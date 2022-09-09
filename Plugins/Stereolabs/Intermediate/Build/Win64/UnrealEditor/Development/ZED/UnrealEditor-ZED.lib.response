@@ -1,0 +1,13 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-ZED.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"..\Intermediate\Build\Win64\UnrealEditor\Development\Engine\SharedPCH.Engine.h.obj"
+"E:\ZED\zed-UE5\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\ZED\Module.ZED.cpp.obj"
+"E:\ZED\zed-UE5\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\ZED\Module.ZED.gen.cpp.obj"
+"..\Intermediate\Build\Win64\UnrealEditor\Development\Default.rc2.res"
+/OUT:"E:\ZED\zed-UE5\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\ZED\UnrealEditor-ZED.lib"

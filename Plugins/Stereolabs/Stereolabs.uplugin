@@ -1,0 +1,61 @@
+{
+	"FileVersion": 3,
+	"Version": 8,
+	"VersionName": "1.0",
+	"FriendlyName": "Stereolabs",
+	"Description": "Stereolabs plugin supporting ZED stereo camera",
+	"Category": "Mixed Reality",
+	"CreatedBy": "Stereolabs",
+	"CreatedByURL": "http://stereolabs.com",
+	"DocsURL": "https://www.stereolabs.com/docs/unreal/",
+	"MarketplaceURL": "",
+	"SupportURL": "https://www.stereolabs.com/company/",
+	"EnabledByDefault": true,
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "Stereolabs",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "ZED",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "SpatialMapping",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "Devices",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "SpatialMappingEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ZEDEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}

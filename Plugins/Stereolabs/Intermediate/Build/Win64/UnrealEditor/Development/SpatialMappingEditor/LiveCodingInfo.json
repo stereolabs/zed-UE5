@@ -1,0 +1,9 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.SpatialMappingEditor.cpp.obj": [
+			"SpatialMappingEditorPlugin.cpp.obj",
+			"SpatialMappingManagerDetails.cpp.obj"
+		]
+	}
+}

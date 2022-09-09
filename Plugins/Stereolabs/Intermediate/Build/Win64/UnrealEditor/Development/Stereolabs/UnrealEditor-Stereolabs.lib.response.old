@@ -1,0 +1,15 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-Stereolabs.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"..\Intermediate\Build\Win64\UnrealEditor\Development\Engine\SharedPCH.Engine.h.obj"
+"E:\ZED\SDK\zed-unreal-examples-master\UE5_ZEDExamples\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\Stereolabs\Module.Stereolabs.cpp.obj"
+"E:\ZED\SDK\zed-unreal-examples-master\UE5_ZEDExamples\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\Stereolabs\Module.Stereolabs.gen.1_of_3.cpp.obj"
+"E:\ZED\SDK\zed-unreal-examples-master\UE5_ZEDExamples\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\Stereolabs\Module.Stereolabs.gen.2_of_3.cpp.obj"
+"E:\ZED\SDK\zed-unreal-examples-master\UE5_ZEDExamples\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\Stereolabs\Module.Stereolabs.gen.3_of_3.cpp.obj"
+"..\Intermediate\Build\Win64\UnrealEditor\Development\Default.rc2.res"
+/OUT:"E:\ZED\SDK\zed-unreal-examples-master\UE5_ZEDExamples\Plugins\Stereolabs\Intermediate\Build\Win64\UnrealEditor\Development\Stereolabs\UnrealEditor-Stereolabs.lib"

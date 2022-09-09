@@ -1,0 +1,85 @@
+//#include "/Engine/Private/ACES.ush"
+
+
+struct Functions {
+
+	half3 FilmToneMapInverse( half3 ToneColor ) 
+	{
+		const float3x3 XYZ_2_AP1_MAT =
+		{
+			 1.6410233797, -0.3248032942, -0.2364246952,
+			-0.6636628587,  1.6153315917,  0.0167563477,
+			 0.0117218943, -0.0082844420,  0.9883948585,
+		};
+
+		const float3x3 AP1_2_XYZ_MAT = 
+		{
+			 0.6624541811, 0.1340042065, 0.1561876870,
+			 0.2722287168, 0.6740817658, 0.0536895174,
+			-0.0055746495, 0.0040607335, 1.0103391003,
+		};
+
+		// Bradford chromatic adaptation transforms between ACES white point (D60) and sRGB white point (D65)
+		const float3x3 D65_2_D60_CAT =
+		{
+			 1.01303,    0.00610531, -0.014971,
+			 0.00769823, 0.998165,   -0.00503203,
+			-0.00284131, 0.00468516,  0.924507,
+		};
+
+		const float3x3 D60_2_D65_CAT =
+		{
+			 0.987224,   -0.00611327, 0.0159533,
+			-0.00759836,  1.00186,    0.00533002,
+			 0.00307257, -0.00509595, 1.08168,
+		};
+
+		const float3x3 sRGB_2_XYZ_MAT =
+		{
+			0.4124564, 0.3575761, 0.1804375,
+			0.2126729, 0.7151522, 0.0721750,
+			0.0193339, 0.1191920, 0.9503041,
+		};
+
+		// REC 709 primaries
+		const float3x3 XYZ_2_sRGB_MAT =
+		{
+			 3.2409699419, -1.5373831776, -0.4986107603,
+			-0.9692436363,  1.8759675015,  0.0415550574,
+			 0.0556300797, -0.2039769589,  1.0569715142,
+		};
+
+		const float3 AP1_RGB2Y =
+		{
+			0.2722287168, //AP1_2_XYZ_MAT[0][1],
+			0.6740817658, //AP1_2_XYZ_MAT[1][1],
+			0.0536895174, //AP1_2_XYZ_MAT[2][1]
+		};
+
+		const float3x3 sRGB_2_AP1 = mul( XYZ_2_AP1_MAT, mul( D65_2_D60_CAT, sRGB_2_XYZ_MAT ) );
+		const float3x3 AP1_2_sRGB = mul( XYZ_2_sRGB_MAT, mul( D60_2_D65_CAT, AP1_2_XYZ_MAT ) );
+	
+		// Use ACEScg primaries as working space
+		half3 WorkingColor = mul( sRGB_2_AP1, saturate( ToneColor ) );
+
+		WorkingColor = max( 0, WorkingColor );
+	
+		// Post desaturate
+		WorkingColor = lerp( dot( WorkingColor, AP1_RGB2Y ), WorkingColor, 1.0 / 0.93 );
+
+		half3 ToeColor		= 0.374816 * pow( 0.9 / min( WorkingColor, 0.8 ) - 1, -0.588729 );
+		half3 ShoulderColor	= 0.227986 * pow( 1.56 / ( 1.04 - WorkingColor ) - 1, 1.02046 );
+
+		half3 t = saturate( ( WorkingColor - 0.35 ) / ( 0.45 - 0.35 ) );
+		t = (3-2*t)*t*t;
+		half3 LinearColor = lerp( ToeColor, ShoulderColor, t );
+
+		// Pre desaturate
+		LinearColor = lerp( dot( LinearColor, AP1_RGB2Y ), LinearColor, 1.0 / 0.96 );
+
+		LinearColor = mul( AP1_2_sRGB, LinearColor );
+
+		// Returning positive sRGB values
+		return max( 0, LinearColor );
+	}
+};

@@ -1,0 +1,35 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.Stereolabs.cpp.obj": [
+			"StereolabsBaseTypes.cpp.obj",
+			"StereolabsCameraProxy.cpp.obj",
+			"StereolabsCoreGlobals.cpp.obj",
+			"StereolabsMesh.cpp.obj",
+			"StereolabsTexture.cpp.obj",
+			"StereolabsTextureBatch.cpp.obj",
+			"Stereolabs.cpp.obj",
+			"StereolabsGrabRunnable.cpp.obj",
+			"StereolabsMeasureRunnable.cpp.obj",
+			"StereolabsRunnable.cpp.obj",
+			"StereolabsFunctionLibrary.cpp.obj",
+			"StereolabsViewportHelper.cpp.obj"
+		],
+		"Module.Stereolabs.gen.1_of_3.cpp.obj": [
+			"Stereolabs.init.gen.cpp.obj",
+			"StereolabsBaseTypes.gen.cpp.obj"
+		],
+		"Module.Stereolabs.gen.2_of_3.cpp.obj": [
+			"StereolabsCameraProxy.gen.cpp.obj",
+			"StereolabsCriticalSection.gen.cpp.obj",
+			"StereolabsFunctionLibrary.gen.cpp.obj"
+		],
+		"Module.Stereolabs.gen.3_of_3.cpp.obj": [
+			"StereolabsMatFunctionLibrary.gen.cpp.obj",
+			"StereolabsMesh.gen.cpp.obj",
+			"StereolabsTexture.gen.cpp.obj",
+			"StereolabsTextureBatch.gen.cpp.obj",
+			"StereolabsViewportHelper.gen.cpp.obj"
+		]
+	}
+}
