@@ -1,3 +1,11 @@
+# Stereolabs plugins
+Stereolabs/Binaries/*
+Stereolabs/Intermediate/*
+
+# Runtime mesh plugin
+RuntimeMeshComponent/Binaries/*
+RuntimeMeshComponent/Intermediate/*
+
 
 #local folders
 *.vs
