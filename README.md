@@ -6,12 +6,7 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 ## Installation
 
-First you need to have our custom engine installed and ready to use. If you don't, see our [installation guide](https://docs.stereolabs.com/mixed-reality/unreal/getting-started/)).
-
-Then follow these steps:
-- Download this repository.
-- Go to your new root project folder. Create a new folder called **Plugins**.
-- Drop the Stereolabs folder within the plugin download into this folder. If you haven’t downloaded the plugin yet, you can get it [here](https://github.com/stereolabs/zed-unreal-plugin).
+- Download this repository..
 - Right click on the *ZEDSamples.uproject*, select *switch Unreal Engine version* and choose our ue5 you previously installed in the list.
 - Build the solution by pressing **Ctrl + F5**. Once the build is done, it will start the project in the UE5 Editor. 
 
