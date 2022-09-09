@@ -1,0 +1,15 @@
+# Stereolabs plugins
+Plugins/*
+
+#local folders
+*.vs
+*.db
+*.vc.db
+*.vc.vc.opendb
+*.sln
+Binaries/*
+Build/*
+Debug/*
+DerivedDataCache/*
+Intermediate/*
+Saved/*

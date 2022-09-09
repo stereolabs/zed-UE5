@@ -1,0 +1,30 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{BA1A1D9A-4070-A447-785B-73B51C0E28E1}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "ZEDSamples",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		},
+		{
+			"Name": "ZEDSamplesEditor",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"AnimGraph"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Stereolabs",
+			"Enabled": true
+		}
+	]
+}
