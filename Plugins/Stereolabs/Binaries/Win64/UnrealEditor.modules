@@ -1,0 +1,12 @@
+{
+	"BuildId": "19505902",
+	"Modules": 
+	{
+		"Devices": "UnrealEditor-Devices.dll",
+		"SpatialMapping": "UnrealEditor-SpatialMapping.dll",
+		"SpatialMappingEditor": "UnrealEditor-SpatialMappingEditor.dll",
+		"Stereolabs": "UnrealEditor-Stereolabs.dll",
+		"ZED": "UnrealEditor-ZED.dll",
+		"ZEDEditor": "UnrealEditor-ZEDEditor.dll"
+	}
+}

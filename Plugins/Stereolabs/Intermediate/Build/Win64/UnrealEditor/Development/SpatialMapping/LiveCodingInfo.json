@@ -1,0 +1,18 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.SpatialMapping.cpp.obj": [
+			"SpatialMappingCubemapManager.cpp.obj",
+			"SpatialMappingManager.cpp.obj",
+			"SpatialMapping.cpp.obj",
+			"SpatialMappingCubemapRunnable.cpp.obj",
+			"SpatialMappingRunnable.cpp.obj"
+		],
+		"Module.SpatialMapping.gen.cpp.obj": [
+			"SpatialMapping.init.gen.cpp.obj",
+			"SpatialMappingBaseTypes.gen.cpp.obj",
+			"SpatialMappingCubemapManager.gen.cpp.obj",
+			"SpatialMappingManager.gen.cpp.obj"
+		]
+	}
+}

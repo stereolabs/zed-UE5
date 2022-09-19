@@ -1,0 +1,10 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.ZEDEditor.cpp.obj": [
+			"ZEDCameraDetails.cpp.obj",
+			"ZEDEditorPlugin.cpp.obj",
+			"ZEDInitializerDetails.cpp.obj"
+		]
+	}
+}
