@@ -823,6 +823,7 @@ struct STEREOLABS_API FSlCameraInformation
 	ESlModel CameraModel; 
 
 	/* Resolution of the camera */
+	UPROPERTY(BlueprintReadOnly)
 	FIntPoint Resolution;
 };
 
@@ -1634,7 +1635,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		SensorsWorld(ESlSensorWorld::SW_Off),
+		SensorsWorld(ESlSensorWorld::SW_ImuGravity),
 		TrackingType(ETrackingType::TrT_ZED)
 	{
 	}
@@ -1819,7 +1820,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	* HMD : Hmd tracking only
 	* Mixte : Zed Imu rotations and Hmd translations
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETrackingType TrackingType;
 };
 
@@ -2349,7 +2350,7 @@ struct STEREOLABS_API FSlBatchParameters
 
 	/* Defines if the Batch option in the object detection module is enabled.  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool Enable;
+	bool bEnable;
 
 	/* Max retention time in seconds of a detected object. After this time, the same object will mostly have a different ID.  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2360,7 +2361,7 @@ struct STEREOLABS_API FSlBatchParameters
 	float Latency;
 
 	FSlBatchParameters() :
-		Enable(false),
+		bEnable(false),
 		IdRetentionTime(240),
 		Latency(2.0f)
 	{}
@@ -2378,15 +2379,15 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 
 	/* Defines if the object detection is synchronized to the image or runs in a separate thread.	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool ImageSync;
+	bool bImageSync;
 
 	/* Defines if the object detection will track objects across images flow.	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool EnableTracking;
+	bool bEnableTracking;
 
 	/* Defines if the mask object will be computed. 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool EnableMaskOutput;
+	bool bEnableMaskOutput;
 
 	/* Enable human pose estimation with skeleton keypoints output. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2394,7 +2395,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 
 	/* Defines if the body fitting will be applied.  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool EnableBodyFitting;
+	bool bEnableBodyFitting;
 
 	/* Defines the body format outputed by the sdk when retrieveObjects is called. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2418,11 +2419,11 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	float PredictionTimeout_s;
 
 	FSlObjectDetectionParameters() :
-		ImageSync(true),
-		EnableTracking(true),
-		EnableMaskOutput(false),
+		bImageSync(true),
+		bEnableTracking(true),
+		bEnableMaskOutput(false),
 		DetectionModel(ESlDetectionModel::DM_MultiClassBox),
-		EnableBodyFitting(true),
+		bEnableBodyFitting(true),
 		BodyFormat(ESlBodyFormat::BF_POSE_34),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
@@ -2571,10 +2572,10 @@ struct STEREOLABS_API FSlObjects
 	TArray<FSlObjectData> ObjectsList;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsNew;
+	bool bIsNew;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsTracked;
+	bool bIsTracked;
 };
 
 
@@ -2708,7 +2709,7 @@ struct STEREOLABS_API FSlRenderingParameters
 	float PerceptionDistance;
 
 	/** ! Experimental ! : enable SRemap. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool SRemapEnable;
 
 	/** Threading mode of the Grab. Multithreading is recommended for better performance. */

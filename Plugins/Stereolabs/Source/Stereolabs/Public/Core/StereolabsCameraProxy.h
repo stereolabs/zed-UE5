@@ -50,6 +50,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxySpatialMappingPausedDe
  */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FSlCameraProxyGrabDelegate, ESlErrorCode, const FSlTimestamp&);
 
+/*
+* Notify new objects are retrieved
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveObjectDelegate, const FSlObjects&, objects);
 
 class FOpenCameraAsyncTask;
 class FEnableTrackingAsyncTask;
@@ -441,6 +445,13 @@ public:
 	bool EnableObjectDetection(const FSlObjectDetectionParameters& ObjectDetectionParameters);
 
 	/*
+	 * Tell if the Object detection module is enabled.
+	 * @return True is object detection is enabled
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "is object detection enabled"), Category = "Zed|Object Detection")
+	bool IsObjectDetectionEnabled();
+
+	/*
 	 * Disable Zed Object Detection module
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "disable zed Object detection"), Category = "Zed|Object Detection")
@@ -453,7 +464,7 @@ public:
 	 * @param ObjectDetectionRuntimeParameters Object detection runtime settings, can be changed at each detection. 
 	 * @return True if returned sl::SUCCESS
 	 */
-	bool RetrieveObjects(SL_Objects& objects, FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters);
+	bool RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters);
 
 	/*
 	 * Call this function to get the current error of the open camera async task.
@@ -756,6 +767,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	FIntPoint RetrieveMatSize;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Zed")
+	FSlObjects objects;
+
 public:
 	/** Camera opened event dispatcher. Broadcast after the camera is opened. */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
@@ -803,11 +817,11 @@ public:
 
 	/** Object detection enabled event dispatcher */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
-	FSlCameraProxyTwoParamsDelegate OnObjectdetectionEnabled;
+	FSlCameraProxyTwoParamsDelegate OnObjectDetectionEnabled;
 
 	/** Object detection retrieve event dispatcher */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
-	FSlCameraProxyDelegate OnObjectDetectionRetrieved;
+	FSlCameraProxyRetrieveObjectDelegate OnObjectDetectionRetrieved;
 	
 private:
 	/** Grab done event dispatcher */

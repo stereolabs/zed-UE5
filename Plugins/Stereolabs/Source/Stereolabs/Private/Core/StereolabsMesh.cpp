@@ -68,9 +68,9 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 		Vertices.SetNum(NbVertices * 3);
 		UVs.SetNum(NbVertices * 2);
 		Triangles.SetNum(NbTriangles * 3);
-
 		Texture.SetNum(TextureSize[0] * TextureSize[1] * 4);
-		(SL_ERROR_CODE)sl_retrieve_whole_mesh(GSlCameraProxy->GetCameraID(), Vertices.GetData(), Triangles.GetData(), UVs.GetData(), Texture.GetData());
+		SL_ERROR_CODE err = (SL_ERROR_CODE)sl_retrieve_whole_mesh(GSlCameraProxy->GetCameraID(), Vertices.GetData(), Triangles.GetData(), UVs.GetData(), Texture.GetData());
+
 	}
 
 	if (!bIsMeshTextured)
@@ -80,13 +80,16 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 
 	// Create texture
 	UTexture2D* UTexture = UTexture2D::CreateTransient(TextureSize[0], TextureSize[1], EPixelFormat::PF_B8G8R8A8, "MeshTexture");
-
+ 
 	// Populate texture
 	FTexture2DMipMap& Mip = UTexture->PlatformData->Mips[0];
 	Mip.BulkData.Lock(LOCK_READ_WRITE);
-	uint8* Data = (uint8*)Mip.BulkData.Realloc(TextureSize[0] * TextureSize[1] * 4);
-	FMemory::Memcpy(Data, Texture.GetData(), TextureSize[0] * TextureSize[1] * 4 * sizeof(unsigned char));
+	void* Data = Mip.BulkData.Realloc(TextureSize[0] * TextureSize[1] * 4);
+	FMemory::Memcpy(Data, Texture.GetData(), TextureSize[0] * TextureSize[1] * 4);
 	Mip.BulkData.Unlock();
+
+
+
 	// Set texture settings
 #if WITH_EDITORONLY_DATA
 	UTexture->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
@@ -103,7 +106,7 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 	UTexture->LODGroup = TextureGroup::TEXTUREGROUP_World;
 
 	if (IsInRenderingThread())
-	{
+	{	
 		UTexture->UpdateResource();
 	}
 
@@ -118,7 +121,6 @@ bool USlMesh::Save(const FString& FilePath, const TArray<int32>& ChunksIDs, ESlM
 	bool bSaved = sl_save_mesh(GSlCameraProxy->GetCameraID(), TCHAR_TO_UTF8(*FilePath), sl::unreal::ToSlType(FileFormat));
 
 	return bSaved;
-
 }
 
 bool USlMesh::Load(const FString& FilePath, bool bUpdateChunksOnly/* = false*/)

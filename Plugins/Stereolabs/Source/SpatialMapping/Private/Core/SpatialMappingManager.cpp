@@ -65,10 +65,10 @@ void ASpatialMappingManager::Tick(float DeltaSeconds)
 							break;
 						case  ESpatialMappingStep::SS_Texture:
 							{
-								Mesh->MeshData.Texture->UpdateResource();
-
-								// Free memory of the texture
-								//if (Mesh->Texture.GetData()) sl_mat_free(Mesh->Texture.GetData(), (SL_MEM)sl_mat_get_memory_type(Mesh->Texture.GetData()));
+								if (Mesh->Texture.GetData()) {
+									Mesh->MeshData.Texture->UpdateResource();
+									//sl_mat_free(Mesh->Texture.GetData(), (SL_MEM)sl_mat_get_memory_type(Mesh->Texture.GetData()));
+								}
 								switch (SpatialMappingWorker->TexturingMode)
 								{
 									case ESpatialMappingTexturingMode::TM_Render:
@@ -149,8 +149,13 @@ void ASpatialMappingManager::EnableSpatialMapping()
 		return;
 	}
 
-	SpatialMappingWorker = new FSpatialMappingRunnable(this, Mesh, GSlCameraProxy->GetCameraID());
-	SpatialMappingWorker->Start(15.0f);
+	if (GSlCameraProxy->IsTrackingEnabled()) {
+		SpatialMappingWorker = new FSpatialMappingRunnable(this, Mesh, GSlCameraProxy->GetCameraID());
+			SpatialMappingWorker->Start(15.0f);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("ZED Tracking is not enabled yet. Make sure it is activated and the camera can see the scene"));
+	}
 
 	OnScaningEnabled.Broadcast();
 }

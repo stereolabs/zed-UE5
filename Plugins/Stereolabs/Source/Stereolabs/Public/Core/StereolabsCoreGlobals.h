@@ -1731,14 +1731,14 @@ namespace sl
 			FSlObjects objects;
 
 			objects.Timestamp = FSlTimestamp(SlData.image_ts);
-			objects.IsNew = (bool)SlData.is_new;
+			objects.bIsNew = (bool)SlData.is_new;
 
 
 			objects.ObjectsList.SetNum(SlData.nb_object);
 			for (int i = 0; i < SlData.nb_object; i++) {
 				objects.ObjectsList[i] = sl::unreal::ToUnrealType(SlData.object_list[i]);
 			}
-			objects.IsTracked = (bool)SlData.is_tracked;
+			objects.bIsTracked = (bool)SlData.is_tracked;
 
 			return objects;
 		}
@@ -2018,16 +2018,16 @@ namespace sl
 		{
 			struct SL_ObjectDetectionParameters ODParameters;
 
-			ODParameters.enable_tracking = UnrealData.EnableTracking;
-			ODParameters.image_sync = UnrealData.ImageSync;
-			ODParameters.enable_mask_output = UnrealData.EnableMaskOutput;
+			ODParameters.enable_tracking = UnrealData.bEnableTracking;
+			ODParameters.image_sync = UnrealData.bImageSync;
+			ODParameters.enable_mask_output = UnrealData.bEnableMaskOutput;
 			ODParameters.model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
-			ODParameters.enable_body_fitting = UnrealData.EnableBodyFitting;
+			ODParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
 			ODParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
 			ODParameters.max_range = UnrealData.MaxRange;
 
 			SL_BatchParameters batchParameters;
-			batchParameters.enable = UnrealData.BatchParameters.Enable;
+			batchParameters.enable = UnrealData.BatchParameters.bEnable;
 			if (batchParameters.enable) {
 				batchParameters.id_retention_time = UnrealData.BatchParameters.IdRetentionTime;
 				batchParameters.latency = UnrealData.BatchParameters.Latency;

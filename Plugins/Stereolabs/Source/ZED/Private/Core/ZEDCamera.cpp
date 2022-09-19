@@ -566,6 +566,11 @@ void AZEDCamera::Tick(float DeltaSeconds)
 			}
 		}
 	}
+
+	if (GSlCameraProxy->IsObjectDetectionEnabled())
+	{
+		GSlCameraProxy->RetrieveObjects(ObjectDetectionRuntimeParameters);
+	}
 }
 
 void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
@@ -715,6 +720,16 @@ void AZEDCamera::EnableTracking()
 	GSlCameraProxy->EnableTracking(TrackingParameters);
 }
 
+void AZEDCamera::EnableObjectDetection() 
+{
+	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
+}
+
+void AZEDCamera::DisableObjectDetection()
+{
+	GSlCameraProxy->DisableObjectDetection();
+}
+
 void AZEDCamera::DisableTracking()
 {
 	GSlCameraProxy->DisableTracking();
@@ -754,16 +769,14 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
 	bShowZedImage = ZedInitializer->bShowZedImage;
 
+	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
+	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
+
 	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
 
 	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
 	
 	checkf(RuntimeParameters.ReferenceFrame == ESlReferenceFrame::RF_World, TEXT("Reference frame must be World when using the ZEDCamera"));
-
-	/*if (InitParameters.InputType == ESlInputType::IT_SVO)
-	{
-		RenderingParameters.ThreadingMode = ESlThreadingMode::TM_SingleThreaded;
-	}*/
 
 	if (bUseHMDTrackingAsOrigin)
 	{

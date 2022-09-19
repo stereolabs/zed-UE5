@@ -94,6 +94,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlRenderingParameters RenderingParameters;
 
+	/* Object Detection parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlObjectDetectionParameters ObjectDetectionParameters;
+
+	/* Object Detection runtime parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+
 	/** Camera settings */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlVideoSettings CameraSettings;
@@ -115,7 +123,7 @@ public:
 	 * Enable if the player must match his real world location/rotation. 
 	 * Not loaded from config file
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	uint8 bUseHMDTrackingAsOrigin:1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")

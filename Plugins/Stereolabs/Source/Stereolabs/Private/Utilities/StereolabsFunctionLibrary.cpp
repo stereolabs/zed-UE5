@@ -253,7 +253,6 @@ UTexture2D* USlFunctionLibrary::GenerateTextureFromTxtFile(const FString filepat
 	std::vector<std::vector<float>> Mx;
 	std::string filepathSTD = (TCHAR_TO_UTF8(*filepath));
 
-
 	std::ifstream myfile(filepathSTD);
 	if (myfile.is_open())
 	{
@@ -280,4 +279,55 @@ FVector2D USlFunctionLibrary::GetHmdFocale()
 	focales.Y = (IdealRenderSize.Y / 2.0f * ProjectionMatrix.M[1][1]);
 	SL_LOG_W(SLFunctionLibrary, "HMD focal compute on viewport %f x %f", (float)IdealRenderSize.X, (float)IdealRenderSize.Y);
 	return focales;
+}
+
+void USlFunctionLibrary::Set3DBoxTransform(AActor*& BBox, const FSlObjectData ObjectData) {
+
+	// GET ZED camera position. 
+	SL_PoseData SL_Pose;
+	GSlCameraProxy->GetCameraPosition(&SL_Pose, SL_REFERENCE_FRAME_WORLD);
+
+	FSlPose CameraPose = sl::unreal::ToUnrealType(SL_Pose);
+
+	FVector LeftTopFront = ObjectData.BoundingBox[0];
+	FVector RightBottomBack = ObjectData.BoundingBox[6];
+
+	// Retrieve Bbox Scale 
+	float XSize = ObjectData.Dimensions.X;
+	float YSize = ObjectData.Dimensions.Z; // The coordinate system is not the same. Dimensions is in COORDINATE_SYSTEM::IMAGE
+	float ZSize = ObjectData.Dimensions.Y;
+
+	FVector BoxPosition = (RightBottomBack + LeftTopFront) / 2;
+	FVector CameraPosition = CameraPose.Transform.GetLocation();
+
+	// Compute Box orientation to face the camera
+	FVector normal = CameraPose.Transform.GetRotation().RotateVector(FVector::ForwardVector);
+	FRotator BoxRotation = FRotator::ZeroRotator;
+	//BoxRotation = UKismetMathLibrary::FindLookAtRotation(BoxPosition, CameraPosition); // box face camera
+	BoxRotation = UKismetMathLibrary::FindLookAtRotation(FVector::Zero(), normal);
+
+	FVector rota_euler = BoxRotation.Euler();
+	rota_euler.Y = 0;
+	BoxRotation = FRotator::MakeFromEuler(rota_euler);
+
+	// Apply the position, orientation and scale to the Box Actor
+	BBox->SetActorLocation(BoxPosition);
+	BBox->SetActorRotation(BoxRotation);
+	BBox->SetActorScale3D(FVector(XSize, YSize, ZSize) / 100.0f);
+
+	// Set the label on top of the Box.
+	FVector RightTopBack = ObjectData.BoundingBox[2];
+	FVector LabelPos = BoxPosition + FVector(0, 0, (ZSize / 2) + 15);
+
+	UTextRenderComponent* Label = BBox->FindComponentByClass<UTextRenderComponent>();
+	if (Label) {
+		Label->SetWorldLocation(LabelPos);
+
+		FString label = FString("ID: ");
+		label.AppendInt(ObjectData.Id);
+		FText text;
+		text = FText::FromString(label);
+
+		Label->SetText(text);
+	}
 }

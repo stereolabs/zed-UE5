@@ -223,7 +223,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, TCHAR_TO_UTF8(*InitParameters.SvoPath), TCHAR_TO_UTF8(*InitParameters.StreamIP),
 			InitParameters.StreamPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath), TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath),
 				TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile));
-		
+
 		SetOpenCameraErrorCode((ESlErrorCode)ErrorCode);
 
 		if (ErrorCode != SL_ERROR_CODE_SUCCESS)
@@ -1184,9 +1184,10 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 
 	if (!ai_model_status->optimized)
-		{
-			SL_CAMERA_PROXY_LOG_E("AI model is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed");
-		}
+	{
+		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+		return false;
+	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 
@@ -1203,7 +1204,12 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 	}
 #endif
 
-	OnObjectdetectionEnabled.Broadcast(bObjectDetectionEnabled, (ESlErrorCode)ErrorCode);
+	OnObjectDetectionEnabled.Broadcast(bObjectDetectionEnabled, (ESlErrorCode)ErrorCode);
+	return bObjectDetectionEnabled;
+}
+
+bool USlCameraProxy::IsObjectDetectionEnabled()
+{
 	return bObjectDetectionEnabled;
 }
 
@@ -1216,19 +1222,20 @@ void USlCameraProxy::DisableObjectDetection()
 		bObjectDetectionEnabled = false;
 }
 
-bool USlCameraProxy::RetrieveObjects(SL_Objects& objects, FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters)
+bool USlCameraProxy::RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters)
 {
+	SL_Objects sl_objects;
 	SL_ObjectDetectionRuntimeParameters ODParams = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ODParams, &objects);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ODParams, &sl_objects);
+	objects = sl::unreal::ToUnrealType(sl_objects);
 
+	if (sl_objects.is_new) OnObjectDetectionRetrieved.Broadcast(objects);
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
 		return false;
 	}
-
-	if (objects.is_new)	OnObjectDetectionRetrieved.Broadcast();
 
 	return true;
 #else

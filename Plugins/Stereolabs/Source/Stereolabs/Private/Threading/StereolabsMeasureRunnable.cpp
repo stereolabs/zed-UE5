@@ -279,8 +279,6 @@ TArray<FVector> FSlMeasureRunnable::GetNormals(const TArray<FIntPoint>& ScreenPo
 
 		void* NormalsMat = Buffer->Mats[1];
 
-		sl::float4 Normal;
-
 		for (auto Iterator = ScreenPositions.CreateConstIterator(); Iterator; ++Iterator)
 		{
 			uint32 X = (uint32)FMath::GetMappedRangeValueUnclamped(InputRangeX, OutputRangeX, Iterator->X);

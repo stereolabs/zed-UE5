@@ -19,6 +19,8 @@ public class Stereolabs : ModuleRules
 
     public Stereolabs(ReadOnlyTargetRules Target) : base(Target)
     {
+        bLegacyPublicIncludePaths = true;
+        //ShadowVariableWarningLevel = WarningLevel.Error;
         PrivatePCHHeaderFile = "Public/Stereolabs.h";
 
         string CudaSDKPath = System.Environment.GetEnvironmentVariable("CUDA_PATH", EnvironmentVariableTarget.Machine);

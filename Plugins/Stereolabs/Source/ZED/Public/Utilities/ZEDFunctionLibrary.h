@@ -469,4 +469,5 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "AddLatencyOffset"), Category = "Stereolabs|Latency")
 	static void LatencyCorrectorAddOffset(const int offset);
+
 };

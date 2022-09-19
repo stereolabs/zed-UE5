@@ -62,6 +62,18 @@ public:
 	void DisableTracking();
 
 	/*
+	*Enable object detection using current object detection parameters
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Zed|Object Detection")
+	void EnableObjectDetection();
+
+	/*
+	 * Disable object detection
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|Object Detection")
+	void DisableObjectDetection();
+
+	/*
 	 * Reset the tracking origin of the camera.
 	 * If using an HMD, reset with its current transform.
 	 * Else use the current tracking data.
@@ -292,6 +304,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
 	UMaterialInstanceDynamic* HMDRightEyeMaterialInstanceDynamic;
 
+	// ------------------------------------------------------------------
+
+	/** Object Detection Parameters */
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlObjectDetectionParameters ObjectDetectionParameters;
+
+	/* Object Detection runtime parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
 
 	// ------------------------------------------------------------------
 

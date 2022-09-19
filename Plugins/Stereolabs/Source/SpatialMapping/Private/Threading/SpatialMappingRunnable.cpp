@@ -60,6 +60,7 @@ uint32 FSpatialMappingRunnable::Run()
 				break;
 			case ESpatialMappingStep::SS_Filter:
 				{
+					SL_LOG(SpatialMappingThread, "Start mesh filtering....");
 					bool bFiltered = FilterMesh();
 
 					if (bFiltered)
@@ -73,10 +74,13 @@ uint32 FSpatialMappingRunnable::Run()
 					}
 
 					Step = ESpatialMappingStep::SS_None;
+					SL_LOG(SpatialMappingThread, "Mesh filtering is done");
+
 				}
 				break;
 			case ESpatialMappingStep::SS_Texture:
 				{
+					SL_LOG(SpatialMappingThread, "Start Mesh texturing");
 					bool bTextured = TextureMesh();
 
 					if (!bTextured)
@@ -86,6 +90,7 @@ uint32 FSpatialMappingRunnable::Run()
 					}
 
 					Step = ESpatialMappingStep::SS_None;
+					SL_LOG(SpatialMappingThread, "Mesh texturing is done");
 				}
 				break;
 			case ESpatialMappingStep::SS_Load:
