@@ -39,10 +39,10 @@ AZEDCamera::AZEDCamera()
 	:
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
-	LeftEyeNormals(nullptr),
+	//LeftEyeNormals(nullptr),
 	RightEyeColor(nullptr),
 	RightEyeDepth(nullptr),
-	RightEyeNormals(nullptr),
+	//RightEyeNormals(nullptr),
 	LeftEyeRenderTarget(nullptr),
 	RightEyeRenderTarget(nullptr),
 	HMDRenderPlaneDistance(1000.0f),
@@ -481,12 +481,12 @@ void AZEDCamera::Tick(float DeltaSeconds)
 			Batch->AddTexture(LeftEyeDepth);
 
 			// Left normals
-			Batch->RemoveTexture(LeftEyeNormals);
-			LeftEyeNormals->Resize(DepthSize.X, DepthSize.Y);
-			Batch->AddTexture(LeftEyeNormals);
+			//Batch->RemoveTexture(LeftEyeNormals);
+			//LeftEyeNormals->Resize(DepthSize.X, DepthSize.Y);
+			//Batch->AddTexture(LeftEyeNormals);
 
 			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
+			//ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
 
 			if (RenderingMode == ESlRenderingMode::RM_Stereo)
 			{
@@ -496,12 +496,12 @@ void AZEDCamera::Tick(float DeltaSeconds)
 				Batch->AddTexture(RightEyeDepth);
 
 				// Right normals
-				Batch->RemoveTexture(RightEyeNormals);
-				RightEyeNormals->Resize(DepthSize.X, DepthSize.Y);
-				Batch->AddTexture(RightEyeNormals);
+				//Batch->RemoveTexture(RightEyeNormals);
+				//RightEyeNormals->Resize(DepthSize.X, DepthSize.Y);
+				//Batch->AddTexture(RightEyeNormals);
 
 				ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", RightEyeDepth->Texture);
-				ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
+				//ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
 			}
 		}
 #if WITH_EDITOR
@@ -519,28 +519,28 @@ void AZEDCamera::Tick(float DeltaSeconds)
 			if (!bCurrentDepthEnabled)
 			{
 				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", nullptr);
+				//ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", nullptr);
 
 				Batch->RemoveTexture(LeftEyeDepth);
 				delete LeftEyeDepth;
 				LeftEyeDepth = nullptr;
 
-				Batch->RemoveTexture(LeftEyeNormals);
-				delete LeftEyeNormals;
-				LeftEyeNormals = nullptr;
+				//Batch->RemoveTexture(LeftEyeNormals);
+				//delete LeftEyeNormals;
+				//LeftEyeNormals = nullptr;
 
 				if (RenderingMode == ESlRenderingMode::RM_Stereo)
 				{
 					ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
-					ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", nullptr);
+					//ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", nullptr);
 
 					Batch->RemoveTexture(RightEyeDepth);
 					delete RightEyeDepth;
 					RightEyeDepth = nullptr;
 
-					Batch->RemoveTexture(RightEyeNormals);
-					delete RightEyeNormals;
-					RightEyeNormals = nullptr;
+					//Batch->RemoveTexture(RightEyeNormals);
+					//delete RightEyeNormals;
+					//RightEyeNormals = nullptr;
 				}
 			}
 			else
@@ -548,20 +548,20 @@ void AZEDCamera::Tick(float DeltaSeconds)
 				CreateLeftTextures(false);
 
 				Batch->AddTexture(LeftEyeDepth);
-				Batch->AddTexture(LeftEyeNormals);
+				//Batch->AddTexture(LeftEyeNormals);
 
 				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
+				//ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
 
 				if (RenderingMode == ESlRenderingMode::RM_Stereo)
 				{
 					CreateRightTextures(false);
 
 					Batch->AddTexture(RightEyeDepth);
-					Batch->AddTexture(RightEyeNormals);
+					//Batch->AddTexture(RightEyeNormals);
 
 					ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", RightEyeDepth->Texture);
-					ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
+					//ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
 				}
 			}
 		}
@@ -640,7 +640,7 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
 
 		LeftEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_Depth, true, ESlTextureFormat::TF_R32_FLOAT);
-		LeftEyeNormals = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeNormals", TextureSize.X, TextureSize.Y, ESlMeasure::M_Normals, true, ESlTextureFormat::TF_A32B32G32R32F);
+		//LeftEyeNormals = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeNormals", TextureSize.X, TextureSize.Y, ESlMeasure::M_Normals, true, ESlTextureFormat::TF_A32B32G32R32F);
 	}
 }
 
@@ -658,7 +658,7 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
 
 		RightEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("RightEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_DepthRight, true, ESlTextureFormat::TF_R32_FLOAT);
-		RightEyeNormals = USlMeasureTexture::CreateGPUMeasureTexture("RightEyeNormals", TextureSize.X, TextureSize.Y, ESlMeasure::M_NormalsRight, true, ESlTextureFormat::TF_A32B32G32R32F);
+		//RightEyeNormals = USlMeasureTexture::CreateGPUMeasureTexture("RightEyeNormals", TextureSize.X, TextureSize.Y, ESlMeasure::M_NormalsRight, true, ESlTextureFormat::TF_A32B32G32R32F);
 	}
 }
 
@@ -837,7 +837,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	CreateLeftTextures();
 	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Color", LeftEyeColor->Texture);
 	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
+	//ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", LeftEyeNormals->Texture);
 
 	Batch->AddTexture(LeftEyeColor);
 
@@ -846,7 +846,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	if (!bHMDEnabled)
 	{
 		Batch->AddTexture(LeftEyeDepth);
-		Batch->AddTexture(LeftEyeNormals);
+		//Batch->AddTexture(LeftEyeNormals);
 	}
 	else
 	{
@@ -864,7 +864,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 		if (bCurrentDepthEnabled)
 		{
 			ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", RightEyeDepth->Texture);
-			ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
+			//ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
 		}
 
 		Batch->AddTexture(RightEyeColor);
@@ -872,8 +872,8 @@ void AZEDCamera::Init(bool bHMDEnabled)
 		{
 			Batch->AddTexture(LeftEyeDepth);
 			Batch->AddTexture(RightEyeDepth);
-			Batch->AddTexture(LeftEyeNormals);
-			Batch->AddTexture(RightEyeNormals);
+			/*Batch->AddTexture(LeftEyeNormals);
+			Batch->AddTexture(RightEyeNormals);*/
 		}
 	}
 
@@ -907,18 +907,18 @@ void AZEDCamera::CameraClosed()
 	if (LeftEyeColor) {
 		LeftEyeColor->ConditionalBeginDestroy();
 	}
-	if (LeftEyeNormals) {
-		LeftEyeNormals->ConditionalBeginDestroy();
-	}
+	//if (LeftEyeNormals) {
+	//	LeftEyeNormals->ConditionalBeginDestroy();
+	//}
 	if (LeftEyeDepth) {
 		LeftEyeDepth->ConditionalBeginDestroy();
 	}
 	if (RightEyeColor) {
 		RightEyeColor->ConditionalBeginDestroy();
 	}
-	if (RightEyeNormals) {
-		RightEyeNormals->ConditionalBeginDestroy();
-	}
+	//if (RightEyeNormals) {
+	//	RightEyeNormals->ConditionalBeginDestroy();
+	//}
 	if (RightEyeDepth) {
 		RightEyeDepth->ConditionalBeginDestroy();
 	}

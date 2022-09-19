@@ -225,8 +225,9 @@ public:
 	USlTexture* LeftEyeDepth;
 
 	/** Left eye normals texture */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* LeftEyeNormals;
+	// Not used for the moment
+	//UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
+	//USlTexture* LeftEyeNormals;
 
 	/** Right eye image texture */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
@@ -237,8 +238,9 @@ public:
 	USlTexture* RightEyeDepth;
 
 	/** Right eye normals texture  */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* RightEyeNormals;
+	// Not used for the moment
+	//UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
+	//USlTexture* RightEyeNormals;
 
 	/** Render target left eye */
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
