@@ -1,6 +1,4 @@
-# Stereolabs plugins
-Stereolabs/Binaries/*
-Stereolabs/Intermediate/*
+# Stereolabs plugins - ignored in plugins
 
 # Runtime mesh plugin
 RuntimeMeshComponent/Binaries/*

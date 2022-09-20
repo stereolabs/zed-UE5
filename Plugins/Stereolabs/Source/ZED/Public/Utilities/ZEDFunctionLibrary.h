@@ -451,7 +451,7 @@ public:
 	 * @param WorldDirection   The direction from the camera to the world position
 	 * @return True if deprojected
 	 */
-	//UFUNCTION(BlueprintPure, meta = (DisplayName = "ZEDDeprojectScreenToWorld"), Category = "Stereolabs|Zed")
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "ZEDDeprojectScreenToWorld"), Category = "Stereolabs|Zed")
 	static bool DeprojectScreenToWorld(AZEDPlayerController const* Player, const FVector2D& ScreenPosition, FVector& WorldPosition, FVector& WorldDirection);
 
 	/*
@@ -461,7 +461,7 @@ public:
 	 * @param ScreenPosition		  The screen position
 	 * @return True if projected
 	 */
-	//UFUNCTION(BlueprintPure, meta = (DisplayName = "ZEDProjectWorldToScreen"), Category = "Stereolabs|Zed")
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "ZEDProjectWorldToScreen"), Category = "Stereolabs|Zed")
 	static bool ProjectWorldToScreen(AZEDPlayerController const* Player, const FVector& WorldPosition, FVector2D& ScreenPosition);
 
 	/*

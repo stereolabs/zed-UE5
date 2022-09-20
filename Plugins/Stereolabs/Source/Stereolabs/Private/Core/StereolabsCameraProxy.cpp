@@ -1029,7 +1029,7 @@ ESlErrorCode USlCameraProxy::GetOpenCameraErrorCode()
 
 float USlCameraProxy::GetDepth(const FSlViewportHelper& ViewportHelper, const FIntPoint& ScreenPosition)
 {
-	checkf(MeasuresWorker && bHitTestDepthEnabled, TEXT("Depth hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestDepthEnabled, TEXT("Depth hit tests must be enabled"));
 
 	float Depth = MeasuresWorker->GetDepth(ScreenPosition, ViewportHelper.RangeX, ViewportHelper.RangeY);
 
@@ -1050,7 +1050,7 @@ float USlCameraProxy::GetDepth(const FSlViewportHelper& ViewportHelper, const FI
 
 TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions)
 {
-	checkf(MeasuresWorker && bHitTestDepthEnabled, TEXT("Depth hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestDepthEnabled, TEXT("Depth hit tests must be enabled"));
 
 	TArray<float> Depths = MeasuresWorker->GetDepths(ScreenPositions, ViewportHelper.RangeX, ViewportHelper.RangeY);
 
@@ -1078,7 +1078,7 @@ TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper,
 
 FVector USlCameraProxy::GetNormal(const FSlViewportHelper& ViewportHelper, const FIntPoint& ScreenPosition)
 {
-	checkf(MeasuresWorker && bHitTestNormalsEnabled, TEXT("Normals hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestNormalsEnabled, TEXT("Normals hit tests must be enabled"));
 
 	FVector Normal = MeasuresWorker->GetNormal(ScreenPosition, ViewportHelper.RangeX, ViewportHelper.RangeY);
 
@@ -1093,7 +1093,7 @@ FVector USlCameraProxy::GetNormal(const FSlViewportHelper& ViewportHelper, const
 
 TArray<FVector> USlCameraProxy::GetNormals(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions)
 {
-	checkf(MeasuresWorker && bHitTestNormalsEnabled, TEXT("Normals hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestNormalsEnabled, TEXT("Normals hit tests must be enabled"));
 
 	TArray<FVector> Normals = MeasuresWorker->GetNormals(ScreenPositions, ViewportHelper.RangeX, ViewportHelper.RangeY);
 
@@ -1113,7 +1113,7 @@ TArray<FVector> USlCameraProxy::GetNormals(const FSlViewportHelper& ViewportHelp
 
 void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, const FIntPoint& ScreenPosition, float& Depth, FVector& Normal)
 {
-	checkf(MeasuresWorker && bHitTestDepthEnabled && bHitTestNormalsEnabled, TEXT("Depth and Normals hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestDepthEnabled && bHitTestNormalsEnabled, TEXT("Depth and Normals hit tests must be enabled"));
 
 	FVector4 DepthAndNormal = MeasuresWorker->GetDepthAndNormal(ScreenPosition, ViewportHelper.RangeX, ViewportHelper.RangeY);
 	
@@ -1142,7 +1142,7 @@ void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, 
 
 void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions, TArray<float>& Depths, TArray<FVector>& Normals)
 {
-	checkf(MeasuresWorker && bHitTestDepthEnabled && bHitTestNormalsEnabled, TEXT("Depth and Normals hit tests must be enabled"));
+	ensureMsgf(MeasuresWorker && bHitTestDepthEnabled && bHitTestNormalsEnabled, TEXT("Depth and Normals hit tests must be enabled"));
 
 	TArray<FVector4> DepthsAndNormals = MeasuresWorker->GetDepthsAndNormals(ScreenPositions, ViewportHelper.RangeX, ViewportHelper.RangeY);
 
