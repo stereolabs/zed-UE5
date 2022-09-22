@@ -24,11 +24,16 @@ public:
 	{ 
 		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 	
-		return SpatialMappingManager->IsSpatialMappingEnabled()/* && GSlCameraProxy->bSpatialMappingEnabled*/;
+		return GSlCameraProxy->bSpatialMappingEnabled/* && GSlCameraProxy->bSpatialMappingEnabled*/;
 	}
 
 	/** Button enabled */
-	bool IsSpatialMappingDisabled() const { return !IsSpatialMappingEnabled(); }
+	bool IsSpatialMappingDisabled() const 
+	{ 
+		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
+		
+		return !GSlCameraProxy->bSpatialMappingEnabled;
+	}
 
 	/** Button enabled */
 	bool IsSpatialMappingStarted() const { return IsSpatialMappingEnabled() && GSlCameraProxy &&  GSlCameraProxy->bSpatialMappingEnabled; }
@@ -57,7 +62,7 @@ public:
 	{
 		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 
-		return IsSpatialMappingEnabled() && SpatialMappingManager->GetMeshVerticesNumber() > 0;
+		return SpatialMappingManager->GetMeshVerticesNumber() > 0;
 	}
 
 	/** Button enabled */
@@ -66,6 +71,32 @@ public:
 		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 
 		return IsSpatialMappingEnabled() && HasMeshVertices() && SpatialMappingManager->SpatialMappingParameters.bSaveTexture;
+	}
+
+	bool IsFiltering() const
+	{
+		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
+
+		return IsSpatialMappingEnabled() && SpatialMappingManager->Step == ESpatialMappingStep::SS_Filter;
+	}
+
+	bool IsTexturing() const
+	{
+		ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
+
+		return IsSpatialMappingEnabled() && SpatialMappingManager->Step == ESpatialMappingStep::SS_Texture;
+	}
+
+	bool IsTexturingAllowed() const 
+	{
+
+		return (IsTexturingEnabled() && !IsFiltering());
+	}
+
+	bool IsFilteringAllowed() const
+	{
+
+		return (HasMeshVertices() && !IsTexturing());
 	}
 
 
@@ -101,6 +132,13 @@ public:
 
 	/** Clicking the save mesh button */
 	FReply OnClickSaveMesh();
+
+
+	/** Clicking the show mesh button */
+	FReply OnClickShowMesh();
+
+	/** Clicking the hide mesh button */
+	FReply OnClickHideMesh();
 
 private:
 	/** Can only be one camera actor */

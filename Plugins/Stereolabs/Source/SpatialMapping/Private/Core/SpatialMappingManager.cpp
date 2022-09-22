@@ -11,7 +11,8 @@ ASpatialMappingManager::ASpatialMappingManager()
 	bStepFailed(false),
 	SpatialMappingWorker(nullptr),
 	UpdateTime(0.0f),
-	bSpatialMappingPaused(false)
+	bSpatialMappingPaused(false),
+	bShowMesh(true)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;

@@ -777,6 +777,7 @@ bool USlCameraProxy::EnableSpatialMapping(const FSlSpatialMappingParameters& Spa
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't enable spatial mapping: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		return bSpatialMappingEnabled;
 	}
 #endif
 
@@ -875,7 +876,8 @@ bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType 
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(MemoryType));
 	}
-	return RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution);
+
+	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution);
 }
 
 bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
@@ -891,7 +893,9 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveImage);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, Mat, (SL_VIEW)ViewType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y);
+	void* InMat = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, sl::unreal::ToSlType2(MemoryType));
+
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, InMat, (SL_VIEW)ViewType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y);
 	
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
@@ -901,7 +905,10 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		return false;
 	}
 
-	return true;
+	bool out = sl_convert_image(InMat, Mat, 0) == SL_ERROR_CODE_SUCCESS;
+	sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
+
+	return out;
 #else
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 #endif
@@ -1185,7 +1192,7 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 	if (!ai_model_status->optimized)
 	{
-		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
 		return false;
 	}
 

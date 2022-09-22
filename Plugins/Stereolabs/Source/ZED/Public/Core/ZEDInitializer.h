@@ -74,6 +74,13 @@ private:
 	void LoadAntiDriftParameters();
 
 public:
+
+	/** Type of view displayed on the scene.
+	* Default is ESlView::LEFT.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	ESlView ImageView;
+
 	/** Init parameters */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlInitParameters InitParameters;

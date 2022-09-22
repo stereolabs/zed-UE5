@@ -896,6 +896,14 @@ extern "C" {
      */
     INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height);
 
+    /**
+    \brief Convert Image format from Unsigned char to Signed char, designed for Unreal Engine pipeline, works on GPU memory.
+    \param image_in : input image to convert
+    \param image_signed : output image to converted
+    \param stream : a cuda stream to put the compute to (def. 0)
+    \note If the Output Mat does not satisfies the requirements, it is freed and re-allocated.
+    */
+    INTERFACE_API int sl_convert_image(void* image_in_ptr, void* image_signed_ptr, cudaStream_t stream);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Streaming Sender //////////////////////////////////////////////////////////////////////

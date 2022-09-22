@@ -266,20 +266,18 @@ enum class ESlView : uint8
 {
 	V_Left					 UMETA(DisplayName = "Left"),
 	V_Right					 UMETA(DisplayName = "Right"),
-	V_LeftGray				 UMETA(DisplayName = "Left gray"),
-	V_RightGray				 UMETA(DisplayName = "Right gray"),
+	V_LeftGray				 UMETA(DisplayName = "Left gray", Tooltip = "Not supported for the moment"),
+	V_RightGray				 UMETA(DisplayName = "Right gray", Tooltip = "Not supported for the moment"),
 	V_LeftUnrectified		 UMETA(DisplayName = "Left unrectified"),
 	V_RightUnrectified		 UMETA(DisplayName = "Right unrectified"),
-	V_LeftUnrectifiedGray	 UMETA(DisplayName = "Left unrectified gray"),
-	V_RightUnrectifiedGray	 UMETA(DisplayName = "Right unrectified gray"),
+	V_LeftUnrectifiedGray	 UMETA(DisplayName = "Left unrectified gray", Tooltip = "Not supported for the moment"),
+	V_RightUnrectifiedGray	 UMETA(DisplayName = "Right unrectified gray", Tooltip="Not supported for the moment"),
 	V_SideBySide			 UMETA(DisplayName = "Side by side"),
 	V_Depth					 UMETA(DisplayName = "Depth"),
 	V_Confidence			 UMETA(DisplayName = "Confidence"),
 	V_Normals				 UMETA(DisplayName = "Normals"),
 	V_DepthRight			 UMETA(DisplayName = "Depth right"),
-	V_NormalsRight		     UMETA(DisplayName = "Normals right"),
-	V_LeftSigned     	     UMETA(DisplayName = "Signed Left"),
-	V_RightSigned    	     UMETA(DisplayName = "Signed Right")
+	V_NormalsRight		     UMETA(DisplayName = "Normals right")
 };
 
 /*

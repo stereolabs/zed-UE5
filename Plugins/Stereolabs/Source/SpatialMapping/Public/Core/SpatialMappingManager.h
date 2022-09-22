@@ -186,6 +186,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Zed|SpatialMapping")
 	FSpatialMappingManagerDelegate OnSpatialMappingReset;
 
+	/** Show Mesh */
+	UPROPERTY(BlueprintAssignable, Category = "Zed|SpatialMapping")
+	FSpatialMappingManagerDelegate OnShowMesh;
+
+	/** Hide Mesh */
+	UPROPERTY(BlueprintAssignable, Category = "Zed|SpatialMapping")
+	FSpatialMappingManagerDelegate OnHideMesh;
+
 public:
 	/** Spatial mapping settings */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
@@ -210,6 +218,8 @@ public:
 	/** The mesh being used for spatial memory. Not thread safe to access if SpatialMapping enable, use delegate instead. */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|SpatialMapping")
 	USlMesh* Mesh;
+
+	bool bShowMesh;
 
 	/** Mesh data update section */
 	FCriticalSection MeshDataUpdateSection;

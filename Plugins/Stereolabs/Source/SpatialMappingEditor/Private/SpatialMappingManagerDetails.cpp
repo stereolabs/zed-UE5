@@ -26,11 +26,19 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Spatial Mapping Controls");
 
-	const FText SpatialMappingFilterString = FText::FromString("zed SpatialMapping");
+	const FText SpatialMappingFilterString = FText::FromString("ZED SpatialMapping");
 
 	const FText EnableSpatialMappingText = FText::FromString("Enable");
 	const FText DisableSpatialMappingText = FText::FromString("Disable");
 	const FText ResetSpatialMappingText = FText::FromString("Reset");
+
+	const FText StartSpatialMappingText = FText::FromString("Start");
+	const FText PauseSpatialMappingText = FText::FromString("Pause");
+	const FText ResumeSpatialMappingText = FText::FromString("Resume");
+	const FText StopSpatialMappingText = FText::FromString("Stop");
+
+	const FText ShowMeshText = FText::FromString("Show");
+	const FText HideMeshText = FText::FromString("Hide");
 
 	Category.AddCustomRow(SpatialMappingFilterString, false)
 		.NameContent()
@@ -47,17 +55,17 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 			.VAlign(VAlign_Center)
 			.Padding(2.0f)
 			[
-				SNew(SButton)
+				SNew(SButton) 
 				.VAlign(VAlign_Center)
-				.ToolTipText(FText::FromString("Enable SpatialMapping"))
-				.OnClicked(this, &FSpatialMappingManagerDetails::OnClickEnableSpatialMapping)
+				.ToolTipText(FText::FromString("Start SpatialMapping"))
+				.OnClicked(this, &FSpatialMappingManagerDetails::OnClickStartSpatialMapping)
 				.IsEnabled(this, &FSpatialMappingManagerDetails::IsSpatialMappingDisabled)
 				.Content()
 				[
 					SNew(STextBlock)
 					.MinDesiredWidth(110)
 					.Justification(ETextJustify::Center)
-					.Text(EnableSpatialMappingText)
+					.Text(StartSpatialMappingText)
 				]
 			]
 			+ SHorizontalBox::Slot()
@@ -96,35 +104,29 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 			]
 		];
 
-	
-	const FText StartSpatialMappingText = FText::FromString("Start");
-	const FText PauseSpatialMappingText = FText::FromString("Pause");
-	const FText ResumeSpatialMappingText = FText::FromString("Resume");
-	const FText StopSpatialMappingText = FText::FromString("Stop");
-
 	Category.AddCustomRow(SpatialMappingFilterString, false)
 		.ValueContent()
 		.VAlign(VAlign_Center)
 		.MaxDesiredWidth(325)
 		[
 			SNew( SHorizontalBox )
-			+ SHorizontalBox::Slot()
-			.VAlign(VAlign_Center)
-			.Padding(2.0f)
-			[
-				SNew(SButton)
-				.VAlign(VAlign_Center)
-				.ToolTipText(FText::FromString("Start SpatialMapping"))
-				.OnClicked(this, &FSpatialMappingManagerDetails::OnClickStartSpatialMapping)
-				.IsEnabled(this, &FSpatialMappingManagerDetails::IsSpatialMappingStopped)
-				.Content()
-				[
-					SNew(STextBlock)
-					.MinDesiredWidth(110)
-					.Justification(ETextJustify::Center)
-					.Text(StartSpatialMappingText)
-				]
-			]
+			//+ SHorizontalBox::Slot()
+			//.VAlign(VAlign_Center)
+			//.Padding(2.0f)
+			//[
+			//	SNew(SButton)
+			//	.VAlign(VAlign_Center)
+			//	.ToolTipText(FText::FromString("Start SpatialMapping"))
+			//	.OnClicked(this, &FSpatialMappingManagerDetails::OnClickStartSpatialMapping)
+			//	.IsEnabled(this, &FSpatialMappingManagerDetails::IsSpatialMappingStopped)
+			//	.Content()
+			//	[
+			//		SNew(STextBlock)
+			//		.MinDesiredWidth(110)
+			//		.Justification(ETextJustify::Center)
+			//		.Text(StartSpatialMappingText)
+			//	]
+			//]
 			+ SHorizontalBox::Slot()
 			.VAlign(VAlign_Center)
 			.Padding(2.0f)
@@ -213,7 +215,7 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 				.VAlign(VAlign_Center)
 				.ToolTipText(FText::FromString("Filter mesh"))
 				.OnClicked(this, &FSpatialMappingManagerDetails::OnClickFilterMesh)
-				.IsEnabled(this, &FSpatialMappingManagerDetails::HasMeshVertices)
+				.IsEnabled(this, &FSpatialMappingManagerDetails::IsFilteringAllowed)
 				.Content()
 				[
 					SNew(STextBlock)
@@ -230,7 +232,7 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 				.VAlign(VAlign_Center)
 				.ToolTipText(FText::FromString("Texture mesh"))
 				.OnClicked(this, &FSpatialMappingManagerDetails::OnClickTextureMesh)
-				.IsEnabled(this, &FSpatialMappingManagerDetails::IsTexturingEnabled)
+				.IsEnabled(this, &FSpatialMappingManagerDetails::IsTexturingAllowed)
 				.Content()
 				[
 					SNew(STextBlock)
@@ -240,6 +242,54 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 				]
 			]
 		];
+
+
+		Category.AddCustomRow(SpatialMappingFilterString, false)
+			.NameContent()
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("Mesh Display options", "Mesh Display options"))
+			]
+		.ValueContent()
+			.VAlign(VAlign_Center)
+			.MaxDesiredWidth(325)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.Padding(2.0f)
+			[
+				SNew(SButton)
+				.VAlign(VAlign_Center)
+			.ToolTipText(FText::FromString("Show mesh"))
+			.OnClicked(this, &FSpatialMappingManagerDetails::OnClickShowMesh)
+			.IsEnabled(this, &FSpatialMappingManagerDetails::HasMeshVertices)
+			.Content()
+			[
+				SNew(STextBlock)
+				.MinDesiredWidth(110)
+			.Justification(ETextJustify::Center)
+			.Text(ShowMeshText)
+			]
+			]
+		+ SHorizontalBox::Slot()
+			.VAlign(VAlign_Center)
+			.Padding(2.0f)
+			[
+				SNew(SButton)
+				.VAlign(VAlign_Center)
+			.ToolTipText(FText::FromString("Hide mesh"))
+			.OnClicked(this, &FSpatialMappingManagerDetails::OnClickHideMesh)
+			.IsEnabled(this, &FSpatialMappingManagerDetails::HasMeshVertices)
+			.Content()
+			[
+				SNew(STextBlock)
+				.MinDesiredWidth(110)
+			.Justification(ETextJustify::Center)
+			.Text(HideMeshText)
+			]
+			]
+			];
 
 	Category.AddCustomRow(SpatialMappingFilterString, false)
 		.NameContent()
@@ -336,6 +386,8 @@ FReply FSpatialMappingManagerDetails::OnClickStartSpatialMapping()
 {
 	ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 
+	SpatialMappingManager->EnableSpatialMapping();
+
 	SpatialMappingManager->StartSpatialMapping();
 
 	return FReply::Handled();
@@ -383,6 +435,24 @@ FReply FSpatialMappingManagerDetails::OnClickTextureMesh()
 
 	SpatialMappingManager->TextureMesh(ESpatialMappingTexturingMode::TM_Render);
 
+	return FReply::Handled();
+}
+
+FReply FSpatialMappingManagerDetails::OnClickShowMesh() 
+{
+	ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
+
+	SpatialMappingManager->OnShowMesh.Broadcast();
+
+	return FReply::Handled();
+}
+
+FReply FSpatialMappingManagerDetails::OnClickHideMesh()
+{
+	ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
+	
+	SpatialMappingManager->OnHideMesh.Broadcast();
+		
 	return FReply::Handled();
 }
 

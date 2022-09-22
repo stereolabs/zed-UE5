@@ -49,12 +49,13 @@ AZEDCamera::AZEDCamera()
 	RenderingMode(ESlRenderingMode::RM_None),
 	bUseHMDTrackingAsOrigin(false),
 	Batch(nullptr),
-	CurrentDepthTextureQualityPreset(0),
+	CurrentDepthTextureQualityPreset(2),
 	bPositionalTrackingInitialized(false),
 	bHMDHasTrackers(false),
 	bCurrentDepthEnabled(false),
 	bInit(false),
-	bShowZedImage(true)
+	bShowZedImage(true),
+	ImageView(ESlView::V_Left)
 {
 	// Controller tick the camera to make it the first actor to tick
 	PrimaryActorTick.bCanEverTick = false;
@@ -134,6 +135,8 @@ AZEDCamera::AZEDCamera()
 	FinalLeftPlane->SetCastShadow(false);
 	FinalRightPlane->SetCastShadow(false);
 
+	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
+	InterRightCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 	InterLeftCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
 	InterRightCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
 	InterLeftCamera->PostProcessSettings.VignetteIntensity = 0;
@@ -233,6 +236,10 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 
 	if (PropertyName == FName("DepthClampThreshold")) {
 		SetDepthClampThreshold(DepthClampThreshold);
+	}
+
+	if (PropertyName == FName("bDepthOcclusion")) {
+		SetDepthOcclusion(bDepthOcclusion);
 	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -632,7 +639,7 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 	{
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution;
 
-		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ESlView::V_LeftSigned, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ImageView, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
 	}
 
 	if (RuntimeParameters.bEnableDepth)
@@ -650,7 +657,7 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 	{
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters.Resolution;
 
-		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_RightSigned, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_Right, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
 	}
 
 	if (RuntimeParameters.bEnableDepth)
@@ -683,6 +690,12 @@ void AZEDCamera::SetDepthClampThreshold(const float DepthDistance) {
 
 	if (ZedRightEyeMaterialInstanceDynamic) {
 		ZedRightEyeMaterialInstanceDynamic->SetScalarParameterValue("MaxDepth", DepthDistance);
+	}
+}
+
+void AZEDCamera::SetDepthOcclusion(const bool EnableOcclusion) {
+	if (ZedLeftEyeMaterialInstanceDynamic) {
+		ZedLeftEyeMaterialInstanceDynamic->SetScalarParameterValue("DepthOcclusion", bDepthOcclusion);
 	}
 }
 
@@ -768,6 +781,7 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 	bUseHMDTrackingAsOrigin = ZedInitializer->bUseHMDTrackingAsOrigin;
 	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
 	bShowZedImage = ZedInitializer->bShowZedImage;
+	ImageView = ZedInitializer->ImageView;
 
 	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
 	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
@@ -1046,14 +1060,14 @@ void AZEDCamera::SetupComponents(bool stereo)
 	LeftEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);
 	HMDLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("RealVirtual", LeftEyeRenderTarget);
 	InterLeftCamera->TextureTarget = LeftEyeRenderTarget;
-	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 	FinalLeftPlane->SetMaterial(0, HMDLeftEyeMaterialInstanceDynamic);
 	if (stereo)
 	{
 		RightEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);
 		HMDRightEyeMaterialInstanceDynamic->SetTextureParameterValue("RealVirtual", RightEyeRenderTarget);
 		InterRightCamera->TextureTarget = RightEyeRenderTarget;
-		InterRightCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+		InterRightCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 		FinalRightPlane->SetMaterial(0, HMDRightEyeMaterialInstanceDynamic);
 	}
 

@@ -31,7 +31,8 @@ AZEDInitializer::AZEDInitializer()
 	bLoadCameraSettingsFromConfigFile(false),
 	bUseHMDTrackingAsOrigin(false),
 	bDepthOcclusion(true),
-	bShowZedImage(true)
+	bShowZedImage(true),
+	ImageView(ESlView::V_Left)
 {
 	if (InitParameters.VerboseFilePath.IsEmpty())
 	{
@@ -245,6 +246,8 @@ void AZEDInitializer::ResetParameters()
 
 	bDepthOcclusion = true;
 	DepthClampThreshold = InitParameters.DepthMaximumDistance;
+
+	ImageView = ESlView::V_Left;
 
 	bShowZedImage = true;
 }

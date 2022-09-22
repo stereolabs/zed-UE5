@@ -448,9 +448,7 @@ enum SL_VIEW {
 	SL_VIEW_CONFIDENCE, /** Color rendering of the depth confidence. Each pixel contains 4 unsigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. */
 	SL_VIEW_NORMALS, /** Color rendering of the normals. Each pixel contains 4 unsigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. */
 	SL_VIEW_DEPTH_RIGHT, /** Color rendering of the right depth mapped on right sensor. Each pixel contains 4 unsigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. */
-	SL_VIEW_NORMALS_RIGHT, /** Color rendering of the normals mapped on right sensor. Each pixel contains 4 unsigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. */
-	SL_VIEW_LEFT_SIGNED, /**< Left BGRA image. Each pixel contains 4 signed char (B,G,R,A). sl::MAT_TYPE::S8_C4.  */
-	SL_VIEW_RIGHT_SIGNED, /**< Left BGRA image. Each pixel contains 4 signed char (B,G,R,A). sl::MAT_TYPE::S8_C4.  */
+	SL_VIEW_NORMALS_RIGHT /** Color rendering of the normals mapped on right sensor. Each pixel contains 4 unsigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. */
 };
 
 /**

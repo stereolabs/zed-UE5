@@ -325,17 +325,14 @@ namespace sl
 			case SL_VIEW_NORMALS:
 			case SL_VIEW_DEPTH_RIGHT:
 			case SL_VIEW_NORMALS_RIGHT:
-				return SL_MAT_TYPE_U8_C4;
+				return SL_MAT_TYPE_S8_C4;
 			case SL_VIEW_LEFT_GRAY:
 			case SL_VIEW_RIGHT_GRAY:
 			case SL_VIEW_LEFT_UNRECTIFIED_GRAY:
 			case SL_VIEW_RIGHT_UNRECTIFIED_GRAY:
 				return SL_MAT_TYPE_U8_C1;
-			case SL_VIEW_LEFT_SIGNED:
-			case SL_VIEW_RIGHT_SIGNED:
-				return SL_MAT_TYPE_S8_C4;
 			default:
-				return SL_MAT_TYPE_U8_C4;
+				return SL_MAT_TYPE_S8_C4;
 			}
 		}
 

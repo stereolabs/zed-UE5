@@ -100,6 +100,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zed|Runtime")
 	void SetDepthClampThreshold(const float DepthDistance);
 
+	UFUNCTION(BlueprintCallable, Category = "Zed|Runtime")
+	void SetDepthOcclusion(const bool EnableOcclusion);
+
 	/*
 	 * Set the runtime parameters. Take effect next grab
 	 * @param NewValue The news runtime parameters
@@ -250,6 +253,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
 	UTextureRenderTarget2D* RightEyeRenderTarget;
 
+	/** Type of view displayed on the scene.
+	* Default is ESlView::LEFT.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	ESlView ImageView;
+
 	// ------------------------------------------------------------------
 
 	/** Runtime parameters */
@@ -324,9 +333,9 @@ public:
 	FSlRecordingParameters RecordingParameters;
 
 	// ------------------------------------------------------------------
-
+	
 	/** True if HMD transform is used as tracking origin */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	uint8 bUseHMDTrackingAsOrigin:1;
 
 	/** When enabled, the real world can occlude (cover up) virtual objects that are behind it. Otherwise, virtual objects will appear in front. */
