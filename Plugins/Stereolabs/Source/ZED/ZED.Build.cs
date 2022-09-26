@@ -33,7 +33,7 @@ public class ZED : ModuleRules
 			{
                  "Stereolabs",
                  "MixedReality",
-
+                 "Niagara",
                  "UMG",
                  "Slate",
                  "SlateCore"
