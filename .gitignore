@@ -4,6 +4,9 @@
 RuntimeMeshComponent/Binaries/*
 RuntimeMeshComponent/Intermediate/*
 
+# Local tests
+Content/LocalTest/*
+Content/LocalTests/*
 
 #local folders
 *.vs

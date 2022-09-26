@@ -246,6 +246,14 @@ private:
 	void FadeOutToGame();
 
 public:
+	/** Human body keypoints bones correspondance for POSE_34 mode */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs")
+	TArray<FSlBone34> BodyBonesPose34;
+
+	/** Human body keypoints bones correspondance for POSE_34 mode */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs")
+	TArray<FSlBone18> BodyBonesPose18;
+
 	/** The pawn class to spawn */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
 	TSubclassOf<AZEDPawn> PawnClass;

@@ -649,9 +649,131 @@ enum class ESlObjectSubClass : uint8
 	OSC_CARROT = 21			UMETA(DisplayName = "Carrot"),
 	OSC_SPORTBALL = 23		UMETA(DisplayName = "Sportball"),
 };
+
+/*
+* List of human body parts and order of SlObjectData::keypoint for BODY_FORMAT::POSE_18.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyParts : uint8 {
+	NOSE = 0,
+	NECK = 1,
+	RIGHT_SHOULDER = 2,
+	RIGHT_ELBOW = 3,
+	RIGHT_WRIST = 4,
+	LEFT_SHOULDER = 5,
+	LEFT_ELBOW = 6,
+	LEFT_WRIST = 7,
+	RIGHT_HIP = 8,
+	RIGHT_KNEE = 9,
+	RIGHT_ANKLE = 10,
+	LEFT_HIP = 11,
+	LEFT_KNEE = 12,
+	LEFT_ANKLE = 13,
+	RIGHT_EYE = 14,
+	LEFT_EYE = 15,
+	RIGHT_EAR = 16,
+	LEFT_EAR = 17
+};
+
+
+
+/*
+* List of human body parts and order of SlObjectData::keypoint for BODY_FORMAT::POSE_34.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyPartsPose34 : uint8 {
+	PELVIS = 0,
+	NAVAL_SPINE = 1,
+	CHEST_SPINE = 2,
+	NECK = 3,
+	LEFT_CLAVICLE = 4,
+	LEFT_SHOULDER = 5,
+	LEFT_ELBOW = 6,
+	LEFT_WRIST = 7,
+	LEFT_HAND = 8,
+	LEFT_HANDTIP = 9,
+	LEFT_THUMB = 10,
+	RIGHT_CLAVICLE = 11,
+	RIGHT_SHOULDER = 12,
+	RIGHT_ELBOW = 13,
+	RIGHT_WRIST = 14,
+	RIGHT_HAND = 15,
+	RIGHT_HANDTIP = 16,
+	RIGHT_THUMB = 17,
+	LEFT_HIP = 18,
+	LEFT_KNEE = 19,
+	LEFT_ANKLE = 20,
+	LEFT_FOOT = 21,
+	RIGHT_HIP = 22,
+	RIGHT_KNEE = 23,
+	RIGHT_ANKLE = 24,
+	RIGHT_FOOT = 25,
+	HEAD = 26,
+	NOSE = 27,
+	LEFT_EYE = 28,
+	LEFT_EAR = 29,
+	RIGHT_EYE = 30,
+	RIGHT_EAR = 31,
+	LEFT_HEEL = 32,
+	RIGHT_HEEL = 33
+};
 /************************************************************************/
 /*							    Structs				    				*/
 /************************************************************************/
+
+/*
+ * Bone descriptor, pair of ESlBodyParts
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBone18 
+{
+	GENERATED_BODY()
+
+	FSlBone18()
+	{}
+
+	FSlBone18(ESlBodyParts first, ESlBodyParts second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+	ESlBodyParts FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+	ESlBodyParts SecondEnd;
+};
+
+/*
+ * Bone descriptor, pair of ESlBodyPartsPose34
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBone34
+{
+	GENERATED_BODY()
+
+	FSlBone34() 
+	{}
+
+	FSlBone34(ESlBodyPartsPose34 first, ESlBodyPartsPose34 second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+	ESlBodyPartsPose34 FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+	ESlBodyPartsPose34 SecondEnd;
+};
 
 /*
  * SDK device properties
@@ -2557,6 +2679,8 @@ struct STEREOLABS_API FSlObjectData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FQuat GlobalRootOrientation;
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//TArray<TPair<FVector, FVector>> BodyBones; TODO : Implement and fill with the positions of the end of the bones.
 };
 
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")

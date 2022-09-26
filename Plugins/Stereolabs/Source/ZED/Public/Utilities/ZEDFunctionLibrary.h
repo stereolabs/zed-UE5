@@ -470,4 +470,23 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "AddLatencyOffset"), Category = "Stereolabs|Latency")
 	static void LatencyCorrectorAddOffset(const int offset);
 
+	/*
+	 * Get the index corresponding to the enum value
+	 * @param ESlBodyPartsPose34Val The body part value
+	 */
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetIndexFromValue", Keywords = "get index enum from value"), Category = "Stereolabs|Zed")
+	static uint8 GetIndexFromValuePose34(ESlBodyPartsPose34 ESlBodyPartsPose34Val)
+	{
+		return (uint8)ESlBodyPartsPose34Val;
+	}
+
+	/*
+	 * Get the index corresponding to the enum value
+	 * @param ESlBodyPartsVal The body part value
+	 */
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetIndexFromValue", Keywords = "get index enum from value"), Category = "Stereolabs|Zed")
+	static uint8 GetIndexFromValue(ESlBodyParts ESlBodyPartsVal)
+	{
+		return (uint8)ESlBodyPartsVal;
+	}
 };
