@@ -2377,6 +2377,18 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int StreamPort;
 
+	/** Resolution of the camera (720p if used with HMD) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlResolution Resolution;
+
+	/** Capture fps of the camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int FPS;
+
+	/** Disparity */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlDepthMode DepthMode;
+
 	/** Verbose file path */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString VerboseFilePath;
@@ -2389,21 +2401,9 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMaximumDistance;
 
-	/** Capture fps of the camera */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int FPS;
-
 	/** Device selected */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float GPUID;
-
-	/** Resolution of the camera (720p if used with HMD) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlResolution Resolution;
-
-	/** Disparity */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlDepthMode DepthMode;
 
 	/** Unit */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

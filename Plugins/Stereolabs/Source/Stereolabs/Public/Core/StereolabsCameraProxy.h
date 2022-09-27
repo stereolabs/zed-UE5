@@ -208,6 +208,14 @@ public:
 	void SetRuntimeParameters(const FSlRuntimeParameters& NewRuntimeParameters);
 
 	/*
+	 * Set the object detection runtime parameters
+	 * @param NewObjectDetectionRuntimeParameters The object detection runtime parameters
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera object detection runtime parameters"), Category = "Zed|Camera")
+	void SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters);
+
+
+	/*
 	 * Get the camera informations
 	 * @param CustomResolution		   Custom resolution to retrieve the information. Set to FIntPoint(0, 0) to retrieve current camera informations.
 	 * @return CurrentCameraInformation The current camera information
@@ -464,7 +472,7 @@ public:
 	 * @param ObjectDetectionRuntimeParameters Object detection runtime settings, can be changed at each detection. 
 	 * @return True if returned sl::SUCCESS
 	 */
-	bool RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters);
+	bool RetrieveObjects();
 
 	/*
 	 * Call this function to get the current error of the open camera async task.
@@ -690,11 +698,18 @@ public:
 	void BP_RemoveFromGrabDelegate(FGrabDelegateHandle GrabDelegateHandle);
 
 	/*
-	 * Enable/disable the grad thread
+	 * Enable/disable the grab thread
 	 * @param bEnable True to enable
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
 	void EnableGrabThread(bool bEnable);
+
+	/*
+	 * Enable/disable the AI thread
+	 * @param bEnable True to enable
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
+	void EnableAIThread(bool bEnable);
 
 	// ------------------------------------------------------------------
 
@@ -857,12 +872,18 @@ private:
 	/** Runtime parameters */
 	SL_RuntimeParameters RuntimeParameters;
 
+	/** Runtime parameters */
+	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+
 private:
 	/** A worker to thread the Grab calls */
 	class FSlGrabRunnable* GrabWorker;
 
 	/** A worker to thread CPU depth get calls */
 	class FSlMeasureRunnable* MeasuresWorker;
+
+	/** A worker to thread AI detection */
+	class FSlAIDetectionRunnable* AIWorker;
 
 private:
 	/** True if camera opened by OpenCamera */

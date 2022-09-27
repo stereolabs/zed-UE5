@@ -5,6 +5,7 @@
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Private/Threading/StereolabsGrabRunnable.h"
 #include "Stereolabs/Private/Threading/StereolabsMeasureRunnable.h"
+#include "Stereolabs/Private/Threading/StereolabsAIDetectionRunnable.h"
 #include "Stereolabs/Public/Core/StereolabsTexture.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
@@ -157,6 +158,14 @@ void USlCameraProxy::BeginDestroy()
 		MeasuresWorker->EnsureCompletion();
 		delete MeasuresWorker;
 		MeasuresWorker = nullptr;
+	}
+
+	// Disable ai thread
+	if (AIWorker)
+	{
+		AIWorker->EnsureCompletion();
+		delete AIWorker;
+		AIWorker = nullptr;
 	}
 
 	CloseCamera();  
@@ -334,6 +343,12 @@ void USlCameraProxy::CloseCamera()
 		if (GrabWorker)
 		{
 			EnableGrabThread(false);
+		}
+
+		// Disable AI thread
+		if (AIWorker)
+		{
+			EnableAIThread(false);
 		}
 
 		// Disable measures thread
@@ -593,6 +608,15 @@ void USlCameraProxy::SetRuntimeParameters(const FSlRuntimeParameters& NewRuntime
 		RuntimeParameters = sl::unreal::ToSlType(NewRuntimeParameters);
 	SL_SCOPE_UNLOCK
 }
+
+void USlCameraProxy::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters)
+{
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		ObjectDetectionRuntimeParameters = sl::unreal::ToSlType(NewObjectDetectionRuntimeParameters);
+	SL_SCOPE_UNLOCK
+}
+
+
 
 FSlCameraInformation USlCameraProxy::GetCameraInformation(const FIntPoint& CustomResolution/* = FIntPoint::ZeroValue*/)
 {
@@ -1019,6 +1043,35 @@ void USlCameraProxy::EnableGrabThread(bool bEnable)
 	}
 }
 
+void USlCameraProxy::EnableAIThread(bool bEnable)
+{
+	if (bEnable)
+	{
+		if (AIWorker)
+		{
+			return;
+		}
+
+		AIWorker = new FSlAIDetectionRunnable();
+		AIWorker->Start(0.001f);
+
+		//OnAIhreadEnabled.Broadcast(true);
+	}
+	else
+	{
+		if (!AIWorker)
+		{
+			return;
+		}
+
+		AIWorker->EnsureCompletion();
+		delete AIWorker;
+		AIWorker = nullptr;
+
+		//OnAIWorkerThreadEnabled.Broadcast(false);
+	}
+}
+
 void USlCameraProxy::SetOpenCameraErrorCode(ESlErrorCode ErrorCode)
 {
 	SL_SCOPE_LOCK(SubLock, AsyncStatusSection)
@@ -1226,23 +1279,26 @@ void USlCameraProxy::DisableObjectDetection()
 		sl_disable_objects_detection(CameraID);
 	SL_SCOPE_UNLOCK
 
-		bObjectDetectionEnabled = false;
+	bObjectDetectionEnabled = false;
 }
 
-bool USlCameraProxy::RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters)
+bool USlCameraProxy::RetrieveObjects()
 {
 	SL_Objects sl_objects;
-	SL_ObjectDetectionRuntimeParameters ODParams = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ODParams, &sl_objects);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ObjectDetectionRuntimeParameters, &sl_objects);
 	objects = sl::unreal::ToUnrealType(sl_objects);
 
-	if (sl_objects.is_new) OnObjectDetectionRetrieved.Broadcast(objects);
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
 		return false;
 	}
+
+	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
+	{
+		OnObjectDetectionRetrieved.Broadcast(objects);
+	});
 
 	return true;
 #else

@@ -111,6 +111,13 @@ public:
 	void SetRuntimeParameters(const FSlRuntimeParameters& NewValue);
 
 	/*
+	 * Set the object detection runtime parameters. Take effect next retrieve
+	 * @param NewValue The news object detection runtime parameters
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|OD")
+	void SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewValue);
+
+	/*
 	 * Set the camera settings. Take effect next grab 
 	 * @param NewValue The news camera settings
 	 */
