@@ -183,6 +183,7 @@ void AZEDCamera::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (GSlCameraProxy)
 	{
+		DisableObjectDetection();
 		GSlCameraProxy->OnCameraClosed.RemoveDynamic(this, &AZEDCamera::CameraClosed);
 		GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
 	}
@@ -324,6 +325,8 @@ void AZEDCamera::Tick(float DeltaSeconds)
 	if (RenderingParameters.ThreadingMode == ESlThreadingMode::TM_SingleThreaded)
 	{
 		GSlCameraProxy->Grab();
+
+		if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->RetrieveObjects();
 	}
 
 	bool bUpdateTracking = false;
@@ -573,11 +576,6 @@ void AZEDCamera::Tick(float DeltaSeconds)
 			}
 		}
 	}
-
-	if (GSlCameraProxy->IsObjectDetectionEnabled())
-	{
-		GSlCameraProxy->RetrieveObjects(ObjectDetectionRuntimeParameters);
-	}
 }
 
 void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
@@ -705,6 +703,12 @@ void AZEDCamera::SetRuntimeParameters(const FSlRuntimeParameters& NewValue)
 	GSlCameraProxy->SetRuntimeParameters(RuntimeParameters);
 }
 
+void AZEDCamera::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewValue)
+{
+	ObjectDetectionRuntimeParameters = NewValue;
+	GSlCameraProxy->SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
+}
+
 void AZEDCamera::SetCameraSettings(const FSlVideoSettings& NewValue)
 {
 	if (NewValue.bDefault)
@@ -736,11 +740,15 @@ void AZEDCamera::EnableTracking()
 void AZEDCamera::EnableObjectDetection() 
 {
 	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
+
+	GSlCameraProxy->EnableAIThread(RenderingParameters.ThreadingMode == ESlThreadingMode::TM_MultiThreaded);
 }
 
 void AZEDCamera::DisableObjectDetection()
 {
-	GSlCameraProxy->DisableObjectDetection();
+	if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->DisableObjectDetection();
+
+	GSlCameraProxy->EnableAIThread(false);
 }
 
 void AZEDCamera::DisableTracking()
@@ -841,6 +849,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 		RenderingMode = bHMDEnabled ? ESlRenderingMode::RM_Stereo : ESlRenderingMode::RM_Mono;
 	}
 	SetRuntimeParameters(RuntimeParameters);
+	SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
 	SetThreadingMode(RenderingParameters.ThreadingMode);
 
 	ZedLeftEyeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(ZedSourceMaterial, nullptr);
@@ -915,6 +924,7 @@ void AZEDCamera::CameraClosed()
 	}
 
 	GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
+	DisableObjectDetection();
 	UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::SingleEyeCroppedToFill);
 	
 	if (Batch) Batch->Clear();

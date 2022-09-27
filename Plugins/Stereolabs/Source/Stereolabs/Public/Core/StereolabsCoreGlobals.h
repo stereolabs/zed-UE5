@@ -744,14 +744,15 @@ namespace sl
 					return sl::VIEW::LEFT_UNRECTIFIED;
 				case ESlView::V_RightUnrectified:
 					return sl::VIEW::RIGHT_UNRECTIFIED;
-				case ESlView::V_LeftUnrectifiedGray:
-					return sl::VIEW::LEFT_UNRECTIFIED_GRAY;
-				case ESlView::V_RightUnrectifiedGray:
-					return sl::VIEW::RIGHT_UNRECTIFIED_GRAY;
-				case ESlView::V_LeftGray:
-					return sl::VIEW::LEFT_GRAY;
-				case ESlView::V_RightGray:
-					return sl::VIEW::RIGHT_GRAY;
+				// Not supported for the moment.
+				//case ESlView::V_LeftUnrectifiedGray:
+				//	return sl::VIEW::LEFT_UNRECTIFIED_GRAY;
+				//case ESlView::V_RightUnrectifiedGray:
+				//	return sl::VIEW::RIGHT_UNRECTIFIED_GRAY;
+				//case ESlView::V_LeftGray:
+				//	return sl::VIEW::LEFT_GRAY;
+				//case ESlView::V_RightGray:
+				//	return sl::VIEW::RIGHT_GRAY;
 				case ESlView::V_SideBySide:
 					return sl::VIEW::SIDE_BY_SIDE;
 				case ESlView::V_Depth:

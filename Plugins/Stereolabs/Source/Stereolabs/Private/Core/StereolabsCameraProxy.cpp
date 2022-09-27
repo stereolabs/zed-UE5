@@ -5,6 +5,7 @@
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Private/Threading/StereolabsGrabRunnable.h"
 #include "Stereolabs/Private/Threading/StereolabsMeasureRunnable.h"
+#include "Stereolabs/Private/Threading/StereolabsAIDetectionRunnable.h"
 #include "Stereolabs/Public/Core/StereolabsTexture.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 
@@ -114,6 +115,31 @@ protected:
 	FSlPositionalTrackingParameters TrackingParameters;
 };
 
+class FAIOptimizationAsyncTask : public FNonAbandonableTask
+{
+	friend class FAsyncTask<FAIOptimizationAsyncTask>;
+
+public:
+	FAIOptimizationAsyncTask(const ESlAIModels& AIModel)
+		:
+		AIModel(AIModel)
+	{}
+
+protected:
+	void DoWork()
+	{
+		GSlCameraProxy->Internal_OptimizeAIModel(AIModel);
+	}
+
+	FORCEINLINE TStatId GetStatId() const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(FAIOptimizationAsyncTask, STATGROUP_ThreadPoolAsyncTasks);
+	}
+
+protected:
+	ESlAIModels AIModel;
+};
+
 USlCameraProxy::USlCameraProxy()
 	:
 	HMDToCameraOffset(0.0f),
@@ -130,6 +156,7 @@ USlCameraProxy::USlCameraProxy()
 	RetrieveMatSize(GetSlTextureSizeFromPreset(0)),
 	OpenCameraAsyncTask(nullptr),
 	EnableTrackingAsyncTask(nullptr),
+	AIOptimizationAsyncTask(nullptr),
 	OpenCameraErrorCode(ESlErrorCode::EC_None),
 	bAbandonOpenTask(false),
 	GrabWorker(nullptr),
@@ -157,6 +184,14 @@ void USlCameraProxy::BeginDestroy()
 		MeasuresWorker->EnsureCompletion();
 		delete MeasuresWorker;
 		MeasuresWorker = nullptr;
+	}
+
+	// Disable ai thread
+	if (AIWorker)
+	{
+		AIWorker->EnsureCompletion();
+		delete AIWorker;
+		AIWorker = nullptr;
 	}
 
 	CloseCamera();  
@@ -334,6 +369,12 @@ void USlCameraProxy::CloseCamera()
 		if (GrabWorker)
 		{
 			EnableGrabThread(false);
+		}
+
+		// Disable AI thread
+		if (AIWorker)
+		{
+			EnableAIThread(false);
 		}
 
 		// Disable measures thread
@@ -593,6 +634,15 @@ void USlCameraProxy::SetRuntimeParameters(const FSlRuntimeParameters& NewRuntime
 		RuntimeParameters = sl::unreal::ToSlType(NewRuntimeParameters);
 	SL_SCOPE_UNLOCK
 }
+
+void USlCameraProxy::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters)
+{
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		ObjectDetectionRuntimeParameters = sl::unreal::ToSlType(NewObjectDetectionRuntimeParameters);
+	SL_SCOPE_UNLOCK
+}
+
+
 
 FSlCameraInformation USlCameraProxy::GetCameraInformation(const FIntPoint& CustomResolution/* = FIntPoint::ZeroValue*/)
 {
@@ -1019,6 +1069,74 @@ void USlCameraProxy::EnableGrabThread(bool bEnable)
 	}
 }
 
+void USlCameraProxy::EnableAIThread(bool bEnable)
+{
+	if (bEnable)
+	{
+		if (AIWorker)
+		{
+			return;
+		}
+
+		AIWorker = new FSlAIDetectionRunnable();
+		AIWorker->Start(0.001f);
+
+		//OnAIhreadEnabled.Broadcast(true);
+	}
+	else
+	{
+		if (!AIWorker)
+		{
+			return;
+		}
+
+		AIWorker->EnsureCompletion();
+		delete AIWorker;
+		AIWorker = nullptr;
+
+		//OnAIWorkerThreadEnabled.Broadcast(false);
+	}
+}
+
+bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel) 
+{
+	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0);
+
+	if (!ai_model_status->optimized)
+	{
+		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized", AiModel);
+		return false;
+	}
+	return true;
+}
+
+void USlCameraProxy::OptimizeAIModel(const ESlAIModels& AIModel) {
+
+	AIOptimizationAsyncTask = new FAsyncTask<FAIOptimizationAsyncTask>(AIModel);
+	AIOptimizationAsyncTask->StartBackgroundTask();
+}
+
+void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel) {
+
+	int err = sl_optimize_AI_model((SL_AI_MODELS)AIModel, 0);
+
+	AsyncTask(ENamedThreads::GameThread, [this]()
+		{
+			if (!GSlCameraProxy)
+			{
+				return;
+			}
+
+			AIOptimizationAsyncTask->EnsureCompletion(false);
+
+			delete AIOptimizationAsyncTask;
+			AIOptimizationAsyncTask = nullptr;
+
+			GSlCameraProxy->OnAIModelOptimized.Broadcast();
+
+		});
+}
+
 void USlCameraProxy::SetOpenCameraErrorCode(ESlErrorCode ErrorCode)
 {
 	SL_SCOPE_LOCK(SubLock, AsyncStatusSection)
@@ -1192,7 +1310,7 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 	if (!ai_model_status->optimized)
 	{
-		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
 		return false;
 	}
 
@@ -1226,23 +1344,26 @@ void USlCameraProxy::DisableObjectDetection()
 		sl_disable_objects_detection(CameraID);
 	SL_SCOPE_UNLOCK
 
-		bObjectDetectionEnabled = false;
+	bObjectDetectionEnabled = false;
 }
 
-bool USlCameraProxy::RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters)
+bool USlCameraProxy::RetrieveObjects()
 {
 	SL_Objects sl_objects;
-	SL_ObjectDetectionRuntimeParameters ODParams = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ODParams, &sl_objects);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ObjectDetectionRuntimeParameters, &sl_objects);
 	objects = sl::unreal::ToUnrealType(sl_objects);
 
-	if (sl_objects.is_new) OnObjectDetectionRetrieved.Broadcast(objects);
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
 		return false;
 	}
+
+	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
+	{
+		OnObjectDetectionRetrieved.Broadcast(objects);
+	});
 
 	return true;
 #else

@@ -266,12 +266,14 @@ enum class ESlView : uint8
 {
 	V_Left					 UMETA(DisplayName = "Left"),
 	V_Right					 UMETA(DisplayName = "Right"),
-	V_LeftGray				 UMETA(DisplayName = "Left gray", Tooltip = "Not supported for the moment"),
-	V_RightGray				 UMETA(DisplayName = "Right gray", Tooltip = "Not supported for the moment"),
+	//Not supported for the moment"
+	//V_LeftGray				 UMETA(DisplayName = "Left gray"),
+	//V_RightGray				 UMETA(DisplayName = "Right gray"),
 	V_LeftUnrectified		 UMETA(DisplayName = "Left unrectified"),
 	V_RightUnrectified		 UMETA(DisplayName = "Right unrectified"),
-	V_LeftUnrectifiedGray	 UMETA(DisplayName = "Left unrectified gray", Tooltip = "Not supported for the moment"),
-	V_RightUnrectifiedGray	 UMETA(DisplayName = "Right unrectified gray", Tooltip="Not supported for the moment"),
+	//Not supported for the moment"
+	//V_LeftUnrectifiedGray	 UMETA(DisplayName = "Left unrectified gray"),
+	//V_RightUnrectifiedGray	 UMETA(DisplayName = "Right unrectified gray"),
 	V_SideBySide			 UMETA(DisplayName = "Side by side"),
 	V_Depth					 UMETA(DisplayName = "Depth"),
 	V_Confidence			 UMETA(DisplayName = "Confidence"),
@@ -576,7 +578,23 @@ enum class ESlDetectionModel : uint8
 	DM_MultiClassBoxMedium		UMETA(DisplayName = "Multi class box medium"),
 	DM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
 	DM_PersonHeadBox			UMETA(DisplayName = "Person head box"),
+	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head Accurate box"),
 	DM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects")
+};
+
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlAIModels : uint8
+{
+	AIM_MultiClassDetection			    UMETA(DisplayName = "Multi class Detection"),
+	AIM_MultiClassMediumDetection		UMETA(DisplayName = "Multi class medium Detection"),
+	AIM_MultiClassAccurateDetection		UMETA(DisplayName = "Multi class accurate Detection"),
+	AIM_HumanBodyFastDetection			UMETA(DisplayName = "Human body fast Detection"),
+	AIM_HumanBodyMediumDetection		UMETA(DisplayName = "Human body medium Detection"),
+	AIM_HumanBodyAccurateDetection		UMETA(DisplayName = "Human body accurate Detection"),
+	AIM_PersonHeadDetection				UMETA(DisplayName = "Person head Detection"),
+	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head Accurate Detection"),
+	AIM_REIDAssociation					UMETA(DisplayName = "REID Associaiton"),
+	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 };
 
 /*
@@ -967,11 +985,12 @@ struct STEREOLABS_API FSlMat
 	{
 	}
 
-	FSlMat& operator=(int* NewMat)
+	FSlMat& operator=(void* NewMat)
 	{
 		Mat = NewMat;
 		return *this;
 	}
+
 
 	/** The underlying sl::Mat */
 	void* Mat;
@@ -2026,13 +2045,13 @@ struct STEREOLABS_API FSlInitParameters
 
 	FSlInitParameters()
 		:
-		Resolution(ESlResolution::R_HD720),
-		FPS(60),
+		Resolution(ESlResolution::R_HD1080),
+		FPS(30),
 		VerticalFlipImage(ESlFlipMode::FP_AUTO),
 		bDisableSelfCalibration(false),
 		bEnableRightSideMeasure(false),
 		bRealTime(false),
-		DepthMode(ESlDepthMode::DM_Performance),
+		DepthMode(ESlDepthMode::DM_Ultra),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
 		Unit(ESlUnit::DU_Centimeter),
@@ -2374,6 +2393,18 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int StreamPort;
 
+	/** Resolution of the camera (720p if used with HMD) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlResolution Resolution;
+
+	/** Capture fps of the camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int FPS;
+
+	/** Disparity */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlDepthMode DepthMode;
+
 	/** Verbose file path */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString VerboseFilePath;
@@ -2386,21 +2417,9 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMaximumDistance;
 
-	/** Capture fps of the camera */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int FPS;
-
 	/** Device selected */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float GPUID;
-
-	/** Resolution of the camera (720p if used with HMD) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlResolution Resolution;
-
-	/** Disparity */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlDepthMode DepthMode;
 
 	/** Unit */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

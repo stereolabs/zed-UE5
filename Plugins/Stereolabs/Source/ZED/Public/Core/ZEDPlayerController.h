@@ -138,6 +138,13 @@ public:
 	virtual void UpdateHUDEnablingZedTracking_Implementation();
 
 	/*
+	 * Called if a AI model has to be optimized
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Zed")
+	void UpdateHUDOptimizingAIModel();
+	virtual void UpdateHUDOptimizingAIModel_Implementation();
+
+	/*
 	 * Called after tracking enabled
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Zed")
@@ -202,6 +209,9 @@ private:
 	UFUNCTION()
 	void OnRep_ZedPawn();
 
+	UFUNCTION()
+	void ZedReady();
+
 	/*
 	 * Open the camera
 	 */
@@ -246,14 +256,6 @@ private:
 	void FadeOutToGame();
 
 public:
-	/** Human body keypoints bones correspondance for POSE_34 mode */
-	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs")
-	TArray<FSlBone34> BodyBonesPose34;
-
-	/** Human body keypoints bones correspondance for POSE_34 mode */
-	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs")
-	TArray<FSlBone18> BodyBonesPose18;
-
 	/** The pawn class to spawn */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
 	TSubclassOf<AZEDPawn> PawnClass;

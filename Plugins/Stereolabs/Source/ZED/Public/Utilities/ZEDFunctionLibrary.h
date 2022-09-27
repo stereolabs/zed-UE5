@@ -14,6 +14,66 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(ZEDFunctionLibrary, Log, All);
 
+static TArray<FSlBone34> BodyBonesPose34 = TArray<FSlBone34>{
+	FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::NAVAL_SPINE),
+	FSlBone34(ESlBodyPartsPose34::NAVAL_SPINE, ESlBodyPartsPose34::CHEST_SPINE),
+	FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::LEFT_CLAVICLE),
+	FSlBone34(ESlBodyPartsPose34::LEFT_CLAVICLE, ESlBodyPartsPose34::LEFT_SHOULDER),
+	FSlBone34(ESlBodyPartsPose34::LEFT_SHOULDER, ESlBodyPartsPose34::LEFT_ELBOW),
+	FSlBone34(ESlBodyPartsPose34::LEFT_ELBOW, ESlBodyPartsPose34::LEFT_WRIST),
+	FSlBone34(ESlBodyPartsPose34::LEFT_WRIST, ESlBodyPartsPose34::LEFT_HAND),
+	FSlBone34(ESlBodyPartsPose34::LEFT_HAND, ESlBodyPartsPose34::LEFT_HANDTIP),
+	FSlBone34(ESlBodyPartsPose34::LEFT_WRIST, ESlBodyPartsPose34::LEFT_THUMB),
+	FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::RIGHT_CLAVICLE),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_CLAVICLE, ESlBodyPartsPose34::RIGHT_SHOULDER),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_SHOULDER, ESlBodyPartsPose34::RIGHT_ELBOW),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_ELBOW, ESlBodyPartsPose34::RIGHT_WRIST),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_WRIST, ESlBodyPartsPose34::RIGHT_HAND),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_HAND, ESlBodyPartsPose34::RIGHT_HANDTIP),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_WRIST, ESlBodyPartsPose34::RIGHT_THUMB),
+	FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::LEFT_HIP),
+	FSlBone34(ESlBodyPartsPose34::LEFT_HIP, ESlBodyPartsPose34::LEFT_KNEE),
+	FSlBone34(ESlBodyPartsPose34::LEFT_KNEE, ESlBodyPartsPose34::LEFT_ANKLE),
+	FSlBone34(ESlBodyPartsPose34::LEFT_ANKLE, ESlBodyPartsPose34::LEFT_FOOT),
+	FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::RIGHT_HIP),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_HIP, ESlBodyPartsPose34::RIGHT_KNEE),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_KNEE, ESlBodyPartsPose34::RIGHT_ANKLE),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_ANKLE, ESlBodyPartsPose34::RIGHT_FOOT),
+	FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::NECK),
+	FSlBone34(ESlBodyPartsPose34::NECK, ESlBodyPartsPose34::HEAD),
+	FSlBone34(ESlBodyPartsPose34::HEAD, ESlBodyPartsPose34::NOSE),
+	FSlBone34(ESlBodyPartsPose34::NOSE, ESlBodyPartsPose34::LEFT_EYE),
+	FSlBone34(ESlBodyPartsPose34::LEFT_EYE, ESlBodyPartsPose34::LEFT_EAR),
+	FSlBone34(ESlBodyPartsPose34::NOSE, ESlBodyPartsPose34::RIGHT_EYE),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_EYE, ESlBodyPartsPose34::RIGHT_EAR),
+	FSlBone34(ESlBodyPartsPose34::LEFT_ANKLE, ESlBodyPartsPose34::LEFT_HEEL),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_ANKLE, ESlBodyPartsPose34::RIGHT_HEEL),
+	FSlBone34(ESlBodyPartsPose34::LEFT_HEEL, ESlBodyPartsPose34::LEFT_FOOT),
+	FSlBone34(ESlBodyPartsPose34::RIGHT_HEEL, ESlBodyPartsPose34::RIGHT_FOOT)
+};
+
+static TArray<FSlBone18> BodyBonesPose18 = TArray<FSlBone18>{
+	FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::NECK),
+	FSlBone18(ESlBodyParts::NECK, ESlBodyParts::RIGHT_SHOULDER),
+	FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::RIGHT_ELBOW),
+	FSlBone18(ESlBodyParts::RIGHT_ELBOW, ESlBodyParts::RIGHT_WRIST),
+	FSlBone18(ESlBodyParts::NECK, ESlBodyParts::LEFT_SHOULDER),
+	FSlBone18(ESlBodyParts::LEFT_SHOULDER, ESlBodyParts::LEFT_ELBOW),
+	FSlBone18(ESlBodyParts::LEFT_ELBOW, ESlBodyParts::LEFT_WRIST),
+	FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::RIGHT_HIP),
+	FSlBone18(ESlBodyParts::RIGHT_HIP, ESlBodyParts::RIGHT_KNEE),
+	FSlBone18(ESlBodyParts::RIGHT_KNEE, ESlBodyParts::RIGHT_ANKLE),
+	FSlBone18(ESlBodyParts::LEFT_SHOULDER, ESlBodyParts::LEFT_HIP),
+	FSlBone18(ESlBodyParts::LEFT_HIP, ESlBodyParts::LEFT_KNEE),
+	FSlBone18(ESlBodyParts::LEFT_KNEE, ESlBodyParts::LEFT_ANKLE),
+	FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::LEFT_SHOULDER),
+	FSlBone18(ESlBodyParts::RIGHT_HIP, ESlBodyParts::LEFT_HIP),
+	FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::RIGHT_EYE),
+	FSlBone18(ESlBodyParts::RIGHT_EYE, ESlBodyParts::RIGHT_EAR),
+	FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::LEFT_EYE),
+	FSlBone18(ESlBodyParts::LEFT_EYE, ESlBodyParts::LEFT_EAR),
+};
+
 UCLASS()
 class ZED_API UZEDFunctionLibrary : public UBlueprintFunctionLibrary
 {
@@ -488,5 +548,21 @@ public:
 	static uint8 GetIndexFromValue(ESlBodyParts ESlBodyPartsVal)
 	{
 		return (uint8)ESlBodyPartsVal;
+	}
+
+	/*
+	 * Get the index corresponding to the enum value
+	* @param ESlBodyPartsVal The body part value
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesPose34", Keywords = "GetBodyBonesPose34"), Category = "Stereolabs|Zed")
+	static const TArray<FSlBone34> GetBodyBonesPose34()
+	{
+		return BodyBonesPose34;
+	}
+
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesPose18", Keywords = "GetBodyBonesPose18"), Category = "Stereolabs|Zed")
+	static const TArray<FSlBone18> GetBodyBonesPose18()
+	{
+		return BodyBonesPose18;
 	}
 };

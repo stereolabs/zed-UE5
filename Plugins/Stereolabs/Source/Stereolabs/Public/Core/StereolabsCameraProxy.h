@@ -57,6 +57,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveObjectDelegate
 
 class FOpenCameraAsyncTask;
 class FEnableTrackingAsyncTask;
+class FAIOptimizationAsyncTask;
 class FResetTrackingAsyncTask;
 
 /** Create the instance */
@@ -129,6 +130,7 @@ class STEREOLABS_API USlCameraProxy : public UObject
 	friend class USlFunctionLibrary;
 	friend class FOpenCameraAsyncTask;
 	friend class FEnableTrackingAsyncTask;
+	friend class FAIOptimizationAsyncTask;
 	friend class FResetTrackingAsyncTask;
 
 	GENERATED_BODY()
@@ -206,6 +208,14 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera runtime parameters"), Category = "Zed|Camera")
 	void SetRuntimeParameters(const FSlRuntimeParameters& NewRuntimeParameters);
+
+	/*
+	 * Set the object detection runtime parameters
+	 * @param NewObjectDetectionRuntimeParameters The object detection runtime parameters
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera object detection runtime parameters"), Category = "Zed|Camera")
+	void SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters);
+
 
 	/*
 	 * Get the camera informations
@@ -436,6 +446,9 @@ public:
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed depth"), Category = "Zed|Rendering")
 	void GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions, TArray<float>& Depths, TArray<FVector>& Normals);
 	
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "optimize AI Model"), Category = "Zed|AI")
+	void OptimizeAIModel(const ESlAIModels& AIModel);
+
 	/*
 	 * Enable Zed Object Detection module
 	 * @param ObjectDetectionParameters The object detection parameters to use
@@ -464,7 +477,7 @@ public:
 	 * @param ObjectDetectionRuntimeParameters Object detection runtime settings, can be changed at each detection. 
 	 * @return True if returned sl::SUCCESS
 	 */
-	bool RetrieveObjects(FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters);
+	bool RetrieveObjects();
 
 	/*
 	 * Call this function to get the current error of the open camera async task.
@@ -634,6 +647,8 @@ private:
 	 */
 	void Internal_EnableTracking(const FSlPositionalTrackingParameters& NewTrackingParameters);
 
+	void Internal_OptimizeAIModel(const ESlAIModels& AIModel);
+
 	// ------------------------------------------------------------------
 
 public:
@@ -646,6 +661,11 @@ public:
 	 * Perform a grab with the current runtime parameters
 	 */
 	void Grab();
+
+	/*
+	* Check if the AI model used is optimized or not
+	*/
+	bool CheckAIModelOptimization(const ESlAIModels AiModel);
 
 	/*
 	* Easy access to sl::Pose
@@ -690,11 +710,18 @@ public:
 	void BP_RemoveFromGrabDelegate(FGrabDelegateHandle GrabDelegateHandle);
 
 	/*
-	 * Enable/disable the grad thread
+	 * Enable/disable the grab thread
 	 * @param bEnable True to enable
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
 	void EnableGrabThread(bool bEnable);
+
+	/*
+	 * Enable/disable the AI thread
+	 * @param bEnable True to enable
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
+	void EnableAIThread(bool bEnable);
 
 	// ------------------------------------------------------------------
 
@@ -703,6 +730,7 @@ private:
 	 * Set async status
 	 */
 	void SetOpenCameraErrorCode(ESlErrorCode ErrorCode);
+
 
 	// ------------------------------------------------------------------
 
@@ -771,6 +799,10 @@ public:
 	FSlObjects objects;
 
 public:
+	/** Broadcast after the AI model is optimized*/
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyDelegate OnAIModelOptimized;
+
 	/** Camera opened event dispatcher. Broadcast after the camera is opened. */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FSlCameraProxyDelegate OnCameraOpened;
@@ -834,6 +866,9 @@ private:
 	/** Enable tracking task */
 	FAsyncTask<class FEnableTrackingAsyncTask>* EnableTrackingAsyncTask;
 
+	/** AI Model optimization async task */
+	FAsyncTask<class FAIOptimizationAsyncTask>* AIOptimizationAsyncTask;
+
 private:
 	/** The status of the current async task */
 	ESlErrorCode OpenCameraErrorCode;
@@ -857,12 +892,18 @@ private:
 	/** Runtime parameters */
 	SL_RuntimeParameters RuntimeParameters;
 
+	/** Runtime parameters */
+	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+
 private:
 	/** A worker to thread the Grab calls */
 	class FSlGrabRunnable* GrabWorker;
 
 	/** A worker to thread CPU depth get calls */
 	class FSlMeasureRunnable* MeasuresWorker;
+
+	/** A worker to thread AI detection */
+	class FSlAIDetectionRunnable* AIWorker;
 
 private:
 	/** True if camera opened by OpenCamera */

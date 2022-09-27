@@ -75,65 +75,6 @@ AZEDPlayerController::AZEDPlayerController()
 	bShowLowAppFPS(false),
 	bZedCameraDisconnected(false)
 {
-	// Fill arrays of body bones
-	//-------------------- Pose 34 - 35 bones
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::NAVAL_SPINE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::NAVAL_SPINE, ESlBodyPartsPose34::CHEST_SPINE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::LEFT_CLAVICLE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_CLAVICLE, ESlBodyPartsPose34::LEFT_SHOULDER));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_SHOULDER, ESlBodyPartsPose34::LEFT_ELBOW));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_ELBOW, ESlBodyPartsPose34::LEFT_WRIST));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_WRIST, ESlBodyPartsPose34::LEFT_HAND));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_HAND, ESlBodyPartsPose34::LEFT_HANDTIP));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_WRIST, ESlBodyPartsPose34::LEFT_THUMB));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::RIGHT_CLAVICLE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_CLAVICLE, ESlBodyPartsPose34::RIGHT_SHOULDER));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_SHOULDER, ESlBodyPartsPose34::RIGHT_ELBOW));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_ELBOW, ESlBodyPartsPose34::RIGHT_WRIST));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_WRIST, ESlBodyPartsPose34::RIGHT_HAND));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_HAND, ESlBodyPartsPose34::RIGHT_HANDTIP));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_WRIST, ESlBodyPartsPose34::RIGHT_THUMB));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::LEFT_HIP));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_HIP, ESlBodyPartsPose34::LEFT_KNEE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_KNEE, ESlBodyPartsPose34::LEFT_ANKLE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_ANKLE, ESlBodyPartsPose34::LEFT_FOOT));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::PELVIS, ESlBodyPartsPose34::RIGHT_HIP));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_HIP, ESlBodyPartsPose34::RIGHT_KNEE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_KNEE, ESlBodyPartsPose34::RIGHT_ANKLE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_ANKLE, ESlBodyPartsPose34::RIGHT_FOOT));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::CHEST_SPINE, ESlBodyPartsPose34::NECK));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::NECK, ESlBodyPartsPose34::HEAD));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::HEAD, ESlBodyPartsPose34::NOSE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::NOSE, ESlBodyPartsPose34::LEFT_EYE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_EYE, ESlBodyPartsPose34::LEFT_EAR));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::NOSE, ESlBodyPartsPose34::RIGHT_EYE));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_EYE, ESlBodyPartsPose34::RIGHT_EAR));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_ANKLE, ESlBodyPartsPose34::LEFT_HEEL));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_ANKLE, ESlBodyPartsPose34::RIGHT_HEEL));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::LEFT_HEEL, ESlBodyPartsPose34::LEFT_FOOT));
-	BodyBonesPose34.Add(FSlBone34(ESlBodyPartsPose34::RIGHT_HEEL, ESlBodyPartsPose34::RIGHT_FOOT));
-
-	//-------------------- Pose 18
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::NECK));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::NECK, ESlBodyParts::RIGHT_SHOULDER));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::RIGHT_ELBOW));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_ELBOW, ESlBodyParts::RIGHT_WRIST));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::NECK, ESlBodyParts::LEFT_SHOULDER));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_SHOULDER, ESlBodyParts::LEFT_ELBOW));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_ELBOW, ESlBodyParts::LEFT_WRIST));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::RIGHT_HIP));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_HIP, ESlBodyParts::RIGHT_KNEE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_KNEE, ESlBodyParts::RIGHT_ANKLE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_SHOULDER, ESlBodyParts::LEFT_HIP));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_HIP, ESlBodyParts::LEFT_KNEE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_KNEE, ESlBodyParts::LEFT_ANKLE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_SHOULDER, ESlBodyParts::LEFT_SHOULDER));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_HIP, ESlBodyParts::LEFT_HIP));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::RIGHT_EYE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::RIGHT_EYE, ESlBodyParts::RIGHT_EAR));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::NOSE, ESlBodyParts::LEFT_EYE));
-	BodyBonesPose18.Add(FSlBone18(ESlBodyParts::LEFT_EYE, ESlBodyParts::LEFT_EAR));
-
 
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bTickEvenWhenPaused = false;
@@ -504,6 +445,7 @@ void AZEDPlayerController::Init()
 	PostProcessZedMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(PostProcessZedSourceMaterial, nullptr);
 
 	// Bind events to proxy
+	GSlCameraProxy->OnAIModelOptimized.AddDynamic(this, &AZEDPlayerController::ZedReady);
 	GSlCameraProxy->OnCameraOpened.AddDynamic(this, &AZEDPlayerController::ZedCameraOpened);
 	GSlCameraProxy->OnCameraDisconnected.AddDynamic(this, &AZEDPlayerController::ZedCameraDisconnected);
 	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDPlayerController::ZedCameraClosed);
@@ -649,6 +591,19 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 	// Set parameters
 	ZedCamera->InitializeParameters(Initializer, bHMDEnabled);
 
+	if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
+
+		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth);
+		UpdateHUDOptimizingAIModel();
+	}
+	else 
+	{
+		ZedReady();
+	}
+}
+
+void AZEDPlayerController::ZedReady()
+{
 	// Open camera with parameters
 	GSlCameraProxy->OpenCamera(ZedCamera->InitParameters);
 
@@ -1026,6 +981,15 @@ void AZEDPlayerController::UpdateHUDEnablingZedTracking_Implementation()
 {
 #if WITH_EDITOR
 	ZedPawn->ZedLoadingWidget->SetText(FText::FromString("Enabling tracking"));
+#endif
+}
+
+void AZEDPlayerController::UpdateHUDOptimizingAIModel_Implementation()
+{
+#if WITH_EDITOR
+	ZedPawn->ZedLoadingWidget->SetVisibility(true);
+	ZedPawn->ZedLoadingWidget->SetText(FText::FromString("Optimizing Neural Depth AI Model \n Can take few minutes ..."));
+	ZedPawn->ZedLoadingWidget->FadeIn();
 #endif
 }
 
