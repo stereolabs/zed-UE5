@@ -578,7 +578,23 @@ enum class ESlDetectionModel : uint8
 	DM_MultiClassBoxMedium		UMETA(DisplayName = "Multi class box medium"),
 	DM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
 	DM_PersonHeadBox			UMETA(DisplayName = "Person head box"),
+	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head Accurate box"),
 	DM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects")
+};
+
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlAIModels : uint8
+{
+	AIM_MultiClassDetection			    UMETA(DisplayName = "Multi class Detection"),
+	AIM_MultiClassMediumDetection		UMETA(DisplayName = "Multi class medium Detection"),
+	AIM_MultiClassAccurateDetection		UMETA(DisplayName = "Multi class accurate Detection"),
+	AIM_HumanBodyFastDetection			UMETA(DisplayName = "Human body fast Detection"),
+	AIM_HumanBodyMediumDetection		UMETA(DisplayName = "Human body medium Detection"),
+	AIM_HumanBodyAccurateDetection		UMETA(DisplayName = "Human body accurate Detection"),
+	AIM_PersonHeadDetection				UMETA(DisplayName = "Person head Detection"),
+	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head Accurate Detection"),
+	AIM_REIDAssociation					UMETA(DisplayName = "REID Associaiton"),
+	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 };
 
 /*
@@ -2029,13 +2045,13 @@ struct STEREOLABS_API FSlInitParameters
 
 	FSlInitParameters()
 		:
-		Resolution(ESlResolution::R_HD720),
-		FPS(60),
+		Resolution(ESlResolution::R_HD1080),
+		FPS(30),
 		VerticalFlipImage(ESlFlipMode::FP_AUTO),
 		bDisableSelfCalibration(false),
 		bEnableRightSideMeasure(false),
 		bRealTime(false),
-		DepthMode(ESlDepthMode::DM_Performance),
+		DepthMode(ESlDepthMode::DM_Ultra),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
 		Unit(ESlUnit::DU_Centimeter),

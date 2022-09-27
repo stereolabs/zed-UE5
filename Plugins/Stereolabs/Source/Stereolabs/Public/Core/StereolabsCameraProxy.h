@@ -57,6 +57,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveObjectDelegate
 
 class FOpenCameraAsyncTask;
 class FEnableTrackingAsyncTask;
+class FAIOptimizationAsyncTask;
 class FResetTrackingAsyncTask;
 
 /** Create the instance */
@@ -129,6 +130,7 @@ class STEREOLABS_API USlCameraProxy : public UObject
 	friend class USlFunctionLibrary;
 	friend class FOpenCameraAsyncTask;
 	friend class FEnableTrackingAsyncTask;
+	friend class FAIOptimizationAsyncTask;
 	friend class FResetTrackingAsyncTask;
 
 	GENERATED_BODY()
@@ -444,6 +446,9 @@ public:
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed depth"), Category = "Zed|Rendering")
 	void GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions, TArray<float>& Depths, TArray<FVector>& Normals);
 	
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "optimize AI Model"), Category = "Zed|AI")
+	void OptimizeAIModel(const ESlAIModels& AIModel);
+
 	/*
 	 * Enable Zed Object Detection module
 	 * @param ObjectDetectionParameters The object detection parameters to use
@@ -642,6 +647,8 @@ private:
 	 */
 	void Internal_EnableTracking(const FSlPositionalTrackingParameters& NewTrackingParameters);
 
+	void Internal_OptimizeAIModel(const ESlAIModels& AIModel);
+
 	// ------------------------------------------------------------------
 
 public:
@@ -654,6 +661,11 @@ public:
 	 * Perform a grab with the current runtime parameters
 	 */
 	void Grab();
+
+	/*
+	* Check if the AI model used is optimized or not
+	*/
+	bool CheckAIModelOptimization(const ESlAIModels AiModel);
 
 	/*
 	* Easy access to sl::Pose
@@ -718,6 +730,7 @@ private:
 	 * Set async status
 	 */
 	void SetOpenCameraErrorCode(ESlErrorCode ErrorCode);
+
 
 	// ------------------------------------------------------------------
 
@@ -786,6 +799,10 @@ public:
 	FSlObjects objects;
 
 public:
+	/** Broadcast after the AI model is optimized*/
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyDelegate OnAIModelOptimized;
+
 	/** Camera opened event dispatcher. Broadcast after the camera is opened. */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FSlCameraProxyDelegate OnCameraOpened;
@@ -848,6 +865,9 @@ private:
 
 	/** Enable tracking task */
 	FAsyncTask<class FEnableTrackingAsyncTask>* EnableTrackingAsyncTask;
+
+	/** AI Model optimization async task */
+	FAsyncTask<class FAIOptimizationAsyncTask>* AIOptimizationAsyncTask;
 
 private:
 	/** The status of the current async task */

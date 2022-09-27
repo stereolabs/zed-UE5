@@ -115,6 +115,31 @@ protected:
 	FSlPositionalTrackingParameters TrackingParameters;
 };
 
+class FAIOptimizationAsyncTask : public FNonAbandonableTask
+{
+	friend class FAsyncTask<FAIOptimizationAsyncTask>;
+
+public:
+	FAIOptimizationAsyncTask(const ESlAIModels& AIModel)
+		:
+		AIModel(AIModel)
+	{}
+
+protected:
+	void DoWork()
+	{
+		GSlCameraProxy->Internal_OptimizeAIModel(AIModel);
+	}
+
+	FORCEINLINE TStatId GetStatId() const
+	{
+		RETURN_QUICK_DECLARE_CYCLE_STAT(FAIOptimizationAsyncTask, STATGROUP_ThreadPoolAsyncTasks);
+	}
+
+protected:
+	ESlAIModels AIModel;
+};
+
 USlCameraProxy::USlCameraProxy()
 	:
 	HMDToCameraOffset(0.0f),
@@ -131,6 +156,7 @@ USlCameraProxy::USlCameraProxy()
 	RetrieveMatSize(GetSlTextureSizeFromPreset(0)),
 	OpenCameraAsyncTask(nullptr),
 	EnableTrackingAsyncTask(nullptr),
+	AIOptimizationAsyncTask(nullptr),
 	OpenCameraErrorCode(ESlErrorCode::EC_None),
 	bAbandonOpenTask(false),
 	GrabWorker(nullptr),
@@ -1072,6 +1098,45 @@ void USlCameraProxy::EnableAIThread(bool bEnable)
 	}
 }
 
+bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel) 
+{
+	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0);
+
+	if (!ai_model_status->optimized)
+	{
+		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized", AiModel);
+		return false;
+	}
+	return true;
+}
+
+void USlCameraProxy::OptimizeAIModel(const ESlAIModels& AIModel) {
+
+	AIOptimizationAsyncTask = new FAsyncTask<FAIOptimizationAsyncTask>(AIModel);
+	AIOptimizationAsyncTask->StartBackgroundTask();
+}
+
+void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel) {
+
+	int err = sl_optimize_AI_model((SL_AI_MODELS)AIModel, 0);
+
+	AsyncTask(ENamedThreads::GameThread, [this]()
+		{
+			if (!GSlCameraProxy)
+			{
+				return;
+			}
+
+			AIOptimizationAsyncTask->EnsureCompletion(false);
+
+			delete AIOptimizationAsyncTask;
+			AIOptimizationAsyncTask = nullptr;
+
+			GSlCameraProxy->OnAIModelOptimized.Broadcast();
+
+		});
+}
+
 void USlCameraProxy::SetOpenCameraErrorCode(ESlErrorCode ErrorCode)
 {
 	SL_SCOPE_LOCK(SubLock, AsyncStatusSection)
@@ -1245,7 +1310,7 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 	if (!ai_model_status->optimized)
 	{
-		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
 		return false;
 	}
 
