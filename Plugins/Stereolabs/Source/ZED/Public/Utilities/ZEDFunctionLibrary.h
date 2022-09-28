@@ -475,7 +475,8 @@ public:
 	static bool MultipleHitTestsRealOneResult(AZEDPlayerController* PlayerController, const TArray<FVector>& Locations, const TArray<float>& HitThresholds, bool bGetNormal, bool bHitIfBehind, FZEDHitResult& HitResult);
 
 	/*
-	 * Return the world location of a plane if it exist
+	 * Return the world location of a plane if it exists.
+	 * Returns the position of the hit point, and a boolean set to true if its normal is horizontal enough.
 	 * @param PlayerController The Zed player controller
 	 * @param ScreenPosition   The screen position
 	 * @param PlaneLocation	   The out plane world location
