@@ -4,6 +4,8 @@
 #include "types_c.h"
 #include <stdbool.h>
 #include <cuda.h>
+#include <cuda_runtime.h>
+
 /**
  * @file
  * */
@@ -26,6 +28,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
     /**
     \brief Forces unload of all instances.

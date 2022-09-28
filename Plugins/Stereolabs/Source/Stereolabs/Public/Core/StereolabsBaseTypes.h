@@ -578,7 +578,7 @@ enum class ESlDetectionModel : uint8
 	DM_MultiClassBoxMedium		UMETA(DisplayName = "Multi class box medium"),
 	DM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
 	DM_PersonHeadBox			UMETA(DisplayName = "Person head box"),
-	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head Accurate box"),
+	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head accurate box"),
 	DM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects")
 };
 
@@ -592,7 +592,7 @@ enum class ESlAIModels : uint8
 	AIM_HumanBodyMediumDetection		UMETA(DisplayName = "Human body medium Detection"),
 	AIM_HumanBodyAccurateDetection		UMETA(DisplayName = "Human body accurate Detection"),
 	AIM_PersonHeadDetection				UMETA(DisplayName = "Person head Detection"),
-	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head Accurate Detection"),
+	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Associaiton"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 };

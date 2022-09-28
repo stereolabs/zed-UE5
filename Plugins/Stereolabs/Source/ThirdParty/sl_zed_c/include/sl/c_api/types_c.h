@@ -361,9 +361,8 @@ enum SL_REFERENCE_FRAME
 \brief Lists different World frame available  
  */
 enum SL_SENSOR_WORLD {
-	SL_SENSOR_WORLD_OFF = 0, /**<  default behavior.*/
-	SL_SENSOR_WORLD_IMU_GRAVITY = 1, /**< align world to imu gravity measurement. keep the yaw from the user*/
-	SL_SENSOR_WORLD_MAGNETO_YAW = 2, /**< align yaw world to magnetometer measurement. keep other axis from the user*/
+	SL_SENSOR_WORLD_OFF, /**<  default behavior.*/
+	SL_SENSOR_WORLD_IMU_GRAVITY /**< align world to imu gravity measurement. keep the yaw from the user*/
 };
 
 
