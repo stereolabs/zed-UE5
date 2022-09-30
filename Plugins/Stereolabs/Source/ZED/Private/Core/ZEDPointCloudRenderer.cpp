@@ -23,10 +23,24 @@ void AZEDPointCloudRenderer::BeginPlay()
 	Super::BeginPlay();
 
 	GSlCameraProxy->OnCameraOpened.AddDynamic(this, &AZEDPointCloudRenderer::Init);
-	GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
+	GrabDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
 	{
 		UpdateTextures(ErrorCode, Timestamp);
 	});
+}
+
+void AZEDPointCloudRenderer::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	FlushRenderingCommands();
+
+	if (GSlCameraProxy)
+	{
+		GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
+
+		GSlCameraProxy->OnCameraOpened.RemoveDynamic(this, &AZEDPointCloudRenderer::Init);
+	}
 }
 
 /**
@@ -89,6 +103,7 @@ void AZEDPointCloudRenderer::Init()
 	ColorTexture->UpdateResource();
 	// Set the niagara system user variables:
 	SetNiagaraVariableTexture(RendererInstance, "User.PositionTexture", VerticeTexture);
+	SetNiagaraVariableTexture(RendererInstance, "User.PointCloudTexture", VerticeTexture);
 	SetNiagaraVariableTexture(RendererInstance, "User.ColorTexture", ColorTexture);
 
 	RendererInstance->SetVariableInt("User.TextureWidth", Resolution.X);
@@ -101,6 +116,11 @@ void AZEDPointCloudRenderer::Init()
 
 void AZEDPointCloudRenderer::UpdateTextures(ESlErrorCode ErrorCode, FSlTimestamp Timestamp) 
 {
+	if (ErrorCode != ESlErrorCode::EC_Success)
+	{
+		return;
+	}
+
 	if (sl_mat_is_init(Vertices)) sl_retrieve_measure(GSlCameraProxy->GetCameraID(), Vertices, SL_MEASURE_XYZ, SL_MEM_CPU, Resolution.X, Resolution.Y);
 	else UE_LOG(LogTemp, Warning, TEXT("Positions is not init"));
 

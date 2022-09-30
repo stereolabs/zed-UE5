@@ -88,8 +88,6 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 	FMemory::Memcpy(Data, Texture.GetData(), TextureSize[0] * TextureSize[1] * 4);
 	Mip.BulkData.Unlock();
 
-
-
 	// Set texture settings
 #if WITH_EDITORONLY_DATA
 	UTexture->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
@@ -117,6 +115,11 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 
 bool USlMesh::Save(const FString& FilePath, const TArray<int32>& ChunksIDs, ESlMeshFileFormat FileFormat/* = ESlMeshFileFormat::MFF_OBJ*/)
 {
+	if (FilePath.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Error SaveMesh : filepath is empty"));
+		return false;
+	}
 
 	bool bSaved = sl_save_mesh(GSlCameraProxy->GetCameraID(), TCHAR_TO_UTF8(*FilePath), sl::unreal::ToSlType(FileFormat));
 
@@ -125,6 +128,12 @@ bool USlMesh::Save(const FString& FilePath, const TArray<int32>& ChunksIDs, ESlM
 
 bool USlMesh::Load(const FString& FilePath, bool bUpdateChunksOnly/* = false*/)
 {
+	if (FilePath.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Error LoadMesh : filepath is empty"));
+		return false;
+	}
+	
 	bool bIsLoaded = sl_load_whole_mesh(GSlCameraProxy->GetCameraID(), TCHAR_TO_UTF8(*FilePath), &NbVertices, &NbTriangles, TextureSize);
 
 	Vertices.SetNum(NbVertices * 3);
