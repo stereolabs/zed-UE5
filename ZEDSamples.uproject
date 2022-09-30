@@ -25,6 +25,10 @@
 		{
 			"Name": "Stereolabs",
 			"Enabled": true
+		},
+		{
+			"Name": "NiagaraFluids",
+			"Enabled": true
 		}
 	]
 }

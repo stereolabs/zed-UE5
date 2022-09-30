@@ -624,8 +624,6 @@ void AZEDPlayerController::ZedCameraOpened()
 		UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
 
 		AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
-		/*if(Initializer->RenderingParameters.SRemapEnable)
-			ZedPawn->InitRemap(GEngine->XRSystem->GetSystemName(), sl::unreal::ToSlType(ZedCamera->InitParameters.Resolution), ZedCamera->RenderingParameters.PerceptionDistance);*/
 	}
 
 	// Set fade post process
@@ -722,7 +720,7 @@ void AZEDPlayerController::ZedCameraActorInitialized()
 	// Set HMD camera offset
 	ZedPawn->SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 
-	//ZedCamera->AddOrUpdatePostProcessCpp(PostProcessZedMaterialInstanceDynamic,  1.0f);
+	ZedCamera->AddOrUpdatePostProcessCpp(PostProcessZedMaterialInstanceDynamic,  1.0f);
 	//PreZedEdit
 	/*ZedPawn->Camera->PostProcessSettings.bDeferredAA = false;
 	ZedPawn->Camera->PostProcessSettings.bPostProcessing = false;

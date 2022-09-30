@@ -916,18 +916,18 @@ bool USlCameraProxy::RetrieveTexture(USlTexture* Texture)
 	return (
 		Texture->IsTypeOf(ESlTextureType::TT_Measure) ? 
 		RetrieveMeasure(Texture->Mat, static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height)) :
-		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height))
+		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height), static_cast<USlViewTexture*>(Texture)->ViewFormat)
 	);
 }
 
-bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
+bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
 {
 	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(ViewType));
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(MemoryType));
 	}
 
-	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution);
+	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution, ViewFormat);
 }
 
 bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
@@ -939,13 +939,13 @@ bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMem
 	return RetrieveMeasure(Mat.Mat, MeasureType, MemoryType, Resolution);
 }
 
-bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
+bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveImage);
 
-	void* InMat = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, sl::unreal::ToSlType2(MemoryType));
+	void* InMat = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, InMat, (SL_VIEW)ViewType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, InMat, (SL_VIEW)ViewType, SL_MEM_GPU, Resolution.X, Resolution.Y);
 	
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
@@ -955,10 +955,30 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		return false;
 	}
 
-	bool out = sl_convert_image(InMat, Mat, 0) == SL_ERROR_CODE_SUCCESS;
+	if (ViewFormat == ESlViewFormat::VF_Unsigned)
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(InMat, Mat, SL_COPY_TYPE_GPU_GPU);
+	}
+	else
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_convert_image(InMat, Mat, 0);
+	}
+
 	sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
 
-	return out;
+	if (MemoryType == ESlMemoryType::MT_CPU)
+	{
+		sl_mat_update_cpu_from_gpu(Mat);
+	}
+
+	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
+	{
+		SL_CAMERA_PROXY_LOG_E("Error while converting texture image format : \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+
+		return false;
+	}
+
+	return true;
 #else
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 #endif

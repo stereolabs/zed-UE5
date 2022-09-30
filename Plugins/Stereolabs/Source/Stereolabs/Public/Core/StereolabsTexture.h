@@ -153,7 +153,7 @@ public:
 	 * @return				    The view texture
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Texture")
-	static USlViewTexture* CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D = true, ESlTextureFormat TextureFormat = ESlTextureFormat::TF_R8G8B8A8_SNORM);
+	static USlViewTexture* CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D = true, ESlTextureFormat TextureFormat = ESlTextureFormat::TF_R8G8B8A8_SNORM, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
 
 	/*
 	 * Create a CPU view texture
@@ -164,7 +164,7 @@ public:
 	 * @return				    The view texture
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Texture")
-	static USlViewTexture* CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType);
+	static USlViewTexture* CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
 
 private:
 	/* 
@@ -178,12 +178,16 @@ private:
 	 * @param TextureFormat	    The format of the texture
 	 * @return				    The view texture
 	 */
-	static USlViewTexture* CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat);
+	static USlViewTexture* CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
 
 public:
 	/** Texture view type */
 	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
 	ESlView ViewType;
+
+	/** Texture view type */
+	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
+	ESlViewFormat ViewFormat;
 };
 
 /*

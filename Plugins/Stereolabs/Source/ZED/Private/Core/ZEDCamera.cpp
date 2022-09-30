@@ -135,6 +135,16 @@ AZEDCamera::AZEDCamera()
 	FinalLeftPlane->SetCastShadow(false);
 	FinalRightPlane->SetCastShadow(false);
 
+	// Ignore Postprocessing
+	InterLeftPlane->SetRenderCustomDepth(true);
+	InterLeftPlane->CustomDepthStencilValue = 1;
+	InterRightPlane->SetRenderCustomDepth(true);
+	InterRightPlane->CustomDepthStencilValue = 1;
+	FinalLeftPlane->SetRenderCustomDepth(true);
+	FinalLeftPlane->CustomDepthStencilValue = 1;
+	FinalRightPlane->SetRenderCustomDepth(true);
+	FinalRightPlane->CustomDepthStencilValue = 1;
+
 	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 	InterRightCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 	InterLeftCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
@@ -170,7 +180,7 @@ AZEDCamera::AZEDCamera()
 }
 
 void AZEDCamera::BeginPlay()
-{	
+{
 	Super::BeginPlay();
 
 	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
@@ -209,7 +219,7 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 		{
 			SetCameraSettings(CameraSettings);
 		}
-		
+
 		if (StructName == FString("SlRuntimeParameters"))
 		{
 			SetRuntimeParameters(RuntimeParameters);
@@ -360,7 +370,7 @@ void AZEDCamera::Tick(float DeltaSeconds)
 
 		// Current timestamp
 		unsigned long long CurrentTimestamp = sl_get_current_timestamp(GSlCameraProxy->GetCameraID());
-	
+
 		// Set IMU prior
 		if (GSlCameraProxy->bTrackingEnabled && GSlCameraProxy->GetCameraModel() == ESlModel::M_ZedM)
 		{
@@ -393,11 +403,11 @@ void AZEDCamera::Tick(float DeltaSeconds)
 		{
 			// Initialize drift corrector if failed because out of tracking area
 			InitializeDriftCorrectorConstOffset(HMDLocation, HMDRotation);
-			
+
 			// Remove HMD origin from tracking
 			FZEDTrackingData TmpTrackingData = TrackingData;
 			TmpTrackingData.ZedPathTransform = TmpTrackingData.ZedPathTransform * TrackingOriginFromHMD.Inverse();
-				
+
 			sl::mr::trackingData SlTrackingData = sl::unreal::ToSlType(TmpTrackingData);
 			sl::mr::driftCorrectorGetTrackingData(SlTrackingData, SlHMDTransform, SlLatencyTransform, bHMDHasTrackers && UHeadMountedDisplayFunctionLibrary::HasValidTrackingPosition(), true);
 
@@ -737,7 +747,7 @@ void AZEDCamera::EnableTracking()
 	GSlCameraProxy->EnableTracking(TrackingParameters);
 }
 
-void AZEDCamera::EnableObjectDetection() 
+void AZEDCamera::EnableObjectDetection()
 {
 	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
 
@@ -797,7 +807,7 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
 
 	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
-	
+
 	checkf(RuntimeParameters.ReferenceFrame == ESlReferenceFrame::RF_World, TEXT("Reference frame must be World when using the ZEDCamera"));
 
 	if (bUseHMDTrackingAsOrigin)
@@ -926,7 +936,7 @@ void AZEDCamera::CameraClosed()
 	GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
 	DisableObjectDetection();
 	UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::SingleEyeCroppedToFill);
-	
+
 	if (Batch) Batch->Clear();
 	if (LeftEyeColor) {
 		LeftEyeColor->ConditionalBeginDestroy();
@@ -1108,7 +1118,7 @@ void AZEDCamera::SetupComponents(bool stereo)
 	{
 		SetPlaneSize(FinalLeftPlane, HMDRenderPlaneDistance);
 	}
-	
+
 
 	// Inter baseline offset
 	if (stereo)
@@ -1167,7 +1177,7 @@ void AZEDCamera::SetupComponents(bool stereo)
 	// Show only list management
 	InterLeftCamera->HideComponent(FinalLeftPlane);
 	InterLeftCamera->HideComponent(FinalRightPlane);
-	
+
 	if (bShowZedImage) {
 		UZEDFunctionLibrary::GetPlayerController(this)->bUseShowOnlyList = true;
 		UZEDFunctionLibrary::GetPlayerController(this)->EmptyShowOnlyComponentList();
@@ -1187,7 +1197,7 @@ void AZEDCamera::SetupComponents(bool stereo)
 void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
 {
 	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-	
+
 	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSizeWithGamma(this, cameraParam.Resolution, RenderingParameters.PerceptionDistance, cameraParam.HFocal, planeDistance/100.0f); // because plane is already of side 100
 	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
 }
@@ -1195,7 +1205,7 @@ void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeD
 void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)
 {
 	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-	
+
 	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSize(cameraParam.Resolution, cameraParam.VFOV, planeDistance/100.0f); // because plane is already of side 100
 	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
 }

@@ -282,6 +282,13 @@ enum class ESlView : uint8
 	V_NormalsRight		     UMETA(DisplayName = "Normals right")
 };
 
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlViewFormat : uint8
+{
+	VF_Signed					 UMETA(DisplayName = "Signed"), //  Each pixel contains 4 signed char 
+	VF_Unsigned					 UMETA(DisplayName = "Unsigned"), //  Each pixel contains 4 unsigned char 
+};
+
 /*
  * SDK Measure types
  * See sl::MEASURE
@@ -2856,4 +2863,21 @@ struct STEREOLABS_API FSlRenderingParameters
 	/** Threading mode of the Grab. Multithreading is recommended for better performance. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlThreadingMode ThreadingMode;
+};
+
+/** Environmental lighting settings */
+USTRUCT(BlueprintType)
+struct FEnvironmentalLightingSettings
+{
+	GENERATED_USTRUCT_BODY()
+
+	/** Image exposure */
+	UPROPERTY(BlueprintReadOnly, Category = Exposure)
+	float Exposure;
+
+	FEnvironmentalLightingSettings()
+		:
+		Exposure(1)
+	{
+	}
 };

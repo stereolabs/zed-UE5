@@ -8,10 +8,6 @@
 #include "Stereolabs/Public/Utilities/StereolabsViewportHelper.h"
 #include "Stereolabs/Public/Core/StereolabsMesh.h"
 
-//#include "Windows/AllowWindowsPlatformTypes.h"
-//#include <sl/Camera.hpp>
-//#include "Windows/HideWindowsPlatformTypes.h"
-
 THIRD_PARTY_INCLUDES_START
 #include "../../../ThirdParty/sl_zed_c/include/sl/c_api/zed_interface.h"
 THIRD_PARTY_INCLUDES_END
@@ -356,7 +352,7 @@ public:
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "retrieve zed image"), Category = "Zed|Rendering")
-	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
+	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
 
 	/*
 	* Retrieve a measure mat
@@ -379,7 +375,7 @@ public:
 	 * @param Name		 The name of the mat
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
-	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
+	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
 
 	/*
 	 * Retrieve a measure mat

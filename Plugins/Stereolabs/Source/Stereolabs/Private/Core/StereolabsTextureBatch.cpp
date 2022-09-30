@@ -37,7 +37,7 @@ DEFINE_LOG_CATEGORY(SlTextureBatch);
 #define FREE_TB_TEXTURES_POOL()\
 	for (auto TexturesIt = TexturesPool.CreateIterator(); TexturesIt; ++TexturesIt)\
 	{\
-		sl_mat_free((*TexturesIt)->Mat.Mat, (SL_MEM)sl_mat_get_memory_type((*TexturesIt)->Mat.Mat));\
+		if (TexturesIt) sl_mat_free((*TexturesIt)->Mat.Mat, (SL_MEM)sl_mat_get_memory_type((*TexturesIt)->Mat.Mat));\
 	}\
 
 FSlTextueBatchMatBuffer::FSlTextueBatchMatBuffer()
@@ -137,7 +137,7 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
 				}
 
-				bSuccess = GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution);
+				bSuccess = GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution, static_cast<USlViewTexture*>(Texture)->ViewFormat);
 			}
 
 			if (!bSuccess)
@@ -319,8 +319,6 @@ bool USlTextureBatch::Tick()
 
 				INIT_TB_CURRENT_FRAME_BUFFER(Buffers[1]);
 			SL_SCOPE_UNLOCK
-				SL_LOG_E(SlTextureBatch, "Retrieve of texture 2 ");
-
 			for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 			{
 				sl_mat_swap(Buffers[1]->Mats[TextureIt.GetIndex()], (*TextureIt)->Mat.Mat);

@@ -37,7 +37,9 @@ private:
 
 	uint32_t PointCount;
 
-	// The data which has to be written into the textures:
+	/** The grab delegate handle */
+	FDelegateHandle GrabDelegateHandle;
+
 	float* Vertices;
 	unsigned char* Colors;
 	unsigned char* SignedColors;
@@ -57,6 +59,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private :
 	UFUNCTION(BlueprintCallable, Category = "Zed|PointCloud")
