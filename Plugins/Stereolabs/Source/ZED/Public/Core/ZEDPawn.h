@@ -6,6 +6,9 @@
 #include "ZED/Public/Core/ZEDCamera.h"
 #include "ZED/Public/Core/ZEDBaseTypes.h"
 
+#include "CineCameraComponent.h"
+#include "VCamComponent.h"
+
 #include "ZEDPawn.generated.h"
 
 /*
@@ -30,6 +33,9 @@ private:
 	UFUNCTION()
 	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData);
 
+	UFUNCTION()
+	virtual void Tick(float DeltaSeconds) override;
+
 	/*
 	* Initialisation
 	*/
@@ -42,7 +48,29 @@ public:
 
 	/** Main camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCameraComponent* Camera;
+	UCineCameraComponent* Camera;
+
+	/** Virtual camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UVCamComponent* VirtualCamera;
+
+	/** Should update virtual camera transform according to real camera tracking*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool VirtualCamFollowsRealCam;
+
+	/** Should enable lerp with specified alpha*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool EnableLerp;
+
+	/** Lerp Speed value*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float LerpIntensity;
+
+	FTransform LerpTransform;
+
+	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FTransform RealCameraTransform;
 
 	/** Zed loading widget */
 	UPROPERTY()

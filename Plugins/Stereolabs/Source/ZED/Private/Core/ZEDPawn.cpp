@@ -7,17 +7,25 @@
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
-AZEDPawn::AZEDPawn()
+AZEDPawn::AZEDPawn() :
+	VirtualCamFollowsRealCam(true),
+	EnableLerp(true),
+	LerpIntensity(10.0)
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	//PrimaryActorTick.bCanEverTick = false;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
 	SpringArm = CreateDefaultSubobject<USceneComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("MainCamera"));
+	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("MainCamera"));
 	Camera->SetupAttachment(SpringArm);
+
+	VirtualCamera = CreateDefaultSubobject<UVCamComponent>(TEXT("VirtualCamera"));
+	VirtualCamera->SetupAttachment(Camera);
+
 	Camera->bConstrainAspectRatio = true;
 	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
 	Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
@@ -72,7 +80,28 @@ AZEDPawn::AZEDPawn()
 
 void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 {
-	SetActorTransform(NewTrackingData.OffsetZedWorldTransform);
+	RealCameraTransform = NewTrackingData.OffsetZedWorldTransform;
+}
+
+void AZEDPawn::Tick(float DeltaSeconds) 
+{
+	// UE_LOG(LogTemp, Display, TEXT("[ZEDPawn.cpp] Delta : %f"), DeltaSeconds);
+
+	if (VirtualCamFollowsRealCam) {
+		SetActorTransform(RealCameraTransform);
+		LerpTransform = RealCameraTransform;
+	}
+	else if (EnableLerp)
+	{
+		float lerpAlpha = DeltaSeconds * LerpIntensity;
+		LerpTransform = UKismetMathLibrary::TLerp(LerpTransform, RealCameraTransform, lerpAlpha);
+		SetActorTransform(LerpTransform);
+	}
+	else 
+	{
+		LerpTransform = RealCameraTransform;
+	}
+
 }
 
 void AZEDPawn::InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp)
