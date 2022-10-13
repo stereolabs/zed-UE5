@@ -54,10 +54,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UVCamComponent* VirtualCamera;
 
-	/** Should update virtual camera transform according to real camera tracking*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool VirtualCamFollowsRealCam;
-
 	/** Should enable lerp with specified alpha*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool EnableLerp;
@@ -66,11 +62,48 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LerpIntensity;
 
+	/** Transform used during Lerp smoothing*/
 	FTransform LerpTransform;
+
+	/** Transform offset used to reposition the camera, taking into account movement multipliers or offsetters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform TransformOffset;
 
 	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FTransform RealCameraTransform;
+
+	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool ToggleFreeze;
+
+	/** Save the rotation of the camera when freezing, and apply offset to the camera after unfreezing.*/
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool UseRotationOffset;
+
+	/** Has the camera been frozen by the toggle freeze*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool IsFrozen;
+
+	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool ToggleLockRotation;
+
+	/** Lock the rotation*/
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool IsLockRotation;
+
+	/** Use locked rotation*/
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FQuat LockedRotation;
+
+	FQuat RotationToUse;
+
+	/** Set the location offset, i.e. when starting the level */
+	UFUNCTION()
+	void SetStartOffsetLocation(const FVector& locOffset);
+
+	FVector StartOffsetLocation;
 
 	/** Zed loading widget */
 	UPROPERTY()

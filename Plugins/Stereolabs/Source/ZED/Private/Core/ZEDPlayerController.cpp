@@ -410,8 +410,22 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
 {
-	// Spawn pawn
-	ZedPawn = Cast<AZEDPawn>(GetWorld()->SpawnActor(NewPawnClass));
+	TArray<AActor*> ActorsToFind;
+	if (UWorld* World = GetWorld())
+	{
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), NewPawnClass, ActorsToFind);
+	}
+
+	if (ActorsToFind.Num() > 0) 
+	{
+		ZedPawn = Cast<AZEDPawn>(ActorsToFind[0]);
+		ZedPawn->SetStartOffsetLocation(ZedPawn->GetActorTransform().GetLocation());
+	}
+	else 
+	{
+		// Spawn pawn
+		ZedPawn = Cast<AZEDPawn>(GetWorld()->SpawnActor(NewPawnClass));
+	}
 
 	checkf(ZedPawn, TEXT("NewPawnClass must inherit from AZedPawn"));
 

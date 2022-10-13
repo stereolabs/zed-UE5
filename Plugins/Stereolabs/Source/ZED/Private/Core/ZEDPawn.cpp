@@ -8,11 +8,20 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
 AZEDPawn::AZEDPawn() :
-	VirtualCamFollowsRealCam(true),
 	EnableLerp(true),
-	LerpIntensity(10.0)
+	LerpIntensity(10.0),
+	IsFrozen(false),
+	ToggleFreeze(false),
+	UseRotationOffset(false),
+	IsLockRotation(false),
+	ToggleLockRotation(false),
+	StartOffsetLocation(FVector::ZeroVector)
 {
+	TransformOffset = FTransform();
+	ToggleFreeze = false;
 	PrimaryActorTick.bCanEverTick = true;
+	LockedRotation = FQuat::Identity;
+	RotationToUse = FQuat::Identity;
 	//PrimaryActorTick.bCanEverTick = false;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
@@ -81,27 +90,79 @@ AZEDPawn::AZEDPawn() :
 void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 {
 	RealCameraTransform = NewTrackingData.OffsetZedWorldTransform;
+
+	if (ToggleFreeze) {
+		if (IsFrozen) {
+			// set new offset
+			TransformOffset.SetLocation(GetActorTransform().GetLocation() - RealCameraTransform.GetLocation());
+			if (UseRotationOffset) {
+				// Get the rotational difference between where the actor is facing and the "real" camera orientation.
+				// [Actor - Real] is [Actor * Real.Inv] in quaternion 
+				TransformOffset.SetRotation(GetActorTransform().GetRotation() * RealCameraTransform.GetRotation().Inverse());
+			}
+			else {
+				TransformOffset.SetRotation(FQuat::Identity);
+			}
+		}
+		IsFrozen = !IsFrozen;
+		ToggleFreeze = false;
+	}
+	
+}
+
+void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset) 
+{
+	StartOffsetLocation = locOffset;
 }
 
 void AZEDPawn::Tick(float DeltaSeconds) 
 {
-	// UE_LOG(LogTemp, Display, TEXT("[ZEDPawn.cpp] Delta : %f"), DeltaSeconds);
-
-	if (VirtualCamFollowsRealCam) {
-		SetActorTransform(RealCameraTransform);
-		LerpTransform = RealCameraTransform;
-	}
-	else if (EnableLerp)
-	{
-		float lerpAlpha = DeltaSeconds * LerpIntensity;
-		LerpTransform = UKismetMathLibrary::TLerp(LerpTransform, RealCameraTransform, lerpAlpha);
-		SetActorTransform(LerpTransform);
-	}
-	else 
-	{
-		LerpTransform = RealCameraTransform;
+	if (ToggleLockRotation) {
+		if (!IsLockRotation) {
+			LockedRotation = GetActorTransform().GetRotation();
+		}
+		IsLockRotation = !IsLockRotation;
+		ToggleLockRotation = false;
 	}
 
+	if (!IsFrozen) {
+		if (EnableLerp)
+		{
+			// Apply rotational offset on transform as global rotation
+			RotationToUse =
+				IsLockRotation
+				? LockedRotation
+				: TransformOffset.GetRotation() * RealCameraTransform.GetRotation();
+
+			float lerpAlpha = DeltaSeconds * LerpIntensity;
+			LerpTransform = UKismetMathLibrary::TLerp(
+				LerpTransform, 
+				FTransform(
+					RotationToUse,
+					RealCameraTransform.GetLocation() + TransformOffset.GetLocation() + StartOffsetLocation,
+					RealCameraTransform.GetScale3D()),
+				lerpAlpha);
+			SetActorTransform(LerpTransform);
+		}
+		else
+		{
+			// Apply rotational offset on transform as global rotation
+			RotationToUse = 
+				IsLockRotation
+				? LockedRotation 
+				: TransformOffset.GetRotation() * RealCameraTransform.GetRotation();
+
+			SetActorTransform(
+				FTransform(
+					RotationToUse,
+					RealCameraTransform.GetLocation() + TransformOffset.GetLocation() + StartOffsetLocation,
+					RealCameraTransform.GetScale3D()
+				)
+			);
+
+			LerpTransform = RealCameraTransform;
+		}
+	}
 }
 
 void AZEDPawn::InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp)
