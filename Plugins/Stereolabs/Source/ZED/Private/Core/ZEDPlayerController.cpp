@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "IHeadMountedDisplay.h"
 #include "IXRTrackingSystem.h"
+#include "HeadMountedDisplayFunctionLibrary.h"
 
 DEFINE_LOG_CATEGORY(ZEDPlayerController);
 
@@ -186,102 +187,6 @@ void AZEDPlayerController::Tick(float DeltaSeconds)
 	if (bTickZedCamera)
 	{
 		ZedCamera->Tick(DeltaSeconds);
-
-		ZEDFPS = GSlCameraProxy->GetCurrentFPS();
-		if (ZEDFPS <= 50.0f)
-		{
-			// Hitch
-			if (CurrentCameraFPSTimerGoodFPS < 4.0f && CurrentCameraFPSTimerBadFPS == 2.0f)
-			{
-				// Reset
-				CurrentCameraFPSTimerGoodFPS = 0.0f;
-			}
-			else
-			{
-				CurrentCameraFPSTimerBadFPS = FMath::Min(2.0f, CurrentCameraFPSTimerBadFPS + DeltaSeconds);
-				if (CurrentCameraFPSTimerBadFPS == 2.0f)
-				{
-					CurrentCameraFPSTimerGoodFPS = 0.0f;
-
-					bShowLowCameraFPS = true;
-				}
-			}
-		}
-		else
-		{
-			// Hitch
-			if (CurrentCameraFPSTimerBadFPS < 2.0f && CurrentCameraFPSTimerGoodFPS == 4.0f)
-			{
-				// Reset
-				CurrentCameraFPSTimerBadFPS = 0.0f;
-			}
-			else
-			{
-				CurrentCameraFPSTimerGoodFPS = FMath::Min(4.0f, CurrentCameraFPSTimerGoodFPS + DeltaSeconds);
-				if (CurrentCameraFPSTimerGoodFPS == 4.0f)
-				{
-					CurrentCameraFPSTimerBadFPS = 0.0f;
-
-					bShowLowCameraFPS = false;
-				}
-			}
-		}
-
-		if (1.0f / DeltaSeconds <= 50.0f)
-		{
-			// Hitch
-			if (CurrentFPSTimerGoodFPS < 4.0f && CurrentFPSTimerBadFPS == 2.0f)
-			{
-				// Reset
-				CurrentFPSTimerGoodFPS = 0.0f;
-			}
-			else
-			{
-				CurrentFPSTimerBadFPS = FMath::Min(2.0f, CurrentFPSTimerBadFPS + DeltaSeconds);
-				if (CurrentFPSTimerBadFPS == 2.0f)
-				{
-					CurrentFPSTimerGoodFPS = 0.0f;
-
-					bShowLowAppFPS = true;
-				}
-			}
-		}
-		else
-		{
-			// Hitch
-			if (CurrentFPSTimerBadFPS < 2.0f && CurrentFPSTimerGoodFPS == 4.0f)
-			{
-				// Reset
-				CurrentFPSTimerBadFPS = 0.0f;
-			}
-			else
-			{
-				CurrentFPSTimerGoodFPS = FMath::Min(4.0f, CurrentFPSTimerGoodFPS + DeltaSeconds);
-				if (CurrentFPSTimerGoodFPS == 4.0f)
-				{
-					CurrentFPSTimerBadFPS = 0.0f;
-
-					bShowLowAppFPS = false;
-				}
-			}
-		}
-	}
-
-	int32 NoiseValue = CVarZEDNoise.GetValueOnGameThread();
-	if (CurrentNoiseValue != NoiseValue)
-	{
-		CurrentNoiseValue = NoiseValue;
-
-		if (CurrentNoiseValue)
-		{
-			PostProcessZedMaterialInstanceDynamic->SetScalarParameterValue("UseNoise", 1);
-			GetWorldTimerManager().SetTimer(NoiseTimerHandle, this, &AZEDPlayerController::UpdateNoise, 5.0f, true);
-		}
-		else
-		{
-			PostProcessZedMaterialInstanceDynamic->SetScalarParameterValue("UseNoise", 0);
-			GetWorldTimerManager().ClearTimer(NoiseTimerHandle);
-		}
 	}
 
 	Super::Tick(DeltaSeconds);
@@ -410,8 +315,22 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
 {
-	// Spawn pawn
-	ZedPawn = Cast<AZEDPawn>(GetWorld()->SpawnActor(NewPawnClass));
+	TArray<AActor*> ActorsToFind;
+	if (UWorld* World = GetWorld())
+	{
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), NewPawnClass, ActorsToFind);
+	}
+
+	if (ActorsToFind.Num() > 0) 
+	{
+		ZedPawn = Cast<AZEDPawn>(ActorsToFind[0]);
+		ZedPawn->SetStartOffsetLocation(ZedPawn->GetActorTransform().GetLocation());
+	}
+	else 
+	{
+		// Spawn pawn
+		ZedPawn = Cast<AZEDPawn>(GetWorld()->SpawnActor(NewPawnClass));
+	}
 
 	checkf(ZedPawn, TEXT("NewPawnClass must inherit from AZedPawn"));
 

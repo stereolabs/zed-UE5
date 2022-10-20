@@ -3,6 +3,7 @@
 #include "Stereolabs/Private/Threading/StereolabsGrabRunnable.h"
 #include "StereolabsPrivatePCH.h"
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
+#include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 
 DEFINE_LOG_CATEGORY(SlGrabThread);
 

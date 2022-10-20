@@ -55,7 +55,7 @@ class FOpenCameraAsyncTask : public FNonAbandonableTask
 	friend class FAsyncTask<FOpenCameraAsyncTask>;
 
 public:
-	FOpenCameraAsyncTask( const FSlInitParameters& InitParameters) 
+	FOpenCameraAsyncTask( const FSlInitParameters& InitParameters)
 		:
 		InitParameters(InitParameters)
 	{}
@@ -76,7 +76,7 @@ protected:
 		{
 			SL_CAMERA_PROXY_LOG_W("ZED connected");
 			GSlCameraProxy->SetOpenCameraErrorCode(ESlErrorCode::EC_None);
-		
+
 			GSlCameraProxy->Internal_OpenCamera(InitParameters);
 		}
 	}
@@ -196,7 +196,7 @@ void USlCameraProxy::BeginDestroy()
 		AIWorker = nullptr;
 	}
 
-	CloseCamera();  
+	CloseCamera();
 	Super::BeginDestroy();
 }
 
@@ -391,10 +391,10 @@ void USlCameraProxy::CloseCamera()
 		// Broadcast
 		OnCameraClosed.Broadcast();
 	}
-	 
+
 	sl_close_camera(CameraID);
 
-	
+
 }
 
 void USlCameraProxy::EnableTracking(const FSlPositionalTrackingParameters& NewTrackingParameters)
@@ -496,7 +496,7 @@ void USlCameraProxy::DisableTracking()
 		if (bTrackingEnabled)
 		{
 			sl_disable_positional_tracking(CameraID, "");
-		
+
 			bTrackingEnabled = false;
 		}
 	SL_SCOPE_UNLOCK
@@ -681,7 +681,7 @@ int USlCameraProxy::GetCameraID()
 {
 	return CameraID;
 }
- 
+
 SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose, SL_REFERENCE_FRAME rframe)
 {
 	if (sl_is_opened(CameraID))
@@ -691,11 +691,11 @@ SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose
 	else
 		return SL_POSITIONAL_TRACKING_STATE_OFF;
 }
- 
+
 SL_ERROR_CODE USlCameraProxy::GetCameraIMURotationAtImage(sl::Rotation& pose)
 {
 	if (sl_is_opened(CameraID)) {
-		 
+
 		if (IMUErrorCode == SL_ERROR_CODE_SUCCESS)
 		{
 			SL_Vector3 cam_imu_t;
@@ -920,7 +920,7 @@ bool USlCameraProxy::ExtractWholeMesh(USlMesh* Mesh)
 bool USlCameraProxy::RetrieveTexture(USlTexture* Texture)
 {
 	return (
-		Texture->IsTypeOf(ESlTextureType::TT_Measure) ? 
+		Texture->IsTypeOf(ESlTextureType::TT_Measure) ?
 		RetrieveMeasure(Texture->Mat, static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height)) :
 		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height), static_cast<USlViewTexture*>(Texture)->ViewFormat)
 	);
@@ -952,7 +952,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 	if (UnsignedLeftImage == nullptr) UnsignedLeftImage = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
 
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, (SL_VIEW)ViewType, SL_MEM_GPU, Resolution.X, Resolution.Y);
-	
+
 #if WITH_EDITOR
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
@@ -984,6 +984,23 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	return true;
 #else
+
+	if (ViewFormat == ESlViewFormat::VF_Unsigned)
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(InMat, Mat, SL_COPY_TYPE_GPU_GPU);
+	}
+	else
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_convert_image(InMat, Mat, 0);
+	}
+
+	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
+
+	if (MemoryType == ESlMemoryType::MT_CPU)
+	{
+		sl_mat_update_cpu_from_gpu(Mat);
+	}
+
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 #endif
 }
@@ -1122,7 +1139,7 @@ void USlCameraProxy::EnableAIThread(bool bEnable)
 	}
 }
 
-bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel) 
+bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel)
 {
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0);
 
@@ -1265,7 +1282,7 @@ void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, 
 	ensureMsgf(MeasuresWorker && bHitTestDepthEnabled && bHitTestNormalsEnabled, TEXT("Depth and Normals hit tests must be enabled"));
 
 	FVector4 DepthAndNormal = MeasuresWorker->GetDepthAndNormal(ScreenPosition, ViewportHelper.RangeX, ViewportHelper.RangeY);
-	
+
 	Depth = DepthAndNormal.W;
 	if (!FMath::IsFinite(Depth))
 	{
@@ -1501,7 +1518,7 @@ void USlCameraProxy::DisableSVORecording()
 
 		SL_SCOPE_LOCK(SubLock, SVOSection)
 			bSVORecordingEnabled = false;
-		SL_SCOPE_UNLOCK	
+		SL_SCOPE_UNLOCK
 	SL_SCOPE_UNLOCK
 }
 
@@ -1536,7 +1553,7 @@ int USlCameraProxy::GetSVONumberOfFrames()
 {
 	return sl_get_svo_number_of_frames(CameraID);
 }
- 
+
 
 void USlCameraProxy::PauseSVOplayback(bool bPause, int NewSVOPosition/* = -1*/)
 {
@@ -1545,7 +1562,7 @@ void USlCameraProxy::PauseSVOplayback(bool bPause, int NewSVOPosition/* = -1*/)
 		{
 			CurrentSVOPlaybackPosition = NewSVOPosition >= 0 ? NewSVOPosition : sl_get_svo_position(CameraID) - 1;
 		}
-		
+
 		bSVOPlaybackPaused = bPause;
 	SL_SCOPE_UNLOCK
 }
@@ -1609,7 +1626,7 @@ float USlCameraProxy::GetCameraFPS()
 	return sl_get_camera_information(CameraID, 0, 0)->camera_configuration.fps;
 }
 
- 
+
 float USlCameraProxy::GetCurrentFPS()
 {
 	return sl_get_current_fps(CameraID);
@@ -1619,5 +1636,3 @@ float USlCameraProxy::GetFrameDroppedCount()
 {
 	return sl_get_frame_dropped_count(CameraID);
 }
-
- 

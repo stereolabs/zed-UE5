@@ -7,17 +7,34 @@
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
-AZEDPawn::AZEDPawn()
+AZEDPawn::AZEDPawn() :
+	EnableLerp(true),
+	LerpIntensity(10.0),
+	IsFrozen(false),
+	ToggleFreeze(false),
+	UseRotationOffset(true),
+	StartOffsetLocation(FVector::ZeroVector),
+	PreviousLocation(FVector::ZeroVector),
+	PreviousToCurrentLocation(FVector::ZeroVector),
+	TranslationMultiplier(FVector::OneVector),
+	PrevVirtualLocation(FVector::ZeroVector),
+	VirtualLocation(FVector::ZeroVector)
 {
-	PrimaryActorTick.bCanEverTick = false;
+	TransformOffset = FTransform();
+	ToggleFreeze = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 
 	SpringArm = CreateDefaultSubobject<USceneComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("MainCamera"));
+	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("MainCamera"));
 	Camera->SetupAttachment(SpringArm);
+
+	VirtualCamera = CreateDefaultSubobject<UVCamComponent>(TEXT("VirtualCamera"));
+	VirtualCamera->SetupAttachment(Camera);
+
 	Camera->bConstrainAspectRatio = true;
 	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
 	Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
@@ -72,7 +89,78 @@ AZEDPawn::AZEDPawn()
 
 void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 {
-	SetActorTransform(NewTrackingData.OffsetZedWorldTransform);
+	PreviousLocation = RealCameraTransform.GetLocation();
+	RealCameraTransform = NewTrackingData.OffsetZedWorldTransform;
+	PreviousToCurrentLocation = RealCameraTransform.GetLocation() - PreviousLocation;
+
+	PrevVirtualLocation = VirtualLocation;
+	VirtualLocation = PrevVirtualLocation + RealTranslationToVirtualTranslation(PreviousToCurrentLocation);
+
+	if (ToggleFreeze) {
+		if (IsFrozen) {
+			// set new offset
+			VirtualLocation = GetActorTransform().GetLocation();
+
+			if (UseRotationOffset) {
+				// Get the rotational difference between where the actor is facing and the "real" camera orientation.
+				// [Actor - Real] is [Actor * Real.Inv] in quaternion 
+				TransformOffset.SetRotation(GetActorTransform().GetRotation() * RealCameraTransform.GetRotation().Inverse());
+			}
+			else {
+				TransformOffset.SetRotation(FQuat::Identity);
+			}
+		}
+		IsFrozen = !IsFrozen;
+		ToggleFreeze = false;
+	}
+}
+
+void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset) 
+{
+	StartOffsetLocation = locOffset;
+	PrevVirtualLocation = locOffset;
+	VirtualLocation = locOffset;
+}
+
+void AZEDPawn::Tick(float DeltaSeconds) 
+{
+	if (!IsFrozen) {
+		if (EnableLerp)
+		{
+			// Apply rotational offset on transform as global rotation
+
+			float lerpAlpha = DeltaSeconds * LerpIntensity;
+			LerpTransform = UKismetMathLibrary::TLerp(
+				LerpTransform, 
+				FTransform(
+					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+					VirtualLocation,
+					RealCameraTransform.GetScale3D()
+				),
+				lerpAlpha);
+			SetActorTransform(LerpTransform);
+		}
+		else
+		{
+			SetActorTransform(
+				FTransform(
+					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+					VirtualLocation,
+					RealCameraTransform.GetScale3D()
+				)
+			);
+
+			LerpTransform = RealCameraTransform;
+		}
+	}
+}
+
+/** The realTranslation should be previousToCurrentLocation*/
+FVector AZEDPawn::RealTranslationToVirtualTranslation(const FVector& realTranslation)
+{
+	FVector ret = FVector::ZeroVector;
+	ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	return ret;
 }
 
 void AZEDPawn::InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp)

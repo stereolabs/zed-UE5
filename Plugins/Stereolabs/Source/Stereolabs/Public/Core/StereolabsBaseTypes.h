@@ -233,7 +233,7 @@ enum class ESlFlipMode : uint8
 };
 
 /*
- * SDK Tracking states 
+ * SDK Tracking states
  * See sl::TRACKING_STATE
  */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
@@ -285,8 +285,8 @@ enum class ESlView : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlViewFormat : uint8
 {
-	VF_Signed					 UMETA(DisplayName = "Signed"), //  Each pixel contains 4 signed char 
-	VF_Unsigned					 UMETA(DisplayName = "Unsigned"), //  Each pixel contains 4 unsigned char 
+	VF_Signed					 UMETA(DisplayName = "Signed"), //  Each pixel contains 4 signed char
+	VF_Unsigned					 UMETA(DisplayName = "Unsigned"), //  Each pixel contains 4 unsigned char
 };
 
 /*
@@ -335,14 +335,14 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlRetrieveResult : uint8
 {
 	/** The location is valid and the retrieve returned a valid value */
-	RR_RetrieveValid        UMETA(DisplayName = "Retrieve valid"), 
+	RR_RetrieveValid        UMETA(DisplayName = "Retrieve valid"),
 	/** The location is not valid and no retrieve */
-	RR_LocationNotValid		UMETA(DisplayName = "Retrieve location not valid"), 
+	RR_LocationNotValid		UMETA(DisplayName = "Retrieve location not valid"),
 	/** The location is valid and the normal retrieved is not valid */
-	RR_NormalNotValid		UMETA(DisplayName = "Normal not valid") 
+	RR_NormalNotValid		UMETA(DisplayName = "Normal not valid")
 };
 
-/* 
+/*
  * SDK Error codes
  * see sl::ERROR_CODE
  */
@@ -384,10 +384,10 @@ enum class ESlErrorCode : uint8
 	EC_MotionSensorsRequired         UMETA(DisplayName = "Motion sensors required"),
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
 	// ERROR_CODE_LAST
-	EC_None					  	   UMETA(DisplayName = "No error") 
+	EC_None					  	   UMETA(DisplayName = "No error")
 };
 
-/* 
+/*
  * SDK SVO compression modes
  * see sl::SVO_COMPRESSION_MODE
  */
@@ -401,7 +401,7 @@ enum class ESlSVOCompressionMode : uint8
 	SCM_H265_Lossless	    UMETA(DisplayName = "H265_Lossless")
 };
 
-/* 
+/*
  * SDK spatial memory export state
  * see sl::AREA_EXPORT_STATE
  */
@@ -416,7 +416,7 @@ enum class ESlSpatialMemoryExportingState : uint8
 	SMES_SpatialMemoryDisabled UMETA(DisplayName = "SpatialMemoryDisabled")
 };
 
-/* 
+/*
  * SDK mesh file format
  * see sl::MESH_FILE_FORMAT
  */
@@ -428,7 +428,7 @@ enum class ESlMeshFileFormat : uint8
 	MFF_OBJ					UMETA(DisplayName = "Obj (.obj)")
 };
 
-/* 
+/*
  * SDK mesh texture format
  * see sl::MESH_TEXTURE_FORMAT
  */
@@ -439,7 +439,7 @@ enum class ESlMeshTextureFormat : uint8
 	MTF_RGBA				UMETA(DisplayName = "RGBA")
 };
 
-/* 
+/*
  * SDK camera type
  * see sl::MODEL
  */
@@ -736,7 +736,7 @@ enum class ESlBodyPartsPose34 : uint8 {
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone18 
+struct STEREOLABS_API FSlBone18
 {
 	GENERATED_BODY()
 
@@ -767,7 +767,7 @@ struct STEREOLABS_API FSlBone34
 {
 	GENERATED_BODY()
 
-	FSlBone34() 
+	FSlBone34()
 	{}
 
 	FSlBone34(ESlBodyPartsPose34 first, ESlBodyPartsPose34 second)
@@ -928,12 +928,12 @@ struct STEREOLABS_API FSlCameraInformation
 
 	/** Intrinsic and Extrinsic stereo parameters for rectified images (default) */
 	UPROPERTY(BlueprintReadOnly)
-	FSlCalibrationParameters CalibrationParameters; 
+	FSlCalibrationParameters CalibrationParameters;
 
 	/** Intrinsic and Extrinsic stereo parameters for original images (unrectified) */
 	UPROPERTY(BlueprintReadOnly)
 	FSlCalibrationParameters CalibrationParametersRaw;
-	
+
 	/** Half baseline in selected unit */
 	UPROPERTY(BlueprintReadOnly)
 	float HalfBaseline;
@@ -952,7 +952,7 @@ struct STEREOLABS_API FSlCameraInformation
 
 	/** camera model (ZED or ZED-M) */
 	UPROPERTY(BlueprintReadOnly)
-	ESlModel CameraModel; 
+	ESlModel CameraModel;
 
 	/* Resolution of the camera */
 	UPROPERTY(BlueprintReadOnly)
@@ -1186,7 +1186,7 @@ struct STEREOLABS_API FSlRecordingState
 
 	/** Average compression time in ms since beginning of recording. */
 	UPROPERTY(BlueprintReadOnly)
-	float AverageCompressionTime; 
+	float AverageCompressionTime;
 
 	/** Compression ratio (% of raw size) since beginning of recording. */
 	UPROPERTY(BlueprintReadOnly)
@@ -1423,7 +1423,7 @@ struct STEREOLABS_API FSlVideoSettings
 	/** Gamma, default = 3 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "9"))
 	int32 Gamma;
-	
+
 	/** WhiteBalance */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "2800", ClampMax = "6500"))
 	int32 WhiteBalance;
@@ -1894,7 +1894,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	}
 
 	/*
-	 * Initial position. 
+	 * Initial position.
 	 * If using HMD tracking origin, this is the HMD location.
 	 * If not using HMD tracking origin, this is an offset from origin added to the tracking.
 	 */
@@ -1939,14 +1939,15 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	/* This setting allows you to change the minimum depth used by the SDK for Positional Tracking. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMinRange;
-	/**
-	 *This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
-    * default : true
-	 */
+
+	/** Set Gravity As Origin
+	*This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
+	* default : true
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSetGravityAsOrigin;
 
-	/** Tracking type 
+	/** Tracking type
 	* Allow to chose which tracking is selected for the pawn.
 	* ZED : Zed tracking only
 	* HMD : Hmd tracking only
@@ -1980,7 +1981,7 @@ struct STEREOLABS_API FSlPose
 	/** Timestamp of the pose. This timestamp should be compared with the camera timestamp for synchronization. */
 	FSlTimestamp Timestamp;
 
-	/** 
+	/**
 	 * Confidence/Quality of the pose estimation for the target frame.
 	 * A confidence metric of the tracking [0-100], 0 means that the tracking is lost, 100 means that the tracking can be fully trusted.
 	 */
@@ -2532,7 +2533,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	/* Defines the body format outputed by the sdk when retrieveObjects is called. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlBodyFormat BodyFormat;
-	
+
 	/* Defines a upper depth range for detections. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxRange;
@@ -2691,13 +2692,13 @@ struct STEREOLABS_API FSlObjectData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Dimensions;
 
-	/* A set of useful points representing the human body, expressed in 2D, respect to the original image resolution. 
+	/* A set of useful points representing the human body, expressed in 2D, respect to the original image resolution.
 	* We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector2D> Keypoint2D;
 
-	/* A set of useful points representing the human body, expressed in 3D. We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS. 
+	/* A set of useful points representing the human body, expressed in 3D. We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS.
 	* Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2761,7 +2762,7 @@ USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
 struct STEREOLABS_API FSlAntiDriftParameters
 {
 	GENERATED_BODY()
-		
+
 	const TCHAR* Section = TEXT("HMD");
 
 	FSlAntiDriftParameters()
@@ -2819,7 +2820,7 @@ USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
 struct STEREOLABS_API FSlRenderingParameters
 {
 	GENERATED_BODY()
-		
+
 	const TCHAR* Section = TEXT("Rendering");
 
 	FSlRenderingParameters()
