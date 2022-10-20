@@ -5,6 +5,7 @@
 #include "Animation/AnimInstanceProxy.h"
 #include "Animation/AnimTrace.h"
 #include "Features/IModularFeatures.h"
+#include "Math/Quat.h"
 
 // Index of joints parent
 static TArray<int> ParentsIdx = TArray<int>{
@@ -244,8 +245,19 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 RootPosition.Z += HeightOffset;
                 RootPosition.Z *= rootTranslationFactor;
 
-                Translation = RootPosition;
-                Rotation = ObjectData.GlobalRootOrientation;
+                Translation = FMath::Lerp(
+                    PreviousRootPosition,
+                    RootPosition,
+                    FVector(SlerpIntensity)
+                );
+                PreviousRootPosition = Translation;
+
+                Rotation = FQuat::Slerp(
+                    PreviousRootRotation,
+                    ObjectData.GlobalRootOrientation,
+                    SlerpIntensity
+                );
+                PreviousRootRotation = Rotation;
 
                 if (bMirrorOnZAxis) {
                     Translation.Y *= -1.0f;
@@ -253,7 +265,13 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
             }
             else
             {             
-                Rotation = ObjectData.LocalOrientationPerJoint[idx];
+                Rotation = FQuat::Slerp(
+                    PreviousRotations[idx],
+                    ObjectData.LocalOrientationPerJoint[idx],
+                    SlerpIntensity
+                );
+                PreviousRotations[idx] = Rotation;
+
                 Translation = OutPose[CPIndex].GetTranslation();
             }
 
@@ -271,7 +289,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation().Inverse(), true);
 }
 
-FAnimNode_ZEDPose::FAnimNode_ZEDPose()
+FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
 {
 }
 
@@ -305,6 +323,21 @@ void FAnimNode_ZEDPose::Evaluate_AnyThread(FPoseContext& Output)
 	InputPose.Evaluate(Output);
 
     if (ObjectData.Keypoint.Num() > 0) {
+        if (!PrevDataInitialized) {
+            // Rotations
+            for (int i = 0; i < ObjectData.LocalOrientationPerJoint.Num(); ++i) 
+            { 
+                PreviousRotations.Add(ObjectData.LocalOrientationPerJoint[i]); 
+            }
+
+            // Root position
+            PreviousRootPosition = (ObjectData.Keypoint[0] - FeetOffset + HeightOffset);
+
+            // Root rotation
+            PreviousRootRotation = ObjectData.GlobalRootOrientation;
+
+            PrevDataInitialized = true;
+        }
         BuildPoseFromSlObjectData(Output.Pose);
     }
 }

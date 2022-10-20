@@ -33,6 +33,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	float HeightOffset;
 
+	/** Pose smoothing*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
+	float SlerpIntensity;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	USkeletalMeshComponent* SkeletalMesh;
 
@@ -66,6 +70,13 @@ private:
 	float FeetOffset;
 	// factor used to computer foot offset over time.
 	float Alpha;
+
+	// Used for slerping rotations to avoid stuttering
+	TArray<FQuat> PreviousRotations;
+	FVector PreviousRootPosition;
+	FQuat PreviousRootRotation;	
+	bool PrevDataInitialized;
+
 };
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
