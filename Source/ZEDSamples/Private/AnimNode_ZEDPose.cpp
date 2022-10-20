@@ -251,12 +251,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                     Translation.Y *= -1.0f;
                 }
             }
-            else if (idx == 12 || idx == 5) { // Clamp left and right arm X rotation to prevent impossible pose
-                FVector RotationEuler = ObjectData.LocalOrientationPerJoint[idx].Euler();
-                RotationEuler.X = FMath::Clamp(RotationEuler.X, -85, 85);
-                Rotation = FQuat::MakeFromEuler(RotationEuler);
-                Translation = OutPose[CPIndex].GetTranslation();
-            }
             else
             {             
                 Rotation = ObjectData.LocalOrientationPerJoint[idx];

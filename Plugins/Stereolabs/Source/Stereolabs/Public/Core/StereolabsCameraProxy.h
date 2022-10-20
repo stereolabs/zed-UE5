@@ -922,13 +922,9 @@ private:
 
 	/** Camera informations needed if camera disconnected */
 	SL_CameraInformation* SlCameraInformation;
- 
-<<<<<<< HEAD
+
+	/** Pointer to image grabbed. Used internally.*/
 	void* UnsignedLeftImage;
-=======
-	/** Pointer to image grabbed*/
-	void* InMat;
->>>>>>> main
 
 private:
 	/** Underlying Zed camera */
