@@ -116,7 +116,11 @@ static TMap<int, FName> KeypointsMirrored = TMap<int, FName>{
     {33, "LEFT_HEEL"}
 };
 
-float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData) {
+#define DISTANCE_THRESH 2
+#define HEIGHT_THRESH 2
+
+float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData) 
+{
     float avatarTotalTranslation = 0.f;
     float SDKTotalTranslation = 0.f;
     for (int32 i = 23; i < 25; i++)
@@ -138,7 +142,8 @@ float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, con
     return FMath::Abs(scale * factor);
 }
 
-FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPose) {
+FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPose) 
+{
     FName Name = bMirrorOnZAxis ? KeypointsMirrored[i] : Keypoints[i];
     FName BoneName = RemapAsset[Name];
     const int32 MeshIndex = OutPose.GetBoneContainer().GetPoseBoneIndexForBoneName(BoneName);
@@ -149,10 +154,10 @@ FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPo
         return CPIndex;
     }
     return (FCompactPoseBoneIndex)INDEX_NONE;
-
 }
 
-void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames) {
+void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames) 
+{
     for (auto & i : SourceBoneNames)
     {
         int idx = bMirrorOnZAxis ? *KeypointsMirrored.FindKey(i) : *Keypoints.FindKey(i);
@@ -166,7 +171,8 @@ void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> Source
 }
 
 void FAnimNode_ZEDPose::PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse) {
-    for (int32 i = 0; i < ParentsIdx.Num(); i++) {
+    for (int32 i = 0; i < ParentsIdx.Num(); i++) 
+    {
         FCompactPoseBoneIndex CPIndex = GetCPIndex(i, OutPose);
         if (ParentsIdx[i] == parentIdx)
         {
@@ -189,7 +195,8 @@ void FAnimNode_ZEDPose::PropagateRestPoseRotations(int32 parentIdx, FCompactPose
     }
 }
 
-void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) {
+void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) 
+{
     TArray<FName> SourceBoneNames;
     SourceBoneNames.SetNum(RemapAsset.Num());
     RemapAsset.GetKeys(SourceBoneNames);
@@ -197,21 +204,23 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) {
     PutInRefPose(OutPose, SourceBoneNames);
     FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
 
-    if (ObjectData.KeypointConfidence.Num() == 34) {
-        if (ObjectData.KeypointConfidence[20] != 0 && ObjectData.KeypointConfidence[24] != 0) { //if both foot are visible/detected
+    float LeftFootHeight = 0;
+    float RightFootHeight = 0;
+    if (ObjectData.KeypointConfidence.Num() == 34) 
+    {
+        if (ObjectData.KeypointConfidence[20] != 0 && ObjectData.KeypointConfidence[24] != 0) //if both foot are visible/detected
+        { 
             if (SkeletalMesh) {
-                float LeftFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["LEFT_FOOT"]).Z;
-                float RightFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["RIGHT_FOOT"]).Z;
+                LeftFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["LEFT_FOOT"]).Z;
+                RightFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["RIGHT_FOOT"]).Z;
                 FeetOffset = Alpha * fmin(LeftFootHeight, RightFootHeight) + (1 - Alpha) * FeetOffset;
-
             }       
         }
     }
 
     if (CPIndexRoot != INDEX_NONE)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation(), false);
-
-
+    
     //// Iterate over remapped bone names, find the index of that bone on the skeleton, and apply the pose data.
     for (auto& i : SourceBoneNames)
     {
@@ -228,7 +237,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) {
             {
                 float rootTranslationFactor = ComputeRootTranslationFactor(OutPose, ObjectData);
                 FVector RootPosition = ObjectData.Keypoint[0];
-                FCompactPoseBoneIndex leftUpLegIndex = GetCPIndex(18, OutPose);
+                FCompactPoseBoneIndex leftUpLegIndex = GetCPIndex(18, OutPose); // 18 = LEFT_HIP
                 float HipOffset = FMath::Abs(OutPose[leftUpLegIndex].GetTranslation().Z) *OutPose[CPIndexRoot].GetScale3D().Z;
                 RootPosition.Z += HipOffset;
                 RootPosition.Z -= FeetOffset;
@@ -243,7 +252,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) {
                 }
             }
             else
-            {
+            {             
                 Rotation = ObjectData.LocalOrientationPerJoint[idx];
                 Translation = OutPose[CPIndex].GetTranslation();
             }
@@ -257,7 +266,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose) {
             OutPose[CPIndex].SetRotation(FinalRotation);
             OutPose[CPIndex].SetTranslation(Translation);
         }
-
     }
     if (CPIndexRoot != INDEX_NONE)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation().Inverse(), true);
@@ -305,7 +313,6 @@ void FAnimNode_ZEDPose::CacheBones_AnyThread(const FAnimationCacheBonesContext &
 {
 	Super::CacheBones_AnyThread(Context);
 	InputPose.CacheBones(Context);
-
 }
 
 bool FAnimNode_ZEDPose::Serialize(FArchive& Ar)

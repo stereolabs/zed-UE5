@@ -891,6 +891,9 @@ private:
 	/** Runtime parameters */
 	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
 
+	/** OD parameters */
+	FSlObjectDetectionParameters ObjectDetectionParameters;
+
 private:
 	/** A worker to thread the Grab calls */
 	class FSlGrabRunnable* GrabWorker;
@@ -919,9 +922,9 @@ private:
 
 	/** Camera informations needed if camera disconnected */
 	SL_CameraInformation* SlCameraInformation;
- 
-	/** Pointer to image grabbed*/
-	void* InMat;
+
+	/** Pointer to image grabbed. Used internally.*/
+	void* UnsignedLeftImage;
 
 private:
 	/** Underlying Zed camera */

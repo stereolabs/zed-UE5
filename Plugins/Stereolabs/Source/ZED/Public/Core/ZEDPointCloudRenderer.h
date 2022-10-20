@@ -11,6 +11,8 @@
 
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 
+#include <chrono>
+
 #include "ZEDPointCloudRenderer.generated.h"
 
 UCLASS(Category = "Stereolabs|Zed")
@@ -51,6 +53,9 @@ private:
 
 	//Point Cloud resolution
 	FIntPoint Resolution;
+
+	float Fps;
+	std::chrono::milliseconds PreviousTS;
 
 protected:
 	// Called when the game starts or when spawned

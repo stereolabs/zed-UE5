@@ -5,8 +5,6 @@ AZEDPointCloudRenderer::AZEDPointCloudRenderer()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
-
 }
 
 // Just the destructor:
@@ -27,6 +25,8 @@ void AZEDPointCloudRenderer::BeginPlay()
 	{
 		UpdateTextures(ErrorCode, Timestamp);
 	});
+
+	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 }
 
 void AZEDPointCloudRenderer::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -35,12 +35,16 @@ void AZEDPointCloudRenderer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	FlushRenderingCommands();
 
+	Runtime = 0;
+
 	if (GSlCameraProxy)
 	{
 		GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
 
 		GSlCameraProxy->OnCameraOpened.RemoveDynamic(this, &AZEDPointCloudRenderer::Init);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("FPS PC %f"), Fps);
+
 }
 
 /**
@@ -103,7 +107,6 @@ void AZEDPointCloudRenderer::Init()
 	ColorTexture->UpdateResource();
 	// Set the niagara system user variables:
 	SetNiagaraVariableTexture(RendererInstance, "User.PositionTexture", VerticeTexture);
-	SetNiagaraVariableTexture(RendererInstance, "User.PointCloudTexture", VerticeTexture);
 	SetNiagaraVariableTexture(RendererInstance, "User.ColorTexture", ColorTexture);
 
 	RendererInstance->SetVariableInt("User.TextureWidth", Resolution.X);
@@ -116,28 +119,40 @@ void AZEDPointCloudRenderer::Init()
 
 void AZEDPointCloudRenderer::UpdateTextures(ESlErrorCode ErrorCode, FSlTimestamp Timestamp) 
 {
-	if (ErrorCode != ESlErrorCode::EC_Success)
-	{
-		return;
-	}
-
-	if (sl_mat_is_init(Vertices)) sl_retrieve_measure(GSlCameraProxy->GetCameraID(), Vertices, SL_MEASURE_XYZ, SL_MEM_CPU, Resolution.X, Resolution.Y);
-	else UE_LOG(LogTemp, Warning, TEXT("Positions is not init"));
-
-	if (sl_mat_is_init(Colors)) sl_retrieve_image(GSlCameraProxy->GetCameraID(), Colors, SL_VIEW_LEFT, SL_MEM_GPU, Resolution.X, Resolution.Y);
-	else UE_LOG(LogTemp, Warning, TEXT("Colors is not init"));
-
-	sl_convert_image(Colors, SignedColors, 0);
-	sl_mat_update_cpu_from_gpu(SignedColors);
-	if (Runtime < 0) {
+	if (Runtime < 0 || ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Not initialized"));
 		return;
 	}
 
-	AsyncTask(ENamedThreads::GameThread, [=]() {
-		VerticeTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(Vertices, SL_MEM_CPU), sl_mat_get_pixel_bytes(Vertices), (uint8*)sl_mat_get_ptr(Vertices, SL_MEM_CPU));
-		ColorTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(SignedColors, SL_MEM_CPU), sl_mat_get_pixel_bytes(SignedColors), (uint8*)sl_mat_get_ptr(SignedColors, SL_MEM_CPU));
+	if (sl_mat_is_init(Vertices)) sl_retrieve_measure(GSlCameraProxy->GetCameraID(), Vertices, SL_MEASURE_XYZ, SL_MEM_CPU, Resolution.X, Resolution.Y);
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Vertices is not init"));
+		return;
+	}
+
+	if (sl_mat_is_init(Colors)) sl_retrieve_image(GSlCameraProxy->GetCameraID(), Colors, SL_VIEW_LEFT, SL_MEM_GPU, Resolution.X, Resolution.Y);
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Colors is not init"));
+		return;
+	}
+
+	sl_convert_image(Colors, SignedColors, 0);
+	sl_mat_update_cpu_from_gpu(SignedColors);
+
+
+	AsyncTask(ENamedThreads::ActualRenderingThread, [=]() {
+		if (VerticeTexture) VerticeTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(Vertices, SL_MEM_CPU), sl_mat_get_pixel_bytes(Vertices), (uint8*)sl_mat_get_ptr(Vertices, SL_MEM_CPU));
+		if (ColorTexture) ColorTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(SignedColors, SL_MEM_CPU), sl_mat_get_pixel_bytes(SignedColors), (uint8*)sl_mat_get_ptr(SignedColors, SL_MEM_CPU));
 	});
+
+	// Compute OD FPS
+	std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	auto ObjectDetectionTime = now.count() - PreviousTS.count();
+	float CurrentFPS = (1000.0f / ObjectDetectionTime);
+	Fps = (Fps + CurrentFPS) / 2;
+	PreviousTS = now;
 }
 
 // Called every frame

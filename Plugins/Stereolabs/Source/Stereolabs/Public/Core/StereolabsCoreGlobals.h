@@ -1670,7 +1670,7 @@ namespace sl
 		}
 
 
-		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData)
+		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData, ESlBodyFormat BodyFormat)
 		{
 			FSlObjectData ObjectData;
 			
@@ -1700,9 +1700,9 @@ namespace sl
 				ObjectData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
 			}
 
-			//ObjectData.dimension = ToUnrealType(SlData.dimensions);
+			int NbKP = BodyFormat == ESlBodyFormat::BF_POSE_34 ? 34 : 18;
 
-			for (int i = 0; i < 34; i++) {
+			for (int i = 0; i < NbKP; i++) {
 
 				ObjectData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
 				ObjectData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
@@ -1724,7 +1724,7 @@ namespace sl
 			return ObjectData;
 		}
 
-		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData)
+		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData, ESlBodyFormat BodyFormat)
 		{
 			FSlObjects objects;
 
@@ -1734,7 +1734,7 @@ namespace sl
 
 			objects.ObjectsList.SetNum(SlData.nb_object);
 			for (int i = 0; i < SlData.nb_object; i++) {
-				objects.ObjectsList[i] = sl::unreal::ToUnrealType(SlData.object_list[i]);
+				objects.ObjectsList[i] = sl::unreal::ToUnrealType(SlData.object_list[i], BodyFormat);
 			}
 			objects.bIsTracked = (bool)SlData.is_tracked;
 

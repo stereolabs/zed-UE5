@@ -15,17 +15,7 @@ bool FSlAIDetectionRunnable::Init()
 
 uint32 FSlAIDetectionRunnable::Run()
 {
-	FPlatformProcess::SleepNoStats(0.0f);
-
-	/*while (bIsRunning)
-	{
-		if (GSlCameraProxy->IsObjectDetectionEnabled()) 
-		{
-			GSlCameraProxy->RetrieveObjects();
-
-		}
-		FPlatformProcess::SleepNoStats(0.001f);
-	}*/
+	FPlatformProcess::SleepNoStats(0.001f);
 
 	return 0;
 }
@@ -38,7 +28,8 @@ void FSlAIDetectionRunnable::Stop()
 
 	GSlCameraProxy->RemoveFromGrabDelegate(AIRetrieveDelegateHandle);
 
-	SL_LOG(SlGrabThread, "AI Thread stopped");
+	SL_LOG(SlAIThread, "AI Thread stopped");
+	SL_LOG(SlAIThread, "FPS OD %f", Fps);
 }
 
 void FSlAIDetectionRunnable::Exit()
@@ -61,7 +52,9 @@ void FSlAIDetectionRunnable::Start(float Frequency)
 			RetrieveObjects(ErrorCode, Timestamp);
 		});
 
-	SL_LOG(SlGrabThread, "AI Thread started");
+
+	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	SL_LOG(SlAIThread, "AI Thread started ");
 }
 
 void FSlAIDetectionRunnable::RetrieveObjects(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
@@ -69,5 +62,13 @@ void FSlAIDetectionRunnable::RetrieveObjects(ESlErrorCode ErrorCode, const FSlTi
 	if (bIsRunning && GSlCameraProxy->IsObjectDetectionEnabled())
 	{
 		GSlCameraProxy->RetrieveObjects();
+
+		// Compute OD FPS
+		std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+		auto ObjectDetectionTime = now.count() - PreviousTS.count();
+		float CurrentFPS = (1000.0f / ObjectDetectionTime);
+
+		Fps = (Fps + CurrentFPS) / 2;
+		PreviousTS = now;
 	}
 }
