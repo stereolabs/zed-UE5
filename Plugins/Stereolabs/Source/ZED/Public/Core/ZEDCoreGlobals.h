@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ZED/Public/Core/ZEDBaseTypes.h"
+#include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 
 #include "sl_mr_core/defines.hpp"
 
@@ -32,8 +33,8 @@ namespace sl
 		{
 			sl::mr::trackingData TrackingData;
 
-			TrackingData.zedPathTransform = sl::unreal::ToEigenType(UnrealType.ZedPathTransform);
-			TrackingData.zedWorldTransform = sl::unreal::ToEigenType(UnrealType.ZedWorldTransform);
+			TrackingData.zedPathTransform = ToEigenType(UnrealType.ZedPathTransform);
+			TrackingData.zedWorldTransform = ToEigenType(UnrealType.ZedWorldTransform);
 			TrackingData.trackingState = (int)sl::unreal::ToSlType(UnrealType.TrackingState);
 
 			return TrackingData;

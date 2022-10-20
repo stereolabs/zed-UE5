@@ -82,28 +82,29 @@ public:
 	bool UseRotationOffset;
 
 	/** Has the camera been frozen by the toggle freeze*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool IsFrozen;
-
-	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool ToggleLockRotation;
-
-	/** Lock the rotation*/
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	bool IsLockRotation;
-
-	/** Use locked rotation*/
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FQuat LockedRotation;
-
-	FQuat RotationToUse;
 
 	/** Set the location offset, i.e. when starting the level */
 	UFUNCTION()
 	void SetStartOffsetLocation(const FVector& locOffset);
 
 	FVector StartOffsetLocation;
+	
+	/** The previous location given by the slcamera (not the last frame)*/
+	FVector PreviousLocation;
+	
+	/** From Previous to current location given by the slcamera*/
+	FVector PreviousToCurrentLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TranslationMultiplier;
+
+	FVector RealTranslationToVirtualTranslation(const FVector& realTranslation);
+	/** The new virtual target location for lerp and direct movement*/
+	FVector VirtualLocation;
+	FVector PrevVirtualLocation;
+
 
 	/** Zed loading widget */
 	UPROPERTY()

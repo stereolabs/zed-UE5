@@ -176,6 +176,8 @@ void USlCameraProxy::BeginDestroy()
 		GrabWorker->EnsureCompletion();
 		delete GrabWorker;
 		GrabWorker = nullptr;
+
+		if (InMat != nullptr) sl_mat_free(InMat, SL_MEM_GPU);
 	}
 
 	// Disable measures thread
@@ -428,7 +430,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	sl_positional_tracking_parameters.initial_world_rotation = sl::unreal::ToSlType(NewTrackingParameters.Rotation.Quaternion());
 	sl_positional_tracking_parameters.set_as_static = NewTrackingParameters.bSetAsStatic;
 	sl_positional_tracking_parameters.set_floor_as_origin = NewTrackingParameters.bSetFloorAsOrigin;
-	sl_positional_tracking_parameters.sensors_world = (SL_SENSOR_WORLD)NewTrackingParameters.SensorsWorld;
+	sl_positional_tracking_parameters.set_gravity_as_origin = NewTrackingParameters.bSetGravityAsOrigin;
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		ErrorCode = (SL_ERROR_CODE)sl_enable_positional_tracking(CameraID, &sl_positional_tracking_parameters, TCHAR_TO_UTF8(*NewTrackingParameters.AreaFilePath));
@@ -943,7 +945,8 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveImage);
 
-	void* InMat = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
+	// Initialize once
+	if (InMat == nullptr) InMat = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
 
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, InMat, (SL_VIEW)ViewType, SL_MEM_GPU, Resolution.X, Resolution.Y);
 	
@@ -964,7 +967,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		ErrorCode = (SL_ERROR_CODE)sl_convert_image(InMat, Mat, 0);
 	}
 
-	sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
+	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
 
 	if (MemoryType == ESlMemoryType::MT_CPU)
 	{
@@ -980,6 +983,23 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	return true;
 #else
+
+	if (ViewFormat == ESlViewFormat::VF_Unsigned)
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(InMat, Mat, SL_COPY_TYPE_GPU_GPU);
+	}
+	else
+	{
+		ErrorCode = (SL_ERROR_CODE)sl_convert_image(InMat, Mat, 0);
+	}
+
+	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
+
+	if (MemoryType == ESlMemoryType::MT_CPU)
+	{
+		sl_mat_update_cpu_from_gpu(Mat);
+	}
+
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 #endif
 }

@@ -6,7 +6,9 @@
 
 #include "ZED/Public/Core/ZEDCamera.h"
 #include "ZED/Public/Core/ZEDPawn.h"
-#include "ZED/Public/Core/ZEDBaseTypes.h"
+#include "ZED/Public/Core/ZEDBaseTypes.h"	
+
+#include "Components/TimelineComponent.h"
 
 #include <sl_mr_core/Rendering.hpp>
 
