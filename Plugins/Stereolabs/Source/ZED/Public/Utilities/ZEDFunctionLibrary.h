@@ -10,6 +10,10 @@
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 
+#include "ProceduralMeshComponent.h"
+#include "ProceduralMeshConversion.h"
+#include "StaticMeshDescription.h"
+
 #include "ZEDFunctionLibrary.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(ZEDFunctionLibrary, Log, All);
@@ -566,4 +570,79 @@ public:
 	{
 		return BodyBonesPose18;
 	}
+
+	// -------------------------------------------------------------
+	// -------------------------------------------------------------
+	//  Tests conversion procedural mesh to static mesh
+	// -------------------------------------------------------------
+	// -------------------------------------------------------------
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Convert Procedural Mesh to Static Mesh", Keywords = "Convert Proc Procedural Mesh 2 Stat Static Mesh ProcMesh2StatMesh"), Category = "Stereolabs|Zed")
+	static UStaticMesh* ProcMesh2StatMesh(UProceduralMeshComponent* ProcMesh)
+	{
+		if (!ProcMesh)
+			return nullptr;
+
+		FMeshDescription MeshDescription = BuildMeshDescription(ProcMesh);
+
+		// If we got some valid data.
+		if (MeshDescription.Polygons().Num() > 0)
+		{
+			// Create StaticMesh object
+			UStaticMesh* StaticMesh = NewObject<UStaticMesh>(ProcMesh/*Package, MeshName, RF_Public | RF_Standalone*/);
+			StaticMesh->InitResources();
+
+			StaticMesh->SetLightingGuid();
+
+			// Add source to new StaticMesh
+			auto Desc = StaticMesh->CreateStaticMeshDescription();
+			Desc->SetMeshDescription(MeshDescription);
+			// buildSimpleCol = false, cause it creates box collision based on mesh bounds or whatever :(
+			StaticMesh->BuildFromStaticMeshDescriptions({ Desc }, false);
+			//StaticMesh->BuildFromStaticMeshDescriptions({ Desc }, true);
+
+			//// SIMPLE COLLISION
+			if (!ProcMesh->bUseComplexAsSimpleCollision)
+			{
+				StaticMesh->CreateBodySetup();
+				UBodySetup* NewBodySetup = StaticMesh->GetBodySetup();
+				NewBodySetup->BodySetupGuid = FGuid::NewGuid();
+				NewBodySetup->AggGeom.ConvexElems = ProcMesh->ProcMeshBodySetup->AggGeom.ConvexElems;
+
+				UE_LOG(LogTemp, Warning, TEXT("[ZEDFunctionLibrary.h]ConvexElems : %d"), ProcMesh->ProcMeshBodySetup->AggGeom.ConvexElems.Num());
+
+				NewBodySetup->bGenerateMirroredCollision = false;
+				NewBodySetup->bDoubleSidedGeometry = true;
+				// Play around with the flag below if you struggle with collision not working
+				// NewBodySetup->CollisionTraceFlag = CTF_UseDefault;
+				NewBodySetup->CollisionTraceFlag = CTF_UseSimpleAndComplex;
+				NewBodySetup->CreatePhysicsMeshes();
+			}
+
+			/* Commented out cause I don't need it
+			//// MATERIALS
+			TSet<UMaterialInterface*> UniqueMaterials;
+			const int32 NumSections = ProcMesh->GetNumSections();
+			for (int32 SectionIdx = 0; SectionIdx < NumSections; SectionIdx++)
+			{
+				FProcMeshSection *ProcSection =
+					ProcMesh->GetProcMeshSection(SectionIdx);
+				UMaterialInterface *Material = ProcMesh->GetMaterial(SectionIdx);
+				UniqueMaterials.Add(Material);
+			}
+			// Copy materials to new mesh
+			for (auto* Material : UniqueMaterials)
+			{
+				StaticMesh->GetStaticMaterials().Add(FStaticMaterial(Material));
+			}
+			*/
+
+			// Uncallable in game runtime
+			// StaticMesh->Build(false);
+
+			return StaticMesh;
+		}
+
+		return nullptr;
+	}
+
 };
