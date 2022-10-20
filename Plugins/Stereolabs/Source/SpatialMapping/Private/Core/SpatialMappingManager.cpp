@@ -38,7 +38,7 @@ void ASpatialMappingManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void ASpatialMappingManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
+	GSlCameraProxy->GetWorld();
 	if (bStepFailed)
 	{
 		bStepFailed = false;

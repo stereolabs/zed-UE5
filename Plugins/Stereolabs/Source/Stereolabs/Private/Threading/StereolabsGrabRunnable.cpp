@@ -19,9 +19,17 @@ uint32 FSlGrabRunnable::Run()
 	{
 		GSlCameraProxy->Grab();
 
+
+		// Compute Grab fps.
+		std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+		auto GrabTime = now.count() - PreviousTS.count();
+		float CurrentFPS = (1000.0f / GrabTime);
+		Fps = (Fps + CurrentFPS) / 2;
+		PreviousTS = now;
 		FPlatformProcess::SleepNoStats(0.001f);
 	}
 
+	SL_LOG(SlGrabThread, "FPS image %f", Fps);
 	return 0;
 }
 
@@ -49,6 +57,9 @@ void FSlGrabRunnable::Start(float Frequency)
 	Thread = FRunnableThread::Create(this, *ThreadName, 0, TPri_BelowNormal);
 	GSlGrabThreadId = Thread->GetThreadID();
 	GSlIsGrabThreadIdInitialized = true;
+
+	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	Fps = 0;
 
 	SL_LOG(SlGrabThread, "Thread started");
 }

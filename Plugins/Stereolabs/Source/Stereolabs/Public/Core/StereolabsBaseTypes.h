@@ -467,19 +467,6 @@ enum class ESlReferenceFrame : uint8
 };
 
 /*
- * Defines the world type that the SDK can use to initialize the Positionnal Tracking module
- * see sl::SENSOR_WORLD
- */
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlSensorWorld : uint8
-{
-	/** The SDK takes the user initial pose without any modification as the world position of the Positional Tracking module.*/
-	SW_Off	    			UMETA(DisplayName = "Off"),
-	/** Align the positional tracking world to imu gravity measurement. keep the yaw from the user initial pose.*/
-	SW_ImuGravity			UMETA(DisplayName = "IMU gravity")
-};
-
-/*
  * SDK time reference
  * see sl::TIME_REFERENCE
  */
@@ -1781,7 +1768,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		SensorsWorld(ESlSensorWorld::SW_ImuGravity),
+		bSetGravityAsOrigin(true),
 		TrackingType(ETrackingType::TrT_ZED)
 	{
 	}
@@ -1953,12 +1940,11 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMinRange;
 	/**
-	 *This setting allows you to set the odometry world using sensors data. For example, if IMU world is chosen, the initial_world_transform
-	 * will be aligned with IMU gravity by keeping user's yaw.
-	 * default : IMU_GRAVITY
+	 *This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
+    * default : true
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlSensorWorld SensorsWorld;
+	bool bSetGravityAsOrigin;
 
 	/** Tracking type 
 	* Allow to chose which tracking is selected for the pawn.
@@ -2630,80 +2616,121 @@ struct STEREOLABS_API FSlObjectData
 
 	const TCHAR* Section = TEXT("ObjectData");
 
+	/* Object identification number, used as a reference when tracking the object through the frames.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Id;
 
+	/* Unique ID to help identify and track AI detections. Can be either generated externally, or using generate_unique_id() or left empty.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString UniqueObjectId;
 
+	/* Object label, forwarded from CustomBoxObjectData when using DETECTION_MODEL::CUSTOM_BOX_OBJECTS.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int RawLabel;
 
+	/* Object category. Identify the object type.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectClass Label;
 
+	/* Object subclass.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectSubClass Sublabel;
 
+	/* Defines the object tracking state.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectTrackingState TrackingState;
 
+	/* Defines the object action state.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectActionState ActionState;
 
+	/* Defines the object 3D centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Position;
 
+	/* Defines the object 3D velocity Defined in sl:InitParameters::UNIT / seconds, expressed in RuntimeParameters::measure3D_reference_frame.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Velocity;
 
+	/* the covariance matrix of the 3d position, represented by its upper triangular matrix value
+	*	[p0, p1, p2]
+	*	[p1, p3, p4]
+	*	[p2, p4, p5]
+	*	where pi is position_covariance[i]*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<float> PositionCovariance;
 
+	/*2D bounding box of the person represented as four 2D points starting at the top left corner and rotation clockwise. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
+	*	A ------ B
+	*	| Object |
+	*	D ------ C
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector2D> BoundingBox2D;
 
+	/* Defines for the bounding_box_2d the pixels which really belong to the object (set to 255) and those of the background (set to 0).*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSlMat Mask;
 
+	/* Defines the detection confidence value of the object. From 0 to 100, a low value means the object might not be localized perfectly or the label (OBJECT_CLASS) is uncertain.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Confidence;
 
+	/* 3D bounding box of the person represented as eight 3D points Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
+	*	  1 ------ 2
+	*	 /        /|
+	*	0 ------ 3 |
+	*	| Object | 6
+	*	|        |/
+	*	4 ------ 7
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector> BoundingBox;
 
+	/* 3D object dimensions: width, height, length Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Dimensions;
 
+	/* A set of useful points representing the human body, expressed in 2D, respect to the original image resolution. 
+	* We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector2D> Keypoint2D;
 
+	/* A set of useful points representing the human body, expressed in 3D. We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS. 
+	* Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector> Keypoint;
 
+	/* Bounds the head with four 2D points. Expressed in pixels on the original image resolution.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector2D> HeadBoundingBox2D;
 
+	/* Bounds the head with eight 3D points. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector> HeadBoundingBox;
 
+	/* 3D head centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector HeadPosition;
 
+	/* Per keypoint detection confidence, can not be lower than the ObjectDetectionRuntimeParameters::detection_confidence_threshold.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<float> KeypointConfidence;
 
+	/* Per keypoint local position (the position of the child keypoint with respect to its parent expressed in its parent coordinate frame)*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FVector> LocalPositionPerJoint;
 
+	/* Per keypoint local orientation.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FQuat> LocalOrientationPerJoint;
 
+	/* global root orientation of the skeleton. The orientation is also represented by a quaternion with the same format as local_orientation_per_joint*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FQuat GlobalRootOrientation;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//TArray<TPair<FVector, FVector>> BodyBones; TODO : Implement and fill with the positions of the end of the bones.
 };
 
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")

@@ -283,6 +283,8 @@ FVector2D USlFunctionLibrary::GetHmdFocale()
 
 void USlFunctionLibrary::Set3DBoxTransform(AActor*& BBox, const FSlObjectData ObjectData) {
 
+	if (!GSlCameraProxy) return;
+
 	// GET ZED camera position. 
 	SL_PoseData SL_Pose;
 	GSlCameraProxy->GetCameraPosition(&SL_Pose, SL_REFERENCE_FRAME_WORLD);
@@ -330,4 +332,13 @@ void USlFunctionLibrary::Set3DBoxTransform(AActor*& BBox, const FSlObjectData Ob
 
 		Label->SetText(text);
 	}
+}
+
+float USlFunctionLibrary::GetSkeletonBoneHeight(const USkeletalMeshComponent* SkeletalMesh, const FName BoneName) 
+{
+	float Height = -1;
+	if (SkeletalMesh) {
+		Height = SkeletalMesh->GetBoneLocation(BoneName, EBoneSpaces::ComponentSpace).Z;
+	}
+	return Height;
 }

@@ -248,4 +248,8 @@ public:
 	/* Compute 3d box position, orientation and scale based on Objectdata informations*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set3DBoxTransform"), Category = "Stereolabs")
 	static void Set3DBoxTransform(UPARAM(ref) AActor*& BBox, const FSlObjectData ObjectData);
+
+	/* return the height of a Skeletal bone*/
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "GetSkeletonBoneHeight"), Category = "Stereolabs")
+	static float GetSkeletonBoneHeight(const USkeletalMeshComponent* SkeletalMesh, const FName BoneName);
 };

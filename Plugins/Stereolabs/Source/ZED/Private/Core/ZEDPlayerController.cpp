@@ -726,25 +726,8 @@ void AZEDPlayerController::ZedCameraActorInitialized()
 	ZedPawn->Camera->PostProcessSettings.bPostProcessing = false;
 	ZedPawn->Camera->CameraRenderingSettings.bLighting = false;*/
 
-	//if (bHMDEnabled)
-	//{
-	//	FString Command = FString::Printf(TEXT("r.VirtualObjects.BlurSigma %f"), STEREO_BLUR_SIGMA);
-	//	ConsoleCommand(Command);
-	//}
-
-	//// Full HD or 2k
-	//if (GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution.X >= 1920)
-	//{
-	//	// Disable blur
-	//	FString Command = FString::Printf(TEXT("r.VirtualObjects.BlurSigma %f"), 0);
-	//	ConsoleCommand(Command);
-	//}
-
 	ZedPawn->ZedLoadingWidget->SetVisibility(false);
 	ZedPawn->ZedErrorWidget->SetVisibility(false);
-
-	//bUseShowOnlyList = false;
-	//ShowOnlyPrimitiveComponents.Empty();
 
 	GetWorldTimerManager().SetTimer(FadeOutTimerHandle, this, &AZEDPlayerController::FadeOutToGame, 1.0f, false);
 
@@ -843,8 +826,8 @@ void AZEDPlayerController::Internal_ZedCameraDisconnected()
 	ZedPawn->Camera->PostProcessSettings.bPostProcessing = true;
 	ZedPawn->Camera->CameraRenderingSettings.bLighting = true;
 	ZedPawn->Camera->CameraRenderingSettings.bVelocity = true;
-
 	ZedPawn->Camera->PostProcessSettings.bVirtualObjectsPostProcess = false;*/
+
 	ZedPawn->Camera->AddOrUpdateBlendable(PostProcessZedMaterialInstanceDynamic, 0.0f);
 
 	ZedCamera->DisableRenderingCpp();

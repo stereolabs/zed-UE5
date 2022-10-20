@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Stereolabs/Public/Threading/StereolabsRunnable.h"
+#include <chrono>
 
 DECLARE_LOG_CATEGORY_EXTERN(SlAIThread, Log, All);
 
@@ -19,4 +20,8 @@ public:
 	void RetrieveObjects(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp);
 
 	FDelegateHandle AIRetrieveDelegateHandle;
+
+private :
+	float Fps;
+	std::chrono::milliseconds PreviousTS;
 };

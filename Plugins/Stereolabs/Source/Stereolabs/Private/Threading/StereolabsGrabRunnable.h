@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Stereolabs/Public/Threading/StereolabsRunnable.h"
+#include <chrono>
 
 DECLARE_LOG_CATEGORY_EXTERN(SlGrabThread, Log, All);
 
@@ -17,4 +18,9 @@ public:
 	virtual void Stop() override;
 	virtual void Exit() override;
 	virtual void Start(float Frequency) override;
+
+private :
+
+	std::chrono::milliseconds PreviousTS;
+	float Fps;
 };
