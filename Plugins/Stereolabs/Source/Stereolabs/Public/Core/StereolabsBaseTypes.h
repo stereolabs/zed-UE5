@@ -1781,7 +1781,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		SensorsWorld(ESlSensorWorld::SW_ImuGravity),
+		bSetGravityAsOrigin(true),
 		TrackingType(ETrackingType::TrT_ZED)
 	{
 	}
@@ -1952,13 +1952,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	/* This setting allows you to change the minimum depth used by the SDK for Positional Tracking. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMinRange;
-	/**
-	 *This setting allows you to set the odometry world using sensors data. For example, if IMU world is chosen, the initial_world_transform
-	 * will be aligned with IMU gravity by keeping user's yaw.
-	 * default : IMU_GRAVITY
-	 */
+
+	/** Set Gravity As Origin
+	*This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
+	* default : true
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlSensorWorld SensorsWorld;
+	bool bSetGravityAsOrigin;
 
 	/** Tracking type 
 	* Allow to chose which tracking is selected for the pawn.

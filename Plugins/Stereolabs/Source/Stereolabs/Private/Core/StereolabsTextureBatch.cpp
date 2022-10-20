@@ -161,7 +161,7 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
 				}
 
-				GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution);
+				GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution, static_cast<USlViewTexture*>(Texture)->ViewFormat);
 			}
 #endif
 

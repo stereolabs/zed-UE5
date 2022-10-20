@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/WidgetComponent.h"
+#include "Components/TimelineComponent.h"
 
 #include "ZEDWidgetComponent.generated.h"
 

@@ -1199,11 +1199,9 @@ struct SL_PositionalTrackingParameters
 	 */
 	float depth_min_range;
 	/**
-	 * @brief This setting allows you to set the odometry world using sensors data. For example, if IMU world is chosen, the initial_world_transform
-	 * will be aligned with IMU gravity by keeping user's yaw.
-	 * default : 0 : the initial_world_transform from user is keept without any modification.
+	 * @brief This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
 	 */
-	enum SL_SENSOR_WORLD sensors_world;
+	bool set_gravity_as_origin;
 };
 
 /**
