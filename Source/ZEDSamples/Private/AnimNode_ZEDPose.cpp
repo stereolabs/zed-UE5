@@ -6,6 +6,7 @@
 #include "Animation/AnimTrace.h"
 #include "Features/IModularFeatures.h"
 #include "Math/Quat.h"
+#include "Math/UnrealMathUtility.h"
 
 // Index of joints parent
 static TArray<int> ParentsIdx = TArray<int>{
