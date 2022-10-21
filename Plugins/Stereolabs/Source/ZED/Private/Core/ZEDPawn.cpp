@@ -17,8 +17,7 @@ AZEDPawn::AZEDPawn() :
 	PreviousLocation(FVector::ZeroVector),
 	PreviousToCurrentLocation(FVector::ZeroVector),
 	TranslationMultiplier(FVector::OneVector),
-	PrevVirtualLocation(FVector::ZeroVector),
-	VirtualLocation(FVector::ZeroVector)
+	PrevVirtualLocation(FVector::ZeroVector)
 {
 	TransformOffset = FTransform();
 	ToggleFreeze = false;
@@ -32,9 +31,6 @@ AZEDPawn::AZEDPawn() :
 	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("MainCamera"));
 	Camera->SetupAttachment(SpringArm);
 	Camera->SetFieldOfView(80);
-
-	VirtualCamera = CreateDefaultSubobject<UVCamComponent>(TEXT("VirtualCamera"));
-	VirtualCamera->SetupAttachment(Camera);
 
 	Camera->bConstrainAspectRatio = true;
 	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
