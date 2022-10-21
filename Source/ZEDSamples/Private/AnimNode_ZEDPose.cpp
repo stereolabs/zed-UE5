@@ -249,14 +249,14 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
                     RootPosition,
-                    FVector(FMath::Clamp(SlerpIntensity, 0.0f, 1.0f))
+                    RootLocationSlerpIntensity
                 );
                 PreviousRootPosition = Translation;
 
                 Rotation = FQuat::Slerp(
                     PreviousRootRotation,
                     ObjectData.GlobalRootOrientation,
-                    FMath::Clamp(SlerpIntensity, 0.0f, 1.0f)
+                    FMath::Clamp(RotationSlerpIntensity, 0.0f, 1.0f)
                 );
                 PreviousRootRotation = Rotation;
 
@@ -269,7 +269,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 Rotation = FQuat::Slerp(
                     PreviousRotations[idx],
                     ObjectData.LocalOrientationPerJoint[idx],
-                    SlerpIntensity
+                    FMath::Clamp(RotationSlerpIntensity, 0.0f, 1.0f)
                 );
                 PreviousRotations[idx] = Rotation;
 
