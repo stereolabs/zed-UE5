@@ -19,7 +19,8 @@ AZEDPawn::AZEDPawn() :
 	PreviousToCurrentLocation(FVector::ZeroVector),
 	TranslationMultiplier(FVector::OneVector),
 	PrevVirtualLocation(FVector::ZeroVector),
-	VirtualLocation(FVector::ZeroVector)
+	VirtualLocation(FVector::ZeroVector),
+	SetFloorAsOriginCorrected(false)
 {
 	TransformOffset = FTransform();
 	ToggleFreeze = false;
@@ -161,7 +162,13 @@ void AZEDPawn::Tick(float DeltaSeconds)
 FVector AZEDPawn::RealTranslationToVirtualTranslation(const FVector& realTranslation)
 {
 	FVector ret = FVector::ZeroVector;
-	ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	if (SetFloorAsOriginCorrected) {
+		ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	}
+	else {
+		ret = TransformOffset.GetRotation() * (realTranslation);
+		SetFloorAsOriginCorrected = true;
+	}
 	return ret;
 }
 

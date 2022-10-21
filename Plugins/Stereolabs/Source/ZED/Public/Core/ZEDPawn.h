@@ -90,6 +90,12 @@ public:
 	void SetStartOffsetLocation(const FVector& locOffset);
 
 	FVector StartOffsetLocation;
+
+	// If there is a translation modifier different than (1,1,1), it will also apply on the translation
+	// given by the boolean "bSetFloorAsOrigin" of the tracking parameters, which will move the ZEDPawn
+	// accordingly to the height of the real camera.
+	// This bool is to ignore the translation modifier on the first offset.
+	bool SetFloorAsOriginCorrected;
 	
 	/** The previous location given by the slcamera (not the last frame)*/
 	FVector PreviousLocation;
