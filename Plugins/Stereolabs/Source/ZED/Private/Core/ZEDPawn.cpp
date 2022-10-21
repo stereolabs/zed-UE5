@@ -4,6 +4,7 @@
 #include "ZEDPrivatePCH.h"
 #include "ZED/Public/Core/ZEDPlayerController.h"
 #include "UMG.h"
+#include "Math/UnrealMathUtility.h"
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
@@ -17,7 +18,9 @@ AZEDPawn::AZEDPawn() :
 	PreviousLocation(FVector::ZeroVector),
 	PreviousToCurrentLocation(FVector::ZeroVector),
 	TranslationMultiplier(FVector::OneVector),
-	PrevVirtualLocation(FVector::ZeroVector)
+	PrevVirtualLocation(FVector::ZeroVector),
+	VirtualLocation(FVector::ZeroVector),
+	SetFloorAsOriginCorrected(false)
 {
 	TransformOffset = FTransform();
 	ToggleFreeze = false;
@@ -79,7 +82,7 @@ AZEDPawn::AZEDPawn() :
 	ZedErrorWidget->SetVisibility(false);
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
-	
+
 	static ConstructorHelpers::FObjectFinder<UMaterial> RemapMaterial(TEXT("Material'/Stereolabs/Stereolabs/Materials/M_SL_RPP.M_SL_RPP'"));
 	RemapSourceMaterial = RemapMaterial.Object;
 }
@@ -100,7 +103,7 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 
 			if (UseRotationOffset) {
 				// Get the rotational difference between where the actor is facing and the "real" camera orientation.
-				// [Actor - Real] is [Actor * Real.Inv] in quaternion 
+				// [Actor - Real] is [Actor * Real.Inv] in quaternion
 				TransformOffset.SetRotation(GetActorTransform().GetRotation() * RealCameraTransform.GetRotation().Inverse());
 			}
 			else {
@@ -112,14 +115,14 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 	}
 }
 
-void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset) 
+void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset)
 {
 	StartOffsetLocation = locOffset;
 	PrevVirtualLocation = locOffset;
 	VirtualLocation = locOffset;
 }
 
-void AZEDPawn::Tick(float DeltaSeconds) 
+void AZEDPawn::Tick(float DeltaSeconds)
 {
 	if (!IsFrozen) {
 		if (EnableLerp)
@@ -128,13 +131,13 @@ void AZEDPawn::Tick(float DeltaSeconds)
 
 			float lerpAlpha = DeltaSeconds * LerpIntensity;
 			LerpTransform = UKismetMathLibrary::TLerp(
-				LerpTransform, 
+				LerpTransform,
 				FTransform(
 					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
 					VirtualLocation,
 					RealCameraTransform.GetScale3D()
 				),
-				lerpAlpha);
+				FMath::Clamp(lerpAlpha, 0.0f, 1.0f));
 			SetActorTransform(LerpTransform);
 		}
 		else
@@ -156,7 +159,13 @@ void AZEDPawn::Tick(float DeltaSeconds)
 FVector AZEDPawn::RealTranslationToVirtualTranslation(const FVector& realTranslation)
 {
 	FVector ret = FVector::ZeroVector;
-	ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	if (SetFloorAsOriginCorrected) {
+		ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	}
+	else {
+		ret = TransformOffset.GetRotation() * (realTranslation);
+		SetFloorAsOriginCorrected = true;
+	}
 	return ret;
 }
 

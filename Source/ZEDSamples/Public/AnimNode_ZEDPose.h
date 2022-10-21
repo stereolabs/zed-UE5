@@ -35,7 +35,11 @@ public:
 
 	/** Pose smoothing*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
-	float SlerpIntensity;
+	float RotationSlerpIntensity;
+
+	/** Pose smoothing*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
+	FVector RootLocationSlerpIntensity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	USkeletalMeshComponent* SkeletalMesh;

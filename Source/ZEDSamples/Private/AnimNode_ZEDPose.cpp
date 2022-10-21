@@ -6,6 +6,7 @@
 #include "Animation/AnimTrace.h"
 #include "Features/IModularFeatures.h"
 #include "Math/Quat.h"
+#include "Math/UnrealMathUtility.h"
 
 // Index of joints parent
 static TArray<int> ParentsIdx = TArray<int>{
@@ -248,14 +249,14 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
                     RootPosition,
-                    FVector(SlerpIntensity)
+                    RootLocationSlerpIntensity
                 );
                 PreviousRootPosition = Translation;
 
                 Rotation = FQuat::Slerp(
                     PreviousRootRotation,
                     ObjectData.GlobalRootOrientation,
-                    SlerpIntensity
+                    FMath::Clamp(RotationSlerpIntensity, 0.0f, 1.0f)
                 );
                 PreviousRootRotation = Rotation;
 
@@ -268,7 +269,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 Rotation = FQuat::Slerp(
                     PreviousRotations[idx],
                     ObjectData.LocalOrientationPerJoint[idx],
-                    SlerpIntensity
+                    FMath::Clamp(RotationSlerpIntensity, 0.0f, 1.0f)
                 );
                 PreviousRotations[idx] = Rotation;
 
