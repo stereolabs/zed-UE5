@@ -4,6 +4,7 @@
 #include "ZEDPrivatePCH.h"
 #include "ZED/Public/Core/ZEDPlayerController.h"
 #include "UMG.h"
+#include "Math/UnrealMathUtility.h"
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
@@ -138,7 +139,7 @@ void AZEDPawn::Tick(float DeltaSeconds)
 					VirtualLocation,
 					RealCameraTransform.GetScale3D()
 				),
-				lerpAlpha);
+				FMath::Clamp(lerpAlpha, 0.0f, 1.0f));
 			SetActorTransform(LerpTransform);
 		}
 		else
