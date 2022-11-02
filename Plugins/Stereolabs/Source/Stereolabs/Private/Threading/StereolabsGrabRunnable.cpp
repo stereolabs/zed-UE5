@@ -20,7 +20,6 @@ uint32 FSlGrabRunnable::Run()
 	{
 		GSlCameraProxy->Grab();
 
-
 		// Compute Grab fps.
 		std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 		auto GrabTime = now.count() - PreviousTS.count();
