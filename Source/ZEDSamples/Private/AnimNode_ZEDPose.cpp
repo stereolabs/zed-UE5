@@ -204,6 +204,8 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
     RemapAsset.GetKeys(SourceBoneNames);
    
     PutInRefPose(OutPose, SourceBoneNames);
+
+    // Compact Pose Root index
     FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
 
     float LeftFootHeight = 0;
