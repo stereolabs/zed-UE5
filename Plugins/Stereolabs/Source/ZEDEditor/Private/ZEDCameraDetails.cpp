@@ -683,8 +683,13 @@ void FZEDCameraDetailsGrabCallback::GrabCallback(ESlErrorCode ErrorCode)
 		if (bUpdateSVOPlaybackSlider)
 		{
 			int SVOPosition = GSlCameraProxy->GetSVOPlaybackPosition() - 1;
-			SVOPlaybackSlider->SetValue((float)SVOPosition / (float)MaxValue);
-			SetSVOPlaybackTextBoxValue(SVOPosition);
+
+			AsyncTask(ENamedThreads::GameThread, [this, SVOPosition, MaxValue]()
+				{
+					SVOPlaybackSlider->SetValue((float)SVOPosition / (float)MaxValue);
+					SetSVOPlaybackTextBoxValue(SVOPosition);
+				});
+
 		}
 	SL_SCOPE_UNLOCK
 }

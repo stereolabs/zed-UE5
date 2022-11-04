@@ -35,10 +35,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "VirtualCamera",
-			"Enabled": true
-		},
-		{
 			"Name": "LiveLink",
 			"Enabled": true
 		}

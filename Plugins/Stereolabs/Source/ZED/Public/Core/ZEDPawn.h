@@ -7,7 +7,6 @@
 #include "ZED/Public/Core/ZEDBaseTypes.h"
 
 #include "CineCameraComponent.h"
-#include "VCamComponent.h"
 
 #include "ZEDPawn.generated.h"
 
@@ -49,10 +48,6 @@ public:
 	/** Main camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UCineCameraComponent* Camera;
-
-	/** Virtual camera */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UVCamComponent* VirtualCamera;
 
 	/** Should enable lerp with specified alpha*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

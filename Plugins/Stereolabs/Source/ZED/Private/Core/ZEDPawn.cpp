@@ -35,9 +35,6 @@ AZEDPawn::AZEDPawn() :
 	Camera->SetupAttachment(SpringArm);
 	Camera->SetFieldOfView(80);
 
-	VirtualCamera = CreateDefaultSubobject<UVCamComponent>(TEXT("VirtualCamera"));
-	VirtualCamera->SetupAttachment(Camera);
-
 	Camera->bConstrainAspectRatio = true;
 	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
 	Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
@@ -85,7 +82,7 @@ AZEDPawn::AZEDPawn() :
 	ZedErrorWidget->SetVisibility(false);
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
-	
+
 	static ConstructorHelpers::FObjectFinder<UMaterial> RemapMaterial(TEXT("Material'/Stereolabs/Stereolabs/Materials/M_SL_RPP.M_SL_RPP'"));
 	RemapSourceMaterial = RemapMaterial.Object;
 }
@@ -106,7 +103,7 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 
 			if (UseRotationOffset) {
 				// Get the rotational difference between where the actor is facing and the "real" camera orientation.
-				// [Actor - Real] is [Actor * Real.Inv] in quaternion 
+				// [Actor - Real] is [Actor * Real.Inv] in quaternion
 				TransformOffset.SetRotation(GetActorTransform().GetRotation() * RealCameraTransform.GetRotation().Inverse());
 			}
 			else {
@@ -118,14 +115,14 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 	}
 }
 
-void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset) 
+void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset)
 {
 	StartOffsetLocation = locOffset;
 	PrevVirtualLocation = locOffset;
 	VirtualLocation = locOffset;
 }
 
-void AZEDPawn::Tick(float DeltaSeconds) 
+void AZEDPawn::Tick(float DeltaSeconds)
 {
 	if (!IsFrozen) {
 		if (EnableLerp)
@@ -134,7 +131,7 @@ void AZEDPawn::Tick(float DeltaSeconds)
 
 			float lerpAlpha = DeltaSeconds * LerpIntensity;
 			LerpTransform = UKismetMathLibrary::TLerp(
-				LerpTransform, 
+				LerpTransform,
 				FTransform(
 					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
 					VirtualLocation,
