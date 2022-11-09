@@ -645,4 +645,25 @@ public:
 		return nullptr;
 	}
 
+	/**
+	* Get an array referencing all the body34 bones' lengths.
+	* @param ObjectData ObjectData struct for the specified skeleton
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Get Bones Length Body34", Keywords = "Bones Length Body34"), Category = "Stereolabs|Zed")
+	static TArray<float> GetBody34BonesLength(const FSlObjectData& ObjectData ) {
+		TArray<float> ret = {};
+
+		float tmpLen = 0.0f;
+		FVector firstEndPos = FVector::Zero();
+		FVector secondEndPos = FVector::Zero();
+
+		for (int i = 0; i < BodyBonesPose34.Num(); ++i) {
+			firstEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].FirstEnd)];
+			secondEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].SecondEnd)];
+			tmpLen = FVector::Distance(firstEndPos, secondEndPos);
+			ret.Push(tmpLen);
+		}
+
+		return ret;
+	}
 };
