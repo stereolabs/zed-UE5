@@ -59,19 +59,19 @@ Initiates the ZED, then properly closes it before opening a new level (in this c
 
 ### Object Detection
 
-[![](https://gfycat.com/HotFriendlyBarb.gif)](https://gfycat.com/hotfriendlybarb)
+[![](https://media.giphy.com/media/sUlTEzb81WQtLcO5wf/giphy.gif)](https://media.giphy.com/media/sUlTEzb81WQtLcO5wf/giphy.gif)
 
 Highlight objects detected by our [Object Detection API](https://www.stereolabs.com/docs/api/group__Object__group.html) with either a 2D frame or a 3D box.  
 
 ### Plane Detection
 
-[![](https://gfycat.com/ElderlyWetAzureVase.gif)](https://gfycat.com/elderlywetazurevase)
+[![](https://media.giphy.com/media/sA2rgcM55rH0qs06s4/giphy.gif)](https://media.giphy.com/media/sA2rgcM55rH0qs06s4/giphy.gif)
 
 Simple demo of the plane and floor detection features of the SDK. Click anywhere and see the plane found there, if any. Press F to highlight the floor plane.
 
 ### Background Subtraction
 
-[![bg-sub-gif](https://gfycat.com/DesertedSeparateFossa.gif)](https://gfycat.com/DesertedSeparateFossa)
+[![](https://media.giphy.com/media/rrgpiO2aaaUNcWmMvI/giphy.gif)](https://media.giphy.com/media/rrgpiO2aaaUNcWmMvI/giphy.gif)
 
 Remove the background of a ZED videa stream by using either depth occlusion (put a virtual object closer to the camera than the real background, causing a view obstruction) or depth clamping (make the plugin not render any pixel further than a threshold distance).
 
