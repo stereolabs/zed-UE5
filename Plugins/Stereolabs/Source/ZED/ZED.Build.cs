@@ -40,7 +40,6 @@ public class ZED : ModuleRules
                  "ProceduralMeshComponent",
                  "MeshDescription",
                  "CinematicCamera",
-                 "VCamCore",
                  "LiveLinkInterface"
 
 				// ... add other public dependencies that you statically link with here ...

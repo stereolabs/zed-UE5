@@ -246,7 +246,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 RootPosition.Z += HipOffset;
                 RootPosition.Z -= FeetOffset;
                 RootPosition.Z += HeightOffset;
-                /*RootPosition.Z *= rootTranslationFactor;*/
+                RootPosition.Z *= rootTranslationFactor;
 
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
