@@ -1,6 +1,12 @@
 # Stereolabs ZED - UE5 Examples
 
-This repository contains an Unreal sample project that demonstrate how to create advanced Mixed Reality application using the ZED SDK and Unreal.
+This repository contains Unreal examples projects that demonstrate how to create advanced Mixed Reality application using the ZED SDK and Unreal Engine 5.
+
+**UE5_Examples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
+
+## Compatibility
+
+This version of the plugin is ***NOT*** compatible with UE 5.1, and was made using and for UE 5.0.3.
 
 **UE5_Examples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
 
