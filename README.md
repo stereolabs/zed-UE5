@@ -20,49 +20,65 @@ This version of the plugin is ***NOT*** compatible with UE 5.1, and was made usi
 
 You can now start the project with a double click on *ZEDSamples.uproject*.
 
-## Features
+## Interactive applications samples
 
-All samples are in the **UE5_Examples** project as a level, found in **Content** -> **ZED** -> **Levels**. 
+### Body Tracking
+
+https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4
+
+Use 3D skeleton data to animate one or more avatars based on real time body tracking. Showcases the ZED Body Tracking feature, allowing you to track and "avatarize" people using a highly optimized AI model. 
+
+### Camera Tracking
+
+https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4
+
+Use the ZED internal trackers to navigate a virtual scene by moving your ZED Camera. Explore the camera repositioning, translation multipliers and all features you can have from the Cine Camera Component.
+
+### Point Cloud Depth View
+
+Generate a realtime colored point cloud of the ZED camera view, using our ultra accurate neural depth detection mode, and Unreal Engine's next-generation VFX system, Niagara.
+
+## XR & miscellaneous samples
 
 ### Object Placement
 
-https://user-images.githubusercontent.com/113181784/202185807-4532eaec-f7cc-4ae3-b345-9353eb492938.mp4
+https://user-images.githubusercontent.com/113181784/202236331-080affd6-bc61-4e31-b9f6-c1539d49b747.mp4
 
 Click on a flat, upwards-facing surface to spawn a box above it. Demonstrates how to use the ZED's Plane Detection feature to place objects without pre-scanning. See the level Blueprint and the GetFloorPlaneAtScreenPosition function to see how it works. Press F to visualize the floor plane.
 
 ### Spatial Mapping
 
-https://user-images.githubusercontent.com/113181784/202185840-d2083f31-bb6d-4075-96aa-83848dbd7bb4.mp4
+https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4
 
 Map your environment into a 3D mesh, then shoot balls at real objects that realistically bounce off using Unreal's collision detection and physics. Optionally, save the mesh, mesh texture and .area spatial memory file for later. Use to pre-scan an environment for when you need persistent geometry, such as when collisions with the real-world need to occur even when you can't see them. See our [spatial mapping](https://docs.stereolabs.com/mixed-reality/unreal/spatial-mapping/) documentation to learn how it works. 
 
 ### Object Detection
 
-https://user-images.githubusercontent.com/113181784/202185925-a212b91d-34a8-4b19-a127-f44ec6fd4f64.mp4
+https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4
 
 Highlight objects detected by our [Object Detection API](https://www.stereolabs.com/docs/api/group__Object__group.html) with either a 2D frame or a 3D box.
 
 ### Background Subtraction
 
-https://user-images.githubusercontent.com/113181784/202185962-69cfb852-da21-4a57-bd40-6b3675b20e13.mp4
+https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4
 
 Remove the background of a ZED videa stream by using either depth occlusion (put a virtual object closer to the camera than the real background, causing a view obstruction) or depth clamping (make the plugin not render any pixel further than a threshold distance).
 
 ### Dynamic Crosshair
 
-https://user-images.githubusercontent.com/113181784/202185991-8658dbc0-441b-4c5f-86af-595ec48e97f1.mp4
+https://user-images.githubusercontent.com/113181784/202236779-c97a72fd-bb92-486c-83bc-1d2ce660fe55.mp4
 
 Puts a 3D crosshair as your cursor that moves itself closer or further to be just in front of the real-world object it overlaps. Explore to see how to use the GetDepthAtScreenPosition function, and experiment with the other GetDepth and GetNormal functions included in the plugin. 
 
 ### Hit Test
 
-https://user-images.githubusercontent.com/113181784/202186093-f85b0c5e-8580-4a10-a3c2-43ef2ab79918.mp4
+https://user-images.githubusercontent.com/113181784/202236855-7c14916e-bbb0-465f-bdbf-23363a6880d8.mp4
 
 Left click to shoot virtual balls that will stop when they collide with a real-world object. Demonstrates that you don't need to pre-scan an environment for such interactions thanks to the ZED's real-time depth map. See the BP_HitTestBall blueprint and the HitTestReal function to learn how it works.
 
 ### Open New Level
 
-https://user-images.githubusercontent.com/113181784/202186131-c54335f5-11b5-480b-8fec-1a1da891bf58.mp4
+https://user-images.githubusercontent.com/113181784/202236919-cef85929-5bb2-4c1e-85bf-232ee9dc50c8.mp4
 
 Initiates the ZED, then properly closes it before opening a new level (in this case, itself). Follow this procedure (visible in the level Blueprint) any time you wish to change levels while the ZED is running. 
 
