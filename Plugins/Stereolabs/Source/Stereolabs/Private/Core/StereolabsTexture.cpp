@@ -5,10 +5,10 @@
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "Stereolabs/Public/Utilities/StereolabsMatFunctionLibrary.h"
 
-#include "D3D11RHIBasePrivate.h"
+#include "D3D11RHIPrivate.h"
 #include "D3D11StateCachePrivate.h"
 #include "D3D11State.h"
-typedef FD3D11StateCacheBase FD3D11StateCache;
+//typedef FD3D11StateCacheBase FD3D11StateCache;
 #include "D3D11Resources.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h" 
@@ -321,7 +321,7 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 
 	if (RHIName.Equals("D3D11"))
 	{
-		FD3D11TextureBase* D3D11Texture = GetD3D11TextureFromRHITexture(Texture->Resource->TextureRHI);
+		FD3D11Texture* D3D11Texture = GetD3D11TextureFromRHITexture(Texture->Resource->TextureRHI);
 		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11Texture->GetResource(), cudaGraphicsMapFlagsNone);
 	}
 	else

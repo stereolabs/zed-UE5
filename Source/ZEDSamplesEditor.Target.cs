@@ -9,7 +9,7 @@ public class ZEDSamplesEditorTarget : TargetRules
 	{
 		bUseAdaptiveUnityBuild = false;
 
-		Type = TargetType.Editor;
+        Type = TargetType.Editor;
 		ExtraModuleNames.AddRange( new string[] { "ZEDSamples" } );
 
 		ExtraModuleNames.AddRange(new string[] { "ZEDSamplesEditor" });
