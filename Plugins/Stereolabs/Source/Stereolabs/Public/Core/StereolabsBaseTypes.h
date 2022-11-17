@@ -2039,31 +2039,32 @@ struct STEREOLABS_API FSlInitParameters
 
 	FSlInitParameters()
 		:
+		InputType(ESlInputType::IT_USB),
+		SvoPath(""),
+		bLoop(false),
+		StreamIP(""),
+		StreamPort(30000),
 		Resolution(ESlResolution::R_HD1080),
 		FPS(30),
-		VerticalFlipImage(ESlFlipMode::FP_AUTO),
-		bDisableSelfCalibration(false),
-		bEnableRightSideMeasure(false),
-		bRealTime(false),
 		DepthMode(ESlDepthMode::DM_Ultra),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
+		GPUID(-1.0f),
 		Unit(ESlUnit::DU_Centimeter),
 		CoordinateSystem(ESlCoordinateSystem::CS_Cartesian),
-		GPUID(-1.0f),
+		bRealTime(false),
 		bVerbose(false),
-		VerboseFilePath(""),
-		InputType(ESlInputType::IT_USB),
-		SvoPath(""),
-		StreamIP(""),
-		StreamPort(30000),
+		bDisableSelfCalibration(false),
+		VerticalFlipImage(ESlFlipMode::FP_AUTO),
+		bEnableRightSideMeasure(false),
 		DepthStabilization(1),
 		OptionalSettingPath(""),
 		OptionalOpencvCalibrationFile(""),
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		bLoop(false)
+		VerboseFilePath("")
+
 	{
 	}
 
@@ -2399,10 +2400,6 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlDepthMode DepthMode;
 
-	/** Verbose file path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString VerboseFilePath;
-
 	/** Minimum distance for depth */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float DepthMinimumDistance;
@@ -2469,6 +2466,10 @@ struct STEREOLABS_API FSlInitParameters
 	/* Define a timeout in seconds after which an error is reported if the open() command fails. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float OpenTimeoutSec;
+
+	/** Verbose file path */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString VerboseFilePath;
 };
 
 /*

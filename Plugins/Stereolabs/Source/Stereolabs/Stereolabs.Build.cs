@@ -19,8 +19,6 @@ public class Stereolabs : ModuleRules
 
     public Stereolabs(ReadOnlyTargetRules Target) : base(Target)
     {
-        bLegacyPublicIncludePaths = true;
-        //ShadowVariableWarningLevel = WarningLevel.Error;
         PrivatePCHHeaderFile = "Public/Stereolabs.h";
 
         string CudaSDKPath = System.Environment.GetEnvironmentVariable("CUDA_PATH", EnvironmentVariableTarget.Machine);
@@ -71,6 +69,13 @@ public class Stereolabs : ModuleRules
               // ... add other private include paths required here ...
           }
           );
+
+        // required by D3D11RHI
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAPI");
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "AMD_AGS");
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAftermath");
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelMetricsDiscovery");
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelExtensionsFramework");
 
 
         string cApiPath = Path.Combine(ModulePath, "../ThirdParty/sl_zed_c/");

@@ -1,4 +1,4 @@
-#include "ZEDPointCloudRenderer.h"
+#include "ZED/Public/Core/ZEDPointCloudRenderer.h"
 
 // Sets default values
 AZEDPointCloudRenderer::AZEDPointCloudRenderer()
