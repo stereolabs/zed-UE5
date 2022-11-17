@@ -36,6 +36,8 @@ Use the ZED internal trackers to navigate a virtual scene by moving your ZED Cam
 
 ### Point Cloud Depth View
 
+https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4
+
 Generate a realtime colored point cloud of the ZED camera view, using our ultra accurate neural depth detection mode, and Unreal Engine's next-generation VFX system, Niagara.
 
 ## XR & miscellaneous samples
