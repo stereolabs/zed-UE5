@@ -1,5 +1,6 @@
 //======= Copyright (c) Stereolabs Corporation, All rights reserved. ===============
 
+#include "EnvironmentalLighting.h"
 #include "EnvironmentalLightingPrivatePCH.h"
 
 #define LOCTEXT_NAMESPACE "FStereolabsEnvironmentalLighting"

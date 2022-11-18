@@ -82,7 +82,7 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 	UTexture2D* UTexture = UTexture2D::CreateTransient(TextureSize[0], TextureSize[1], EPixelFormat::PF_B8G8R8A8, "MeshTexture");
  
 	// Populate texture
-	FTexture2DMipMap& Mip = UTexture->PlatformData->Mips[0];
+	FTexture2DMipMap& Mip = UTexture->GetPlatformData()->Mips[0];
 	Mip.BulkData.Lock(LOCK_READ_WRITE);
 	void* Data = Mip.BulkData.Realloc(TextureSize[0] * TextureSize[1] * 4);
 	FMemory::Memcpy(Data, Texture.GetData(), TextureSize[0] * TextureSize[1] * 4);

@@ -142,7 +142,7 @@ void FSpatialMappingCubemapRunnable::ConverToTextureCube()
 		}
 
 		// The r2t resource will be needed to read its surface contents
-		FTextureRenderTargetCubeResource* CubeResource = (FTextureRenderTargetCubeResource*)static_cast<FTextureRenderTargetResource*>(CubemapProxy->TextureTarget->Resource);
+		FTextureRenderTargetCubeResource* CubeResource = (FTextureRenderTargetCubeResource*)static_cast<FTextureRenderTargetResource*>(CubemapProxy->TextureTarget->GetResource());
 		if (CubeResource && TextureFormat != TSF_Invalid)
 		{
 			bool bSRGB = true;

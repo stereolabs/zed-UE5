@@ -15,12 +15,12 @@ AZEDPawn::AZEDPawn() :
 	ToggleFreeze(false),
 	UseRotationOffset(true),
 	StartOffsetLocation(FVector::ZeroVector),
+	SetFloorAsOriginCorrected(false),
 	PreviousLocation(FVector::ZeroVector),
 	PreviousToCurrentLocation(FVector::ZeroVector),
 	TranslationMultiplier(FVector::OneVector),
-	PrevVirtualLocation(FVector::ZeroVector),
 	VirtualLocation(FVector::ZeroVector),
-	SetFloorAsOriginCorrected(false)
+	PrevVirtualLocation(FVector::ZeroVector)
 {
 	TransformOffset = FTransform();
 	ToggleFreeze = false;
