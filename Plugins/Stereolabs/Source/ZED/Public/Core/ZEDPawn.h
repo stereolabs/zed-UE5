@@ -60,14 +60,6 @@ public:
 	/** Transform used during Lerp smoothing*/
 	FTransform LerpTransform;
 
-	/** Transform offset used to reposition the camera, taking into account movement multipliers or offsetters*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FTransform TransformOffset;
-
-	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FTransform RealCameraTransform;
-
 	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool ToggleFreeze;
@@ -143,4 +135,12 @@ private:
 	/** Zed widget material */
 	UPROPERTY()
 	UMaterial* ZedWidgetSourceMaterial;
+
+	/** Transform offset used to reposition the camera, taking into account movement multipliers or offsetters*/
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform TransformOffset;
+
+	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FTransform RealCameraTransform;
 };
