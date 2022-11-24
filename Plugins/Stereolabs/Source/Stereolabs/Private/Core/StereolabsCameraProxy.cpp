@@ -987,11 +987,11 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (ViewFormat == ESlViewFormat::VF_Unsigned)
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(InMat, Mat, SL_COPY_TYPE_GPU_GPU);
+		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(UnsignedLeftImage, Mat, SL_COPY_TYPE_GPU_GPU);
 	}
 	else
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_convert_image(InMat, Mat, 0);
+		ErrorCode = (SL_ERROR_CODE)sl_convert_image(UnsignedLeftImage, Mat, 0);
 	}
 
 	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
