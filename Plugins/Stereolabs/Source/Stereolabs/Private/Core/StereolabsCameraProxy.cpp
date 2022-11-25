@@ -987,21 +987,24 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (ViewFormat == ESlViewFormat::VF_Unsigned)
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_mat_copy_to(UnsignedLeftImage, Mat, SL_COPY_TYPE_GPU_GPU);
+		Mat = UnsignedLeftImage;
 	}
 	else
 	{
 		ErrorCode = (SL_ERROR_CODE)sl_convert_image(UnsignedLeftImage, Mat, 0);
 	}
 
-	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
-
 	if (MemoryType == ESlMemoryType::MT_CPU)
 	{
 		sl_mat_update_cpu_from_gpu(Mat);
 	}
 
-	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
+	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
+	{
+		return false;
+	}
+
+	return true;
 #endif
 }
 
@@ -1403,15 +1406,14 @@ bool USlCameraProxy::RetrieveObjects()
 		return false;
 	}
 
-	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
-	{
-		OnObjectDetectionRetrieved.Broadcast(objects);
-	});
-
 	return true;
-#else
-	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 #endif
+
+	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
+		{
+			OnObjectDetectionRetrieved.Broadcast(objects);
+		});
+	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
 
 
