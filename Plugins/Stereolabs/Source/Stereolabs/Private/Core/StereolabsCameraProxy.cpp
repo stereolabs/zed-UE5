@@ -994,8 +994,6 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		ErrorCode = (SL_ERROR_CODE)sl_convert_image(UnsignedLeftImage, Mat, 0);
 	}
 
-	// sl_mat_free(InMat, sl::unreal::ToSlType2(MemoryType));
-
 	if (MemoryType == ESlMemoryType::MT_CPU)
 	{
 		sl_mat_update_cpu_from_gpu(Mat);

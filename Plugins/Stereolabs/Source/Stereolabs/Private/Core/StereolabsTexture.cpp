@@ -6,7 +6,7 @@
 #include "Stereolabs/Public/Utilities/StereolabsMatFunctionLibrary.h"
 
 #include "RHI.h"
-#include "RenderResource.h"
+#include "Rendering/Texture2DResource.h"
 
 #include "D3D11RHIPrivate.h"
 #include "D3D11StateCachePrivate.h"
@@ -18,9 +18,7 @@ typedef FD3D11StateCacheBase FD3D11StateCache;
 #include "D3D12Util.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h" 
-#include <aclapi.h>
 #include <cuda.h>
-#include <cuda_runtime.h>
 #include <cuda_d3d11_interop.h>
 #include <cuda_gl_interop.h>
 #include "Windows/HideWindowsPlatformTypes.h"
@@ -51,75 +49,6 @@ DEFINE_LOG_CATEGORY(SlTexture);
 	{\
 		SL_LOG_E(SlTexture, "Error while updating texture %s: %s", *Name.ToString(), *FString(cudaGetErrorString(CudaError)));\
 	}\
-
-//////////////////////////////////////////////
-// WindowsSecurityAttributes implementation //
-//////////////////////////////////////////////
-
-class WindowsSecurityAttributes {
-protected:
-	SECURITY_ATTRIBUTES m_winSecurityAttributes;
-	PSECURITY_DESCRIPTOR m_winPSecurityDescriptor;
-
-public:
-	WindowsSecurityAttributes();
-	~WindowsSecurityAttributes();
-	SECURITY_ATTRIBUTES* operator&();
-};
-
-WindowsSecurityAttributes::WindowsSecurityAttributes() {
-	m_winPSecurityDescriptor = (PSECURITY_DESCRIPTOR)calloc(
-		1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void**));
-	assert(m_winPSecurityDescriptor != (PSECURITY_DESCRIPTOR)NULL);
-
-	PSID* ppSID = (PSID*)((PBYTE)m_winPSecurityDescriptor +
-		SECURITY_DESCRIPTOR_MIN_LENGTH);
-	PACL* ppACL = (PACL*)((PBYTE)ppSID + sizeof(PSID*));
-
-	InitializeSecurityDescriptor(m_winPSecurityDescriptor,
-		SECURITY_DESCRIPTOR_REVISION);
-
-	SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority =
-		SECURITY_WORLD_SID_AUTHORITY;
-	AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0,
-		0, 0, 0, 0, 0, ppSID);
-
-	EXPLICIT_ACCESS explicitAccess;
-	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESS));
-	explicitAccess.grfAccessPermissions =
-		STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-	explicitAccess.grfAccessMode = SET_ACCESS;
-	explicitAccess.grfInheritance = INHERIT_ONLY;
-	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicitAccess.Trustee.ptstrName = (LPTSTR)*ppSID;
-
-	SetEntriesInAcl(1, &explicitAccess, NULL, ppACL);
-
-	SetSecurityDescriptorDacl(m_winPSecurityDescriptor, 1, *ppACL, 0);
-
-	m_winSecurityAttributes.nLength = sizeof(m_winSecurityAttributes);
-	m_winSecurityAttributes.lpSecurityDescriptor = m_winPSecurityDescriptor;
-	m_winSecurityAttributes.bInheritHandle = 1;
-}
-
-WindowsSecurityAttributes::~WindowsSecurityAttributes() {
-	PSID* ppSID = (PSID*)((PBYTE)m_winPSecurityDescriptor +
-		SECURITY_DESCRIPTOR_MIN_LENGTH);
-	PACL* ppACL = (PACL*)((PBYTE)ppSID + sizeof(PSID*));
-
-	if (*ppSID) {
-		FreeSid(*ppSID);
-	}
-	if (*ppACL) {
-		LocalFree(*ppACL);
-	}
-	free(m_winPSecurityDescriptor);
-}
-
-SECURITY_ATTRIBUTES* WindowsSecurityAttributes::operator&() {
-	return &m_winSecurityAttributes;
-}
 
 USlTexture::USlTexture()
 	:
@@ -198,11 +127,27 @@ void USlTexture::BP_UpdateTextureWithMat(const FSlMat& NewMat)
 
 void USlTexture::UpdateTexture()
 {
+	FString RHIName = GDynamicRHI->GetName();
+	if (RHIName.Equals("D3D12"))
+	{
+		sl_mat_update_cpu_from_gpu(Mat.Mat);
+		MatPtr = sl_mat_get_ptr(Mat.Mat, SL_MEM_CPU);
+
+		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
+		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
+
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
+
+		return;
+	}
+
 #if WITH_EDITOR
 	CHECK_UPDATE_VALID();
 #endif
 
-	UE_LOG(LogTemp, Warning, TEXT(" 1 "));
 	cudaArray_t TransitionArray = nullptr;
 	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(Mat.Mat);
 
@@ -217,11 +162,28 @@ void USlTexture::UpdateTexture()
 
 void USlTexture::UpdateTexture(const FSlMat& NewMat)
 {
+
+	FString RHIName = GDynamicRHI->GetName();
+	if (RHIName.Equals("D3D12"))
+	{
+		sl_mat_update_cpu_from_gpu(NewMat.Mat);
+		MatPtr = sl_mat_get_ptr(NewMat.Mat, SL_MEM_CPU);
+
+		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
+		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
+
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
+
+		return;
+	}
+
 #if WITH_EDITOR
 	CHECK_UPDATE_VALID();
 #endif
 
-	UE_LOG(LogTemp, Warning, TEXT(" 2 "));
 	cudaArray_t TransitionArray = nullptr;
 	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat.Mat);
 	cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
@@ -240,19 +202,16 @@ void USlTexture::UpdateTexture(void* NewMat)
 	if (RHIName.Equals("D3D12"))
 	{
 		sl_mat_update_cpu_from_gpu(NewMat);
+
 		MatPtr = sl_mat_get_ptr(NewMat, SL_MEM_CPU);
 		
 		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
 		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
 
-		int TextureSize = Height * Width  * ByteSize;
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
 
-		// Populate texture
-		FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
-		Mip.BulkData.Lock(LOCK_READ_WRITE);
-		void* Data = Mip.BulkData.Realloc(TextureSize);
-		FMemory::Memcpy(Data, MatPtr, TextureSize);
-		Mip.BulkData.Unlock();
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
 
 		return;
 	}
@@ -261,11 +220,18 @@ void USlTexture::UpdateTexture(void* NewMat)
 	CHECK_UPDATE_VALID();
 #endif
 
+	std::chrono::milliseconds before = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+
 	cudaArray_t TransitionArray = nullptr;
 	cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
 	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat);
 	cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
 	CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(NewMat, MemType), sl_mat_get_step_bytes(NewMat, MemType), sl_mat_get_width_bytes(NewMat), sl_mat_get_height(NewMat), cudaMemcpyDeviceToDevice);
+
+	std::chrono::milliseconds after = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+	UE_LOG(LogTemp, Warning, TEXT("%lld"), after.count() - before.count());
 
 #if WITH_EDITOR
 	CHECK_CUDA_MEMCPY(CudaError)
@@ -291,7 +257,6 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 	Width = NewWidth;
 	Height = NewHeight;
-
 	if (MemoryType == ESlMemoryType::MT_GPU && Texture)
 	{
 		TextureCompressionSettings Compression = Texture->CompressionSettings;
@@ -350,7 +315,6 @@ USlViewTexture* USlViewTexture::CreateViewTexture(const FName& TextureName, int3
 
 	if (TextureMemoryType == ESlMemoryType::MT_GPU && bCreateTexture2D)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Create view"));
 		ViewTexture->InitResources(TextureFormat, TextureCompressionSettings::TC_VectorDisplacementmap);
 	}
 
@@ -415,6 +379,7 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 	Texture->AddressX = TextureAddress::TA_Clamp;
 	Texture->AddressY = TextureAddress::TA_Clamp;
 	Texture->LODGroup = TextureGroup::TEXTUREGROUP_RenderTarget;
+	Texture->NeverStream = true;
 	Texture->UpdateResource();
 
 	FlushRenderingCommands();
@@ -442,46 +407,6 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 		{
 			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->Resource->TextureRHI->GetNativeResource()))
 			{
-
-				/*SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
-				int NbChannel = sl::unreal::GetNbChannel(mat_type);
-				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
-
-				int TextureSize = Height * Width * NbChannel* ByteSize;
-
-				HANDLE sharedHandle{};
-				WindowsSecurityAttributes secAttr{};
-				D3D12DevicePtr->CreateSharedHandle(D3D12ResourcePtr, &secAttr, GENERIC_ALL, 0, &sharedHandle);
-
-				FD3D12ResourceDesc texDesc;
-				texDesc.PixelFormat = GetPixelFormatFromSlTextureFormat(Format);
-				const auto texAllocInfo = D3D12DevicePtr->GetResourceAllocationInfo(0, 1, &texDesc);
-				
-				cudaExternalMemoryHandleDesc cuExtmemHandleDesc{};
-				cuExtmemHandleDesc.type = cudaExternalMemoryHandleTypeD3D12Heap;
-				cuExtmemHandleDesc.handle.win32.handle = sharedHandle;
-				cuExtmemHandleDesc.size = texAllocInfo.SizeInBytes;
-				cuExtmemHandleDesc.flags = cudaExternalMemoryDedicated;
-				cudaImportExternalMemory(&m_externalMemory, &cuExtmemHandleDesc);
-				
-				cudaExternalMemoryMipmappedArrayDesc cuExtmemMipDesc{};
-				cuExtmemMipDesc.extent = make_cudaExtent(Width, Height, 0);
-				cuExtmemMipDesc.formatDesc = cudaCreateChannelDesc<char4>();
-				cuExtmemMipDesc.numLevels = 1;
-				cuExtmemMipDesc.flags = cudaArraySurfaceLoadStore;
-
-				cudaMipmappedArray_t cuMipArray{};
-				cudaExternalMemoryGetMappedMipmappedArray(&cuMipArray, m_externalMemory, &cuExtmemMipDesc);
-
-				cudaArray_t cuArray{};
-				cudaGetMipmappedArrayLevel(&cuArray, cuMipArray, 0);
-
-				cudaResourceDesc cuResDesc{};
-				cuResDesc.resType = cudaResourceTypeArray;
-				cuResDesc.res.array.array = cuArray;
-				cudaCreateSurfaceObject(&cuSurface, &cuResDesc);*/
-
-				UE_LOG(LogTemp, Warning, TEXT(" Init Resource %d"), Format);
 
 				SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
 				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
