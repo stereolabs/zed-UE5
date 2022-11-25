@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.0",
+	"EngineAssociation": "{450BA52B-48CB-098E-7C7F-69A0E7DEE36E}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -24,10 +24,6 @@
 	"Plugins": [
 		{
 			"Name": "Stereolabs",
-			"Enabled": true
-		},
-		{
-			"Name": "NiagaraFluids",
 			"Enabled": true
 		},
 		{

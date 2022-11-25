@@ -13,7 +13,7 @@ public class EnvironmentalLighting : ModuleRules
 
     public EnvironmentalLighting(ReadOnlyTargetRules Target) : base(Target)
     {
-        PrivatePCHHeaderFile = "EnvironmentalLighting/Public/EnvironmentalLighting.h";
+        PrivatePCHHeaderFile = "Public/EnvironmentalLighting.h";
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

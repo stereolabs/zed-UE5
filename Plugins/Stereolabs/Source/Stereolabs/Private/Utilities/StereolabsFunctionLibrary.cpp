@@ -197,7 +197,7 @@ UTexture2D* Texture32BitFromImage_Internal(const int32 SrcWidth, const int32 Src
 	texture->SRGB = 0;
 	texture->AddToRoot();
 	texture->UpdateResource();
-	FTexture2DMipMap &mip = texture->PlatformData->Mips[0];
+	FTexture2DMipMap &mip = texture->GetPlatformData()->Mips[0];
 	float *data = (float*)(mip.BulkData.Lock(LOCK_READ_WRITE));
 	for (int32 i = 0; i < SrcHeight; i++)
 	{

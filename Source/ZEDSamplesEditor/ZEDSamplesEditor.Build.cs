@@ -17,18 +17,18 @@ public class ZEDSamplesEditor : ModuleRules
 			 PrivateDependencyModuleNames.AddRange(
 	 new string[]
 	 {
-		 "CoreUObject",
-		 "Engine",
-		 "Slate",
-		 "SlateCore",
-						 "UnrealEd",
-						 "GraphEditor",
-						 "PropertyEditor",
-						 "EditorStyle",
-						 "ContentBrowser",
-						 "ZEDSamples",
-						 "AnimGraph",
-						 "AnimGraphRuntime",
+		"CoreUObject",
+		"Engine",
+		"Slate",
+		"SlateCore",
+		"UnrealEd",
+		"GraphEditor",
+		"PropertyEditor",
+		"EditorStyle",
+		"ContentBrowser",
+		"ZEDSamples",
+		"AnimGraph",
+		"AnimGraphRuntime",
 		 // ... add private dependencies that you statically link with here ...
 	 }
 	 );
