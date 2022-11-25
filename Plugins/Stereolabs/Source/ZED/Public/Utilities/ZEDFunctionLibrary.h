@@ -817,4 +817,16 @@ public:
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "From length (cm) to Scale", Keywords = "From cm to scale bone"), Category = "Stereolabs|Zed")
 	static float FromLengthToScale(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor = 1.0);
+
+	/**
+	* Get the scale corresponding to a given bone and length as a vector (1,1,length).
+	* Used to resize the "UE_ZED_Manny" skeletal mesh.
+	* @param zedMannyBone mannequin's bone to be scaled
+	* @param boneLengths TArray of Bone lengths from the SDK, in cm. Got from GetBody34BonesLength.
+	* @globalScaleFactor if the model was already resized (at least in height), give the scale here.
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "From length (cm) to Scale Vector", Keywords = "From cm to scale bone vector"), Category = "Stereolabs|Zed")
+	static FVector FromLengthToScaleVector(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor = 1.0);
+
+	static FString UE_Manny_BonesToString(EZED_UE_Manny_Bones bone);
 };

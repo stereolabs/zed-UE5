@@ -1093,5 +1093,91 @@ float UZEDFunctionLibrary::FromLengthToScale(const TArray<float>& boneLengths, E
 		break;
 	}
 
+	FString logstring = FString(UE_Manny_BonesToString(zedMannyBone));
+	UE_LOG(LogTemp, Warning, TEXT("New scale for bone %d : %f"), *logstring, ret);
+
+	return ret;
+}
+
+FString UZEDFunctionLibrary::UE_Manny_BonesToString(EZED_UE_Manny_Bones bone) {
+	FString ret = "";
+
+	switch (bone) {
+	case EZED_UE_Manny_Bones::SPINE:
+		ret = "SPINE"; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
+		break;
+	case EZED_UE_Manny_Bones::SPINE1:
+		ret = "SPINE1"; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
+		break;
+	case EZED_UE_Manny_Bones::SPINE2:
+		ret = "SPINE2";
+		break;
+	case EZED_UE_Manny_Bones::L_TOSHOULDER:
+		ret = "L_TOSHOULDER";
+		break;
+	case EZED_UE_Manny_Bones::L_TOARM:
+		ret = "L_TOARM";
+		break;
+	case EZED_UE_Manny_Bones::L_TOFOREARM:
+		ret = "L_TOFOREARM";
+		break;
+	case EZED_UE_Manny_Bones::L_TOHAND:
+		ret = "L_TOHAND";
+		break;
+	case EZED_UE_Manny_Bones::L_TOHANDTIP:
+		ret = "L_TOHANDTIP";
+		break;
+	case EZED_UE_Manny_Bones::R_TOSHOULDER:
+		ret = "R_TOSHOULDER";
+		break;
+	case EZED_UE_Manny_Bones::R_TOARM:
+		ret = "R_TOARM";
+		break;
+	case EZED_UE_Manny_Bones::R_TOFOREARM:
+		ret = "R_TOFOREARM";
+		break;
+	case EZED_UE_Manny_Bones::R_TOHAND:
+		ret = "R_TOHAND";
+		break;
+	case EZED_UE_Manny_Bones::R_TOHANDTIP:
+		ret = "R_TOHANDTIP";
+		break;
+	case EZED_UE_Manny_Bones::TONECK:
+		ret = "TONECK";
+		break;
+	case EZED_UE_Manny_Bones::TOHEAD:
+		ret = "TOHEAD";
+		break;
+	case EZED_UE_Manny_Bones::L_TOUPLEG:
+		ret = "L_TOUPLEG";
+		break;
+	case EZED_UE_Manny_Bones::L_TOLEG:
+		ret = "L_TOLEG";
+		break;
+	case EZED_UE_Manny_Bones::L_TOFOOT:
+		ret = "L_TOFOOT";
+		break;
+	case EZED_UE_Manny_Bones::R_TOUPLEG:
+		ret = "R_TOUPLEG";
+		break;
+	case EZED_UE_Manny_Bones::R_TOLEG:
+		ret = "R_TOLEG";
+		break;
+	case EZED_UE_Manny_Bones::R_TOFOOT:
+		ret = "R_TOFOOT";
+		break;
+	case EZED_UE_Manny_Bones::L_TOTOEBASE:
+		ret = "L_TOTOEBASE";
+		break;
+	case EZED_UE_Manny_Bones::R_TOTOEBASE:
+		ret = "R_TOTOEBASE";
+		break;
+	}
+
+	return ret;
+}
+
+FVector UZEDFunctionLibrary::FromLengthToScaleVector(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor) {
+	FVector ret = FVector(1.0,1.0, FromLengthToScale(boneLengths, zedMannyBone, globalScaleFactor));
 	return ret;
 }
