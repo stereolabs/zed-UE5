@@ -175,20 +175,22 @@ void USlTexture::UpdateTexture(void* NewMat)
 
 bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 {
-#if WITH_EDITOR
+
 	if (!Texture && MemoryType == ESlMemoryType::MT_GPU)
 	{
+#if WITH_EDITOR
 		SL_LOG_E(SlTexture, "Trying to resize unallocated texture.");
-
+#endif
 		return false;
 	}
 	else if (NewWidth <= 0 || NewHeight <= 0)
 	{
+#if WITH_EDITOR
 		SL_LOG_E(SlTexture, "Trying to resize texture with size <= 0: %d - %d.", NewWidth, NewHeight);
-
+#endif
 		return false;
 	}
-#endif
+
 
 	Width = NewWidth;
 	Height = NewHeight;
