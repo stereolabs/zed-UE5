@@ -2597,8 +2597,8 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 	int MinimumKeypointsThreshold;
 
 	FSlObjectDetectionRuntimeParameters() :
-		DetectionConfidenceThreshold(60.0f),
-		MinimumKeypointsThreshold(5)
+		DetectionConfidenceThreshold(35.0f),
+		MinimumKeypointsThreshold(10)
 	{
 		ObjectClassFilter = TArray<int>();
 		ObjectClassFilter.Init(0, (int)SL_OBJECT_CLASS_LAST);
@@ -2606,7 +2606,7 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 		ObjectClassDetectionConfidenceThreshold = TMap<int, float>();
 
 		for (int i = 0; i < (int)SL_OBJECT_CLASS_LAST; i++) {
-			ObjectClassDetectionConfidenceThreshold.Add(i, 60.0f);
+			ObjectClassDetectionConfidenceThreshold.Add(i, 35.0f);
 		}
 	}
 };

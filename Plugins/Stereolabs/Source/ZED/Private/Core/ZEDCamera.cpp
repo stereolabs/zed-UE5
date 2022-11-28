@@ -27,7 +27,7 @@ DEFINE_LOG_CATEGORY(ZEDCamera);
 /** Preset for depth texture quality */
 static TAutoConsoleVariable<int32> CVarZEDDepthTextureQualityPreset(
 	TEXT("r.ZED.DepthTextureQualityPreset"),
-	0,
+	1,
 	TEXT("Set the quality of the ZED depth texture.")
 	TEXT("	0: low (default)")
 	TEXT("	1: medium")
@@ -49,7 +49,7 @@ AZEDCamera::AZEDCamera()
 	RenderingMode(ESlRenderingMode::RM_None),
 	bUseHMDTrackingAsOrigin(false),
 	Batch(nullptr),
-	CurrentDepthTextureQualityPreset(2),
+	CurrentDepthTextureQualityPreset(1),
 	bPositionalTrackingInitialized(false),
 	bHMDHasTrackers(false),
 	bCurrentDepthEnabled(false),

@@ -1406,7 +1406,6 @@ bool USlCameraProxy::RetrieveObjects()
 		return false;
 	}
 
-	return true;
 #endif
 
 	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
