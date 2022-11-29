@@ -666,6 +666,7 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters.Resolution;
 
 		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_Right, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+
 	}
 
 	if (RuntimeParameters.bEnableDepth)

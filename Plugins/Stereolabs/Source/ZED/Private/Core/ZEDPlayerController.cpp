@@ -38,12 +38,12 @@ DEFINE_LOG_CATEGORY(ZEDPlayerController);
 	Position.Y += RowHeight;\
 
 /** Activate/Deactivate noise */
-static TAutoConsoleVariable<int32> CVarZEDNoise(
-	TEXT("r.ZED.Noise"),
-	0,
-	TEXT("1 to enable noise, 0 to disable"),
-	ECVF_RenderThreadSafe
-);
+//static TAutoConsoleVariable<int32> CVarZEDNoise(
+//	TEXT("r.ZED.Noise"),
+//	0,
+//	TEXT("1 to enable noise, 0 to disable"),
+//	ECVF_RenderThreadSafe
+//);
 
 /** Show ZED FPS */
 static TAutoConsoleVariable<int32> CVarZEDShowFPS(

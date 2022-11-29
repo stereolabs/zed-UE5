@@ -6,12 +6,12 @@
 #include <sl_mr_core/EnvironmentalLighting.hpp>
 
 /** Set environmental lighting max intensity */
-static TAutoConsoleVariable<float> CVarEnvLightMaxIntensity(
-	TEXT("r.ZED.EnvLightMaxIntensity"),
-	1.0f,
-	TEXT("Default to 1.0, range [0.005, 2.0]"),
-	ECVF_SetByConsole
-);
+//static TAutoConsoleVariable<float> CVarEnvLightMaxIntensity(
+//	TEXT("r.ZED.EnvLightMaxIntensity"),
+//	1.0f,
+//	TEXT("Default to 1.0, range [0.005, 2.0]"),
+//	ECVF_SetByConsole
+//);
 
 AEnvironmentalLightingManager::AEnvironmentalLightingManager()
 	:

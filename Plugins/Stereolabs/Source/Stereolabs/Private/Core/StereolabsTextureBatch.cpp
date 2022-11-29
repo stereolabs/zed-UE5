@@ -87,6 +87,9 @@ USlTextureBatch* USlTextureBatch::CreateTextureBatch(const FName& Name, ESlMemor
 
 	TextureBatch->Name = Name;
 
+	FString RHIName = GDynamicRHI->GetName();
+	TextureBatch->bCudaInteropEnabled = RHIName.Equals("D3D11") ? true : false;
+
 	GSlCameraProxy->OnGrabThreadEnabled.AddDynamic(TextureBatch, &USlTextureBatch::SetAsyncRetrieveEnabled);
 
 	return TextureBatch;
@@ -342,7 +345,6 @@ void USlGPUTextureBatch::AddTexture(USlTexture* Texture)
 
 	checkf(Texture, TEXT("Texture can't be null"));
 	checkf(Texture->Texture, TEXT("Can't add a texture without Texture2D created"));
-	//checkf(Texture->IsMemoryTypeOf(ESlMemoryType::MT_GPU), TEXT("Memory type mismatch betwwen texture %s and batch %s."), *Texture->Name.ToString(), *Name.ToString());
 
 	// Wait for current tick render command to finish
 	FlushRenderingCommands();
@@ -467,9 +469,12 @@ bool USlGPUTextureBatch::Tick()
 			{
 				int32 BatchSize = TexturesPool.Num();
 
-				GSlCameraProxy->PushCudaContext();
+				if (bCudaInteropEnabled)
+				{
+					GSlCameraProxy->PushCudaContext();
 
-				cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+				}
 
 				for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 				{
@@ -490,13 +495,15 @@ bool USlGPUTextureBatch::Tick()
 					GSlCameraProxy->RetrieveTexture(*TextureIt);
 
 					(*TextureIt)->UpdateTexture();
-#endif
-					
+#endif			
 				}
 
-				cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+				if (bCudaInteropEnabled)
+				{
+					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
 
-				GSlCameraProxy->PopCudaContext();
+					GSlCameraProxy->PopCudaContext();
+				}
 			}
 		);
 
@@ -522,18 +529,24 @@ bool USlGPUTextureBatch::Tick()
 			{
 				int32 BatchSize = TexturesPool.Num();
 
-				GSlCameraProxy->PushCudaContext();
+				if (bCudaInteropEnabled)
+				{
+					GSlCameraProxy->PushCudaContext();
 
-				cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+				}
 				
 				for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 				{
 					(*TextureIt)->UpdateTexture(Buffer.Mats[TextureIt.GetIndex()]);
 				}
 
-				cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+				if (bCudaInteropEnabled)
+				{
+					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
 
-				GSlCameraProxy->PopCudaContext();
+					GSlCameraProxy->PopCudaContext();
+				}
 
 				SL_SCOPE_LOCK(Lock, BuffersSection)
 					Buffer.bIsFree = true;
