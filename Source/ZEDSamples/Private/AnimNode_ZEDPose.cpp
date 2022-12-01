@@ -340,10 +340,13 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FCompactPose& OutPose)
                 FCompactPoseBoneIndex leftUpLegIndex = GetCPIndex(18, OutPose); // 18 = LEFT_HIP
                 float HipOffset = FMath::Abs(OutPose[leftUpLegIndex].GetTranslation().Z) * OutPose[CPIndexRoot].GetScale3D().Z;
                 RootPosition.Z += HipOffset;
+                /* FROM HERE
+                COMMENT FOR SCALE & ORIENTATION BASED Body-Tracking
+                */
                 RootPosition.Z -= FeetOffset;
                 RootPosition.Z += HeightOffset;
                 RootPosition.Z *= rootTranslationFactor;
-
+                /* UNTIL HERE */
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
                     RootPosition,

@@ -1023,13 +1023,13 @@ float UZEDFunctionLibrary::FromLengthToScale(const TArray<float>& boneLengths, E
 
 	switch (zedMannyBone) {
 	case EZED_UE_Manny_Bones::SPINE:
-		ret = boneLengths[0] / 5; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
+		ret = boneLengths[0] * 0.016; // divide by 21+4 (length from hips to spine 2, with 4cm offset) and multiply by 10/25 (ratio of spine-spine1 on spine(more accurately sdk hips)-spine2)
 		break;
 	case EZED_UE_Manny_Bones::SPINE1:
-		ret = boneLengths[0] / 5.5; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
+		ret = boneLengths[0] * (0.0176 * 2); // divide by 21+4 (length from hips to spine 2, with 4cm offset) and multiply by 11/25 (ratio of spine1-spine2 on spine(more accurately sdk hips)-spine2)
 		break;
 	case EZED_UE_Manny_Bones::SPINE2:
-		ret = boneLengths[1] / 13;
+		ret = boneLengths[1] / (13+4);
 		break;
 	case EZED_UE_Manny_Bones::L_TOSHOULDER:
 		ret = boneLengths[2] / 14;
@@ -1062,7 +1062,7 @@ float UZEDFunctionLibrary::FromLengthToScale(const TArray<float>& boneLengths, E
 		ret = (boneLengths[13] + boneLengths[14]) / 20;
 		break;
 	case EZED_UE_Manny_Bones::TONECK:
-		ret = boneLengths[24] / 14;
+		ret = boneLengths[24] / (14+4);
 		break;
 	case EZED_UE_Manny_Bones::TOHEAD:
 		ret = boneLengths[25] / 9;
@@ -1094,7 +1094,7 @@ float UZEDFunctionLibrary::FromLengthToScale(const TArray<float>& boneLengths, E
 	}
 
 	FString logstring = FString(UE_Manny_BonesToString(zedMannyBone));
-	UE_LOG(LogTemp, Warning, TEXT("New scale for bone %d : %f"), *logstring, ret);
+	UE_LOG(LogTemp, Warning, TEXT("New scale for bone %s : %f"), *logstring, ret);
 
 	return ret;
 }
