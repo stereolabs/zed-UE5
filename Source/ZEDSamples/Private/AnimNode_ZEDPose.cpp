@@ -42,7 +42,9 @@ static TArray<int> ParentsIdx = TArray<int>{
         26,
         26,
         26,
-        26
+        26,
+        24,
+        20
 };
 
 static TMap<int, FName> Keypoints = TMap<int, FName>{
@@ -174,6 +176,7 @@ void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> Source
 }
 
 void FAnimNode_ZEDPose::PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse) {
+
     for (int32 i = 0; i < ParentsIdx.Num(); i++) 
     {
         FCompactPoseBoneIndex CPIndex = GetCPIndex(i, OutPose);
@@ -224,6 +227,24 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
         }
     }
 
+    TArray<int> KeypointsKeys;
+    Keypoints.GetKeys(KeypointsKeys);
+    for (auto& i : KeypointsKeys)
+    {
+        FName BoneName = RemapAsset[*Keypoints.Find(i)];
+        FVector BonePosition = ObjectData.Keypoint[i];
+
+        if (BoneName != "None" && ParentsIdx[i] != -1) // Do not scale the root
+        {
+            FVector ParentBonePosition = ObjectData.Keypoint[ParentsIdx[i]];;
+
+            float BoneSize = FVector::Distance(BonePosition, ParentBonePosition);
+
+            // Store the size of each bone of the ref pose.
+            ZEDBoneSize.Add(BoneName, BoneSize);
+        }
+    }
+
     if (CPIndexRoot != INDEX_NONE)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation(), false);
 
@@ -246,9 +267,9 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
                 FCompactPoseBoneIndex leftUpLegIndex = GetCPIndex(18, OutPose); // 18 = LEFT_HIP
                 float HipOffset = FMath::Abs(OutPose[leftUpLegIndex].GetTranslation().Z) * OutPose[CPIndexRoot].GetScale3D().Z;
                 RootPosition.Z += HipOffset;
-                RootPosition.Z -= FeetOffset;
-                RootPosition.Z += HeightOffset;
-                RootPosition.Z *= rootTranslationFactor;
+                //RootPosition.Z -= FeetOffset;
+                //RootPosition.Z += HeightOffset;
+                //RootPosition.Z *= rootTranslationFactor;
 
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
@@ -288,68 +309,29 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             FQuat FinalRotation = Rotation * OutPose[CPIndex].GetRotation();
             OutPose[CPIndex].SetRotation(FinalRotation);
             OutPose[CPIndex].SetTranslation(Translation);
-        }
-    }
 
+            if (!BoneName.IsEqual("None"))
+            {
+                if (ZEDBoneSize.Find(BoneName) && RefPoseBoneSize.Find(BoneName) && RefPoseBoneSize.Find(BoneName) != 0)
+                {
+                    if (BoneName.IsEqual("Head") || BoneName.IsEqual("Spine") || BoneName.IsEqual("Spine2") || BoneName.IsEqual("Neck"))
+                    {
+                        float RefPoseTorsoLength = *RefPoseBoneSize.Find("Hips") + *RefPoseBoneSize.Find("Spine") + *RefPoseBoneSize.Find("Spine2");
+                        float ZEDTorsoLength = *ZEDBoneSize.Find("Hips") + *ZEDBoneSize.Find("Spine") + *ZEDBoneSize.Find("Spine2");
 
-    if (CPIndexRoot != INDEX_NONE)
-        PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation().Inverse(), true);
-}
-
-void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext)
-{
-    FCompactPose OutPose = PoseContext.Pose.GetPose();
-    TArray<FName> SourceBoneNames;
-    SourceBoneNames.SetNum(RemapAsset.Num());
-    RemapAsset.GetKeys(SourceBoneNames);
-
-    PutInRefPose(OutPose, SourceBoneNames);
-
-    // Compact Pose Root index
-    FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
-
-    float LeftFootHeight = 0;
-    float RightFootHeight = 0;
-    if (ObjectData.KeypointConfidence.Num() == 34)
-    {
-        if (ObjectData.KeypointConfidence[20] != 0 && ObjectData.KeypointConfidence[24] != 0) //if both foot are visible/detected
-        {
-            if (SkeletalMesh) {
-                LeftFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["LEFT_FOOT"]).Z;
-                RightFootHeight = SkeletalMesh->GetBoneLocation(RemapAsset["RIGHT_FOOT"]).Z;
-                FeetOffset = Alpha * fmin(LeftFootHeight, RightFootHeight) + (1 - Alpha) * FeetOffset;
+                        UE_LOG(LogTemp, Warning, TEXT("Ref Pose Torso : %f"), RefPoseTorsoLength);
+                        UE_LOG(LogTemp, Warning, TEXT("ZED Pose Torso : %f"), ZEDTorsoLength);
+                    }
+                    else
+                    {
+                        float BoneScale = *ZEDBoneSize.Find(BoneName) / *RefPoseBoneSize.Find(BoneName);
+                        OutPose[CPIndex].SetScale3D(FVector(1, 1, BoneScale));
+                    }
+                }
             }
         }
     }
 
-    if (CPIndexRoot != INDEX_NONE)
-        PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation(), false);
-
-    for (auto& i : SourceBoneNames)
-    {
-        FName BoneName = RemapAsset[i];
-        int idx = bMirrorOnZAxis ? *KeypointsMirrored.FindKey(i) : *Keypoints.FindKey(i);
-        FCompactPoseBoneIndex CPIndex = GetCPIndex(idx, OutPose);
-
-        FBoneReference BoneRef;
-        BoneRef.BoneName = BoneName;
-        BoneRef.Initialize(RequiredBones);
-        FAnimNode_ModifyBone BoneModifier;
-        BoneModifier.BoneToModify = BoneRef;
-        BoneModifier.RotationSpace = EBoneControlSpace::BCS_ParentBoneSpace;
-        BoneModifier.TranslationSpace = EBoneControlSpace::BCS_ParentBoneSpace;
-        BoneModifier.ScaleSpace = EBoneControlSpace::BCS_ParentBoneSpace;
-
-        BoneModifier.TranslationMode = EBoneModificationMode::BMM_Replace;
-        BoneModifier.RotationMode = EBoneModificationMode::BMM_Replace;
-        BoneModifier.ScaleMode = EBoneModificationMode::BMM_Ignore;
-
-
-        BoneModifier.Rotation = FRotator(ObjectData.LocalOrientationPerJoint[idx]);
-        BoneModifier.Translation = ObjectData.LocalPositionPerJoint[idx];
-        TArray<FBoneTransform> BoneTransforms;
-        BoneModifier.EvaluateSkeletalControl_AnyThread(PoseContext, BoneTransforms);
-    }
     if (CPIndexRoot != INDEX_NONE)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation().Inverse(), true);
 }
@@ -375,43 +357,52 @@ void FAnimNode_ZEDPose::PreUpdate(const UAnimInstance* InAnimInstance)
 {
 }
 
-void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext & Context)
+void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
 {
-	InputPose.Update(Context);
+    InputPose.Update(Context);
 
-	GetEvaluateGraphExposedInputs().Execute(Context);
+    GetEvaluateGraphExposedInputs().Execute(Context);
 
-}
+    if (SkeletalMesh)
+    {
+        if (RefPoseBoneSize.Num() == 0)
+        {
+            TArray<FName> SourceBoneNames;
+            SourceBoneNames.SetNum(RemapAsset.Num());
+            RemapAsset.GetKeys(SourceBoneNames);
 
-void FAnimNode_ZEDPose::EvaluateComponentSpace_AnyThread(FComponentSpacePoseContext& Output)
-{
-    if (ObjectData.Keypoint.Num() > 0) {
-        if (!PrevDataInitialized) {
-            // Rotations
-            for (int i = 0; i < ObjectData.LocalOrientationPerJoint.Num(); ++i)
+            TArray<int> KeypointsKeys;
+            Keypoints.GetKeys(KeypointsKeys);
+            for (auto& i : KeypointsKeys)
             {
-                PreviousRotations.Add(ObjectData.LocalOrientationPerJoint[i]);
+                FName BoneName = RemapAsset[*Keypoints.Find(i)];
+                FVector BonePosition = SkeletalMesh->GetBoneLocation(BoneName, EBoneSpaces::WorldSpace);
+
+                if (BoneName != "None" && ParentsIdx[i] != -1) // Do not scale the root
+                {
+                    FName ParentBoneName = RemapAsset[*Keypoints.Find(ParentsIdx[i])];
+                    FVector ParentBonePosition = SkeletalMesh->GetBoneLocation(ParentBoneName, EBoneSpaces::WorldSpace);
+
+                    float BoneSize = FVector::Distance(BonePosition, ParentBonePosition);
+
+                    UE_LOG(LogTemp, Warning, TEXT("Bone Name : %s  || Parent Bone Name : %s || BoneSize : %f"), *BoneName.ToString(), *ParentBoneName.ToString(), BoneSize);
+
+                    // Store the size of each bone of the ref pose.
+                    RefPoseBoneSize.Add(BoneName, BoneSize);
+                }
             }
-
-            // Root position
-            PreviousRootPosition = (ObjectData.Keypoint[0] - FeetOffset + HeightOffset);
-
-            // Root rotation
-            PreviousRootRotation = ObjectData.GlobalRootOrientation;
-
-            PrevDataInitialized = true;
         }
-        BuildPoseFromSlObjectData(Output);
     }
 }
 
-#if 0
 void FAnimNode_ZEDPose::Evaluate_AnyThread(FPoseContext& Output)
 {
 	InputPose.Evaluate(Output);
 
-    if (ObjectData.Keypoint.Num() > 0) {
-        if (!PrevDataInitialized) {
+    if (ObjectData.Keypoint.Num() > 0)
+    {
+        if (!PrevDataInitialized) 
+        {
             // Rotations
             for (int i = 0; i < ObjectData.LocalOrientationPerJoint.Num(); ++i) 
             { 
@@ -429,13 +420,13 @@ void FAnimNode_ZEDPose::Evaluate_AnyThread(FPoseContext& Output)
         BuildPoseFromSlObjectData(Output);
     }
 }
-#endif
+
 
 void FAnimNode_ZEDPose::CacheBones_AnyThread(const FAnimationCacheBonesContext & Context)
 {
 	Super::CacheBones_AnyThread(Context);
 
-    RequiredBones = Context.AnimInstanceProxy->GetRequiredBones();
+    //RequiredBones = Context.AnimInstanceProxy->GetRequiredBones();
 	InputPose.CacheBones(Context);
 }
 

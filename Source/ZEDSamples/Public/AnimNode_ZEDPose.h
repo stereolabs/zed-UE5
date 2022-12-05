@@ -51,8 +51,8 @@ public:
 	virtual void Initialize_AnyThread(const FAnimationInitializeContext& Context) override;
 	virtual void CacheBones_AnyThread(const FAnimationCacheBonesContext & Context) override;
 	virtual void Update_AnyThread(const FAnimationUpdateContext & Context) override;
-	//virtual void Evaluate_AnyThread(FPoseContext& Output) override;
-	virtual void EvaluateComponentSpace_AnyThread(FComponentSpacePoseContext& Output) final;
+	virtual void Evaluate_AnyThread(FPoseContext& Output) override;
+	//virtual void EvaluateComponentSpace_AnyThread(FComponentSpacePoseContext& Output) final;
 	virtual bool HasPreUpdate() const { return true; }
 	virtual void PreUpdate(const UAnimInstance* InAnimInstance) override;
 	//~ End of FAnimNode_Base interface
@@ -63,7 +63,7 @@ protected:
 
 private:
 	void BuildPoseFromSlObjectData(FPoseContext& PoseContext);
-	void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
+	//void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
 
 	float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData);
 	void PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse);
@@ -74,7 +74,10 @@ private:
 	// The root in our case is the pelvis (0)
 	FName GetTargetRootName() const { return "PELVIS"; }
 
-	FBoneContainer& RequiredBones;
+	//FBoneContainer& RequiredBones;
+
+	TMap<FName, float> RefPoseBoneSize;
+	TMap<FName, float> ZEDBoneSize;
 
 	float FeetOffset;
 	// factor used to computer foot offset over time.
