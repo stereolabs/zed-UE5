@@ -33,6 +33,10 @@
 		{
 			"Name": "LiveLink",
 			"Enabled": true
+		},
+		{
+			"Name": "Reflex",
+			"Enabled": true
 		}
 	]
 }
