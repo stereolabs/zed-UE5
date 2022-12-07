@@ -645,4 +645,188 @@ public:
 		return nullptr;
 	}
 
+	/**
+	* Get an array referencing all the body34 bones' lengths.
+	* @param ObjectData ObjectData struct for the specified skeleton
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Get Bones Length Body34", Keywords = "Bones Length Body34"), Category = "Stereolabs|Zed")
+	static TArray<float> GetBody34BonesLength(const FSlObjectData& ObjectData ) {
+		TArray<float> ret = {};
+
+		float tmpLen = 0.0f;
+		FVector firstEndPos = FVector::Zero();
+		FVector secondEndPos = FVector::Zero();
+
+		for (int i = 0; i < BodyBonesPose34.Num(); ++i) {
+			firstEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].FirstEnd)];
+			secondEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].SecondEnd)];
+			tmpLen = FVector::Distance(firstEndPos, secondEndPos);
+			ret.Push(tmpLen);
+		}
+
+		return ret;
+	}
+
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "[B34] Get Joint Name From Enum", Keywords = "Joint Name Body34 Body parts pose"), Category = "Stereolabs|Zed")
+	static FString GetJointNameFromEnum(const ESlBodyPartsPose34& bodypart) {
+		FString ret = "NotFound";
+		switch (bodypart) {
+		case ESlBodyPartsPose34::PELVIS:
+			ret = "Pelvis";
+			break;
+		case ESlBodyPartsPose34::NAVAL_SPINE:
+			ret = "NavalSpine";
+			break;
+		case ESlBodyPartsPose34::CHEST_SPINE:
+			ret = "ChestSpine";
+			break;
+		case ESlBodyPartsPose34::NECK:
+			ret = "Neck";
+			break;
+		case ESlBodyPartsPose34::LEFT_CLAVICLE:
+			ret = "L_Clavicle";
+			break;
+		case ESlBodyPartsPose34::LEFT_SHOULDER:
+			ret = "L_Shoulder";
+			break;
+		case ESlBodyPartsPose34::LEFT_ELBOW:
+			ret = "L_Elbow";
+			break;
+		case ESlBodyPartsPose34::LEFT_WRIST:
+			ret = "L_Wrist";
+			break;
+		case ESlBodyPartsPose34::LEFT_HAND:
+			ret = "L_Hand";
+			break;
+		case ESlBodyPartsPose34::LEFT_HANDTIP:
+			ret = "L_HandTip";
+			break;
+		case ESlBodyPartsPose34::LEFT_THUMB:
+			ret = "L_Thumb";
+			break;
+		case ESlBodyPartsPose34::RIGHT_CLAVICLE:
+			ret = "R_Clavicle";
+			break;
+		case ESlBodyPartsPose34::RIGHT_SHOULDER:
+			ret = "R_Shoulder";
+			break;
+		case ESlBodyPartsPose34::RIGHT_ELBOW:
+			ret = "R_Elbow";
+			break;
+		case ESlBodyPartsPose34::RIGHT_WRIST:
+			ret = "R_Wrist";
+			break;
+		case ESlBodyPartsPose34::RIGHT_HAND:
+			ret = "R_Hand";
+			break;
+		case ESlBodyPartsPose34::RIGHT_HANDTIP:
+			ret = "R_HandTip";
+			break;
+		case ESlBodyPartsPose34::RIGHT_THUMB:
+			ret = "R_Thumb";
+			break;
+		case ESlBodyPartsPose34::LEFT_HIP:
+			ret = "L_Hip";
+			break;
+		case ESlBodyPartsPose34::LEFT_KNEE:
+			ret = "L_Knee";
+			break;
+		case ESlBodyPartsPose34::LEFT_ANKLE:
+			ret = "L_Ankle";
+			break;
+		case ESlBodyPartsPose34::LEFT_FOOT:
+			ret = "L_Foot";
+			break;
+		case ESlBodyPartsPose34::RIGHT_HIP:
+			ret = "R_Hip";
+			break;
+		case ESlBodyPartsPose34::RIGHT_KNEE:
+			ret = "R_Knee";
+			break;
+		case ESlBodyPartsPose34::RIGHT_ANKLE:
+			ret = "R_Ankle";
+			break;
+		case ESlBodyPartsPose34::RIGHT_FOOT:
+			ret = "R_Foot";
+			break;
+		case ESlBodyPartsPose34::HEAD:
+			ret = "Head";
+			break;
+		case ESlBodyPartsPose34::NOSE:
+			ret = "Nose";
+			break;
+		case ESlBodyPartsPose34::LEFT_EYE:
+			ret = "L_Eye";
+			break;
+		case ESlBodyPartsPose34::LEFT_EAR:
+			ret = "L_Ear";
+			break;
+		case ESlBodyPartsPose34::RIGHT_EYE:
+			ret = "R_Eye";
+			break;
+		case ESlBodyPartsPose34::RIGHT_EAR:
+			ret = "R_Ear";
+			break;
+		case ESlBodyPartsPose34::LEFT_HEEL:
+			ret = "L_Heel";
+			break;
+		case ESlBodyPartsPose34::RIGHT_HEEL:
+			ret = "R_Heel";
+			break;
+		}
+		return ret;
+	}
+
+	/**
+	* Get a map referencing all the body34 bones' lengths.
+	* The keys follow the format <Bone 1 Number>-<Bone 2 Number>
+	* @param ObjectData ObjectData struct for the specified skeleton
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Get Bones Length Body34 (Map)", Keywords = "Bones Length Body34"), Category = "Stereolabs|Zed")
+	static TMap<FString, float> GetBody34BonesLengthMap(const FSlObjectData& ObjectData) {
+		TMap<FString, float> ret;
+
+		float tmpLen = 0.0f;
+		FVector firstEndPos = FVector::Zero();
+		FVector secondEndPos = FVector::Zero();
+		FString feName = "";
+		FString seName = "";
+		FString concatName = "";
+
+		for (int i = 0; i < BodyBonesPose34.Num(); ++i) {
+			firstEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].FirstEnd)];
+			secondEndPos = ObjectData.Keypoint[(int)(BodyBonesPose34[i].SecondEnd)];
+			tmpLen = FVector::Distance(firstEndPos, secondEndPos);
+
+			feName = FString::FromInt((int)(BodyBonesPose34[i].FirstEnd));
+			seName = FString::FromInt((int)(BodyBonesPose34[i].SecondEnd));
+			concatName = feName + "-" + seName;
+
+			ret.Add(concatName, tmpLen);
+		}
+
+		return ret;
+	}	
+
+	/**
+	* Get the scale corresponding to a given bone and length.
+	* Used to resize the "UE_ZED_Manny" skeletal mesh.
+	* @param zedMannyBone mannequin's bone to be scaled
+	* @param boneLengths TArray of Bone lengths from the SDK, in cm. Got from GetBody34BonesLength.
+	* @globalScaleFactor if the model was already resized (at least in height), give the scale here.
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "From length (cm) to Scale", Keywords = "From cm to scale bone"), Category = "Stereolabs|Zed")
+	static float FromLengthToScale(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor = 1.0);
+
+	/**
+	* Get the scale corresponding to a given bone and length as a vector (1,1,length).
+	* Used to resize the "UE_ZED_Manny" skeletal mesh.
+	* @param zedMannyBone mannequin's bone to be scaled
+	* @param boneLengths TArray of Bone lengths from the SDK, in cm. Got from GetBody34BonesLength.
+	* @globalScaleFactor if the model was already resized (at least in height), give the scale here.
+	*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "From length (cm) to Scale Vector", Keywords = "From cm to scale bone vector"), Category = "Stereolabs|Zed")
+	static FVector FromLengthToScaleVector(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor = 1.0);
+
+	static FString UE_Manny_BonesToString(EZED_UE_Manny_Bones bone);
 };

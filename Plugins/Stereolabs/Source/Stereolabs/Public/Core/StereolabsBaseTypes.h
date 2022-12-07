@@ -727,6 +727,37 @@ enum class ESlBodyPartsPose34 : uint8 {
 	LEFT_HEEL = 32,
 	RIGHT_HEEL = 33
 };
+
+/*
+* List of our version of the UE5 skeleton bones pertinent for resizing.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class EZED_UE_Manny_Bones : uint8 {
+	SPINE = 0,
+	SPINE1 = 1,
+	SPINE2 = 2,
+	L_TOSHOULDER = 3,
+	L_TOARM = 4,
+	L_TOFOREARM = 5,
+	L_TOHAND = 6,
+	R_TOSHOULDER = 7,
+	R_TOARM = 8,
+	R_TOFOREARM = 9,
+	R_TOHAND = 10,
+	TONECK = 11,
+	TOHEAD = 12,
+	L_TOUPLEG = 13,
+	L_TOLEG = 14,
+	L_TOFOOT = 15,
+	R_TOUPLEG = 16,
+	R_TOLEG = 17,
+	R_TOFOOT = 18,
+	L_TOTOEBASE = 19,
+	R_TOTOEBASE = 20,
+	L_TOHANDTIP = 21,
+	R_TOHANDTIP = 22
+};
+
 /************************************************************************/
 /*							    Structs				    				*/
 /************************************************************************/
@@ -2597,8 +2628,8 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 	int MinimumKeypointsThreshold;
 
 	FSlObjectDetectionRuntimeParameters() :
-		DetectionConfidenceThreshold(60.0f),
-		MinimumKeypointsThreshold(5)
+		DetectionConfidenceThreshold(35.0f),
+		MinimumKeypointsThreshold(10)
 	{
 		ObjectClassFilter = TArray<int>();
 		ObjectClassFilter.Init(0, (int)SL_OBJECT_CLASS_LAST);
@@ -2606,7 +2637,7 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 		ObjectClassDetectionConfidenceThreshold = TMap<int, float>();
 
 		for (int i = 0; i < (int)SL_OBJECT_CLASS_LAST; i++) {
-			ObjectClassDetectionConfidenceThreshold.Add(i, 60.0f);
+			ObjectClassDetectionConfidenceThreshold.Add(i, 35.0f);
 		}
 	}
 };
