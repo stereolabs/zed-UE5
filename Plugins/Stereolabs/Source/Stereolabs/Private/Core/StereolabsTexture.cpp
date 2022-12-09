@@ -421,7 +421,6 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 		{
 			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->Resource->TextureRHI->GetNativeResource()))
 			{
-
 				SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
 				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
 
