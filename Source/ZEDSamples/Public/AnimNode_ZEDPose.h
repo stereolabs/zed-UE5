@@ -79,7 +79,9 @@ private:
 	TMap<FName, float> RefPoseBoneSize;
 	TMap<FName, float> ZEDBoneSize;
 
-	float FeetOffset;
+	TMap<FName, FVector> BonesScale;
+	float RefPoseChestLength;
+
 	// factor used to computer foot offset over time.
 	float Alpha;
 
@@ -88,11 +90,9 @@ private:
 	FVector PreviousRootPosition;
 	FQuat PreviousRootRotation;	
 	bool PrevDataInitialized;
-
 };
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
-
 
 template<> struct TStructOpsTypeTraits<FAnimNode_ZEDPose> : public TStructOpsTypeTraitsBase2<FAnimNode_ZEDPose>
 {

@@ -29,18 +29,6 @@
 		{
 			"Name": "ProceduralMeshComponent",
 			"Enabled": true
-		},
-		{
-			"Name": "LiveLink",
-			"Enabled": true
-		},
-		{
-			"Name": "OptitrackLiveLink",
-			"Enabled": true
-		},
-		{
-			"Name": "OptitrackNatnet",
-			"Enabled": true
 		}
 	]
 }
