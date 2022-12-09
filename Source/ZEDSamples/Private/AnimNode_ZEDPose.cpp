@@ -386,17 +386,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
     {
         if (ZEDBoneSize.Find(TargetBoneName) && RefPoseBoneSize.Find(TargetBoneName) && RefPoseBoneSize.Find(TargetBoneName) != 0)
         {
-            if (!BonesScale.Contains(TargetBoneName))
-            {
-                if (TargetBoneName.IsEqual("Hips"))
-                {
-                    BonesScale.Add(TargetBoneName, FVector::OneVector / 10);
-                }
-                else
-                {
-                    BonesScale.Add(TargetBoneName, FVector::OneVector);
-                }
-            }
+            if (!BonesScale.Contains(TargetBoneName)) BonesScale.Add(TargetBoneName, FVector::OneVector);
 
             FName SourceBoneName = *RemapAsset.FindKey(TargetBoneName);
             int SourceBoneID = *Keypoints.FindKey(SourceBoneName);
@@ -411,7 +401,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
                 if (ObjectData.KeypointConfidence[*Keypoints.FindKey("NECK")] > 90 && ObjectData.KeypointConfidence[*Keypoints.FindKey("PELVIS")] > 90)
                 {
                     BoneScale = ZEDChestLength / RefPoseChestLength;
-                    BoneScale /= 10;
 
                     FinalScale = Alpha * *BonesScale.Find(TargetBoneName) + (1 - Alpha) * FVector(BoneScale, BoneScale, BoneScale);
                 }
@@ -437,14 +426,11 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
                         BoneScale = *ZEDBoneSize.Find(TargetBoneName) / *RefPoseBoneSize.Find(TargetBoneName);
                         ParentBoneScale = *ZEDBoneSize.Find(TargetParentBoneName) / *RefPoseBoneSize.Find(TargetParentBoneName);
 
-                        if (TargetBoneName.IsEqual("LeftUpLeg") || TargetBoneName.IsEqual("RightUpLeg"))
-                        {
-
-                        }
-                        else
+                        if (!TargetBoneName.IsEqual("LeftUpLeg") && !TargetBoneName.IsEqual("RightUpLeg") && !TargetBoneName.IsEqual("LeftArm") && !TargetBoneName.IsEqual("RightArm"))
                         {
                             BoneScale /= ParentBoneScale;
                         }
+
                         FinalScale = Alpha * (*BonesScale.Find(TargetBoneName)) + (1 - Alpha) * FVector(1, 1, BoneScale);
                     }
                     else
@@ -458,7 +444,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             int idx = bMirrorOnZAxis ? *KeypointsMirrored.FindKey(SourceBoneName) : *Keypoints.FindKey(SourceBoneName);
             FCompactPoseBoneIndex CPIndex = GetCPIndex(idx, OutPose);
            
-            UE_LOG(LogTemp, Warning, TEXT("%s - %s"), *TargetBoneName.ToString(), *FinalScale.ToString());
             OutPose[CPIndex].SetScale3D(FinalScale);         
         }
     }
