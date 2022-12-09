@@ -1081,7 +1081,7 @@ void AZEDCamera::SetupComponents(bool stereo)
 	HMDLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("RealVirtual", LeftEyeRenderTarget);
 	InterLeftCamera->TextureTarget = LeftEyeRenderTarget;
 	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-	FinalLeftPlane->SetMaterial(0, HMDLeftEyeMaterialInstanceDynamic);
+	// FinalLeftPlane->SetMaterial(0, HMDLeftEyeMaterialInstanceDynamic);
 	if (stereo)
 	{
 		RightEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);
