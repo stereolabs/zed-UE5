@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{E6850EEE-4589-5E39-07BC-04A938E0031F}",
+	"EngineAssociation": "{450BA52B-48CB-098E-7C7F-69A0E7DEE36E}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -28,10 +28,6 @@
 		},
 		{
 			"Name": "ProceduralMeshComponent",
-			"Enabled": true
-		},
-		{
-			"Name": "LiveLink",
 			"Enabled": true
 		}
 	]
