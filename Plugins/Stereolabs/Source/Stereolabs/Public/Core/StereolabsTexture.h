@@ -122,6 +122,10 @@ public:
 	/** Cuda resource used for copying from SDK to render API */
 	cudaGraphicsResource_t CudaResource;
 
+	// Ptr used when cuda interop is not used (for ex : when using DX12).
+	void* MatPtr;
+
+	bool bCudaInteropEnabled;
 protected:
 	/** Type of memory used to access the texture */
 	ESlMemoryType MemoryType;

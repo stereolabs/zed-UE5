@@ -42,17 +42,11 @@ public class Stereolabs : ModuleRules
             {
                 "Core",
                 "CoreUObject",
-
                 "Engine",
-
                 "InputCore",
-
                 "RenderCore",
-
                 "RHI",
                 "RHICore",
-                "D3D11RHI",
-
                 "UMG",
                 "SlateCore"
             }
@@ -65,7 +59,9 @@ public class Stereolabs : ModuleRules
           new string[]
           {
                 engine_path + "Source/Runtime/Windows/D3D11RHI/Private/",
-                engine_path + "Source/Runtime/Windows/D3D11RHI/Private/Windows"
+                engine_path + "Source/Runtime/Windows/D3D11RHI/Private/Windows",
+                engine_path + "Source/Runtime/D3D12RHI/Private/Windows",
+                engine_path + "Source/Runtime/D3D12RHI/Private/"
               // ... add other private include paths required here ...
           }
           );
@@ -76,6 +72,13 @@ public class Stereolabs : ModuleRules
         AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAftermath");
         AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelMetricsDiscovery");
         AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelExtensionsFramework");
+
+        PrivateDependencyModuleNames.AddRange(new string[] {
+                        "D3D11RHI",
+                        "D3D12RHI",
+                    });
+
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "DX11", "DX12");
 
 
         string cApiPath = Path.Combine(ModulePath, "../ThirdParty/sl_zed_c/");

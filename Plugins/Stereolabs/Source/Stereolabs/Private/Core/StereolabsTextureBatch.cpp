@@ -87,6 +87,9 @@ USlTextureBatch* USlTextureBatch::CreateTextureBatch(const FName& Name, ESlMemor
 
 	TextureBatch->Name = Name;
 
+	FString RHIName = GDynamicRHI->GetName();
+	TextureBatch->bCudaInteropEnabled = RHIName.Equals("D3D11") ? true : false; // for the moment, cuda interop is only available with dx11
+
 	GSlCameraProxy->OnGrabThreadEnabled.AddDynamic(TextureBatch, &USlTextureBatch::SetAsyncRetrieveEnabled);
 
 	return TextureBatch;
@@ -342,7 +345,6 @@ void USlGPUTextureBatch::AddTexture(USlTexture* Texture)
 
 	checkf(Texture, TEXT("Texture can't be null"));
 	checkf(Texture->Texture, TEXT("Can't add a texture without Texture2D created"));
-	//checkf(Texture->IsMemoryTypeOf(ESlMemoryType::MT_GPU), TEXT("Memory type mismatch betwwen texture %s and batch %s."), *Texture->Name.ToString(), *Name.ToString());
 
 	// Wait for current tick render command to finish
 	FlushRenderingCommands();
@@ -467,36 +469,63 @@ bool USlGPUTextureBatch::Tick()
 			{
 				int32 BatchSize = TexturesPool.Num();
 
-				GSlCameraProxy->PushCudaContext();
-
-				cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
-
-				for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+				if (bCudaInteropEnabled)
 				{
+					GSlCameraProxy->PushCudaContext();
+
+					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+
+					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+					{
 #if WITH_EDITOR
-					USlTexture* Texture = *TextureIt;
+						USlTexture* Texture = *TextureIt;
 
-					bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
+						bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
 
-					if (!bSuccess)
-					{
-						SL_LOG_E(SlTextureBatch, "Retrieve of texture %s for the batch %s failed.", *Texture->Name.ToString(), *Name.ToString());
-					}
-					else
-					{
-						(*TextureIt)->UpdateTexture();
-					}
+						if (!bSuccess)
+						{
+							SL_LOG_E(SlTextureBatch, "Retrieve of texture %s for the batch %s failed.", *Texture->Name.ToString(), *Name.ToString());
+						}
+						else
+						{
+							(*TextureIt)->UpdateTexture();
+						}
 #else
-					GSlCameraProxy->RetrieveTexture(*TextureIt);
+						GSlCameraProxy->RetrieveTexture(*TextureIt);
 
-					(*TextureIt)->UpdateTexture();
-#endif
-					
+						(*TextureIt)->UpdateTexture();
+#endif			
+					}
+
+					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+
+					GSlCameraProxy->PopCudaContext();
 				}
+				else
+				{
+					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+					{
+#if WITH_EDITOR
+						USlTexture* Texture = *TextureIt;
 
-				cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+						bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
 
-				GSlCameraProxy->PopCudaContext();
+						if (!bSuccess)
+						{
+							SL_LOG_E(SlTextureBatch, "Retrieve of texture %s for the batch %s failed.", *Texture->Name.ToString(), *Name.ToString());
+						}
+						else
+						{
+							(*TextureIt)->UpdateTexture();
+						}
+#else
+						GSlCameraProxy->RetrieveTexture(*TextureIt);
+
+						(*TextureIt)->UpdateTexture();
+#endif			
+					}
+
+				}
 			}
 		);
 
@@ -522,18 +551,28 @@ bool USlGPUTextureBatch::Tick()
 			{
 				int32 BatchSize = TexturesPool.Num();
 
-				GSlCameraProxy->PushCudaContext();
-
-				cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
-				
-				for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+				if (bCudaInteropEnabled)
 				{
-					(*TextureIt)->UpdateTexture(Buffer.Mats[TextureIt.GetIndex()]);
+					GSlCameraProxy->PushCudaContext();
+
+					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+
+					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+					{
+						(*TextureIt)->UpdateTexture(Buffer.Mats[TextureIt.GetIndex()]);
+					}
+
+					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+
+					GSlCameraProxy->PopCudaContext();
 				}
-
-				cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
-
-				GSlCameraProxy->PopCudaContext();
+				else
+				{
+					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
+					{
+						(*TextureIt)->UpdateTexture(Buffer.Mats[TextureIt.GetIndex()]);
+					}
+				}
 
 				SL_SCOPE_LOCK(Lock, BuffersSection)
 					Buffer.bIsFree = true;

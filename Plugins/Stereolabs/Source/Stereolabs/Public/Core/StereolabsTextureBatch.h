@@ -4,6 +4,7 @@
 
 #include "StereolabsCoreGlobals.h"
 #include "StereolabsTexture.h"
+#include "RHI.h"
 
 #include "StereolabsTextureBatch.generated.h"
 
@@ -95,6 +96,8 @@ protected:
 public:
 	/** Name of the batch */
 	FName Name;
+
+	bool bCudaInteropEnabled;
 
 protected:
 	/** Pool of textures */

@@ -475,6 +475,28 @@ namespace sl
 		}
 
 		/*
+ * Convert ESlTextureFormat to EPixelFormat
+ * @param TextureFormat The texture format
+ * @return				The EPixelFormat
+ */
+		FORCEINLINE SL_MAT_TYPE GetSlMatTypeFormatFromSlTextureFormat(ESlTextureFormat TextureFormat)
+		{
+			switch (TextureFormat)
+			{
+			case ESlTextureFormat::TF_R32_FLOAT:
+				return SL_MAT_TYPE_F32_C1;
+			case ESlTextureFormat::TF_R8G8B8A8_SNORM:
+				return SL_MAT_TYPE_S8_C4;
+			case ESlTextureFormat::TF_A32B32G32R32F:
+				return SL_MAT_TYPE_F32_C4;
+			case ESlTextureFormat::TF_R8_UNORM:
+				return SL_MAT_TYPE_U8_C1;
+			}
+
+			return SL_MAT_TYPE_S8_C4;
+		}
+
+		/*
 		 * Convert from sl::MEM to ESlMemoryType
 		 */
 		FORCEINLINE ESlMemoryType ToUnrealType(sl::MEM SlType)

@@ -666,6 +666,7 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters.Resolution;
 
 		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_Right, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+
 	}
 
 	if (RuntimeParameters.bEnableDepth)
@@ -1081,7 +1082,7 @@ void AZEDCamera::SetupComponents(bool stereo)
 	HMDLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("RealVirtual", LeftEyeRenderTarget);
 	InterLeftCamera->TextureTarget = LeftEyeRenderTarget;
 	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-	// FinalLeftPlane->SetMaterial(0, HMDLeftEyeMaterialInstanceDynamic);
+	FinalLeftPlane->SetMaterial(0, HMDLeftEyeMaterialInstanceDynamic);
 	if (stereo)
 	{
 		RightEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);

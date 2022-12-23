@@ -76,6 +76,12 @@ void AZEDPointCloudRenderer::Init()
 
 	Region = FUpdateTextureRegion2D(0, 0, 0, 0, Resolution.X, Resolution.Y);
 
+	if (!PointCloudRenderer)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Point cloud renderer is not initialized !"));
+		return;
+	}
+
 		// Initialize the Niagara System:
 	RendererInstance = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			this,
