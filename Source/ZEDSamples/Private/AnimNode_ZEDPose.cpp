@@ -444,7 +444,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             int idx = bMirrorOnZAxis ? *KeypointsMirrored.FindKey(SourceBoneName) : *Keypoints.FindKey(SourceBoneName);
             FCompactPoseBoneIndex CPIndex = GetCPIndex(idx, OutPose);
            
-            OutPose[CPIndex].SetScale3D(FinalScale);         
+            // OutPose[CPIndex].SetScale3D(FinalScale);         
         }
     }
 
