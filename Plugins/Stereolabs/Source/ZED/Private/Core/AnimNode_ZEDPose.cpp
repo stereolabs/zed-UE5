@@ -293,13 +293,16 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
     if (bStickAvatarOnFloor && ObjectData.KeypointConfidence[20] > 90 && ObjectData.KeypointConfidence[24] > 90) { //if both foot are visible/detected
         if (SkeletalMesh) {
 
+            // Retrieve Feet position
             FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]) + FVector(0, 0, FeetOffset);
             FVector RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]) + FVector(0, 0, FeetOffset);
 
+            // Shot raycast to the ground.
             FHitResult HitLeftFoot;
             bool RaycastLeftFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitLeftFoot, LeftFootPosition + FVector(0, 0, 500), LeftFootPosition - FVector(0, 0, 500),
                 FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic));
 
+            // Same for the right foot
             FHitResult HitRightFoot;
             bool RaycastRightFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitRightFoot, RightFootPosition + FVector(0, 0, 500), RightFootPosition - FVector(0, 0, 500),
                 FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic));
@@ -307,6 +310,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             float LeftFootFloorDistance = 0;
             float RightFootFloorDistance = 0;
 
+            // Compute the distance between one foot and the ground (the first static object found by the ray cast).
             if (RaycastLeftFoot)
             {
                 LeftFootFloorDistance = (LeftFootPosition - HitLeftFoot.ImpactPoint).Z;
@@ -319,6 +323,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
 
             float MinFootFloorDistance = 0;
 
+            // If both feet are under the ground, use the max value instead of the min value.
             if (RightFootFloorDistance < 0 || LeftFootFloorDistance < 0) {
 
                 MinFootFloorDistance = -1 * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
@@ -328,14 +333,16 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
                 MinFootFloorDistance = fmin(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
             }
 
+            // The feet offset is added in the buffer of size "FeetOffsetBufferSize". If the buffer is already full, remove the oldest value (the first of the deque)
             if (FeetOffsetBuffer.size() == FeetOffsetBufferSize)
             {
                 FeetOffsetBuffer.pop_front();
             }
             FeetOffsetBuffer.push_back(MinFootFloorDistance);
 
-            std::deque<float>::iterator it = std::min_element(FeetOffsetBuffer.begin(), FeetOffsetBuffer.end());
 
+            std::deque<float>::iterator it = std::min_element(FeetOffsetBuffer.begin(), FeetOffsetBuffer.end());
+            // The feet offset is the min element of this deque (of size FeetOffsetBufferSize).
             FeetOffset = *it;
         }
     }
