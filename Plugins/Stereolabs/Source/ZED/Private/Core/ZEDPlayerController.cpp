@@ -298,6 +298,8 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GSlCameraProxy->OnCameraDisconnected.RemoveDynamic(this, &AZEDPlayerController::ZedCameraDisconnected);
 		GSlCameraProxy->OnCameraClosed.RemoveDynamic(this, &AZEDPlayerController::ZedCameraClosed);
 		GSlCameraProxy->OnTrackingEnabled.RemoveDynamic(this, &AZEDPlayerController::ZedCameraTrackingEnabled);
+		GSlCameraProxy->OnSVOLooping.RemoveDynamic(this, &AZEDPlayerController::ZedSVOIsLooping);
+
 	}
 
 	if (ZedCamera)
@@ -371,6 +373,7 @@ void AZEDPlayerController::Init()
 	GSlCameraProxy->OnCameraDisconnected.AddDynamic(this, &AZEDPlayerController::ZedCameraDisconnected);
 	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDPlayerController::ZedCameraClosed);
 	GSlCameraProxy->OnTrackingEnabled.AddDynamic(this, &AZEDPlayerController::ZedCameraTrackingEnabled);
+	GSlCameraProxy->OnSVOLooping.AddDynamic(this, &AZEDPlayerController::ZedSVOIsLooping);
 
 	// Bind event to Zed camera actor
 	ZedCamera->OnCameraActorInitialized.AddDynamic(this, &AZEDPlayerController::ZedCameraActorInitialized);
@@ -682,6 +685,14 @@ void AZEDPlayerController::ResetHMDTrackingOrigin()
 		UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(HMDRotation, HMDLocation);
 
 		UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition(HMDRotation.Yaw, EOrientPositionSelector::Position);
+	}
+}
+
+void AZEDPlayerController::ZedSVOIsLooping()
+{
+	if (ZedCamera->bInit)
+	{
+		ZedCamera->Batch->Reset();
 	}
 }
 

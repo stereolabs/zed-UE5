@@ -768,6 +768,11 @@ void USlCameraProxy::Grab()
 		if (bSVOLooping)
 		{
 			sl_set_svo_position(CameraID, 0);
+
+			AsyncTask(ENamedThreads::GameThread, [this]()
+				{
+				OnSVOLooping.Broadcast();
+			});
 		}
 	}
 	else

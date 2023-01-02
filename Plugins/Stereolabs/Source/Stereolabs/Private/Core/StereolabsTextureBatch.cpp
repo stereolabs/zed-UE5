@@ -237,6 +237,26 @@ void USlTextureBatch::Clear()
 	SL_SCOPE_UNLOCK
 }
 
+void USlTextureBatch::Reset()
+{
+	SL_SCOPE_LOCK(Lock, SwapSection)
+		SL_SCOPE_LOCK(SubLock, RetrieveSection)
+
+	SL_SCOPE_LOCK(SubSubLock, BuffersSection)
+		if (BuffersPool.Num())
+		{
+			BuffersPool[0].Timestamp = ULONG_MAX;
+			BuffersPool[0].bIsFree = true;
+			BuffersPool[0].bIsUpdated = false;
+			BuffersPool[1].Timestamp = ULONG_MAX;
+			BuffersPool[1].bIsFree = true;
+			BuffersPool[1].bIsUpdated = false;
+		}
+	SL_SCOPE_UNLOCK
+		SL_SCOPE_UNLOCK
+		SL_SCOPE_UNLOCK
+}
+
 
 void USlTextureBatch::SetAsyncRetrieveEnabled(bool bEnabled)
 {

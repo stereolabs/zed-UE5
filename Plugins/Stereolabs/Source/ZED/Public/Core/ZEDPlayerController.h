@@ -179,6 +179,9 @@ private:
 	UFUNCTION()
 	void ZedCameraDisconnected();
 
+	UFUNCTION()
+	void ZedSVOIsLooping();
+
 	/*
 	 * Tracking enabled
 	 * @param bSuccess  True if enabled
