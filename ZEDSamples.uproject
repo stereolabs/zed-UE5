@@ -11,14 +11,6 @@
 			"AdditionalDependencies": [
 				"Engine"
 			]
-		},
-		{
-			"Name": "ZEDSamplesEditor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"AnimGraph"
-			]
 		}
 	],
 	"Plugins": [
