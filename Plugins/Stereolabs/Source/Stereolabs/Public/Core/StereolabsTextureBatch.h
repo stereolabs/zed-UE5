@@ -78,6 +78,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs")
 	virtual void Clear();
 
+	/*
+	 * Remove all textures
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs")
+	virtual void Reset();
+
 protected:
 	/*
 	 * Enable/Disable async retrieve

@@ -7,13 +7,15 @@
 #include "CoreMinimal.h"
 #include "Stereolabs/Public/Core/StereolabsBaseTypes.h"
 
+#include <deque>
+#include <algorithm>
 
 #include "AnimNode_ZEDPose.generated.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 USTRUCT(BlueprintInternalUseOnly)
-struct ZEDSAMPLES_API FAnimNode_ZEDPose : public FAnimNode_Base
+struct ZED_API FAnimNode_ZEDPose : public FAnimNode_Base
 {
 	GENERATED_BODY()
 
@@ -32,6 +34,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	float HeightOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
+	bool bStickAvatarOnFloor;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
+	bool bEnableBoneScaling;
 
 	/** Pose smoothing*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
@@ -83,7 +91,11 @@ private:
 	float RefPoseChestLength;
 
 	// factor used to computer foot offset over time.
-	float Alpha;
+	float BoneScaleAlpha = 0.2f;
+
+	int FeetOffsetBufferSize = 200;
+	std::deque<float> FeetOffsetBuffer;
+	float FeetOffset = 0;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;

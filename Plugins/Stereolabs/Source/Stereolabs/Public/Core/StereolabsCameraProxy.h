@@ -850,6 +850,14 @@ public:
 	/** Object detection retrieve event dispatcher */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FSlCameraProxyRetrieveObjectDelegate OnObjectDetectionRetrieved;
+
+	/** End of SVO has been reached and looping is enabled */
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyDelegate OnSVOLooping;
+
+	/** SVO position was set back in time */
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyDelegate OnSVOSetBackInTime;
 	
 private:
 	/** Grab done event dispatcher */

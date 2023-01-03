@@ -36,7 +36,10 @@ namespace UnrealBuildTool.Rules
                     "UnrealEd",
                     "HeadMountedDisplay",
                     "DesktopPlatform",
-                    "InputCore"
+                    "InputCore",
+                    "AnimGraph",
+                    "BlueprintGraph",
+		             "AnimGraphRuntime"
                 }
 				);
 		}

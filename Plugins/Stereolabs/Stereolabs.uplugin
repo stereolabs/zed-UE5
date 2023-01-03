@@ -54,8 +54,11 @@
 		},
 		{
 			"Name": "ZEDEditor",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"Type": "UncookedOnly",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"AnimGraph"
+			]
 		},
 		{
 			"Name": "EnvironmentalLighting",
