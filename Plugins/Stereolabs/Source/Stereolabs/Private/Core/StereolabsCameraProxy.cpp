@@ -1541,6 +1541,12 @@ void USlCameraProxy::SetSVOPlaybackPosition(int Position)
 			else
 			{
 				sl_set_svo_position(CameraID, Position);
+
+				AsyncTask(ENamedThreads::GameThread, [this]()
+				{
+					/* Current behavior: always reset the texture batch on svo position change.*/
+					OnSVOSetBackInTime.Broadcast();
+				});
 			}
 		SL_SCOPE_UNLOCK
 	SL_SCOPE_UNLOCK

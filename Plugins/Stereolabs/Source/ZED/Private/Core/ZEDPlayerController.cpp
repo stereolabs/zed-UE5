@@ -298,7 +298,8 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GSlCameraProxy->OnCameraDisconnected.RemoveDynamic(this, &AZEDPlayerController::ZedCameraDisconnected);
 		GSlCameraProxy->OnCameraClosed.RemoveDynamic(this, &AZEDPlayerController::ZedCameraClosed);
 		GSlCameraProxy->OnTrackingEnabled.RemoveDynamic(this, &AZEDPlayerController::ZedCameraTrackingEnabled);
-		GSlCameraProxy->OnSVOLooping.RemoveDynamic(this, &AZEDPlayerController::ZedSVOIsLooping);
+		GSlCameraProxy->OnSVOLooping.RemoveDynamic(this, &AZEDPlayerController::ZedSVOIsSetBackInTime);
+		GSlCameraProxy->OnSVOSetBackInTime.RemoveDynamic(this, &AZEDPlayerController::ZedSVOIsSetBackInTime);
 
 	}
 
@@ -373,7 +374,8 @@ void AZEDPlayerController::Init()
 	GSlCameraProxy->OnCameraDisconnected.AddDynamic(this, &AZEDPlayerController::ZedCameraDisconnected);
 	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDPlayerController::ZedCameraClosed);
 	GSlCameraProxy->OnTrackingEnabled.AddDynamic(this, &AZEDPlayerController::ZedCameraTrackingEnabled);
-	GSlCameraProxy->OnSVOLooping.AddDynamic(this, &AZEDPlayerController::ZedSVOIsLooping);
+	GSlCameraProxy->OnSVOLooping.AddDynamic(this, &AZEDPlayerController::ZedSVOIsSetBackInTime);
+	GSlCameraProxy->OnSVOSetBackInTime.AddDynamic(this, &AZEDPlayerController::ZedSVOIsSetBackInTime);
 
 	// Bind event to Zed camera actor
 	ZedCamera->OnCameraActorInitialized.AddDynamic(this, &AZEDPlayerController::ZedCameraActorInitialized);
@@ -688,7 +690,7 @@ void AZEDPlayerController::ResetHMDTrackingOrigin()
 	}
 }
 
-void AZEDPlayerController::ZedSVOIsLooping()
+void AZEDPlayerController::ZedSVOIsSetBackInTime()
 {
 	if (ZedCamera->bInit)
 	{

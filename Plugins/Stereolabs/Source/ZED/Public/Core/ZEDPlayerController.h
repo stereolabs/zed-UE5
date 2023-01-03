@@ -179,8 +179,11 @@ private:
 	UFUNCTION()
 	void ZedCameraDisconnected();
 
+	/**
+	* SVO has been set back on its track, reset the tecture batch.
+	*/
 	UFUNCTION()
-	void ZedSVOIsLooping();
+	void ZedSVOIsSetBackInTime();
 
 	/*
 	 * Tracking enabled
