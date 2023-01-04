@@ -196,6 +196,33 @@ static FName GetParentBoneName(FName BoneName)
     return ParentBoneName;
 }
 
+float FindFeetOffset(std::deque<float> Offsets, bool isAboveTheGround)
+{
+    float min = std::numeric_limits<float>::max();
+    float max = -std::numeric_limits<float>::max();
+
+    for (int i = 0; i < Offsets.size(); i++)
+    {
+        float value = Offsets[i];
+        if (isAboveTheGround && value >= 0)
+        {
+            if (value < min)
+            {
+                min = value;
+            }
+        }
+        else if (!isAboveTheGround && value < 0)
+        {
+            if (value > max) // negative values
+            {
+                max = value;
+            }
+        }
+    }
+    
+    return isAboveTheGround ? min : max;
+}
+
 float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData) 
 {
     float avatarTotalTranslation = 0.f;
@@ -292,19 +319,18 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
     if (bStickAvatarOnFloor && ObjectData.KeypointConfidence[20] > 90 && ObjectData.KeypointConfidence[24] > 90) { //if both foot are visible/detected
         if (SkeletalMesh) {
-
             // Retrieve Feet position
-            FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]) + FVector(0, 0, FeetOffset);
-            FVector RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]) + FVector(0, 0, FeetOffset);
+            FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]) ;
+            FVector RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
 
             // Shot raycast to the ground.
             FHitResult HitLeftFoot;
-            bool RaycastLeftFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitLeftFoot, LeftFootPosition + FVector(0, 0, 500), LeftFootPosition - FVector(0, 0, 500),
+            bool RaycastLeftFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitLeftFoot, LeftFootPosition + FVector(0, 0, 200), LeftFootPosition - FVector(0, 0, 200),
                 FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic));
 
             // Same for the right foot
             FHitResult HitRightFoot;
-            bool RaycastRightFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitRightFoot, RightFootPosition + FVector(0, 0, 500), RightFootPosition - FVector(0, 0, 500),
+            bool RaycastRightFoot = SkeletalMesh->GetWorld()->LineTraceSingleByObjectType(OUT HitRightFoot, RightFootPosition + FVector(0, 0, 200), RightFootPosition - FVector(0, 0, 200),
                 FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic));
 
             float LeftFootFloorDistance = 0;
@@ -313,59 +339,63 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             // Compute the distance between one foot and the ground (the first static object found by the ray cast).
             if (RaycastLeftFoot)
             {
-                LeftFootFloorDistance = (LeftFootPosition - HitLeftFoot.ImpactPoint).Z;
+                LeftFootFloorDistance = (LeftFootPosition + FVector(0, 0, FeetOffset) - HitLeftFoot.ImpactPoint).Z;
             }
 
             if (RaycastRightFoot)
             {
-                RightFootFloorDistance = (RightFootPosition - HitRightFoot.ImpactPoint).Z;
+                RightFootFloorDistance = (RightFootPosition + FVector(0, 0, FeetOffset) - HitRightFoot.ImpactPoint).Z;
             }
 
             float MinFootFloorDistance = 0;
 
             // If both feet are under the ground, use the max value instead of the min value.
-            if (RightFootFloorDistance < 0 || LeftFootFloorDistance < 0) {
+            if (RightFootFloorDistance < 0 && LeftFootFloorDistance < 0) {
 
-                MinFootFloorDistance = -1 * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
+                MinFootFloorDistance = -1.0f * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
+                FeetOffset = FeetOffsetAlpha * MinFootFloorDistance + (1 - FeetOffsetAlpha) * FeetOffset;
+            }
+            else if (RightFootFloorDistance > 0 && LeftFootFloorDistance > 0)
+            {
+                MinFootFloorDistance = fmin(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
+
+                // The feet offset is added in the buffer of size "FeetOffsetBufferSize". If the buffer is already full, remove the oldest value (the first of the deque)
+                if (FeetOffsetBuffer.size() == FeetOffsetBufferSize)
+                {
+                    FeetOffsetBuffer.pop_front();
+                }
+                FeetOffsetBuffer.push_back(MinFootFloorDistance);
+
+                // The feet offset is the min element of this deque (of size FeetOffsetBufferSize).
+                FeetOffset = FindFeetOffset(FeetOffsetBuffer, true);
             }
             else
             {
-                MinFootFloorDistance = fmin(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
+                MinFootFloorDistance = fmin(RightFootFloorDistance, LeftFootFloorDistance);
+                FeetOffset = FeetOffsetAlpha * MinFootFloorDistance + (1 - FeetOffsetAlpha) * FeetOffset;
             }
-
-            // The feet offset is added in the buffer of size "FeetOffsetBufferSize". If the buffer is already full, remove the oldest value (the first of the deque)
-            if (FeetOffsetBuffer.size() == FeetOffsetBufferSize)
-            {
-                FeetOffsetBuffer.pop_front();
-            }
-            FeetOffsetBuffer.push_back(MinFootFloorDistance);
-
-
-            std::deque<float>::iterator it = std::min_element(FeetOffsetBuffer.begin(), FeetOffsetBuffer.end());
-            // The feet offset is the min element of this deque (of size FeetOffsetBufferSize).
-            FeetOffset = *it;
         }
     }
-    else
-    {
-        FeetOffset = 0;
-    }
 
-    for (auto& TargetBoneName : TargetBoneNames)
+    // If the Bone Scaling option is enabled, compute the size of each bone coming from the ZED SDK.
+    if (bEnableBoneScaling)
     {
-        const FName* SourceBoneName = RemapAsset.FindKey(TargetBoneName);
-
-        if (SourceBoneName && !SourceBoneName->IsEqual("PELVIS")) // Do not scale the root
+        for (auto& TargetBoneName : TargetBoneNames)
         {
-            int SourceBoneID = *Keypoints.FindKey(*SourceBoneName);
-            FVector BonePosition = ObjectData.Keypoint[SourceBoneID];
-            FVector ParentSourceBonePosition = ObjectData.Keypoint[ParentsIdx[SourceBoneID]];;
-            FName ParentSourceBoneName = RemapAsset[*Keypoints.Find(ParentsIdx[SourceBoneID])];
-            float BoneSize = (ParentSourceBonePosition - BonePosition).Size();
+            const FName* SourceBoneName = RemapAsset.FindKey(TargetBoneName);
 
-            // Store the size of each bone of the ref pose.
-            ZEDBoneSize.Add(ParentSourceBoneName, BoneSize);
-        }   
+            if (SourceBoneName && !SourceBoneName->IsEqual("PELVIS")) // Do not scale the root
+            {
+                int SourceBoneID = *Keypoints.FindKey(*SourceBoneName);
+                FVector BonePosition = ObjectData.Keypoint[SourceBoneID];
+                FVector ParentSourceBonePosition = ObjectData.Keypoint[ParentsIdx[SourceBoneID]];;
+                FName ParentSourceBoneName = RemapAsset[*Keypoints.Find(ParentsIdx[SourceBoneID])];
+                float BoneSize = (ParentSourceBonePosition - BonePosition).Size();
+
+                // Store the size of each bone of the ref pose.
+                ZEDBoneSize.Add(ParentSourceBoneName, BoneSize);
+            }
+        }
     }
 
     if (CPIndexRoot != INDEX_NONE)
@@ -436,6 +466,8 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
         }
     }
 
+    // If the Bone Scaling option is enabled, compare the bone size between the ZED SDK data and the avatar's bones size. apply this factor to the Avatar bones in order 
+    // to scale the mesh to the person's size.
     if (bEnableBoneScaling)
     {
         FVector ZEDNeckPosition = ObjectData.Keypoint[*Keypoints.FindKey("NECK")];
