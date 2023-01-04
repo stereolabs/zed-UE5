@@ -105,7 +105,7 @@ bool USlMesh::ApplyTexture(bool bSRGB/* = false*/)
 
 	if (IsInRenderingThread())
 	{	
-		UTexture->UpdateResource();
+		//UTexture->UpdateResource();
 	}
 
 	MeshData.Texture = UTexture;

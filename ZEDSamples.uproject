@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{E6850EEE-4589-5E39-07BC-04A938E0031F}",
+	"EngineAssociation": "5.1",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -11,14 +11,6 @@
 			"AdditionalDependencies": [
 				"Engine"
 			]
-		},
-		{
-			"Name": "ZEDSamplesEditor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"AnimGraph"
-			]
 		}
 	],
 	"Plugins": [
@@ -28,10 +20,6 @@
 		},
 		{
 			"Name": "ProceduralMeshComponent",
-			"Enabled": true
-		},
-		{
-			"Name": "LiveLink",
 			"Enabled": true
 		}
 	]

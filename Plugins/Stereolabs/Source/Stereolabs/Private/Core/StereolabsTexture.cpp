@@ -5,11 +5,17 @@
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "Stereolabs/Public/Utilities/StereolabsMatFunctionLibrary.h"
 
+#include "RHI.h"
+#include "Rendering/Texture2DResource.h"
+
 #include "D3D11RHIPrivate.h"
 #include "D3D11StateCachePrivate.h"
 #include "D3D11State.h"
 typedef FD3D11StateCacheBase FD3D11StateCache;
 #include "D3D11Resources.h"
+
+#include "D3D12RHIPrivate.h"
+#include "D3D12Util.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h" 
 #include <cuda.h>
@@ -47,7 +53,8 @@ DEFINE_LOG_CATEGORY(SlTexture);
 USlTexture::USlTexture()
 	:
 	Texture(nullptr),
-	CudaResource(nullptr)
+	CudaResource(nullptr),
+	bCudaInteropEnabled(true)
 {
 }
 
@@ -68,8 +75,7 @@ void USlTexture::BeginDestroy()
 	}
 
 	if (Mat.Mat) {
-		SL_MEM mem = (SL_MEM)sl_mat_get_memory_type(Mat.Mat);
-		sl_mat_free(Mat.Mat, mem);
+		FMemory::Free(MatPtr);
 	}
 
 	Super::BeginDestroy();
@@ -84,15 +90,22 @@ void USlTexture::BP_UpdateTexture()
 	ENQUEUE_RENDER_COMMAND(UpdateGPUTexture)(
 		[this](FRHICommandListImmediate& RHICmdList)
 		{
-			GSlCameraProxy->PushCudaContext();
+			if (bCudaInteropEnabled)
+			{
+				GSlCameraProxy->PushCudaContext();
 
-			cudaGraphicsMapResources(1, &CudaResource, 0);
+				cudaGraphicsMapResources(1, &CudaResource, 0);
 
-			UpdateTexture();
+				UpdateTexture();
 
-			cudaGraphicsUnmapResources(1, &CudaResource, 0);
+				cudaGraphicsUnmapResources(1, &CudaResource, 0);
 
-			GSlCameraProxy->PopCudaContext();
+				GSlCameraProxy->PopCudaContext();
+			}
+			else
+			{
+				UpdateTexture();
+			}
 		}
 	);
 }
@@ -106,71 +119,126 @@ void USlTexture::BP_UpdateTextureWithMat(const FSlMat& NewMat)
 	ENQUEUE_RENDER_COMMAND(UpdateGPUTexture)(
 		[this, &NewMat = NewMat](FRHICommandListImmediate& RHICmdList)
 		{
-			GSlCameraProxy->PushCudaContext();
+			if (bCudaInteropEnabled)
+			{
+				GSlCameraProxy->PushCudaContext();
 
-			cudaGraphicsMapResources(1, &CudaResource, 0);
+				cudaGraphicsMapResources(1, &CudaResource, 0);
 
-			UpdateTexture(NewMat);
+				UpdateTexture(NewMat);
 
-			cudaGraphicsUnmapResources(1, &CudaResource, 0);
+				cudaGraphicsUnmapResources(1, &CudaResource, 0);
 
-			GSlCameraProxy->PopCudaContext();
+				GSlCameraProxy->PopCudaContext();
+			}
+			else
+			{
+				UpdateTexture(NewMat);
+			}
 		}
 	);
 }
 
 void USlTexture::UpdateTexture()
 {
+	if (!bCudaInteropEnabled)
+	{
+		sl_mat_update_cpu_from_gpu(Mat.Mat);
+		MatPtr = sl_mat_get_ptr(Mat.Mat, SL_MEM_CPU);
+
+		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
+		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
+
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
+	}
+	else
+	{
 #if WITH_EDITOR
-	CHECK_UPDATE_VALID();
+		CHECK_UPDATE_VALID();
 #endif
 
-	cudaArray_t TransitionArray = nullptr;
-	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(Mat.Mat);
+		cudaArray_t TransitionArray = nullptr;
+		SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(Mat.Mat);
 
-	cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
-	cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
-	CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(Mat.Mat, MemType), sl_mat_get_step_bytes(Mat.Mat, MemType), sl_mat_get_width_bytes(Mat.Mat), sl_mat_get_height(Mat.Mat), cudaMemcpyDeviceToDevice);
+		cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
+		cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
+		CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(Mat.Mat, MemType), sl_mat_get_step_bytes(Mat.Mat, MemType), sl_mat_get_width_bytes(Mat.Mat), sl_mat_get_height(Mat.Mat), cudaMemcpyDeviceToDevice);
 
 #if WITH_EDITOR
-	CHECK_CUDA_MEMCPY(CudaError)
+		CHECK_CUDA_MEMCPY(CudaError)
 #endif
+	}
 }
 
 void USlTexture::UpdateTexture(const FSlMat& NewMat)
 {
+	if (!bCudaInteropEnabled)
+	{
+		sl_mat_update_cpu_from_gpu(NewMat.Mat);
+		MatPtr = sl_mat_get_ptr(NewMat.Mat, SL_MEM_CPU);
+
+		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
+		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
+
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
+	}
+	else
+	{
 #if WITH_EDITOR
-	CHECK_UPDATE_VALID();
+		CHECK_UPDATE_VALID();
 #endif
 
-	cudaArray_t TransitionArray = nullptr;
-	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat.Mat);
-	cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
+		cudaArray_t TransitionArray = nullptr;
+		SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat.Mat);
+		cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
 
-	cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
-	CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(NewMat.Mat, MemType), sl_mat_get_step_bytes(NewMat.Mat, MemType), sl_mat_get_width_bytes(NewMat.Mat), sl_mat_get_height(NewMat.Mat), cudaMemcpyDeviceToDevice);
+		cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
+		CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(NewMat.Mat, MemType), sl_mat_get_step_bytes(NewMat.Mat, MemType), sl_mat_get_width_bytes(NewMat.Mat), sl_mat_get_height(NewMat.Mat), cudaMemcpyDeviceToDevice);
 
 #if WITH_EDITOR
-	CHECK_CUDA_MEMCPY(CudaError)
+		CHECK_CUDA_MEMCPY(CudaError)
 #endif
+	}
 }
 
 void USlTexture::UpdateTexture(void* NewMat)
 {
+	if (!bCudaInteropEnabled)
+	{
+		sl_mat_update_cpu_from_gpu(NewMat);
+
+		MatPtr = sl_mat_get_ptr(NewMat, SL_MEM_CPU);
+		
+		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
+		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
+
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
+	}
+	else
+	{
 #if WITH_EDITOR
-	CHECK_UPDATE_VALID();
+		CHECK_UPDATE_VALID();
 #endif
 
-	cudaArray_t TransitionArray = nullptr;
-	cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
-
-	SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat);
-	cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
-	CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(NewMat, MemType), sl_mat_get_step_bytes(NewMat, MemType), sl_mat_get_width_bytes(NewMat), sl_mat_get_height(NewMat), cudaMemcpyDeviceToDevice);
+		cudaArray_t TransitionArray = nullptr;
+		cudaGraphicsSubResourceGetMappedArray(&TransitionArray, CudaResource, 0, 0);
+		SL_MEM MemType = (SL_MEM)sl_mat_get_memory_type(NewMat);
+		cudaError_t CudaError = cudaError::cudaErrorInvalidTexture;
+		CudaError = cudaMemcpy2DToArray(TransitionArray, 0, 0, sl_mat_get_ptr(NewMat, MemType), sl_mat_get_step_bytes(NewMat, MemType), sl_mat_get_width_bytes(NewMat), sl_mat_get_height(NewMat), cudaMemcpyDeviceToDevice);
 
 #if WITH_EDITOR
-	CHECK_CUDA_MEMCPY(CudaError)
+		CHECK_CUDA_MEMCPY(CudaError)
 #endif
+	}
 }
 
 bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
@@ -194,7 +262,6 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 	Width = NewWidth;
 	Height = NewHeight;
-
 	if (MemoryType == ESlMemoryType::MT_GPU && Texture)
 	{
 		TextureCompressionSettings Compression = Texture->CompressionSettings;
@@ -211,6 +278,8 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 			CudaResource = nullptr;
 		}
+
+		if (MatPtr) FMemory::Free(MatPtr);
 
 		InitResources(TextureFormat, Compression);
 	}
@@ -299,6 +368,7 @@ USlMeasureTexture* USlMeasureTexture::CreateMeasureTexture(const FName& TextureN
 
 void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettings Compression)
 {
+	TextureFormat = Format;
 	// Create texture
 	Texture = UTexture2D::CreateTransient(Width, Height, GetPixelFormatFromSlTextureFormat(Format));
 #if WITH_EDITORONLY_DATA
@@ -314,17 +384,18 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 	Texture->AddressX = TextureAddress::TA_Clamp;
 	Texture->AddressY = TextureAddress::TA_Clamp;
 	Texture->LODGroup = TextureGroup::TEXTUREGROUP_RenderTarget;
+	Texture->NeverStream = true;
 	Texture->UpdateResource();
 
 	FlushRenderingCommands();
 
-	GSlCameraProxy->PushCudaContext();
-
-	cudaError_t CudaError = cudaError::cudaSuccess;
 	FString RHIName = GDynamicRHI->GetName();
 
 	if (RHIName.Equals("D3D11"))
 	{
+		GSlCameraProxy->PushCudaContext();
+
+		cudaError_t CudaError = cudaError::cudaSuccess;
 		
 	// This function has changed between 5.0 and 5.1.
 #if ENGINE_MINOR_VERSION < 1
@@ -334,19 +405,48 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 #endif
 
 		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11Texture->GetResource(), cudaGraphicsMapFlagsNone);
+
+		GSlCameraProxy->PopCudaContext();
+
+#if WITH_EDITOR
+		if (CudaError != cudaError::cudaSuccess)
+		{
+			SL_LOG_E(SlTexture, "Error while registering resource %s: %s", *Name.ToString(), *FString(cudaGetErrorString(CudaError)));
+		}
+#endif
+	}
+	else if (RHIName.Equals("D3D12"))
+	{
+		if (ID3D12Device* D3D12DevicePtr = static_cast<ID3D12Device*>(GDynamicRHI->RHIGetNativeDevice()))
+		{
+			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->Resource->TextureRHI->GetNativeResource()))
+			{
+				SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
+				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
+
+				int TextureSize = Height * Width * ByteSize;
+
+				MatPtr = FMemory::Malloc(TextureSize);
+				// Populate texture
+				FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+				Mip.BulkData.Lock(LOCK_READ_WRITE);
+				void* Data = Mip.BulkData.Realloc(TextureSize);
+
+				FMemory::Memcpy(Data, MatPtr, TextureSize);
+				Mip.BulkData.Unlock();
+			}
+		}
+		else
+		{
+			SL_LOG_F(SlTexture, "Selected RHI not supported : %s", *RHIName);
+		}
+
+		bCudaInteropEnabled = false; // Cuda interop is not available with DX12
+
 	}
 	else
 	{
+		bCudaInteropEnabled = false;
 		SL_LOG_F(SlTexture, "Selected RHI not supported : %s", *RHIName);
-		CudaError = cudaError::cudaErrorInvalidTexture;
 	}
-
-#if WITH_EDITOR
-	if (CudaError != cudaError::cudaSuccess)
-	{
-		SL_LOG_E(SlTexture, "Error while registering resource %s: %s", *Name.ToString(), *FString(cudaGetErrorString(CudaError)));
-	}
-#endif
-
-	GSlCameraProxy->PopCudaContext();
 }

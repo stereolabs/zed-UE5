@@ -11,7 +11,5 @@ public class ZEDSamplesEditorTarget : TargetRules
 
         Type = TargetType.Editor;
 		ExtraModuleNames.AddRange( new string[] { "ZEDSamples" } );
-
-		ExtraModuleNames.AddRange(new string[] { "ZEDSamplesEditor" });
 	}
 }

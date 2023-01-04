@@ -4,6 +4,7 @@
 
 #include "StereolabsCoreGlobals.h"
 #include "StereolabsTexture.h"
+#include "RHI.h"
 
 #include "StereolabsTextureBatch.generated.h"
 
@@ -77,6 +78,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs")
 	virtual void Clear();
 
+	/*
+	 * Remove all textures
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs")
+	virtual void Reset();
+
 protected:
 	/*
 	 * Enable/Disable async retrieve
@@ -95,6 +102,8 @@ protected:
 public:
 	/** Name of the batch */
 	FName Name;
+
+	bool bCudaInteropEnabled;
 
 protected:
 	/** Pool of textures */
