@@ -196,33 +196,6 @@ static FName GetParentBoneName(FName BoneName)
     return ParentBoneName;
 }
 
-float FindFeetOffset(std::deque<float> Offsets, bool isAboveTheGround)
-{
-    float min = std::numeric_limits<float>::max();
-    float max = -std::numeric_limits<float>::max();
-
-    for (int i = 0; i < Offsets.size(); i++)
-    {
-        float value = Offsets[i];
-        if (isAboveTheGround && value >= 0)
-        {
-            if (value < min)
-            {
-                min = value;
-            }
-        }
-        else if (!isAboveTheGround && value < 0)
-        {
-            if (value > max) // negative values
-            {
-                max = value;
-            }
-        }
-    }
-    
-    return isAboveTheGround ? min : max;
-}
-
 float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData) 
 {
     float avatarTotalTranslation = 0.f;
@@ -353,6 +326,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
             if (RightFootFloorDistance < 0 && LeftFootFloorDistance < 0) {
 
                 MinFootFloorDistance = -1.0f * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
+
                 FeetOffset = FeetOffsetAlpha * MinFootFloorDistance + (1 - FeetOffsetAlpha) * FeetOffset;
             }
             else if (RightFootFloorDistance > 0 && LeftFootFloorDistance > 0)
@@ -367,7 +341,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlObjectData(FPoseContext& PoseContext)
                 FeetOffsetBuffer.push_back(MinFootFloorDistance);
 
                 // The feet offset is the min element of this deque (of size FeetOffsetBufferSize).
-                FeetOffset = FindFeetOffset(FeetOffsetBuffer, true);
+                FeetOffset = *std::min_element(FeetOffsetBuffer.begin(), FeetOffsetBuffer.end());
             }
             else
             {

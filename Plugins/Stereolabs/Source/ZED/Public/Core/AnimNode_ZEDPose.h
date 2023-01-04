@@ -96,7 +96,7 @@ private:
 	int FeetOffsetBufferSize = 120;
 	std::deque<float> FeetOffsetBuffer;
 	float FeetOffset = 0;
-	float FeetOffsetAlpha = 0.2f;
+	float FeetOffsetAlpha = 0.5f;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;
