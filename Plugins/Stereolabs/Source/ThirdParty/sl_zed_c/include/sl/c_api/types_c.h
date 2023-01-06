@@ -215,6 +215,7 @@ struct USB_product {
 \brief Lists error codes in the ZED SDK.
  */
 enum SL_ERROR_CODE {
+	SL_ERROR_CODE_CAMERA_REBOOTING = -1,
 	SL_ERROR_CODE_SUCCESS, /**< Standard code for successful behavior.*/
 	SL_ERROR_CODE_FAILURE, /**< Standard code for unsuccessful behavior.*/
 	SL_ERROR_CODE_NO_GPU_COMPATIBLE, /**< No GPU found or CUDA capability of the device is not supported.*/
@@ -943,6 +944,14 @@ struct SL_InitParameters
 	\n This parameter only impacts the LIVE mode.
 	 */
 	float open_timeout_sec;
+
+	/**
+	 Define the behavior of the automatic camera recovery during grab() function call. When async is enabled and there's an issue with the communication with the camera
+	 the grab() will exit after a short period and return the ERROR_CODE::CAMERA_REBOOTING warning. The recovery will run in the background until the correct communication is restored.
+	 When async_grab_camera_recovery is false, the grab() function is blocking and will return only once the camera communication is restored or the timeout is reached.
+	 The default behavior is synchronous, like previous ZED SDK versions
+	 */
+	bool async_grab_camera_recovery;
 };
 
 /**

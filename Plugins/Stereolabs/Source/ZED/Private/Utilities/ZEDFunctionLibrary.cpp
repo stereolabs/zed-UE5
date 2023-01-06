@@ -868,7 +868,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 	FIntPoint ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
 	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), true);
 
-	ESlErrorCode ErrorCode = (ESlErrorCode)planeData->error_code;
+	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Plane not found"));
 		return false;
@@ -880,7 +880,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 	PlaneMeshTriangles.SetNum(65000);
 	int NbVertices, NbTriangles = 0;
 
-	ErrorCode = (ESlErrorCode)sl_convert_hitplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles);
+	ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_convert_hitplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles));
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Cannont convert plane to mesh"));
 		return false;
@@ -919,7 +919,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
 
 	SL_PlaneData* planeData = sl_find_floor_plane(CameraID, &reset_quaternion, &reset_translation, prior_rotation, prior_translation);
 
-	ESlErrorCode ErrorCode = (ESlErrorCode)planeData->error_code;
+	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Plane not found"));
 		return false;
@@ -931,7 +931,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
 	PlaneMeshTriangles.SetNum(65000);
 	int NbVertices, NbTriangles = 0;
 
-	ErrorCode = (ESlErrorCode)sl_convert_floorplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles);
+	ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_convert_floorplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles));
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Cannont convert plane to mesh"));
 		return false;

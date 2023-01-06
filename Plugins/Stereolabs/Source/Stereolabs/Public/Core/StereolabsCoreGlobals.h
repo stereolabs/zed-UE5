@@ -312,6 +312,89 @@ namespace sl
 			}
 		}
 
+		FORCEINLINE ESlErrorCode ToUnrealType(SL_ERROR_CODE SlType)
+		{
+			switch (SlType)
+			{
+			case -1:
+				return ESlErrorCode::EC_CameraRebooting;
+			case SL_ERROR_CODE_SUCCESS: /**< Standard code for successful behavior.*/
+				return ESlErrorCode::EC_Success;
+			case SL_ERROR_CODE_FAILURE: /**< Standard code for unsuccessful behavior.*/
+				return ESlErrorCode::EC_Failure;
+			case SL_ERROR_CODE_NO_GPU_COMPATIBLE: /**< No GPU found or CUDA capability of the device is not supported.*/
+				return ESlErrorCode::EC_NoGpuCompatible;
+			case SL_ERROR_CODE_NOT_ENOUGH_GPU_MEMORY: /**< Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
+				return ESlErrorCode::EC_NotEnoughGPUMemory;
+			case SL_ERROR_CODE_CAMERA_NOT_DETECTED: /**< The ZED camera is not plugged or detected.*/
+				return ESlErrorCode::EC_CameraNotDetected;
+			case SL_ERROR_CODE_SENSORS_NOT_INITIALIZED: /**< The Object detection module is only compatible with the ZED 2*/
+				return ESlErrorCode::EC_SensorNotInitialized;
+			case SL_ERROR_CODE_SENSORS_NOT_AVAILABLE: /**< The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
+				return ESlErrorCode::EC_SensorNotAvailable;
+			case SL_ERROR_CODE_INVALID_RESOLUTION: /**< In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
+				return ESlErrorCode::EC_InvalidResolution;
+			case SL_ERROR_CODE_LOW_USB_BANDWIDTH: /**< This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
+				return ESlErrorCode::EC_LowUSBBandwidth;
+			case SL_ERROR_CODE_CALIBRATION_FILE_NOT_AVAILABLE: /**< ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
+				return ESlErrorCode::EC_CalibrationFileNotAvailable;
+			case SL_ERROR_CODE_INVALID_CALIBRATION_FILE: /**< ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
+				return ESlErrorCode::EC_InvalidCalibrationFile;
+			case SL_ERROR_CODE_INVALID_SVO_FILE: /**< The provided SVO file is not valid.*/
+				return ESlErrorCode::EC_InvalidSVOFile;
+			case SL_ERROR_CODE_SVO_RECORDING_ERROR: /**< An recorder related error occurred (not enough free storage, invalid file).*/
+				return ESlErrorCode::EC_SVORecordingError;
+			case SL_ERROR_CODE_SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
+				return ESlErrorCode::EC_SVOUnsupportedCompression;
+			case SL_ERROR_CODE_END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
+				return ESlErrorCode::EC_SVOEndOfSVOFile;
+			case SL_ERROR_CODE_INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
+				return ESlErrorCode::EC_InvalidCoordinateSystem;
+			case SL_ERROR_CODE_INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
+				return ESlErrorCode::EC_InvalidFirmware;
+			case SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS: /**< An invalid parameter has been set for the function. */
+				return ESlErrorCode::EC_InvalidFunctionParameters;
+			case SL_ERROR_CODE_CUDA_ERROR: /**< In grab() only, a CUDA error has been detected in the process. Activate verbose in sl::Camera::open for more info.*/
+				return ESlErrorCode::EC_CUDAError;
+			case SL_ERROR_CODE_CAMERA_NOT_INITIALIZED: /**< In grab() only, ZED SDK is not initialized. Probably a missing call to sl::Camera::open.*/
+				return ESlErrorCode::EC_CameraNotInitialized;
+			case SL_ERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE: /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
+				return ESlErrorCode::EC_NVIDIADriverOutOfDate;
+			case SL_ERROR_CODE_INVALID_FUNCTION_CALL: /**< The call of the function is not valid in the current context. Could be a missing call of sl::Camera::open. */
+				return ESlErrorCode::EC_InvalidFunctionCall;
+			case SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION: /**< The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
+				return ESlErrorCode::EC_CorruptedSDKInstallation;
+			case SL_ERROR_CODE_INCOMPATIBLE_SDK_VERSION: /**< The installed SDK is incompatible SDK used to compile the program. */
+				return ESlErrorCode::EC_IncompatibleSDKVersion;
+			case SL_ERROR_CODE_INVALID_AREA_FILE: /**< The given area file does not exist, check the path. */
+				return ESlErrorCode::EC_InvalidAreaFile;
+			case SL_ERROR_CODE_INCOMPATIBLE_AREA_FILE: /**< The area file does not contain enought data to be used or the sl::DEPTH_MODE used during the creation of the area file is different from the one currently set. */
+				return ESlErrorCode::EC_IncompatibleAreaFile;
+			case SL_ERROR_CODE_CAMERA_FAILED_TO_SETUP: /**< Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
+				return ESlErrorCode::EC_CameraFailedToSetup;
+			case SL_ERROR_CODE_CAMERA_DETECTION_ISSUE: /**< Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
+				return ESlErrorCode::EC_CameraDetectionIssue;
+			case SL_ERROR_CODE_CANNOT_START_CAMERA_STREAM: /**< Cannot start camera stream. Make sure your camera is not already used by another process or blocked by firewall or antivirus.*/
+				return ESlErrorCode::EC_CameraStreamFailedToStart;
+			case SL_ERROR_CODE_NO_GPU_DETECTED: /**< No GPU found, CUDA is unable to list it. Can be a driver/reboot issue.*/
+				return ESlErrorCode::EC_NoGpuDetected;
+			case SL_ERROR_CODE_PLANE_NOT_FOUND: /**< Plane not found, either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given*/
+				return ESlErrorCode::EC_NoplaneFound;
+			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA: /**< The Object detection module is not compatible with this camera model*/
+				return ESlErrorCode::EC_ModuleNotCompatibleWithCamera;
+			case SL_ERROR_CODE_MOTION_SENSORS_REQUIRED: /**< The module needs the sensors to be enabled (see InitParameters::disable_sensors) */
+				return ESlErrorCode::EC_MotionSensorsRequired;
+			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
+				return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
+
+				return (ESlErrorCode)0;
+			}
+			}
+		}
+
 		FORCEINLINE SL_MAT_TYPE ViewToMatType(SL_VIEW viewType) {
 			switch (viewType)
 			{
