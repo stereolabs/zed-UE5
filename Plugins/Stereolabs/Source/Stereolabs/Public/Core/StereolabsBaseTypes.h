@@ -133,7 +133,7 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlThreadingMode : uint8
 {
 	TM_MultiThreaded		 UMETA(DisplayName = "MultiThreaded"),
-	TM_SingleThreaded		 UMETA(DisplayName = "SingleThreaded"),
+	TM_SingleThreaded		 UMETA(Hidden, DisplayName = "SingleThreaded"),
 	TM_None					 UMETA(Hidden, DisplayName = "Unselected")
 };
 
