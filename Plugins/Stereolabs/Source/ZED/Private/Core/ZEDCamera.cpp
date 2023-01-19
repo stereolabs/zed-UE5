@@ -225,11 +225,6 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 			SetRuntimeParameters(RuntimeParameters);
 		}
 	}
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRenderingParameters, ThreadingMode))
-	{
-		SetThreadingMode(RenderingParameters.ThreadingMode);
-	}
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
 	{
 		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
@@ -307,11 +302,6 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 		PropertyName == GET_MEMBER_NAME_CHECKED(FSlRecordingParameters, CompressionMode))
 	{
 		return !GSlCameraProxy->bSVORecordingEnabled && GSlCameraProxy->GetSVONumberOfFrames() == -1;
-	}
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRenderingParameters, ThreadingMode))
-	{
-		return InitParameters.InputType != ESlInputType::IT_SVO;
 	}
 
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, bEnablePoseSmoothing))
@@ -671,18 +661,9 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 	}
 }
 
-void AZEDCamera::SetThreadingMode(ESlThreadingMode NewValue)
+void AZEDCamera::EnableMultiThreadedRenderingMode(const bool EnableMTR)
 {
-	if (NewValue == ESlThreadingMode::TM_None)
-	{
-#if WITH_EDITOR
-		ZED_CAMERA_LOG_E("EZEDThreadingMode::TM_None is not a valid mode");
-#endif
-		return;
-	}
-
-	GSlCameraProxy->EnableGrabThread(RenderingParameters.ThreadingMode == ESlThreadingMode::TM_MultiThreaded);
-	RenderingParameters.ThreadingMode = NewValue;
+	GSlCameraProxy->EnableGrabThread(EnableMTR);
 }
 
 void AZEDCamera::SetDepthClampThreshold(const float DepthDistance) {
@@ -745,7 +726,7 @@ void AZEDCamera::EnableObjectDetection()
 {
 	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
 
-	GSlCameraProxy->EnableAIThread(RenderingParameters.ThreadingMode == ESlThreadingMode::TM_MultiThreaded);
+	GSlCameraProxy->EnableAIThread(true);
 }
 
 void AZEDCamera::DisableObjectDetection()
@@ -854,7 +835,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	}
 	SetRuntimeParameters(RuntimeParameters);
 	SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
-	SetThreadingMode(RenderingParameters.ThreadingMode);
+	EnableMultiThreadedRenderingMode(true);
 
 	ZedLeftEyeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(ZedSourceMaterial, nullptr);
 	ZedLeftEyeMaterialInstanceDynamic->SetScalarParameterValue("MinDepth", InitParameters.DepthMinimumDistance);
