@@ -127,13 +127,11 @@ enum class ESlEye : uint8
 /*
  * Threading mode selected to perform grab
  * MultiThreaded  = Grab called asynchronously at max rate
- * SingleThreaded = Grab called in game thread at game FPS rate
  */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlThreadingMode : uint8
 {
 	TM_MultiThreaded		 UMETA(DisplayName = "MultiThreaded"),
-	TM_SingleThreaded		 UMETA(Hidden, DisplayName = "SingleThreaded"),
 	TM_None					 UMETA(Hidden, DisplayName = "Unselected")
 };
 

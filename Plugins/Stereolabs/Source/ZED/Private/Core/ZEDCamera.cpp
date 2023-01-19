@@ -332,13 +332,6 @@ void AZEDCamera::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (RenderingParameters.ThreadingMode == ESlThreadingMode::TM_SingleThreaded)
-	{
-		GSlCameraProxy->Grab();
-
-		if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->RetrieveObjects();
-	}
-
 	bool bUpdateTracking = false;
 	SL_SCOPE_LOCK(Lock, TrackingUpdateSection)
 		if (GSlCameraProxy->bTrackingEnabled)
