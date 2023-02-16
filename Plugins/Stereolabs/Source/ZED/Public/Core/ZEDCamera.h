@@ -92,7 +92,7 @@ public:
 	 * @param NewValue The new threading mode
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|Rendering")
-	void SetThreadingMode(ESlThreadingMode NewValue);
+	void EnableMultiThreadedRenderingMode(bool EnableMTR);
 
 	/*
 	 * Set Max depth distance.

@@ -111,11 +111,6 @@ bool AZEDInitializer::CanEditChange(const FProperty* InProperty) const
 		return TrackingParameters.bEnableAreaMemory;
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRenderingParameters, ThreadingMode))
-	{
-		return (InitParameters.InputType == ESlInputType::IT_SVO);
-	}
-
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlObjectDetectionParameters, BodyFormat) || 
 		PropertyName == GET_MEMBER_NAME_CHECKED(FSlObjectDetectionParameters, bEnableBodyFitting))
 	{
