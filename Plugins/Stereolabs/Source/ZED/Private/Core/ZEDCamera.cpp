@@ -1158,19 +1158,11 @@ void AZEDCamera::SetupComponents(bool stereo)
 	{
 		InterRightCamera->bUseCustomProjectionMatrix = true;
 		USlFunctionLibrary::GetSceneCaptureProjectionMatrix(InterRightCamera->CustomProjectionMatrix, ESlEye::E_Right);
-	}
 
 	// Set calibration Zed-HMD
-	if (stereo)
-	{
 		InterLeftRoot->SetRelativeLocation(AntiDriftParameters.CalibrationTransform.GetLocation());
 		InterLeftPlaneRotationRoot->SetRelativeRotation(AntiDriftParameters.CalibrationTransform.GetRotation());
 		InterRightPlaneRotationRoot->SetRelativeRotation(AntiDriftParameters.CalibrationTransform.GetRotation());
-	}
-
-	// Spectator screen texture
-	if (stereo)
-	{
 		UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenTexture(InterLeftCamera->TextureTarget);
 		UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::Texture);
 	}
@@ -1249,9 +1241,7 @@ void AZEDCamera::InitializeRenderingCpp()
 		stereo = true;
 
 	SetupComponents(stereo);
-
 	if (bShowZedImage) {
-
 		ToggleInterComponents(true, stereo);
 		ToggleFinalComponents(true, stereo);
 	}
