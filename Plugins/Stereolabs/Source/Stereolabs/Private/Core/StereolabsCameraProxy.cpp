@@ -600,9 +600,6 @@ bool USlCameraProxy::SaveSpatialMemoryArea(const FString& AreaSavingPath)
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't save spatial memory: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
-#if WITH_EDITOR
-		return false;
-#endif
 	}
 
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
@@ -814,9 +811,6 @@ bool USlCameraProxy::EnableSpatialMapping(const FSlSpatialMappingParameters& Spa
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't enable spatial mapping: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
-#if WITH_EDITOR
-		return bSpatialMappingEnabled;
-#endif
 	}
 
 	OnSpatialMappingEnabled.Broadcast(bSpatialMappingEnabled, (ESlErrorCode)ErrorCode);
@@ -886,9 +880,6 @@ bool USlCameraProxy::ExtractWholeMesh(USlMesh* Mesh)
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't extract the mesh: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
-#if WITH_EDITOR
-		return false;
-#endif
 	}
 	return  (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
