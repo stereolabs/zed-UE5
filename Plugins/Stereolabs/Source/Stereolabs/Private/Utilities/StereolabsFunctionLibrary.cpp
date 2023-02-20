@@ -52,14 +52,12 @@ FVector2D USlFunctionLibrary::GetRenderPlaneSizeWithGamma(UObject* WorldContextO
 	{
 		EyeToZedDistance = sl::mr::getEyeToZEDDistance(sl::unreal::ToSlType(GEngine->XRSystem->GetSystemName()));
 	}
-#if WITH_EDITOR
 	else
 	{
 		SL_LOG_E(SLFunctionLibrary, "Eye to Zed distance not available for this HMD");
 
 		return FVector2D();
 	}
-#endif
 
 	float HMDFocal = 0.0f;
 
@@ -87,14 +85,12 @@ FVector2D USlFunctionLibrary::GetRenderPlaneSizeWithGamma(UObject* WorldContextO
 
 		HMDFocal = sl::mr::computeHMDFocal(HMDScreenResolution, ProjectionMatrix.M[0][0], ProjectionMatrix.M[1][1]);
 	}
-#if WITH_EDITOR
 	else
 	{
 		SL_LOG_E(SLFunctionLibrary, "Focal not available for this HMD");
 
 		return FVector2D();
 	}
-#endif
 
 	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSizeWithGamma(sl::unreal::ToSlMrType2(ImageResolution), PerceptionDistance, EyeToZedDistance, PlaneDistance, HMDFocal, ZedFocal));
 }

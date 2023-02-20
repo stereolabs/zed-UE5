@@ -246,16 +246,12 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 	if (!Texture && MemoryType == ESlMemoryType::MT_GPU)
 	{
-#if WITH_EDITOR
 		SL_LOG_E(SlTexture, "Trying to resize unallocated texture.");
-#endif
 		return false;
 	}
 	else if (NewWidth <= 0 || NewHeight <= 0)
 	{
-#if WITH_EDITOR
 		SL_LOG_E(SlTexture, "Trying to resize texture with size <= 0: %d - %d.", NewWidth, NewHeight);
-#endif
 		return false;
 	}
 
@@ -299,14 +295,12 @@ USlViewTexture* USlViewTexture::CreateCPUViewTexture(const FName& TextureName, i
 
 USlViewTexture* USlViewTexture::CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat, ESlViewFormat TextureViewFormat)
 {
-#if WITH_EDITOR
 	if (TextureWidth <= 0 || TextureHeight <= 0)
 	{
 		SL_LOG_E(SlTexture, "Trying to create texture with size <= 0: %d - %d.", TextureWidth, TextureHeight);
 
 		return nullptr;
 	}
-#endif
 
 	USlViewTexture* ViewTexture = NewObject<USlViewTexture>();
 	ViewTexture->Width = TextureWidth;
@@ -340,14 +334,12 @@ USlMeasureTexture* USlMeasureTexture::CreateMeasureTexture(const FName& TextureN
 {
 	checkf(GSlCameraProxy && GSlCameraProxy->IsCameraOpened(), TEXT("Camera must be opened before creating a GPU texture"));
 
-#if WITH_EDITOR
 	if (TextureWidth <= 0 || TextureHeight <= 0)
 	{
 		SL_LOG_E(SlTexture, "Trying to create texture with size <= 0: %d - %d.", TextureWidth, TextureHeight);
 
 		return nullptr;
 	}
-#endif
 
 	USlMeasureTexture* MeasureTexture = NewObject<USlMeasureTexture>();
 	MeasureTexture->Width = TextureWidth;
@@ -408,12 +400,10 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 
 		GSlCameraProxy->PopCudaContext();
 
-#if WITH_EDITOR
 		if (CudaError != cudaError::cudaSuccess)
 		{
 			SL_LOG_E(SlTexture, "Error while registering resource %s: %s", *Name.ToString(), *FString(cudaGetErrorString(CudaError)));
 		}
-#endif
 	}
 	else if (RHIName.Equals("D3D12"))
 	{
