@@ -493,13 +493,11 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 	TArray<AActor*> ZedInitializer;
 	UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
 
-#if WITH_EDITOR
 	if (!ZedInitializer.Num())
 	{
 		SL_LOG_E(ZEDPlayerController, "BP_ZED_Initializer must be placed in the world");
 		return;
 	}
-#endif
 
 	AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
 

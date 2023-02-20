@@ -666,7 +666,6 @@ bool UZEDFunctionLibrary::HitTestReal(AZEDPlayerController* PlayerController, co
 bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerController, const TArray<FVector>& Locations, const TArray<float>& HitThresholds, bool bGetNormal, bool bHitIfBehind, TArray<FZEDHitResult>& HitResults)
 {
 	bool bOneThreshold = HitThresholds.Num() == 1;
-#if WITH_EDITOR
 	if (HitThresholds.Num() != 1 && HitThresholds.Num() != Locations.Num())
 	{
 		SL_LOG_W(ZEDFunctionLibrary, "Thresholds size differ from Locations size : %d - %d", HitThresholds.Num(), Locations.Num());
@@ -675,7 +674,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerContr
 
 		bOneThreshold = true;
 	}
-#endif
 
 	float ThresholdTemp = HitThresholds[0];
 	uint32 LocationsNum = Locations.Num();
@@ -749,7 +747,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerContr
 bool UZEDFunctionLibrary::MultipleHitTestsRealOneResult(AZEDPlayerController* PlayerController, const TArray<FVector>& Locations, const TArray<float>& HitThresholds, bool bGetNormal, bool bHitIfBehind, FZEDHitResult& HitResult)
 {
 	bool bOneThreshold = HitThresholds.Num() == 1;
-#if WITH_EDITOR
 	if (HitThresholds.Num() != 1 && HitThresholds.Num() != Locations.Num())
 	{
 		SL_LOG_W(ZEDFunctionLibrary, "Thresholds size differ from Locations size : %d - %d", HitThresholds.Num(), Locations.Num());
@@ -758,7 +755,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsRealOneResult(AZEDPlayerController* Pl
 
 		bOneThreshold = true;
 	}
-#endif
 
 	uint32 LocationsNum = Locations.Num();
 	float ThresholdTemp = HitThresholds[0];

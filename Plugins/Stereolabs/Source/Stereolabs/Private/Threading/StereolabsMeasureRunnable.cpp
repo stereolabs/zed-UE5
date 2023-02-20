@@ -92,13 +92,11 @@ uint32 FSlMeasureRunnable::Run()
 			{
 				SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_mat_update_cpu_from_gpu(UpdateBuffer->Mats[0]);
 				bUpdate = ErrorCode == SL_ERROR_CODE_SUCCESS;
-
-#if WITH_EDITOR			
+	
 				if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 				{
 					SL_LOG_E(SlMeasureThread, "Error while updating depth texture: \"%i\"", ErrorCode);
 				}
-#endif
 			}
 
 			if (UpdateBuffer->bNormalsEnabled)
@@ -106,12 +104,10 @@ uint32 FSlMeasureRunnable::Run()
 				SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_mat_update_cpu_from_gpu(UpdateBuffer->Mats[1]);
 				bUpdate = ErrorCode == SL_ERROR_CODE_SUCCESS;
 
-#if WITH_EDITOR
 				if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 				{
 					SL_LOG_E(SlMeasureThread, "Error while updating normals texture: \"%i\"", ErrorCode);
 				}
-#endif
 			}
 
 			if(bUpdate)
