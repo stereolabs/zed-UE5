@@ -866,9 +866,6 @@ bool USlCameraProxy::RetrieveMeshAsync(USlMesh* Mesh)
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't retrieve mesh: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
-#if WITH_EDITOR
-		return false;
-#endif
 	}
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
@@ -1337,9 +1334,6 @@ bool USlCameraProxy::RetrieveObjects()
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
 		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
-#if WITH_EDITOR
-		return false;
-#endif
 	}
 
 	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
