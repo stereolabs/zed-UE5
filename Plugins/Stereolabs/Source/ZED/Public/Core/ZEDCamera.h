@@ -74,6 +74,18 @@ public:
 	void DisableObjectDetection();
 
 	/*
+	*Enable body tracking using current body tracking parameters
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Zed|Body Tracking")
+	void EnableBodyTracking();
+
+	/*
+	 * Disable body tracking
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|Body Tracking")
+	void DisableBodyTracking();
+
+	/*
 	 * Reset the tracking origin of the camera.
 	 * If using an HMD, reset with its current transform.
 	 * Else use the current tracking data.
@@ -116,6 +128,13 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|OD")
 	void SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewValue);
+
+	/*
+	 * Set the body tracking runtime parameters. Take effect next retrieve
+	 * @param NewValue The news body tracking runtime parameters
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|OD")
+	void SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewValue);
 
 	/*
 	 * Set the camera settings. Take effect next grab 
@@ -332,6 +351,15 @@ public:
 	/* Object Detection runtime parameters*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+
+	/** Body Tracking Parameters */
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlBodyTrackingParameters BodyTrackingParameters;
+
+	/* Object Detection runtime parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlBodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
 
 	// ------------------------------------------------------------------
 

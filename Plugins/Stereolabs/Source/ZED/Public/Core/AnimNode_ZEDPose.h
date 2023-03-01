@@ -24,7 +24,7 @@ public:
 	FPoseLink InputPose;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
-	FSlObjectData ObjectData;
+	FSlBodyData BodyData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	TMap<FName, FName> RemapAsset;
@@ -70,10 +70,10 @@ protected:
 	virtual void OnInitializeAnimInstance(const FAnimInstanceProxy* InProxy, const UAnimInstance* InAnimInstance) override;
 
 private:
-	void BuildPoseFromSlObjectData(FPoseContext& PoseContext);
+	void BuildPoseFromSlBodyData(FPoseContext& PoseContext);
 	//void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
 
-	float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlObjectData& InObjectData);
+	float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& BodyData);
 	void PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse);
 	void PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames);
 	FCompactPoseBoneIndex GetCPIndex(int32 idx, FCompactPose& OutPose);

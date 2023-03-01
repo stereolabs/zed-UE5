@@ -262,7 +262,7 @@ namespace sl
 				case sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
 					return ESlErrorCode::EC_SVOUnsupportedCompression;
 				case sl::ERROR_CODE::END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-					return ESlErrorCode::EC_SVOEndOfSVOFile;
+					return ESlErrorCode::EC_EndOfSVOFile;
 				case sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
 					return ESlErrorCode::EC_InvalidCoordinateSystem;
 				case sl::ERROR_CODE::INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
@@ -347,7 +347,7 @@ namespace sl
 			case SL_ERROR_CODE_SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
 				return ESlErrorCode::EC_SVOUnsupportedCompression;
 			case SL_ERROR_CODE_END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-				return ESlErrorCode::EC_SVOEndOfSVOFile;
+				return ESlErrorCode::EC_EndOfSVOFile;
 			case SL_ERROR_CODE_INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
 				return ESlErrorCode::EC_InvalidCoordinateSystem;
 			case SL_ERROR_CODE_INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
@@ -647,26 +647,6 @@ namespace sl
 		}
 
 		/*
-	 	 * Convert from sl::SENSING_MODE to ESlSensingMode
-	 	 */
-		FORCEINLINE ESlSensingMode ToUnrealType(sl::SENSING_MODE SlType)
-		{
-			switch (SlType)
-			{
-				case sl::SENSING_MODE::FILL:
-					return ESlSensingMode::SM_Fill;
-				case sl::SENSING_MODE::STANDARD:
-					return ESlSensingMode::SM_Standard;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::SENSING_MODE entry %u"), (uint32)SlType);
-
-					return (ESlSensingMode)0;
-				}
-			}
-		}
-
-		/*
 		 * Convert from ESlTimeReference to sl::TIME_REFERENCE
 		 */
 		FORCEINLINE sl::TIME_REFERENCE ToSlType(ESlTimeReference UnrealType)
@@ -765,8 +745,8 @@ namespace sl
 					return sl::DEPTH_MODE::NONE;
 				case ESlDepthMode::DM_Performance:
 					return sl::DEPTH_MODE::PERFORMANCE;
-				case ESlDepthMode::DM_Quality:
-					return sl::DEPTH_MODE::QUALITY;
+				case ESlDepthMode::DM_NeuralFast:
+					return sl::DEPTH_MODE::NEURAL_FAST;
 				case ESlDepthMode::DM_Ultra:
 					return sl::DEPTH_MODE::ULTRA;
 				case ESlDepthMode::DM_Neural:
@@ -934,7 +914,7 @@ namespace sl
 					return sl::ERROR_CODE::SVO_RECORDING_ERROR;
 				case ESlErrorCode::EC_SVOUnsupportedCompression : /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
 					return sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION;
-				case ESlErrorCode::EC_SVOEndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
+				case ESlErrorCode::EC_EndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
 					return sl::ERROR_CODE::END_OF_SVOFILE_REACHED;
 				case ESlErrorCode::EC_InvalidCoordinateSystem: /**< The requested coordinate system is not available.*/
 					return sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM ;
@@ -1318,26 +1298,6 @@ namespace sl
 					ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingResolution entry %u"), (uint32)UnrealType);
 
 					return (sl::SpatialMappingParameters::MAPPING_RESOLUTION)0;
-				}
-			}
-		}
-
-		/*
-	 	 * Convert from ESlSensingMode to sl::SENSING_MODE
-	 	 */
-		FORCEINLINE sl::SENSING_MODE ToSlType(ESlSensingMode UnrealType)
-		{
-			switch (UnrealType)
-			{
-				case ESlSensingMode::SM_Fill:
-					return sl::SENSING_MODE::FILL;
-				case ESlSensingMode::SM_Standard:
-					return sl::SENSING_MODE::STANDARD;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSensingMode entry %u"), (uint32)UnrealType);
-
-					return (sl::SENSING_MODE)0;
 				}
 			}
 		}
@@ -1775,7 +1735,7 @@ namespace sl
 		}
 
 
-		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData, ESlBodyFormat BodyFormat)
+		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData)
 		{
 			FSlObjectData ObjectData;
 			
@@ -1805,45 +1765,99 @@ namespace sl
 				ObjectData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
 			}
 
-			int NbKP = BodyFormat == ESlBodyFormat::BF_POSE_34 ? 34 : 18;
-
-			for (int i = 0; i < NbKP; i++) {
-
-				ObjectData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
-				ObjectData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
-				ObjectData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
-				ObjectData.LocalOrientationPerJoint.Add(ToUnrealType(SlData.local_orientation_per_joint[i]));
-			}
-
 			for (int i = 0; i < 8; i++) {
 
 				ObjectData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
 			}
 
 			ObjectData.HeadPosition = ToUnrealType(SlData.head_position);
-
-			ObjectData.KeypointConfidence.Append(&SlData.keypoint_confidence[0], 34);
-
-			ObjectData.GlobalRootOrientation = ToUnrealType(SlData.global_root_orientation);
 			
 			return ObjectData;
 		}
 
-		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData, ESlBodyFormat BodyFormat)
+		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData)
 		{
 			FSlObjects objects;
 
-			objects.Timestamp = FSlTimestamp(SlData.image_ts);
+			objects.Timestamp = FSlTimestamp(SlData.timestamp);
 			objects.bIsNew = (bool)SlData.is_new;
 
 
-			objects.ObjectsList.SetNum(SlData.nb_object);
-			for (int i = 0; i < SlData.nb_object; i++) {
-				objects.ObjectsList[i] = sl::unreal::ToUnrealType(SlData.object_list[i], BodyFormat);
+			objects.ObjectList.SetNum(SlData.nb_objects);
+			for (int i = 0; i < SlData.nb_objects; i++) {
+				objects.ObjectList[i] = sl::unreal::ToUnrealType(SlData.object_list[i]);
 			}
 			objects.bIsTracked = (bool)SlData.is_tracked;
 
 			return objects;
+		}
+
+		FORCEINLINE FSlBodyData ToUnrealType(const SL_BodyData SlData, ESlBodyFormat BodyFormat)
+		{
+			FSlBodyData BodyData;
+
+			BodyData.Id = SlData.id;
+			BodyData.UniqueObjectId = FString(TCHAR_TO_UTF8(SlData.unique_object_id));
+			BodyData.TrackingState = (ESlObjectTrackingState)SlData.tracking_state;
+			BodyData.ActionState = (ESlObjectActionState)SlData.action_state;
+			BodyData.Position = ToUnrealType(SlData.position);
+			BodyData.Velocity = ToUnrealType(SlData.velocity);
+			BodyData.Dimensions = ToUnrealType(SlData.dimensions);
+			BodyData.PositionCovariance.SetNumUninitialized(6);
+			BodyData.PositionCovariance.Append(&SlData.position_covariance[0], 6);
+
+			for (int i = 0; i < 4; i++)
+			{
+				BodyData.BoundingBox2D.Add(ToUnrealType(SlData.bounding_box_2d[i]));
+			}
+
+			BodyData.Mask = SlData.mask;
+			BodyData.Confidence = SlData.confidence;
+
+			for (int i = 0; i < 8; i++) {
+
+				BodyData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
+			}
+
+			int NbKP = BodyFormat == ESlBodyFormat::BF_BODY_38 ? 38 : 70;
+
+			for (int i = 0; i < NbKP; i++) {
+
+				BodyData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
+				BodyData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
+				BodyData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
+				BodyData.LocalOrientationPerJoint.Add(ToUnrealType(SlData.local_orientation_per_joint[i]));
+			}
+
+			for (int i = 0; i < 8; i++) {
+
+				BodyData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
+			}
+
+			BodyData.HeadPosition = ToUnrealType(SlData.head_position);
+
+			BodyData.KeypointConfidence.Append(&SlData.keypoint_confidence[0], NbKP);
+
+			BodyData.GlobalRootOrientation = ToUnrealType(SlData.global_root_orientation);
+
+			return BodyData;
+		}
+
+		FORCEINLINE FSlBodies ToUnrealType(const SL_Bodies SlData, ESlBodyFormat BodyFormat)
+		{
+			FSlBodies bodies;
+
+			bodies.Timestamp = FSlTimestamp(SlData.timestamp);
+			bodies.bIsNew = (bool)SlData.is_new;
+
+
+			bodies.BodyList.SetNum(SlData.nb_bodies);
+			for (int i = 0; i < SlData.nb_bodies; i++) {
+				bodies.BodyList[i] = sl::unreal::ToUnrealType(SlData.body_list[i], BodyFormat);
+			}
+			bodies.bIsTracked = (bool)SlData.is_tracked;
+
+			return bodies;
 		}
 
 		/*
@@ -2121,13 +2135,13 @@ namespace sl
 		{
 			struct SL_ObjectDetectionParameters ODParameters;
 
+			ODParameters.instance_module_id = 0;
+
 			ODParameters.enable_tracking = UnrealData.bEnableTracking;
 			ODParameters.image_sync = UnrealData.bImageSync;
-			ODParameters.enable_mask_output = UnrealData.bEnableMaskOutput;
-			ODParameters.model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
-			ODParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
-			ODParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
+			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
+			ODParameters.detection_model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
 
 			SL_BatchParameters batchParameters;
 			batchParameters.enable = UnrealData.BatchParameters.bEnable;
@@ -2139,6 +2153,7 @@ namespace sl
 			ODParameters.batch_parameters = batchParameters;
 			ODParameters.filtering_mode = (SL_OBJECT_FILTERING_MODE)UnrealData.FilteringMode;
 			ODParameters.prediction_timeout_s = UnrealData.PredictionTimeout_s;
+			ODParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;
 
 			return ODParameters;
 		}
@@ -2156,9 +2171,35 @@ namespace sl
 				ODParameters.object_confidence_threshold[conf.Key] = conf.Value;
 			}
 
-			ODParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
-
 			return ODParameters;
+		}
+
+		FORCEINLINE SL_BodyTrackingParameters ToSlType(const FSlBodyTrackingParameters& UnrealData)
+		{
+			struct SL_BodyTrackingParameters BTParameters;
+
+			BTParameters.enable_tracking = UnrealData.bEnableTracking;
+			BTParameters.image_sync = UnrealData.bImageSync;
+			BTParameters.enable_segmentation = UnrealData.bEnableSegmentation;
+			BTParameters.max_range = UnrealData.MaxRange;
+			BTParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;
+			BTParameters.prediction_timeout_s = UnrealData.PredictionTimeout_s;
+			BTParameters.detection_model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
+			BTParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
+			BTParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
+			BTParameters.body_selection = (SL_BODY_KEYPOINTS_SELECTION)UnrealData.BodySelection;
+			BTParameters.instance_module_id = 0;
+
+			return BTParameters;
+		}
+
+		FORCEINLINE SL_BodyTrackingRuntimeParameters ToSlType(const FSlBodyTrackingRuntimeParameters& UnrealData)
+		{
+			struct SL_BodyTrackingRuntimeParameters BTParameters;
+			BTParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
+			BTParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
+
+			return BTParameters;
 		}
 
 		/*
@@ -2172,7 +2213,7 @@ namespace sl
 			RuntimeParameters.confidence_threshold = UnrealData.ConfidenceThreshold;
 			RuntimeParameters.texture_confidence_threshold = UnrealData.TextureConfidenceThreshold;
 			RuntimeParameters.reference_frame = (SL_REFERENCE_FRAME)UnrealData.ReferenceFrame;
-			RuntimeParameters.sensing_mode = (SL_SENSING_MODE)UnrealData.SensingMode;
+			RuntimeParameters.remove_saturated_areas = UnrealData.bRemoveSaturatedAreas;
 
 			return RuntimeParameters;
 		}

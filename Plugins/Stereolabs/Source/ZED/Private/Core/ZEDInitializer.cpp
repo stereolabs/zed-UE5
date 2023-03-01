@@ -111,14 +111,6 @@ bool AZEDInitializer::CanEditChange(const FProperty* InProperty) const
 		return TrackingParameters.bEnableAreaMemory;
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlObjectDetectionParameters, BodyFormat) || 
-		PropertyName == GET_MEMBER_NAME_CHECKED(FSlObjectDetectionParameters, bEnableBodyFitting))
-	{
-		return (ObjectDetectionParameters.DetectionModel == ESlDetectionModel::DM_HumanBodyFast || 
-				ObjectDetectionParameters.DetectionModel == ESlDetectionModel::DM_HumanBodyMedium || 
-				ObjectDetectionParameters.DetectionModel == ESlDetectionModel::DM_HumanBodyAccurate);
-	}
-
 	return Super::CanEditChange(InProperty);
 }
 #endif
