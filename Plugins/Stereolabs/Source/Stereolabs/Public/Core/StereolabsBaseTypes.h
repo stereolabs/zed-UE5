@@ -125,19 +125,6 @@ enum class ESlEye : uint8
 };
 
 /*
- * Threading mode selected to perform grab
- * MultiThreaded  = Grab called asynchronously at max rate
- * SingleThreaded = Grab called in game thread at game FPS rate
- */
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlThreadingMode : uint8
-{
-	TM_MultiThreaded		 UMETA(DisplayName = "MultiThreaded"),
-	TM_SingleThreaded		 UMETA(DisplayName = "SingleThreaded"),
-	TM_None					 UMETA(Hidden, DisplayName = "Unselected")
-};
-
-/*
  * SDK Memory types
  * see sl::MEM
  */
@@ -2882,8 +2869,7 @@ struct STEREOLABS_API FSlRenderingParameters
 	FSlRenderingParameters()
 		:
 		PerceptionDistance(100.0f),
-		SRemapEnable(false),
-		ThreadingMode(ESlThreadingMode::TM_MultiThreaded)
+		SRemapEnable(false)
 	{}
 
 	FORCEINLINE void Load(const FString& Path)
@@ -2901,15 +2887,6 @@ struct STEREOLABS_API FSlRenderingParameters
 			SRemapEnable,
 			*Path
 		);
-
-		int32 ConfigThreadingMode;
-		GConfig->GetInt(
-			Section,
-			TEXT("ThreadingMode"),
-			ConfigThreadingMode,
-			*Path
-			);
-		ThreadingMode = static_cast<ESlThreadingMode>(ConfigThreadingMode);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2927,13 +2904,6 @@ struct STEREOLABS_API FSlRenderingParameters
 			SRemapEnable,
 			*Path
 		);
-
-		GConfig->SetInt(
-			Section,
-			TEXT("ThreadingMode"),
-			static_cast<int32>(ThreadingMode),
-			*Path
-			);
 	}
 
 	/** Distance in cm at which real object perfectly match their real size, between 75 and 300. */
@@ -2943,10 +2913,6 @@ struct STEREOLABS_API FSlRenderingParameters
 	/** ! Experimental ! : enable SRemap. */
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool SRemapEnable;
-
-	/** Threading mode of the Grab. Multithreading is recommended for better performance. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlThreadingMode ThreadingMode;
 };
 
 /** Environmental lighting settings */
