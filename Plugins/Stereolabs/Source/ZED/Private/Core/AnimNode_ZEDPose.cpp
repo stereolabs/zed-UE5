@@ -8,193 +8,6 @@
 #include "Math/Quat.h"
 #include "Math/UnrealMathUtility.h"
 
-// Index of joints parent
-static TArray<int> ParentsIdx = TArray<int>{
-    -1,
-        0,
-        1,
-        2,
-        2,
-        4,
-        5,
-        6,
-        7,
-        8,
-        7,
-        2,
-        11,
-        12,
-        13,
-        14,
-        15,
-        14,
-        0,
-        18,
-        19,
-        20,
-        0,
-        22,
-        23,
-        24,
-        3,
-        26,
-        26,
-        26,
-        26,
-        26,
-        20,
-        24
-};
-
-static TMap<int, FName> Keypoints = TMap<int, FName>{
-    {0, "PELVIS"},
-    {1, "NAVAL_SPINE"},
-    {2, "CHEST_SPINE"},
-    {3, "NECK"},
-    {4, "LEFT_CLAVICLE"},
-    {5, "LEFT_SHOULDER"},
-    {6, "LEFT_ELBOW"},
-    {7, "LEFT_WRIST"},
-    {8, "LEFT_HAND"},
-    {9, "LEFT_HANDTIP"},
-    {10, "LEFT_THUMB"},
-    {11, "RIGHT_CLAVICLE"},
-    {12, "RIGHT_SHOULDER"},
-    {13, "RIGHT_ELBOW"},
-    {14, "RIGHT_WRIST"},
-    {15, "RIGHT_HAND"},
-    {16, "RIGHT_HANDTIP"},
-    {17, "RIGHT_THUMB"},
-    {18, "LEFT_HIP"},
-    {19, "LEFT_KNEE"},
-    {20, "LEFT_ANKLE"},
-    {21, "LEFT_FOOT"},
-    {22, "RIGHT_HIP"},
-    {23, "RIGHT_KNEE"},
-    {24, "RIGHT_ANKLE"},
-    {25, "RIGHT_FOOT"},
-    {26, "HEAD"},
-    {27, "NOSE"},
-    {28, "LEFT_EYE"},
-    {29, "LEFT_EAR"},
-    {30, "RIGHT_EYE"},
-    {31, "RIGHT_EAR"},
-    {32, "LEFT_HEEL"},
-    {33, "RIGHT_HEEL"}
-};
-
-static TMap<int, FName> KeypointsMirrored = TMap<int, FName>{
-    {0, "PELVIS"},
-    {1, "NAVAL_SPINE"},
-    {2, "CHEST_SPINE"},
-    {3, "NECK"},
-    {4, "RIGHT_CLAVICLE"},
-    {5, "RIGHT_SHOULDER"},
-    {6, "RIGHT_ELBOW"},
-    {7, "RIGHT_WRIST"},
-    {8, "RIGHT_HAND"},
-    {9, "RIGHT_HANDTIP"},
-    {10, "RIGHT_THUMB"},
-    {11, "LEFT_CLAVICLE"},
-    {12, "LEFT_SHOULDER"},
-    {13, "LEFT_ELBOW"},
-    {14, "LEFT_WRIST"},
-    {15, "LEFT_HAND"},
-    {16, "LEFT_HANDTIP"},
-    {17, "LEFT_THUMB"},
-    {18, "RIGHT_HIP"},
-    {19, "RIGHT_KNEE"},
-    {20, "RIGHT_ANKLE"},
-    {21, "RIGHT_FOOT"},
-    {22, "LEFT_HIP"},
-    {23, "LEFT_KNEE"},
-    {24, "LEFT_ANKLE"},
-    {25, "LEFT_FOOT"},
-    {26, "HEAD"},
-    {27, "NOSE"},
-    {28, "RIGHT_EYE"},
-    {29, "RIGHT_EAR"},
-    {30, "LEFT_EYE"},
-    {31, "LEFT_EAR"},
-    {32, "RIGHT_HEEL"},
-    {33, "LEFT_HEEL"}
-};
-
-static FName GetParentBoneName(FName BoneName)
-{
-    FName ParentBoneName = "None";
-
-    if (BoneName.IsEqual("PELVIS"))
-        ParentBoneName = "None";
-    else if (BoneName.IsEqual("NAVAL_SPINE"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("CHEST_SPINE"))
-        ParentBoneName = "NAVAL_SPINE";
-    else if (BoneName.IsEqual("NECK"))
-        ParentBoneName = "CHEST_SPINE";
-    else if (BoneName.IsEqual("LEFT_CLAVICLE"))
-        ParentBoneName = "CHEST_SPINE";
-    else if (BoneName.IsEqual("LEFT_SHOULDER"))
-        ParentBoneName = "LEFT_CLAVICLE";
-    else if (BoneName.IsEqual("LEFT_ELBOW"))
-        ParentBoneName = "LEFT_SHOULDER";
-    else if (BoneName.IsEqual("LEFT_WRIST"))
-        ParentBoneName = "LEFT_ELBOW";
-    else if (BoneName.IsEqual("LEFT_HAND"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HANDTIP"))
-        ParentBoneName = "LEFT_HAND";
-    else if (BoneName.IsEqual("LEFT_THUMB"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_CLAVICLE"))
-        ParentBoneName = "CHEST_SPINE";
-    else if (BoneName.IsEqual("RIGHT_SHOULDER"))
-        ParentBoneName = "RIGHT_CLAVICLE";
-    else if (BoneName.IsEqual("RIGHT_ELBOW"))
-        ParentBoneName = "RIGHT_SHOULDER";
-    else if (BoneName.IsEqual("RIGHT_WRIST"))
-        ParentBoneName = "RIGHT_ELBOW";
-    else if (BoneName.IsEqual("RIGHT_HAND"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HANDTIP"))
-        ParentBoneName = "RIGHT_HAND";
-    else if (BoneName.IsEqual("RIGHT_THUMB"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HIP"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("LEFT_KNEE"))
-        ParentBoneName = "LEFT_HIP";
-    else if (BoneName.IsEqual("LEFT_ANKLE"))
-        ParentBoneName = "LEFT_KNEE";
-    else if (BoneName.IsEqual("LEFT_FOOT"))
-        ParentBoneName = "LEFT_ANKLE";
-    else if (BoneName.IsEqual("RIGHT_HIP"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("RIGHT_KNEE"))
-        ParentBoneName = "RIGHT_HIP";
-    else if (BoneName.IsEqual("RIGHT_ANKLE"))
-        ParentBoneName = "RIGHT_KNEE";
-    else if (BoneName.IsEqual("RIGHT_FOOT"))
-        ParentBoneName = "RIGHT_ANKLE";
-    else if (BoneName.IsEqual("HEAD"))
-        ParentBoneName = "NECK";
-    else if (BoneName.IsEqual("NOSE"))
-        ParentBoneName = "HEAD";
-    else if (BoneName.IsEqual("LEFT_EYE"))
-        ParentBoneName = "HEAD";
-    else if (BoneName.IsEqual("RIGHT_EYE"))
-        ParentBoneName = "HEAD";
-    else if (BoneName.IsEqual("LEFT_EAR"))
-        ParentBoneName = "HEAD";
-    else if (BoneName.IsEqual("RIGHT_EAR"))
-        ParentBoneName = "HEAD";
-    else if (BoneName.IsEqual("LEFT_HEEL"))
-        ParentBoneName = "LEFT_ANKLE";
-    else if (BoneName.IsEqual("RIGHT_HEEL"))
-        ParentBoneName = "RIGHT_ANKLE";
-
-    return ParentBoneName;
-}
 
 float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& InBodyData) 
 {
@@ -289,6 +102,28 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     TArray<FName> TargetBoneNames;
     SkeletalMesh->GetBoneNames(TargetBoneNames);
 
+    if (NbKeypoints < 0) // only the first time.
+    {
+        // Check the size of the input data to know which body format is used.
+        if (BodyData.Keypoint.Num() == Keypoints38.Num() * 2)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("USING BODY 38"));
+            NbKeypoints = 38;
+            Keypoints = Keypoints38;
+            KeypointsMirrored = Keypoints38Mirrored;
+            ParentsIdx = parents38Idx;
+        }
+        else // BODY_70
+        {
+            UE_LOG(LogTemp, Warning, TEXT("USING BODY 70"));
+
+            NbKeypoints = 70;
+            Keypoints = Keypoints70;
+            KeypointsMirrored = Keypoints70Mirrored;
+            ParentsIdx = parents70Idx;
+        }
+    }
+
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
     if (bStickAvatarOnFloor && BodyData.KeypointConfidence[20] > 90 && BodyData.KeypointConfidence[24] > 90) { //if both foot are visible/detected
         if (SkeletalMesh) {
@@ -323,7 +158,8 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             float MinFootFloorDistance = 0;
 
             // If both feet are under the ground, use the max value instead of the min value.
-            if (RightFootFloorDistance < 0 && LeftFootFloorDistance < 0) {
+            if (RightFootFloorDistance < 0 && LeftFootFloorDistance < 0) 
+            {
 
                 MinFootFloorDistance = -1.0f * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
 
@@ -463,47 +299,20 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                 float ParentBoneScale = 1;
                 FVector FinalScale = FVector::OneVector;
 
-                if (TargetBoneName.IsEqual("Hips")) //
+                if (Keypoints.FindKey(SourceBoneName) && Keypoints.Find(ParentsIdx[*Keypoints.FindKey(SourceBoneName)]))
                 {
-                    if (BodyData.KeypointConfidence[*Keypoints.FindKey("NECK")] > 90 && BodyData.KeypointConfidence[*Keypoints.FindKey("PELVIS")] > 90)
+                    if (BodyData.KeypointConfidence[*Keypoints.FindKey(SourceBoneName)] > 90)
                     {
-                        BoneScale = ZEDChestLength / RefPoseChestLength;
+                        FName TargetParentBoneName = RemapAsset[*Keypoints.Find(ParentsIdx[*Keypoints.FindKey(SourceBoneName)])];
 
-                        FinalScale = BoneScaleAlpha * *BonesScale.Find(TargetBoneName) + (1 - BoneScaleAlpha) * FVector(BoneScale, BoneScale, BoneScale);
+                        BoneScale = *ZEDBoneSize.Find(TargetBoneName) / *RefPoseBoneSize.Find(TargetBoneName);
+                        ParentBoneScale = *ZEDBoneSize.Find(TargetParentBoneName) / *RefPoseBoneSize.Find(TargetParentBoneName);
+
+                        FinalScale = BoneScaleAlpha * (*BonesScale.Find(TargetBoneName)) + (1 - BoneScaleAlpha) * FVector(1, 1, BoneScale);
                     }
                     else
                     {
                         FinalScale = *BonesScale.Find(TargetBoneName);
-                    }
-                }
-                // Scale all the bones of the chest with the same scale
-                else if (TargetBoneName.IsEqual("Head") || TargetBoneName.IsEqual("Spine") || TargetBoneName.IsEqual("Spine1") || TargetBoneName.IsEqual("Spine2")
-                    || TargetBoneName.IsEqual("Neck") || TargetBoneName.IsEqual("LeftShoulder") || TargetBoneName.IsEqual("RightShoulder"))
-                {
-                    FinalScale = FVector::OneVector;
-                }
-                else
-                {
-                    if (Keypoints.FindKey(SourceBoneName) && Keypoints.Find(ParentsIdx[*Keypoints.FindKey(SourceBoneName)]))
-                    {
-                        if (BodyData.KeypointConfidence[*Keypoints.FindKey(SourceBoneName)] > 90)
-                        {
-                            FName TargetParentBoneName = RemapAsset[*Keypoints.Find(ParentsIdx[*Keypoints.FindKey(SourceBoneName)])];
-
-                            BoneScale = *ZEDBoneSize.Find(TargetBoneName) / *RefPoseBoneSize.Find(TargetBoneName);
-                            ParentBoneScale = *ZEDBoneSize.Find(TargetParentBoneName) / *RefPoseBoneSize.Find(TargetParentBoneName);
-
-                            if (!TargetBoneName.IsEqual("LeftUpLeg") && !TargetBoneName.IsEqual("RightUpLeg") && !TargetBoneName.IsEqual("LeftArm") && !TargetBoneName.IsEqual("RightArm"))
-                            {
-                                BoneScale /= ParentBoneScale;
-                            }
-
-                            FinalScale = BoneScaleAlpha * (*BonesScale.Find(TargetBoneName)) + (1 - BoneScaleAlpha) * FVector(1, 1, BoneScale);
-                        }
-                        else
-                        {
-                            FinalScale = *BonesScale.Find(TargetBoneName);
-                        }
                     }
                 }
 
