@@ -793,6 +793,9 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
 	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
 
+	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
+	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
+
 	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
 
 	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;

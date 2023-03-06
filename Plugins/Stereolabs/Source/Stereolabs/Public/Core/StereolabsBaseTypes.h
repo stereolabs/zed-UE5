@@ -590,7 +590,7 @@ enum class ESlBodyKeypointsSelection : uint8
 {
 	BKS_FULL          UMETA(DisplayName = "Full"),
 	BKS_UPPER_BODY	  UMETA(DisplayName = "Upper body"),
-	BKS_HAND	      UMETA(DisplayName = "Hand"),
+	//BKS_HAND	      UMETA(DisplayName = "Hand"),
 };
 
 /*

@@ -79,7 +79,7 @@ extern "C" {
     INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, int stream_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
 
-    INTERFACE_API void sl_start_publishing(int camera_id, const char* json_config_filename);
+    INTERFACE_API void sl_start_publishing(int camera_id, struct SL_CommunicationParameters* comm_params);
 
     /**
     \brief Gets the Camera-created CUDA context for sharing it with other CUDA-capable libraries.
@@ -1201,11 +1201,15 @@ extern "C" {
 extern "C" {
 #endif
     
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_init(struct SL_InitFusionParameters* params);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_init(struct SL_InitFusionParameters* params);
 
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_process();
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_process();
 
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_subscribe(struct SL_CameraIdentifier* uuid, char json_config_filename[256]);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_subscribe(struct SL_CameraIdentifier* uuid, struct SL_CommunicationParameters* params);
+
+    INTERFACE_API enum SL_SENDER_ERROR_CODE sl_fusion_get_sender_state(struct SL_CameraIdentifier* uuid);
+
+    INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
 
     /////////////////////////////////////////////////////////////////////
     ///////////////////// Object Detection Fusion ///////////////////////
@@ -1214,7 +1218,7 @@ extern "C" {
     /// \brief enables Object detection fusion module
     /// \param [in] parameters defined by \ref sl::ObjectDetectionFusionParameters
     /// \return
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_enable_body_tracking(struct SL_BodyTrackingFusionParameters* params);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_body_tracking(struct SL_BodyTrackingFusionParameters* params);
 
 	/**
 	\brief Disable the object detection module.
@@ -1222,7 +1226,7 @@ extern "C" {
 	INTERFACE_API void sl_fusion_disable_body_tracking();
 
     //Call to retrieve a single struct of slbodies
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_retrieve_bodies(struct SL_Bodies* bodies, struct SL_BodyTrackingFusionRuntimeParameters* rt, struct SL_CameraIdentifier uuid);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_retrieve_bodies(struct SL_Bodies* bodies, struct SL_BodyTrackingFusionRuntimeParameters* rt, struct SL_CameraIdentifier uuid);
 
     /**
      * \brief get the stats of a given camera in the Fusion API side
@@ -1230,7 +1234,7 @@ extern "C" {
      * \param stats
      * \return ERROR_CODE
      */
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_get_process_metrics(struct SL_FusionMetrics* metrics);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_get_process_metrics(struct SL_FusionMetrics* metrics);
 
 
     /////////////////////////////////////////////////////////////////////
@@ -1244,7 +1248,7 @@ extern "C" {
     * \param params positional tracking fusion parameters
     * \return ERROR_CODE
     */
-    INTERFACE_API enum SL_ERROR_CODE sl_fusion_enable_positional_tracking(struct SL_PositionalTrackingFusionParameters* params);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking(struct SL_PositionalTrackingFusionParameters* params);
 
     /**
      * \brief Get the Fused Position of the camera system

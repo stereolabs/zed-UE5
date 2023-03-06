@@ -263,6 +263,10 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                 PreviousRotations[idx] = Rotation;
 
                 Translation = OutPose[CPIndex].GetTranslation();
+                if (Translation.ContainsNaN())
+                {
+                    Translation = FVector::ZeroVector;
+                }
             }
 
             if (bMirrorOnZAxis) {

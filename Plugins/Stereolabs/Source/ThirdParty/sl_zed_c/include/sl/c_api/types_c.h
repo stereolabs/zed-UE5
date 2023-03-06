@@ -721,7 +721,7 @@ enum SL_BODY_KEYPOINTS_SELECTION
 	/**
 	 * \brief Hands only
 	 */
-	SL_BODY_KEYPOINTS_SELECTION_HAND
+	//SL_BODY_KEYPOINTS_SELECTION_HAND
 };
 
 /**
@@ -2148,10 +2148,64 @@ struct SL_Rect
 
 #endif
 
+struct SL_InputType
+{
+	SL_INPUT_TYPE input_type;
+	unsigned int serial_number;
+	unsigned int id;
+	char svo_input_filename[256];
+	char stream_input_ip[128];
+	unsigned short stream_input_port;
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// MULTI CAM API /////////////////////////////////////////////////////////////
+/////////////////////////////// FUSION API /////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum SL_FUSION_ERROR_CODE {
+	SL_FUSION_ERROR_CODE_WRONG_BODY_TRACKING_MODEL = -8, /**< The requested body tracking model is not available*/
+	SL_FUSION_ERROR_CODE_NOT_ENABLE = -7, /**< The following module was not enabled*/
+	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -6, /**< Some source are provided by SVO and some sources are provided by LIVE stream */
+	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -5, /**< Connection timed out ... impossible to reach the sender... this may be due to ZedHub absence*/
+	SL_FUSION_ERROR_CODE_SHARED_MEMORY_LEAK = -4, /**< Detect multiple instance of SHARED_MEMORY communicator ... only one is authorised*/
+	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -3, /**< The IP format provided is wrong, please provide IP in this format a.b.c.d where (a, b, c, d) are numbers between 0 and 255.*/
+	SL_FUSION_ERROR_CODE_CONNECTION_ERROR = -2, /**< Something goes bad in the connection between sender and receiver.*/
+	SL_FUSION_ERROR_CODE_FAILURE = -1, /**< Standard code for unsuccessful behavior.*/
+	SL_FUSION_ERROR_CODE_SUCCESS = 0,
+	SL_FUSION_ERROR_CODE_FUSION_ERRATIC_FPS = 1, /**< Some big differences has been observed between senders FPS*/
+	SL_FUSION_ERROR_CODE_FUSION_FPS_TOO_LOW = 2 /**< At least one sender has fps lower than 10 FPS*/
+};
+
+enum SL_SENDER_ERROR_CODE {
+	SL_SENDER_ERROR_CODE_DISCONNECTED = -1, /**< the sender has been disconnected*/
+	SL_SENDER_ERROR_CODE_SUCCESS = 0,
+	SL_SENDER_ERROR_CODE_GRAB_ERROR = 1, /**< the sender has encountered an grab error*/
+	SL_SENDER_ERROR_CODE_ERRATIC_FPS = 2, /**< the sender does not run with a constant frame rate*/
+	SL_SENDER_ERROR_CODE_FPS_TOO_LOW = 3 /**< fps lower than 10 FPS*/
+};
+
+enum SL_COMM_TYPE
+{
+	SL_COMM_TYPE_LOCAL_NETWORK, /* the sender and receiver are on the samed local network and communicate by RTP, communication can be affected by the network load.*/
+	SL_COMM_TYPE_INTRA_PROCESS /* both sender and receiver are declared by the same process, can be in different threads, this communication is optimized.*/
+};
+
+struct  SL_CommunicationParameters
+{
+	enum SL_COMM_TYPE communication_type;
+	unsigned int ip_port;
+	char ip_add[128];
+	int serial;
+};
+
+struct SL_FusionConfiguration {
+	int serial_number;
+	struct SL_CommunicationParameters comm_param;
+	SL_Vector3 position;
+	SL_Quaternion rotation;
+	SL_InputType input_type;
+};
 
 
 struct SL_InitFusionParameters
@@ -2216,13 +2270,6 @@ struct SL_PositionalTrackingFusionParameters {
 	* default : -1 which means no minimum depth
 	*/
 	float depth_min_range;
-};
-
-struct SL_InitCameraParameters {
-	float depth_maximum_distance;
-	float detection_confidence_threshold;
-	CUdevice sdk_gpu_id;
-	int confidence_threshold;
 };
 
 struct SL_BodyTrackingFusionParameters

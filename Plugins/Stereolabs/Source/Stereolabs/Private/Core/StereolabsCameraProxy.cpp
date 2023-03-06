@@ -1397,14 +1397,15 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 
 	BodyTrackingParameters = BTParameters;
+	UE_LOG(LogTemp, Warning, TEXT("%d"), (int)BodyTrackingParameters.DetectionModel);
 	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_DETECTION_MODEL)BodyTrackingParameters.DetectionModel);
 
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 
 	if (!ai_model_status->optimized)
 	{
-		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
-		return false;
+		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
+		//return false;
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
