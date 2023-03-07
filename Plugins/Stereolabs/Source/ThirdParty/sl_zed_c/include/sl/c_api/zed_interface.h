@@ -1245,10 +1245,9 @@ extern "C" {
     * \brief enable positional tracking fusion.
     * \note note that for the alpha version of the API, the positional tracking fusion doesn't support the area memory feature
     *
-    * \param params positional tracking fusion parameters
     * \return ERROR_CODE
     */
-    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking(struct SL_PositionalTrackingFusionParameters* params);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking();
 
     /**
      * \brief Get the Fused Position of the camera system

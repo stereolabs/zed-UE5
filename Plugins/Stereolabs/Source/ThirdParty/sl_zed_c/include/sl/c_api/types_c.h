@@ -2196,7 +2196,6 @@ struct  SL_CommunicationParameters
 	enum SL_COMM_TYPE communication_type;
 	unsigned int ip_port;
 	char ip_add[128];
-	int serial;
 };
 
 struct SL_FusionConfiguration {

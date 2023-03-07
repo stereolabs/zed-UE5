@@ -70,7 +70,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
         // Check the size of the input data to know which body format is used.
         if (BodyData.Keypoint.Num() == Keypoints38.Num())
         {
-            UE_LOG(LogTemp, Warning, TEXT("USING BODY 38"));
             NbKeypoints = 38;
             Keypoints = Keypoints38;
             KeypointsMirrored = Keypoints38Mirrored;
@@ -78,8 +77,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
         }
         else // BODY_70
         {
-            UE_LOG(LogTemp, Warning, TEXT("USING BODY 70"));
-
             NbKeypoints = 70;
             Keypoints = Keypoints70;
             KeypointsMirrored = Keypoints70Mirrored;
@@ -101,10 +98,10 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     SkeletalMesh->GetBoneNames(TargetBoneNames);
 
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
-    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[20] > 90 && BodyData.KeypointConfidence[24] > 90) { //if both foot are visible/detected
+    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[22] > 90 && BodyData.KeypointConfidence[23] > 90) { //if both foot are visible/detected
         if (SkeletalMesh) {
             // Retrieve Feet position
-            FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]) ;
+            FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]) ;
             FVector RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
 
             // Shot raycast to the ground.
@@ -136,7 +133,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             // If both feet are under the ground, use the max value instead of the min value.
             if (RightFootFloorDistance < 0 && LeftFootFloorDistance < 0) 
             {
-
                 MinFootFloorDistance = -1.0f * fmax(abs(RightFootFloorDistance), abs(LeftFootFloorDistance));
 
                 FeetOffset = FeetOffsetAlpha * MinFootFloorDistance + (1 - FeetOffsetAlpha) * FeetOffset;
