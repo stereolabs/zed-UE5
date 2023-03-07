@@ -8,30 +8,6 @@
 #include "Math/Quat.h"
 #include "Math/UnrealMathUtility.h"
 
-
-float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& InBodyData) 
-{
-    float avatarTotalTranslation = 0.f;
-    float SDKTotalTranslation = 0.f;
-    for (int32 i = 23; i < 25; i++)
-    {
-        FVector BonePosition = InBodyData.LocalPositionPerJoint[i];
-        FCompactPoseBoneIndex CPIndex = GetCPIndex(i, OutPose);
-        if (CPIndex != INDEX_NONE)
-        {
-            avatarTotalTranslation += OutPose[CPIndex].GetTranslation().Size();
-            SDKTotalTranslation += BonePosition.Size();
-        }
-    }
-
-    float factor = avatarTotalTranslation / SDKTotalTranslation;
-    float scale = 1.f;
-    FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
-    if (CPIndexRoot != INDEX_NONE)
-        scale = OutPose[CPIndexRoot].GetScale3D().Z;
-    return FMath::Abs(scale * factor);
-}
-
 FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPose) 
 {
     FName Name = bMirrorOnZAxis ? KeypointsMirrored[i] : Keypoints[i];
@@ -89,23 +65,10 @@ void FAnimNode_ZEDPose::PropagateRestPoseRotations(int32 parentIdx, FCompactPose
 
 void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 {
-    FCompactPose& OutPose = PoseContext.Pose;
-    TArray<FName> SourceBoneNames;
-    SourceBoneNames.SetNum(RemapAsset.Num());
-    RemapAsset.GetKeys(SourceBoneNames);
-
-    PutInRefPose(OutPose, SourceBoneNames);
-
-    // Compact Pose Root index
-    FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
-
-    TArray<FName> TargetBoneNames;
-    SkeletalMesh->GetBoneNames(TargetBoneNames);
-
     if (NbKeypoints < 0) // only the first time.
     {
         // Check the size of the input data to know which body format is used.
-        if (BodyData.Keypoint.Num() == Keypoints38.Num() * 2)
+        if (BodyData.Keypoint.Num() == Keypoints38.Num())
         {
             UE_LOG(LogTemp, Warning, TEXT("USING BODY 38"));
             NbKeypoints = 38;
@@ -123,6 +86,19 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             ParentsIdx = parents70Idx;
         }
     }
+
+    FCompactPose& OutPose = PoseContext.Pose;
+    TArray<FName> SourceBoneNames;
+    SourceBoneNames.SetNum(RemapAsset.Num());
+    RemapAsset.GetKeys(SourceBoneNames);
+
+    PutInRefPose(OutPose, SourceBoneNames);
+
+    // Compact Pose Root index
+    FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
+
+    TArray<FName> TargetBoneNames;
+    SkeletalMesh->GetBoneNames(TargetBoneNames);
 
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
     if (bStickAvatarOnFloor && BodyData.KeypointConfidence[20] > 90 && BodyData.KeypointConfidence[24] > 90) { //if both foot are visible/detected
@@ -228,9 +204,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             if (TargetBoneName == *RemapAsset.Find(GetTargetRootName()))
             {
                 FVector RootPosition = BodyData.Keypoint[0];
-                FCompactPoseBoneIndex leftUpLegIndex = GetCPIndex(*Keypoints.FindKey("LEFT_HIP"), OutPose); // 18 = LEFT_HIP
-                float HipOffset = FMath::Abs(OutPose[leftUpLegIndex].GetTranslation().Z) * OutPose[CPIndexRoot].GetScale3D().Z;
-                RootPosition.Z += HipOffset;
                 RootPosition.Z += HeightOffset;
                 RootPosition.Z -= FeetOffset;
 
@@ -284,11 +257,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     // to scale the mesh to the person's size.
     if (bEnableBoneScaling)
     {
-        FVector ZEDNeckPosition = BodyData.Keypoint[*Keypoints.FindKey("NECK")];
-        FVector ZEDPelvisPosition = BodyData.Keypoint[*Keypoints.FindKey("PELVIS")];
-
-        float ZEDChestLength = (ZEDNeckPosition - ZEDPelvisPosition).Size();
-
         for (auto& TargetBoneName : TargetBoneNames)
         {
             if (ZEDBoneSize.Find(TargetBoneName) && RefPoseBoneSize.Find(TargetBoneName) && RefPoseBoneSize.Find(TargetBoneName) != 0)
@@ -386,11 +354,6 @@ void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
                     RefPoseBoneSize.Add(TargetBoneName, 1);
                 }
             }
-
-            FVector NeckPosition = SkeletalMesh->GetBoneLocation(RemapAsset["NECK"], EBoneSpaces::WorldSpace);
-            FVector PelvisPosition = (SkeletalMesh->GetBoneLocation(RemapAsset["LEFT_HIP"], EBoneSpaces::WorldSpace) + SkeletalMesh->GetBoneLocation(RemapAsset["RIGHT_HIP"], EBoneSpaces::WorldSpace)) / 2.0f;
-            
-            RefPoseChestLength = (NeckPosition - PelvisPosition).Size();
         }
     }
 }

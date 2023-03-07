@@ -2218,24 +2218,6 @@ namespace sl
 			return RuntimeParameters;
 		}
 
-		/*
-		 * Convert from FSlSpatialMappingParameters to sl::SpatialMappingParameters
-		 */
-		//FORCEINLINE sl::SpatialMappingParameters ToSlType(const FSlSpatialMappingParameters& UnrealData)
-		//{
-		//	sl::SpatialMappingParameters SpatialMappingParameters;
-
-		//	SpatialMappingParameters.max_memory_usage = UnrealData.MaxMemoryUsage;
-		//	SpatialMappingParameters.save_texture = UnrealData.bSaveTexture;
-		//	SpatialMappingParameters.set(sl::unreal::ToSlType(UnrealData.PresetRange));
-		//	SpatialMappingParameters.set(sl::unreal::ToSlType(UnrealData.PresetResolution));
-		//  SpatialMappingParameters.use_chunk_only = UnrealData.GetUseChunksOnly();
-		//	SpatialMappingParameters.reverse_vertex_order = true;
-
-		//	return SpatialMappingParameters;
-		//}
-
-
 		FORCEINLINE float GetMappingRange(ESlSpatialMappingRange mapping_range)
 		{
 			float range = 0.0f;

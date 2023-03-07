@@ -73,7 +73,6 @@ private:
 	void BuildPoseFromSlBodyData(FPoseContext& PoseContext);
 	//void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
 
-	float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& BodyData);
 	void PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse);
 	void PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames);
 	FCompactPoseBoneIndex GetCPIndex(int32 idx, FCompactPose& OutPose);
@@ -93,7 +92,6 @@ private:
 	TMap<FName, float> ZEDBoneSize;
 
 	TMap<FName, FVector> BonesScale;
-	float RefPoseChestLength;
 
 	// factor used to computer foot offset over time.
 	float BoneScaleAlpha = 0.2f;
@@ -101,7 +99,7 @@ private:
 	int FeetOffsetBufferSize = 120;
 	std::deque<float> FeetOffsetBuffer;
 	float FeetOffset = 0;
-	float FeetOffsetAlpha = 0.5f;
+	float FeetOffsetAlpha = 1.0f;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;
@@ -129,45 +127,6 @@ template<> struct TStructOpsTypeTraits<FAnimNode_ZEDPose> : public TStructOpsTyp
 
 
 const TArray<int> parents38Idx = {
-    -1,
-    0,
-    1,
-    2,
-    3,
-    4,
-    4,
-    4,
-    4,
-    4,
-    3,
-    3,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    0,
-    0,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    22,
-    23,
-    22,
-    23,
-    16,
-    17,
-    16,
-    17,
-    16,
-    17,
-    16,
-    17,
-    // confidences
     -1,
     0,
     1,
@@ -279,77 +238,6 @@ const TArray<int> parents70Idx = {
     50,
     51,
     52,
-    //confidences
-    -1,
-    0,
-    1,
-    2,
-    3,
-    4,
-    4,
-    4,
-    4,
-    4,
-    3,
-    3,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    0,
-    0,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    22,
-    23,
-    22,
-    23,
-    16,
-    30,
-    31,
-    32,
-    16,
-    30,
-    31,
-    32,
-    16,
-    30,
-    31,
-    32,
-    16,
-    30,
-    31,
-    32,
-    16,
-    30,
-    31,
-    32,
-    17,
-    50,
-    51,
-    52,
-    17,
-    50,
-    51,
-    52,
-    17,
-    50,
-    51,
-    52,
-    17,
-    50,
-    51,
-    52,
-    17,
-    50,
-    51,
-    52
 };
 
 static TMap<int, FName> Keypoints38 = TMap<int, FName>{
@@ -590,35 +478,41 @@ static FName GetParentBoneName(FName BoneName)
         ParentBoneName = "PELVIS";
     else if (BoneName.IsEqual("SPINE_2"))
         ParentBoneName = "SPINE_1";
+    else if (BoneName.IsEqual("SPINE_3"))
+        ParentBoneName = "SPINE_2";
     else if (BoneName.IsEqual("NECK"))
-        ParentBoneName = "CHEST_SPINE";
+        ParentBoneName = "SPINE_3";
     else if (BoneName.IsEqual("LEFT_CLAVICLE"))
-        ParentBoneName = "CHEST_SPINE";
+        ParentBoneName = "SPINE_3";
     else if (BoneName.IsEqual("LEFT_SHOULDER"))
         ParentBoneName = "LEFT_CLAVICLE";
     else if (BoneName.IsEqual("LEFT_ELBOW"))
         ParentBoneName = "LEFT_SHOULDER";
     else if (BoneName.IsEqual("LEFT_WRIST"))
         ParentBoneName = "LEFT_ELBOW";
-    else if (BoneName.IsEqual("LEFT_HAND"))
+    else if (BoneName.IsEqual("LEFT_HAND_THUMB_4"))
         ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HANDTIP"))
-        ParentBoneName = "LEFT_HAND";
-    else if (BoneName.IsEqual("LEFT_THUMB"))
+    else if (BoneName.IsEqual("LEFT_HAND_INDEX_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_4"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_PINKY_1"))
         ParentBoneName = "LEFT_WRIST";
     else if (BoneName.IsEqual("RIGHT_CLAVICLE"))
-        ParentBoneName = "CHEST_SPINE";
+        ParentBoneName = "SPINE_3";
     else if (BoneName.IsEqual("RIGHT_SHOULDER"))
         ParentBoneName = "RIGHT_CLAVICLE";
     else if (BoneName.IsEqual("RIGHT_ELBOW"))
         ParentBoneName = "RIGHT_SHOULDER";
     else if (BoneName.IsEqual("RIGHT_WRIST"))
         ParentBoneName = "RIGHT_ELBOW";
-    else if (BoneName.IsEqual("RIGHT_HAND"))
+    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_4"))
         ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HANDTIP"))
-        ParentBoneName = "RIGHT_HAND";
-    else if (BoneName.IsEqual("RIGHT_THUMB"))
+    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_4"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_1"))
         ParentBoneName = "RIGHT_WRIST";
     else if (BoneName.IsEqual("LEFT_HIP"))
         ParentBoneName = "PELVIS";
@@ -626,7 +520,9 @@ static FName GetParentBoneName(FName BoneName)
         ParentBoneName = "LEFT_HIP";
     else if (BoneName.IsEqual("LEFT_ANKLE"))
         ParentBoneName = "LEFT_KNEE";
-    else if (BoneName.IsEqual("LEFT_FOOT"))
+    else if (BoneName.IsEqual("LEFT_BIG_TOE"))
+        ParentBoneName = "LEFT_ANKLE";
+    else if (BoneName.IsEqual("LEFT_SMALL_TOE"))
         ParentBoneName = "LEFT_ANKLE";
     else if (BoneName.IsEqual("RIGHT_HIP"))
         ParentBoneName = "PELVIS";
@@ -634,20 +530,20 @@ static FName GetParentBoneName(FName BoneName)
         ParentBoneName = "RIGHT_HIP";
     else if (BoneName.IsEqual("RIGHT_ANKLE"))
         ParentBoneName = "RIGHT_KNEE";
-    else if (BoneName.IsEqual("RIGHT_FOOT"))
+    else if (BoneName.IsEqual("RIGHT_BIG_TOE"))
         ParentBoneName = "RIGHT_ANKLE";
-    else if (BoneName.IsEqual("HEAD"))
-        ParentBoneName = "NECK";
+    else if (BoneName.IsEqual("RIGHT_SMALL_TOE"))
+        ParentBoneName = "RIGHT_ANKLE";
     else if (BoneName.IsEqual("NOSE"))
-        ParentBoneName = "HEAD";
+        ParentBoneName = "NECK";
     else if (BoneName.IsEqual("LEFT_EYE"))
-        ParentBoneName = "HEAD";
+        ParentBoneName = "NECK";
     else if (BoneName.IsEqual("RIGHT_EYE"))
-        ParentBoneName = "HEAD";
+        ParentBoneName = "NECK";
     else if (BoneName.IsEqual("LEFT_EAR"))
-        ParentBoneName = "HEAD";
+        ParentBoneName = "LEFT_EYE";
     else if (BoneName.IsEqual("RIGHT_EAR"))
-        ParentBoneName = "HEAD";
+        ParentBoneName = "RIGHT_EYE";
     else if (BoneName.IsEqual("LEFT_HEEL"))
         ParentBoneName = "LEFT_ANKLE";
     else if (BoneName.IsEqual("RIGHT_HEEL"))
