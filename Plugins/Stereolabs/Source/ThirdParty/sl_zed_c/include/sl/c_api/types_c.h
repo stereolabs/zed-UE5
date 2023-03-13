@@ -543,6 +543,7 @@ enum SL_MESH_FILE_FORMAT {
 enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NONE, /** This mode does not compute any depth map. Only rectified stereo images will be available.*/
 	SL_DEPTH_MODE_PERFORMANCE, /** Computation mode optimized for speed.*/
+	SL_DEPTH_MODE_QUALITY, /**< Computation mode designed for challenging areas with untextured surfaces.*/
 	SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
 	SL_DEPTH_MODE_ULTRA, /** Computation mode favorising edges and sharpness. Requires more GPU memory and computation power.*/
 	SL_DEPTH_MODE_NEURAL /**< End to End Neural disparity estimation, requires AI module */
@@ -2355,6 +2356,67 @@ struct SL_FusionMetrics {
 	float mean_stdev_between_camera;
 
 	struct SL_CameraMetrics camera_individual_stats[MAX_FUSED_CAMERAS];
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// GNSS API //////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct SL_GNSSData
+{
+	// longitude in radian
+	double longitude;
+	// latitude in radian
+	double latitude;
+	// altitude in meter
+	double altitude;
+	// Timestamp
+	unsigned long long ts;
+
+	double position_covariance[9];
+
+	double longitude_std;
+	double latitude_std;
+	double altitude_std;
+};
+
+struct SL_GeoPose
+{
+	SL_Vector3 translation;
+	SL_Quaternion rotation;
+	float pose_covariance[36];
+	double horizontal_accuracy;
+	double vertical_accuracy;
+	double latidude;
+	double longitude;
+	double altitude;
+	double east;
+	double down;
+	double north;
+	double heading;
+};
+
+struct SL_ECEF 
+{
+	double x;
+	double y;
+	double z;
+};
+
+struct SL_LatLng
+{
+	double lat;
+	double lng;
+	double height;
+};
+
+struct SL_UTM
+{
+	double northing;
+	double easting;
+	double gamma;
+	char UTMZone[256];
 };
 
 #endif

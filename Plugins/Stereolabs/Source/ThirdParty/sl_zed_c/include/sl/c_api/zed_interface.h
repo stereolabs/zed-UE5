@@ -1205,8 +1205,10 @@ extern "C" {
 
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_process();
 
-    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_subscribe(struct SL_CameraIdentifier* uuid, struct SL_CommunicationParameters* params);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_subscribe(struct SL_CameraIdentifier* uuid, struct SL_CommunicationParameters* params, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
 
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_update_pose(struct SL_CameraIdentifier* uuid, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
+    
     INTERFACE_API enum SL_SENDER_ERROR_CODE sl_fusion_get_sender_state(struct SL_CameraIdentifier* uuid);
 
     INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
@@ -1263,6 +1265,23 @@ extern "C" {
      * \brief disable the positional tracking
      */
     INTERFACE_API void sl_fusion_disable_positional_tracking();
+
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////// GNSS Fusion /////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+
+    /**
+     * \brief Add GNSS that will be used by fusion for computing fused pose.
+     */
+    INTERFACE_API void sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data);
+
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data);
+
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(SL_GeoPose* pose);
+
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out);
+
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out);
 
 	/**
 	\brief Close Multi Camera instance.
