@@ -579,6 +579,8 @@ enum class ESlAIModels : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlBodyFormat : uint8
 {
+	BF_BODY_18    UMETA(DisplayName = "Body 18"),
+	BF_BODY_34    UMETA(DisplayName = "Body 34"),
 	BF_BODY_38    UMETA(DisplayName = "Body 38"),
 	BF_BODY_70	  UMETA(DisplayName = "Body 70")
 };

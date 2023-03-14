@@ -68,14 +68,21 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     if (NbKeypoints < 0) // only the first time.
     {
         // Check the size of the input data to know which body format is used.
-        if (BodyData.Keypoint.Num() == Keypoints38.Num())
+        if (BodyData.Keypoint.Num() == Keypoints34.Num())
+        {
+            NbKeypoints = 34;
+            Keypoints = Keypoints34;
+            KeypointsMirrored = Keypoints34Mirrored;
+            ParentsIdx = parents34Idx;
+        }
+        else if (BodyData.Keypoint.Num() == Keypoints38.Num())
         {
             NbKeypoints = 38;
             Keypoints = Keypoints38;
             KeypointsMirrored = Keypoints38Mirrored;
             ParentsIdx = parents38Idx;
         }
-        else // BODY_70
+        else if (BodyData.Keypoint.Num() == Keypoints70.Num())
         {
             NbKeypoints = 70;
             Keypoints = Keypoints70;
@@ -275,8 +282,10 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
                         BoneScale = *ZEDBoneSize.Find(TargetBoneName) / *RefPoseBoneSize.Find(TargetBoneName);
                         ParentBoneScale = *ZEDBoneSize.Find(TargetParentBoneName) / *RefPoseBoneSize.Find(TargetParentBoneName);
+                        BoneScale /= ParentBoneScale;
 
-                        FinalScale = BoneScaleAlpha * (*BonesScale.Find(TargetBoneName)) + (1 - BoneScaleAlpha) * FVector(1, 1, BoneScale);
+
+                        FinalScale = BoneScaleAlpha * (*BonesScale.Find(TargetBoneName)) + (1 - BoneScaleAlpha) * FVector(BoneScale, BoneScale, BoneScale);
                     }
                     else
                     {
@@ -337,7 +346,7 @@ void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
                 const FName* SourceBoneName = RemapAsset.FindKey(TargetBoneName);
                 if (SourceBoneName && !SourceBoneName->IsEqual("PELVIS")) // Do not scale the root
                 {
-                    FName ParentTargetBoneName = RemapAsset[GetParentBoneName(*SourceBoneName)];
+                    FName ParentTargetBoneName = RemapAsset[GetParentBoneName(*SourceBoneName, NbKeypoints)];
                     FVector ParentTargetBonePosition = SkeletalMesh->GetBoneLocation(ParentTargetBoneName, EBoneSpaces::WorldSpace);
 
                     float BoneSize = FVector::Distance(TargetBonePosition, ParentTargetBonePosition) ;

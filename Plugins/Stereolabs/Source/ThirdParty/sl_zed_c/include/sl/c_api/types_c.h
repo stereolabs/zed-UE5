@@ -699,6 +699,16 @@ enum SL_BODY_FORMAT
 	 * \brief 38 keypoint model.
 	 * Body model, including feet simplified face and hands
 	 */
+	SL_BODY_FORMAT_POSE_18,
+	/**
+	 * \brief 38 keypoint model.
+	 * Body model, including feet simplified face and hands
+	 */
+	SL_BODY_FORMAT_POSE_34,
+	/**
+	 * \brief 38 keypoint model.
+	 * Body model, including feet simplified face and hands
+	 */
 	SL_BODY_FORMAT_POSE_38,
 
 	/**
