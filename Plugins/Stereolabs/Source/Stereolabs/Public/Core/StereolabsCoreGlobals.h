@@ -1819,10 +1819,28 @@ namespace sl
 				BodyData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
 			}
 
-			int NbKP = BodyFormat == ESlBodyFormat::BF_BODY_38 ? 38 : 70;
+			int NbKP = 34;
 
-			for (int i = 0; i < NbKP; i++) {
+			if (BodyFormat == ESlBodyFormat::BF_BODY_34)
+			{
+				NbKP = 34;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_18)
+			{
+				NbKP = 18;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_38)
+			{
+				NbKP = 38;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_70)
+			{
+				NbKP = 70;
+			}
 
+
+			for (int i = 0; i < NbKP; i++)
+			{
 				BodyData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
 				BodyData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
 				BodyData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
@@ -2141,7 +2159,7 @@ namespace sl
 			ODParameters.image_sync = UnrealData.bImageSync;
 			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
-			ODParameters.detection_model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
+			ODParameters.detection_model = (SL_OBJECT_DETECTION_MODEL)UnrealData.DetectionModel;
 
 			SL_BatchParameters batchParameters;
 			batchParameters.enable = UnrealData.BatchParameters.bEnable;
@@ -2184,7 +2202,7 @@ namespace sl
 			BTParameters.max_range = UnrealData.MaxRange;
 			BTParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;
 			BTParameters.prediction_timeout_s = UnrealData.PredictionTimeout_s;
-			BTParameters.detection_model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
+			BTParameters.detection_model = (SL_BODY_TRACKING_MODEL)UnrealData.DetectionModel;
 			BTParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
 			BTParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
 			BTParameters.body_selection = (SL_BODY_KEYPOINTS_SELECTION)UnrealData.BodySelection;
@@ -2357,18 +2375,25 @@ namespace sl
 			return CameraInformation;
 		}
 
-		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_DETECTION_MODEL& m_in) {
+		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_OBJECT_DETECTION_MODEL& m_in) {
 			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;
 			switch (m_in) {
-			case SL_DETECTION_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
-			case SL_DETECTION_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE: m_out = SL_AI_MODELS_MULTI_CLASS_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM:   m_out = SL_AI_MODELS_MULTI_CLASS_MEDIUM_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX:          m_out = SL_AI_MODELS_MULTI_CLASS_DETECTION; break;
-			case SL_DETECTION_MODEL_PERSON_HEAD_BOX:          m_out = SL_AI_MODELS_PERSON_HEAD_DETECTION; break;
-			case SL_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE: m_out = SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE: m_out = SL_AI_MODELS_MULTI_CLASS_ACCURATE_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM:   m_out = SL_AI_MODELS_MULTI_CLASS_MEDIUM_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_FAST:          m_out = SL_AI_MODELS_MULTI_CLASS_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST:          m_out = SL_AI_MODELS_PERSON_HEAD_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE: m_out = SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:break;
+			}
+			return m_out;
+		}
+
+		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_BODY_TRACKING_MODEL& m_in) {
+			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;
+			switch (m_in) {
+			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
+			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
+			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
 			}
 			return m_out;
 		}

@@ -415,6 +415,14 @@ enum SL_VIDEO_SETTINGS {
 	SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, /**< Defines the color temperature value. Setting a value will automatically set @WHITEBALANCE_AUTO to 0. Affected value should be between 2800 and 6500 with a step of 100.*/
 	SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO, /**< Defines if the White balance is in automatic mode or not*/
 	SL_VIDEO_SETTINGS_LED_STATUS, /**< Defines the status of the camera front LED. Set to 0 to disable the light, 1 to enable the light. Default value is on. Requires Camera FW 1523 at least.*/
+	SL_VIDEO_SETTINGS_EXPOSURE_TIME,
+	SL_VIDEO_SETTINGS_SENSOR_GAIN_DB,
+	SL_VIDEO_SETTINGS_ISP_GAIN_FACTOR,
+	SL_VIDEO_SETTINGS_AEC_RANGE,
+	SL_VIDEO_SETTINGS_ASGC_RANGE, /**< Defines the range of sensor gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int). Min/Max range between [1000 - 16000]mdB  */
+	SL_VIDEO_SETTINGS_ADGC_RANGE, /**< Defines the range of digital ISP gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int) */
+	SL_VIDEO_SETTINGS_EXPOSURE_TARGET_COMPENSATION, /**< Exposure target compensation made after AE. Reduces the overall illumination by factor of F-stops. values range is [0 - 100] (mapped between [-2.0,2.0]).  Only available for GMSL based cameras*/
+	SL_VIDEO_SETTINGS_DENOISER, /**< Defines the level of denoising applied on both left and right images. values range is [0-100]. Only available for GMSL based cameras*/
 	SL_VIDEO_SETTINGS_LAST
 };
 
@@ -642,16 +650,20 @@ enum SL_OBJECT_ACTION_STATE
 /**
 \brief List available models for detection
  */
-enum SL_DETECTION_MODEL {
-	SL_DETECTION_MODEL_MULTI_CLASS_BOX, /**< Any objects, bounding box based */
-	SL_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM, /**< Any objects, bounding box based, compromise between accuracy and speed */
-	SL_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE, /**< Any objects, bounding box based, more accurate but slower than the base model */
-	SL_DETECTION_MODEL_PERSON_HEAD_BOX, /**<  Bounding Box detector specialized in person heads, particulary well suited for crowded environement, the person localization is also improved */
-	SL_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE, /**<  Bounding Box detector specialized in person heads, particulary well suited for crowded environments, the person localization is also improved, state of the art accuracy */
-	SL_DETECTION_MODEL_CUSTOM_BOX_OBJECTS, /**< For external inference, using your own custom model and/or frameworks. This mode disable the internal inference engine, the 2D bounding box detection must be provided */
-	SL_DETECTION_MODEL_HUMAN_BODY_FAST, /**<  Keypoints based, specific to human skeleton, real time performance even on Jetson or low end GPU cards */
-	SL_DETECTION_MODEL_HUMAN_BODY_MEDIUM, /**<  Keypoints based, specific to human skeleton, compromise between accuracy and speed */
-	SL_DETECTION_MODEL_HUMAN_BODY_ACCURATE, /**<  Keypoints based, specific to human skeleton, state of the art accuracy, requires powerful GPU */
+enum SL_OBJECT_DETECTION_MODEL {
+	SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_FAST, /**< Any objects, bounding box based */
+	SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM, /**< Any objects, bounding box based, compromise between accuracy and speed */
+	SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE, /**< Any objects, bounding box based, more accurate but slower than the base model */
+	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST, /**<  Bounding Box detector specialized in person heads, particulary well suited for crowded environement, the person localization is also improved */
+	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE, /**<  Bounding Box detector specialized in person heads, particulary well suited for crowded environments, the person localization is also improved, state of the art accuracy */
+	SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS, /**< For external inference, using your own custom model and/or frameworks. This mode disable the internal inference engine, the 2D bounding box detection must be provided */
+};
+
+enum SL_BODY_TRACKING_MODEL
+{
+	SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST, /**<  Keypoints based, specific to human skeleton, real time performance even on Jetson or low end GPU cards */
+	SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM, /**<  Keypoints based, specific to human skeleton, compromise between accuracy and speed */
+	SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE, /**<  Keypoints based, specific to human skeleton, state of the art accuracy, requires powerful GPU */
 };
 
 /**
@@ -696,26 +708,26 @@ enum SL_OBJECT_FILTERING_MODE {
 enum SL_BODY_FORMAT
 {
 	/**
-	 * \brief 38 keypoint model.
+	 * \brief Legacy 38 keypoint model.
 	 * Body model, including feet simplified face and hands
 	 */
-	SL_BODY_FORMAT_POSE_18,
+	SL_BODY_FORMAT_BODY_18,
+	/**
+	* \brief Legacy 34 keypoints model.
+	* Body model, requires body fitting enabled
+	 */
+	SL_BODY_FORMAT_BODY_34,
 	/**
 	 * \brief 38 keypoint model.
 	 * Body model, including feet simplified face and hands
 	 */
-	SL_BODY_FORMAT_POSE_34,
-	/**
-	 * \brief 38 keypoint model.
-	 * Body model, including feet simplified face and hands
-	 */
-	SL_BODY_FORMAT_POSE_38,
+	SL_BODY_FORMAT_BODY_38,
 
 	/**
 	 * \brief 70 keypoint model.
 	 * Body model, including feet and full hands models (and simplified face)
 	 */
-	 SL_BODY_FORMAT_POSE_70,
+	 SL_BODY_FORMAT_BODY_70,
 };
 
 enum SL_BODY_KEYPOINTS_SELECTION
@@ -1563,7 +1575,7 @@ struct SL_ObjectDetectionParameters
 	/**
 	\brief Enable human pose estimation with skeleton keypoints output (SL_DETECTION_MODEL).
 	 */
-	enum  SL_DETECTION_MODEL detection_model;
+	enum  SL_OBJECT_DETECTION_MODEL detection_model;
 	/**
 	\brief Defines a upper depth range for detections.
 	  * \n Defined in \ref UNIT set at \ref SL_Camera::open.
@@ -1680,7 +1692,7 @@ struct SL_BodyTrackingParameters {
 	/**
 	\brief Enable human pose estimation with skeleton keypoints output
 	 */
-	enum SL_DETECTION_MODEL detection_model;
+	enum SL_BODY_TRACKING_MODEL detection_model;
 
 	/**
 	\brief Defines if the body fitting will be applied
@@ -1930,7 +1942,7 @@ struct SL_Objects
 	/**
 	\brief Detection model used (SL_DETECTION_MODEL).
 	 */
-	enum  SL_DETECTION_MODEL detection_model;
+	enum  SL_OBJECT_DETECTION_MODEL detection_model;
 	/**
 	\brief The list of detected objects
 	 */
@@ -2089,9 +2101,9 @@ struct SL_Bodies
 	 */
 	int is_tracked;
 	/**
-	\brief Detection model used (SL_DETECTION_MODEL).
+	\brief Detection model used (SL_BODY_TRACKING_MODEL).
 	 */
-	enum  SL_DETECTION_MODEL detection_model;
+	enum  SL_BODY_TRACKING_MODEL detection_model;
 	/**
 	\brief The list of detected objects
 	 */
@@ -2161,7 +2173,7 @@ struct SL_Rect
 
 struct SL_InputType
 {
-	SL_INPUT_TYPE input_type;
+	enum SL_INPUT_TYPE input_type;
 	unsigned int serial_number;
 	unsigned int id;
 	char svo_input_filename[256];
@@ -2212,9 +2224,9 @@ struct  SL_CommunicationParameters
 struct SL_FusionConfiguration {
 	int serial_number;
 	struct SL_CommunicationParameters comm_param;
-	SL_Vector3 position;
-	SL_Quaternion rotation;
-	SL_InputType input_type;
+	struct SL_Vector3 position;
+	struct SL_Quaternion rotation;
+	struct SL_InputType input_type;
 };
 
 
@@ -2393,8 +2405,8 @@ struct SL_GNSSData
 
 struct SL_GeoPose
 {
-	SL_Vector3 translation;
-	SL_Quaternion rotation;
+	struct SL_Vector3 translation;
+	struct SL_Quaternion rotation;
 	float pose_covariance[36];
 	double horizontal_accuracy;
 	double vertical_accuracy;

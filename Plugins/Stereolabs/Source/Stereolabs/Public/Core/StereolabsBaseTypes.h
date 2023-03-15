@@ -544,17 +544,25 @@ enum class ESlObjectActionState : uint8
 * List of available models for detection.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlDetectionModel : uint8
+enum class ESlObjectDetectionModel : uint8
 {
-	DM_MultiClassBox			UMETA(DisplayName = "Multi class box"),
-	DM_MultiClassBoxMedium		UMETA(DisplayName = "Multi class box medium"),
-	DM_MultiClassBoxAccurate	UMETA(DisplayName = "Multi class box accurate"),
-	DM_PersonHeadBox			UMETA(DisplayName = "Person head box"),
-	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head accurate box"),
-	DM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
-	DM_HumanBodyFast			UMETA(DisplayName = "Human body fast"),
-	DM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
-	DM_HumanBodyAccurate		UMETA(DisplayName = "Human body accurate")
+	ODM_MultiClassBoxFast			UMETA(DisplayName = "Multi class box fast"),
+	ODM_MultiClassBoxMedium		    UMETA(DisplayName = "Multi class box medium"),
+	ODM_MultiClassBoxAccurate		UMETA(DisplayName = "Multi class box accurate"),
+	ODM_PersonHeadBoxFast			UMETA(DisplayName = "Person head box fast"),
+	ODM_PersonHeadAccurateBox		UMETA(DisplayName = "Person head accurate box"),
+	ODM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
+};
+
+/*
+* List of available models for body tracking.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyTrackingModel : uint8
+{
+	BTM_HumanBodyFast			UMETA(DisplayName = "Human body fast"),
+	BTM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
+	BTM_HumanBodyAccurate		UMETA(DisplayName = "Human body accurate")
 
 };
 
@@ -653,6 +661,73 @@ enum class ESlObjectSubClass : uint8
 	OSC_ORANGE = 20			UMETA(DisplayName = "Orange"),
 	OSC_CARROT = 21			UMETA(DisplayName = "Carrot"),
 	OSC_SPORTBALL = 23		UMETA(DisplayName = "Sportball"),
+};
+
+/*
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::Body_18.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyPartsBody18 : uint8 {
+	NOSE = 0,
+	NECK = 1,
+	RIGHT_SHOULDER = 2,
+	RIGHT_ELBOW = 3,
+	RIGHT_WRIST = 4,
+	LEFT_SHOULDER = 5,
+	LEFT_ELBOW = 6,
+	LEFT_WRIST = 7,
+	RIGHT_HIP = 8,
+	RIGHT_KNEE = 9,
+	RIGHT_ANKLE = 10,
+	LEFT_HIP = 11,
+	LEFT_KNEE = 12,
+	LEFT_ANKLE = 13,
+	RIGHT_EYE = 14,
+	LEFT_EYE = 15,
+	RIGHT_EAR = 16,
+	LEFT_EAR = 17
+};
+
+/*
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_34.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyPartsBody34 : uint8 {
+	PELVIS = 0,
+	NAVAL_SPINE = 1,
+	CHEST_SPINE = 2,
+	NECK = 3,
+	LEFT_CLAVICLE = 4,
+	LEFT_SHOULDER = 5,
+	LEFT_ELBOW = 6,
+	LEFT_WRIST = 7,
+	LEFT_HAND = 8,
+	LEFT_HANDTIP = 9,
+	LEFT_THUMB = 10,
+	RIGHT_CLAVICLE = 11,
+	RIGHT_SHOULDER = 12,
+	RIGHT_ELBOW = 13,
+	RIGHT_WRIST = 14,
+	RIGHT_HAND = 15,
+	RIGHT_HANDTIP = 16,
+	RIGHT_THUMB = 17,
+	LEFT_HIP = 18,
+	LEFT_KNEE = 19,
+	LEFT_ANKLE = 20,
+	LEFT_FOOT = 21,
+	RIGHT_HIP = 22,
+	RIGHT_KNEE = 23,
+	RIGHT_ANKLE = 24,
+	RIGHT_FOOT = 25,
+	HEAD = 26,
+	NOSE = 27,
+	LEFT_EYE = 28,
+	LEFT_EAR = 29,
+	RIGHT_EYE = 30,
+	RIGHT_EAR = 31,
+	LEFT_HEEL = 32,
+	RIGHT_HEEL = 33,
+	LAST = 34
 };
 
 /*
@@ -787,6 +862,61 @@ enum class ESlBodyPartsBody70 : uint8 {
 /************************************************************************/
 /*							    Structs				    				*/
 /************************************************************************/
+
+/*
+ * Bone descriptor, pair of ESlBodyParts
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBone18
+{
+	GENERATED_BODY()
+
+		FSlBone18()
+	{}
+
+	FSlBone18(ESlBodyPartsBody18 first, ESlBodyPartsBody18 second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBodyPartsBody18 FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBodyPartsBody18 SecondEnd;
+};
+
+
+/*
+ * Bone descriptor, pair of ESlBodyParts
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBone34
+{
+	GENERATED_BODY()
+
+		FSlBone34()
+	{}
+
+	FSlBone34(ESlBodyPartsBody34 first, ESlBodyPartsBody34 second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBodyPartsBody34 FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBodyPartsBody34 SecondEnd;
+};
 
 /*
  * Bone descriptor, pair of ESlBodyParts
@@ -1520,7 +1650,7 @@ struct STEREOLABS_API FSlRuntimeParameters
 	FSlRuntimeParameters()
 		:
 		bEnableDepth(true),
-		ConfidenceThreshold(100),
+		ConfidenceThreshold(95),
 		TextureConfidenceThreshold(100),
 		ReferenceFrame(ESlReferenceFrame::RF_World),
 		bRemoveSaturatedAreas(true)
@@ -2603,7 +2733,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 
 	/* Enable human pose estimation with skeleton keypoints output. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlDetectionModel DetectionModel;
+	ESlObjectDetectionModel DetectionModel;
 
 	/* Defines a upper depth range for detections. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2638,7 +2768,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 		bImageSync(true),
 		bEnableTracking(true),
 		bEnableSegmentation(false),
-		DetectionModel(ESlDetectionModel::DM_MultiClassBox),
+		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxFast),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
 		FilteringMode(ESlObjectFilteringMode::OFM_NMS3D),
@@ -2822,7 +2952,7 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 
 	/* Enable human pose estimation with skeleton keypoints output. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlDetectionModel DetectionModel;
+	ESlBodyTrackingModel DetectionModel;
 
 	/* Enable body fitting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2860,7 +2990,7 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 		bImageSync(true),
 		bEnableTracking(true),
 		bEnableSegmentation(false),
-		DetectionModel(ESlDetectionModel::DM_HumanBodyMedium),
+		DetectionModel(ESlBodyTrackingModel::BTM_HumanBodyMedium),
 		MaxRange(-1.0f),
 		PredictionTimeout_s(0.2f),
 		bAllowReducedPrecisionInference(false),

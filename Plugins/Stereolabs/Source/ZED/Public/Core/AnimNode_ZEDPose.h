@@ -311,21 +311,21 @@ const TArray<int> parents70Idx = {
     31,
     32,
     16,
-    30,
-    31,
-    32,
+    34,
+    35,
+    36,
     16,
-    30,
-    31,
-    32,
+    38,
+    39,
+    40,
     16,
-    30,
-    31,
-    32,
+    42,
+    43,
+    44,
     16,
-    30,
-    31,
-    32,
+    46,
+    47,
+    48,
     17,
     50,
     51,
@@ -782,6 +782,14 @@ static FName GetParent70BoneName(FName BoneName)
         ParentBoneName = "LEFT_HAND_MIDDLE_2";
     else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_4"))
         ParentBoneName = "LEFT_HAND_MIDDLE_3";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_2"))
+        ParentBoneName = "LEFT_HAND_RING_1";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_3"))
+        ParentBoneName = "LEFT_HAND_RING_2";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_4"))
+        ParentBoneName = "LEFT_HAND_RING_3";
     else if (BoneName.IsEqual("LEFT_HAND_PINKY_1"))
         ParentBoneName = "LEFT_WRIST";
     else if (BoneName.IsEqual("LEFT_HAND_PINKY_2"))
@@ -822,6 +830,14 @@ static FName GetParent70BoneName(FName BoneName)
         ParentBoneName = "RIGHT_HAND_MIDDLE_2";
     else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_4"))
         ParentBoneName = "RIGHT_HAND_MIDDLE_3";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_2"))
+        ParentBoneName = "RIGHT_HAND_RING_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_3"))
+        ParentBoneName = "RIGHT_HAND_RING_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_4"))
+        ParentBoneName = "RIGHT_HAND_RING_3";
     else if (BoneName.IsEqual("RIGHT_HAND_PINKY_1"))
         ParentBoneName = "RIGHT_WRIST";
     else if (BoneName.IsEqual("RIGHT_HAND_PINKY_2"))

@@ -22,6 +22,7 @@ FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPo
     return (FCompactPoseBoneIndex)INDEX_NONE;
 }
 
+
 void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames) 
 {
     for (auto & i : SourceBoneNames)
@@ -89,6 +90,10 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             KeypointsMirrored = Keypoints70Mirrored;
             ParentsIdx = parents70Idx;
         }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Incompatible body format, please use either body 34/38 or 70"));
+        }
     }
 
     FCompactPose& OutPose = PoseContext.Pose;
@@ -105,11 +110,21 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     SkeletalMesh->GetBoneNames(TargetBoneNames);
 
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
-    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[22] > 90 && BodyData.KeypointConfidence[23] > 90) { //if both foot are visible/detected
+    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("LEFT_ANKLE"))] > 90 && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("RIGHT_ANKLE"))] > 90) { //if both foot are visible/detected
         if (SkeletalMesh) {
-            // Retrieve Feet position
-            FVector LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]) ;
-            FVector RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
+
+            FVector LeftFootPosition;
+            FVector RightFootPosition;
+            if (BodyData.Keypoint.Num() == 34) // body 34
+            {
+                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]);
+                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
+            }
+            else // body 38 or 70
+            {
+                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]);
+                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
+            }
 
             // Shot raycast to the ground.
             FHitResult HitLeftFoot;
@@ -334,7 +349,7 @@ void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
 
     if (SkeletalMesh)
     {
-        if (RefPoseBoneSize.Num() == 0)
+        if (RefPoseBoneSize.Num() == 0 && NbKeypoints > 0)
         {
             TArray<FName> TargetBoneNames;
             SkeletalMesh->GetBoneNames(TargetBoneNames);
@@ -349,7 +364,7 @@ void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
                     FName ParentTargetBoneName = RemapAsset[GetParentBoneName(*SourceBoneName, NbKeypoints)];
                     FVector ParentTargetBonePosition = SkeletalMesh->GetBoneLocation(ParentTargetBoneName, EBoneSpaces::WorldSpace);
 
-                    float BoneSize = FVector::Distance(TargetBonePosition, ParentTargetBonePosition) ;
+                    float BoneSize = FVector::Distance(TargetBonePosition, ParentTargetBonePosition);
 
                     // Store the size of each bone of the ref pose.
                     RefPoseBoneSize.Add(ParentTargetBoneName, BoneSize);
@@ -367,7 +382,7 @@ void FAnimNode_ZEDPose::Evaluate_AnyThread(FPoseContext& Output)
 {
 	InputPose.Evaluate(Output);
 
-    if (BodyData.Keypoint.Num() > 0)
+    if (BodyData.Keypoint.Num() > 0 && RemapAsset.Num() > 0)
     {
         if (!PrevDataInitialized) 
         {

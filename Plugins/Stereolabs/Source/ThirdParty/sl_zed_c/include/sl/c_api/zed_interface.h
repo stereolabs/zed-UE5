@@ -1277,7 +1277,7 @@ extern "C" {
 
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data);
 
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(SL_GeoPose* pose);
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose);
 
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out);
 

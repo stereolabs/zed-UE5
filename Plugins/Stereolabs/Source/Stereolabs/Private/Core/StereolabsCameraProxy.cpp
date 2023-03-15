@@ -1365,7 +1365,7 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 
 	ObjectDetectionParameters = ODParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
 
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 
@@ -1397,8 +1397,7 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 
 	BodyTrackingParameters = BTParameters;
-	UE_LOG(LogTemp, Warning, TEXT("%d"), (int)BodyTrackingParameters.DetectionModel);
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_DETECTION_MODEL)BodyTrackingParameters.DetectionModel);
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel);
 
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 
@@ -1488,6 +1487,30 @@ bool USlCameraProxy::RetrieveBodies()
 			OnBodyTrackingRetrieved.Broadcast(bodies);
 		});
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
+}
+
+int USlCameraProxy::GetNumberOfKeypoints()
+{
+	if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_18)
+	{
+		return 18;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_34)
+	{
+		return 34;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_38)
+	{
+		return 38;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	{
+		return 70;
+	}
+	else
+	{
+		return 38;
+	}
 }
 
 void USlCameraProxy::SetHitTestDepthAndNormals(bool bEnableDepth, bool bEnableNormals)
