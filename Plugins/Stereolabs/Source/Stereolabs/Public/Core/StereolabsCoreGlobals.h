@@ -745,8 +745,8 @@ namespace sl
 					return sl::DEPTH_MODE::NONE;
 				case ESlDepthMode::DM_Performance:
 					return sl::DEPTH_MODE::PERFORMANCE;
-				case ESlDepthMode::DM_NeuralFast:
-					return sl::DEPTH_MODE::NEURAL_FAST;
+				//case ESlDepthMode::DM_NeuralFast:
+				//	return sl::DEPTH_MODE::NEURAL_FAST;
 				case ESlDepthMode::DM_Ultra:
 					return sl::DEPTH_MODE::ULTRA;
 				case ESlDepthMode::DM_Neural:
