@@ -1201,14 +1201,44 @@ extern "C" {
 extern "C" {
 #endif
     
+    /** \brief FusionHandler initialisation. Initializes memory/generic datas
+    * \param [in] params : structure containing all init parameters for the fusion API
+    * \return SL_FUSION_ERROR_CODE
+    */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_init(struct SL_InitFusionParameters* params);
-
+    
+    /** \brief process the fusion.
+    * \return SL_FUSION_ERROR_CODE
+    */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_process();
 
+    /*
+    * \brief adds a camera to the multi camera handler
+    * \param [in] uuid : unique ID that is associated with the camera for easy access.
+    * \param [in] params : communications parameters
+    * \param [in] pose_translation : position of the camera
+    * \param [in] pose_rotation : orientation of the camera
+    * \return SL_FUSION_ERROR_CODE
+    * */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_subscribe(struct SL_CameraIdentifier* uuid, struct SL_CommunicationParameters* params, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
 
+
+    /*
+    * \brief update the pose of the camera in the fusion coordinate space
+    * \param [in] uuid : unique ID that is associated with the camera for easy access.
+    * \param [in] pose_translation : new position of the camera
+    * \param [in] pose_rotation : new orientation of the camera
+    * \return SL_FUSION_ERROR_CODE
+    * */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_update_pose(struct SL_CameraIdentifier* uuid, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
     
+    /*
+    * \brief update the pose of the camera in the fusion coordinate space
+    * \param [in] uuid : unique ID that is associated with the camera for easy access.
+    * \param [in] pose_translation : new position of the camera
+    * \param [in] pose_rotation : new orientation of the camera
+    * \return SL_FUSION_ERROR_CODE
+    * */
     INTERFACE_API enum SL_SENDER_ERROR_CODE sl_fusion_get_sender_state(struct SL_CameraIdentifier* uuid);
 
     INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
@@ -1217,9 +1247,10 @@ extern "C" {
     ///////////////////// Object Detection Fusion ///////////////////////
     /////////////////////////////////////////////////////////////////////
 
-    /// \brief enables Object detection fusion module
-    /// \param [in] parameters defined by \ref sl::ObjectDetectionFusionParameters
-    /// \return
+    /** \brief enables Object detection fusion module
+    * \param [in] parameters defined by \ref sl::ObjectDetectionFusionParameters
+    * \return SL_FUSION_ERROR_CODE
+    */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_body_tracking(struct SL_BodyTrackingFusionParameters* params);
 
 	/**
@@ -1227,14 +1258,20 @@ extern "C" {
 	 */
 	INTERFACE_API void sl_fusion_disable_body_tracking();
 
-    //Call to retrieve a single struct of slbodies
+    /**
+    * \brief retrieves a list of bodies (in SL_Bodies class type) seen by all cameras and merged as if it was seen by a single super-camera.
+    *\note Internal calls retrieveObjects() for all listed cameras, then merged into a single SL_Bodies
+    * \param [out] bodies: list of objects seen by all available cameras
+    * \note Only the 3d informations is available in the returned object.
+    * \return SL_FUSION_ERROR_CODE
+    */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_retrieve_bodies(struct SL_Bodies* bodies, struct SL_BodyTrackingFusionRuntimeParameters* rt, struct SL_CameraIdentifier uuid);
 
     /**
      * \brief get the stats of a given camera in the Fusion API side
      * It can be the received FPS, drop frame, latency, etc
-     * \param stats
-     * \return ERROR_CODE
+     * \param metrics : structure containing all the metrics available
+     * \return SL_FUSION_ERROR_CODE
      */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_get_process_metrics(struct SL_FusionMetrics* metrics);
 
@@ -1247,7 +1284,7 @@ extern "C" {
     * \brief enable positional tracking fusion.
     * \note note that for the alpha version of the API, the positional tracking fusion doesn't support the area memory feature
     *
-    * \return ERROR_CODE
+    * \return SL_FUSION_ERROR_CODE
     */
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking();
 
@@ -1256,6 +1293,7 @@ extern "C" {
      *
      * \param camera_pose will contain the camera pose in world position (world position is given by the calibration of the cameras system)
      * \param reference_frame defines the reference from which you want the pose to be expressed. Default : \ref REFERENCE_FRAME "REFERENCE_FRAME::WORLD".
+     * \param uuid Camera identifier
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_COORDINATE_SYSTEM coordinate_system, enum SL_UNIT unit,
@@ -1275,12 +1313,28 @@ extern "C" {
      */
     INTERFACE_API void sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data);
 
+    /**
+     * \brief disable the positional tracking
+     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data);
 
+    /**
+     * \brief disable the positional tracking
+     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose);
 
+    /**
+     * \brief disable the positional tracking
+     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out);
 
+    /**
+     * \brief disable the positional tracking
+     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out);
 
 	/**

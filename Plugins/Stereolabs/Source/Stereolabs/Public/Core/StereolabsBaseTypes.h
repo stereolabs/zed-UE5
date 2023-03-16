@@ -159,7 +159,7 @@ enum class ESlDepthMode : uint8
 	DM_None				     UMETA(DisplayName = "None"),
 	DM_Performance			 UMETA(DisplayName = "Performance"),
 	DM_Quality		     	 UMETA(DisplayName = "Quality"),
-	DM_NeuralFast			 UMETA(DisplayName = "NeuralFast"),
+	//DM_NeuralFast			 UMETA(DisplayName = "NeuralFast"),
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
 	DM_Neural				 UMETA(DisplayName = "Neural")
 };

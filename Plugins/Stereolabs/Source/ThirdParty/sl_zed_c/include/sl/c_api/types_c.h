@@ -359,20 +359,6 @@ enum SL_INPUT_TYPE {
 };
 
 /**
-\enum BUS_TYPE
-\ingroup Video_group
-\brief Lists available input type in SDK
- */
-enum SL_BUS_TYPE {
-	SL_BUS_TYPE_USB, /**< USB input mode  */
-	SL_BUS_TYPE_GMSL, /** < GMSL input mode (only on NVIDIA Jetson) */
-	SL_BUS_TYPE_AUTO, /** < Automatically select the input type (trying first for availabled USB cameras, then GMSL) */
-	///@cond SHOWHIDDEN 
-	SL_BUS_TYPE_LAST
-	///@endcond
-};
-
-/**
 \brief Defines which type of position matrix is used to store camera path and pose.
  */
 enum SL_REFERENCE_FRAME
@@ -552,7 +538,7 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NONE, /** This mode does not compute any depth map. Only rectified stereo images will be available.*/
 	SL_DEPTH_MODE_PERFORMANCE, /** Computation mode optimized for speed.*/
 	SL_DEPTH_MODE_QUALITY, /**< Computation mode designed for challenging areas with untextured surfaces.*/
-	SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
+	//SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
 	SL_DEPTH_MODE_ULTRA, /** Computation mode favorising edges and sharpness. Requires more GPU memory and computation power.*/
 	SL_DEPTH_MODE_NEURAL /**< End to End Neural disparity estimation, requires AI module */
 };
@@ -1114,6 +1100,10 @@ struct SL_DeviceProperties {
 	\n Not provided for Windows
 	 */
 	unsigned int sn;
+	/**
+	 camera input type
+	 */
+	enum SL_INPUT_TYPE input_type;
 };
 
 struct SL_CameraParameters {
@@ -2428,9 +2418,9 @@ struct SL_ECEF
 
 struct SL_LatLng
 {
-	double lat;
-	double lng;
-	double height;
+	double latitude;
+	double longitude;
+	double altitude;
 };
 
 struct SL_UTM
