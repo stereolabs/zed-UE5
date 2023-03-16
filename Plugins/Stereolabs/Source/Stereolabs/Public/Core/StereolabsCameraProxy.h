@@ -510,6 +510,11 @@ public:
 	bool RetrieveBodies();
 
 	/*
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get number of keypoints"), Category = "Zed|Body Tracking")
+	int GetNumberOfKeypoints();
+
+	/*
 	 * Call this function to get the current error of the open camera async task.
 	 * @return The current error code
 	 */
