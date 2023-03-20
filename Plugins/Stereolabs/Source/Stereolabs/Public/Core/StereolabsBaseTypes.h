@@ -667,7 +667,7 @@ enum class ESlObjectSubClass : uint8
 * List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::Body_18.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyPartsBody18 : uint8 {
+enum class ESlBody18Parts : uint8 {
 	NOSE = 0,
 	NECK = 1,
 	RIGHT_SHOULDER = 2,
@@ -692,7 +692,7 @@ enum class ESlBodyPartsBody18 : uint8 {
 * List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_34.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyPartsBody34 : uint8 {
+enum class ESlBody34Parts : uint8 {
 	PELVIS = 0,
 	NAVAL_SPINE = 1,
 	CHEST_SPINE = 2,
@@ -734,7 +734,7 @@ enum class ESlBodyPartsBody34 : uint8 {
 * List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_38.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyPartsBody38 : uint8 {
+enum class ESlBody38Parts : uint8 {
 	PELVIS = 0,
 	SPINE_1 = 1,
 	SPINE_2 = 2,
@@ -781,7 +781,7 @@ enum class ESlBodyPartsBody38 : uint8 {
 * List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_70.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyPartsBody70 : uint8 {
+enum class ESlBody70Parts : uint8 {
 	PELVIS = 0,
 	SPINE_1 = 1,
 	SPINE_2 = 2,
@@ -868,14 +868,14 @@ enum class ESlBodyPartsBody70 : uint8 {
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone18
+struct STEREOLABS_API FSlBody18Bone
 {
 	GENERATED_BODY()
 
-		FSlBone18()
+	FSlBody18Bone()
 	{}
 
-	FSlBone18(ESlBodyPartsBody18 first, ESlBodyPartsBody18 second)
+	FSlBody18Bone(ESlBody18Parts first, ESlBody18Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -883,11 +883,11 @@ struct STEREOLABS_API FSlBone18
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBodyPartsBody18 FirstEnd;
+	ESlBody18Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBodyPartsBody18 SecondEnd;
+	ESlBody18Parts SecondEnd;
 };
 
 
@@ -896,14 +896,14 @@ struct STEREOLABS_API FSlBone18
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone34
+struct STEREOLABS_API FSlBody34Bone
 {
 	GENERATED_BODY()
 
-		FSlBone34()
+		FSlBody34Bone()
 	{}
 
-	FSlBone34(ESlBodyPartsBody34 first, ESlBodyPartsBody34 second)
+	FSlBody34Bone(ESlBody34Parts first, ESlBody34Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -911,11 +911,11 @@ struct STEREOLABS_API FSlBone34
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBodyPartsBody34 FirstEnd;
+	ESlBody34Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBodyPartsBody34 SecondEnd;
+	ESlBody34Parts SecondEnd;
 };
 
 /*
@@ -923,14 +923,14 @@ struct STEREOLABS_API FSlBone34
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone38
+struct STEREOLABS_API FSlBody38Bone
 {
 	GENERATED_BODY()
 
-		FSlBone38()
+		FSlBody38Bone()
 	{}
 
-	FSlBone38(ESlBodyPartsBody38 first, ESlBodyPartsBody38 second)
+	FSlBody38Bone(ESlBody38Parts first, ESlBody38Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -938,11 +938,11 @@ struct STEREOLABS_API FSlBone38
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsBody38 FirstEnd;
+		ESlBody38Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsBody38 SecondEnd;
+		ESlBody38Parts SecondEnd;
 };
 
 /*
@@ -950,14 +950,14 @@ struct STEREOLABS_API FSlBone38
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone70
+struct STEREOLABS_API FSlBody70Bone
 {
 	GENERATED_BODY()
 
-	FSlBone70()
+		FSlBody70Bone()
 	{}
 
-	FSlBone70(ESlBodyPartsBody70 first, ESlBodyPartsBody70 second)
+	FSlBody70Bone(ESlBody70Parts first, ESlBody70Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -965,11 +965,11 @@ struct STEREOLABS_API FSlBone70
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsBody70 FirstEnd;
+		ESlBody70Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsBody70 SecondEnd;
+		ESlBody70Parts SecondEnd;
 };
 
 /*
