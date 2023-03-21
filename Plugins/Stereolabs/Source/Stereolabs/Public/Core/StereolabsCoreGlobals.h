@@ -1817,6 +1817,8 @@ namespace sl
 			for (int i = 0; i < 8; i++) {
 
 				BodyData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
+				BodyData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
+
 			}
 
 			int NbKP = 34;
@@ -1838,18 +1840,12 @@ namespace sl
 				NbKP = 70;
 			}
 
-
 			for (int i = 0; i < NbKP; i++)
 			{
 				BodyData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
 				BodyData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
 				BodyData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
 				BodyData.LocalOrientationPerJoint.Add(ToUnrealType(SlData.local_orientation_per_joint[i]));
-			}
-
-			for (int i = 0; i < 8; i++) {
-
-				BodyData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
 			}
 
 			BodyData.HeadPosition = ToUnrealType(SlData.head_position);
@@ -2388,12 +2384,41 @@ namespace sl
 			return m_out;
 		}
 
-		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_BODY_TRACKING_MODEL& m_in) {
+		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_BODY_TRACKING_MODEL& m_in, const SL_BODY_FORMAT body_format) {
 			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;
-			switch (m_in) {
-			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
-			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
-			case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
+			if (body_format == SL_BODY_FORMAT_BODY_18 || body_format == SL_BODY_FORMAT_BODY_34)
+			{
+				switch (m_in)
+				{
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
+				}
+			}
+			else if (body_format == SL_BODY_FORMAT_BODY_38)
+			{
+				switch (m_in)
+				{
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_38_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_38_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_38_FAST_DETECTION; break;
+				}
+			}
+			else if (body_format == SL_BODY_FORMAT_BODY_70)
+			{
+				switch (m_in) {
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION; break;
+				}
+			}
+			else
+			{
+				switch (m_in) {
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
+				}
 			}
 			return m_out;
 		}

@@ -323,6 +323,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
 FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
 {
+
 }
 
 void FAnimNode_ZEDPose::OnInitializeAnimInstance(const FAnimInstanceProxy* InProxy, const UAnimInstance* InAnimInstance)

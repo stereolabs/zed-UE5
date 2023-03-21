@@ -569,13 +569,19 @@ enum class ESlBodyTrackingModel : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlAIModels : uint8
 {
-	AIM_MultiClassDetection			    UMETA(DisplayName = "Multi class Detection"),
+	AIM_MultiClassFastDetection		    UMETA(DisplayName = "Multi class fast Detection"),
 	AIM_MultiClassMediumDetection		UMETA(DisplayName = "Multi class medium Detection"),
 	AIM_MultiClassAccurateDetection		UMETA(DisplayName = "Multi class accurate Detection"),
 	AIM_HumanBodyFastDetection			UMETA(DisplayName = "Human body fast Detection"),
 	AIM_HumanBodyMediumDetection		UMETA(DisplayName = "Human body medium Detection"),
 	AIM_HumanBodyAccurateDetection		UMETA(DisplayName = "Human body accurate Detection"),
-	AIM_PersonHeadDetection				UMETA(DisplayName = "Person head Detection"),
+	AIM_HumanBody38FastDetection		UMETA(DisplayName = "Human body 38 fast Detection"),
+	AIM_HumanBody38MediumDetection		UMETA(DisplayName = "Human body 38 medium Detection"),
+	AIM_HumanBody38AccurateDetection	UMETA(DisplayName = "Human body 38 accurate Detection"),
+	AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
+	AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
+	AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
+	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Associaiton"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
