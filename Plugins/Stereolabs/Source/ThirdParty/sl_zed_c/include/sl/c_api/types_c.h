@@ -401,14 +401,14 @@ enum SL_VIDEO_SETTINGS {
 	SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, /**< Defines the color temperature value. Setting a value will automatically set @WHITEBALANCE_AUTO to 0. Affected value should be between 2800 and 6500 with a step of 100.*/
 	SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO, /**< Defines if the White balance is in automatic mode or not*/
 	SL_VIDEO_SETTINGS_LED_STATUS, /**< Defines the status of the camera front LED. Set to 0 to disable the light, 1 to enable the light. Default value is on. Requires Camera FW 1523 at least.*/
-	SL_VIDEO_SETTINGS_EXPOSURE_TIME,
-	SL_VIDEO_SETTINGS_ANALOG_GAIN,
-	SL_VIDEO_SETTINGS_DIGITAL_GAIN,
-	SL_VIDEO_SETTINGS_AUTO_EXPOSURE_TIME_RANGE,
+	SL_VIDEO_SETTINGS_EXPOSURE_TIME,/**< Defines the real exposure time in microseconds. Only available for GMSL based cameras. Recommended for ZED-X/ZED-XM to control manual exposure (instead of EXPOSURE setting)*/
+	SL_VIDEO_SETTINGS_ANALOG_GAIN,/**< Defines the real analog gain (sensor) in mDB. Range is defined by Jetson DTS and by default [1000-16000].  Recommended for ZED-X/ZED-XM to control manual sensor gain (instead of GAIN setting). Only available for GMSL based cameras.*/
+	SL_VIDEO_SETTINGS_DIGITAL_GAIN,/**< Defines the real digital gain (ISP) as a factor. Range is defined by Jetson DTS and by default [1-256].  Recommended for ZED-X/ZED-XM to control manual ISP gain (instead of GAIN setting). Only available for GMSL based cameras.*/
+	SL_VIDEO_SETTINGS_AUTO_EXPOSURE_TIME_RANGE,/**< Defines the range of exposure auto control in micro seconds.Used with \ref setCameraSettings(VIDEO_SETTINGS,int,int).  Min/Max range between Max range defined in DTS. By default : [28000 - <fps_time> or 19000] us. Only available for GMSL based cameras.*/
 	SL_VIDEO_SETTINGS_AUTO_ANALOG_GAIN_RANGE, /**< Defines the range of sensor gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int). Min/Max range between [1000 - 16000]mdB  */
 	SL_VIDEO_SETTINGS_AUTO_DIGITAL_GAIN_RANGE, /**< Defines the range of digital ISP gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int) */
 	SL_VIDEO_SETTINGS_EXPOSURE_COMPENSATION, /**< Exposure target compensation made after AE. Reduces the overall illumination by factor of F-stops. values range is [0 - 100] (mapped between [-2.0,2.0]).  Only available for GMSL based cameras*/
-	SL_VIDEO_SETTINGS_DENOISING, /**< Defines the level of denoising applied on both left and right images. values range is [0-100]. Only available for GMSL based cameras*/
+	SL_VIDEO_SETTINGS_DENOISING, /**< Defines the level of denoising applied on both left and right images. values range is [0-100].Default value is 50. Only available for GMSL based cameras*/
 	SL_VIDEO_SETTINGS_LAST
 };
 
@@ -937,6 +937,16 @@ enum SL_BODY_70_PARTS
 	SL_BODY_70_PARTS_LAST
 };
 
+/**
+\brief Change the type of outputed position for the Fusion positional tracking (raw data or fusion data projected into zed camera)
+*/
+enum SL_POSITION_TYPE {
+	RAW = 0, /*The output position will be the raw position data*/
+	FUSION, /*The output position will be the fused position projected into the requested camera repository*/
+	///@cond SHOWHIDDEN 
+	LAST
+	///@endcond
+};
 
 /**
 * \brief Resolution
@@ -2167,10 +2177,6 @@ struct SL_Bodies
 	 */
 	int is_tracked;
 	/**
-	\brief Detection model used (SL_BODY_TRACKING_MODEL).
-	 */
-	enum  SL_BODY_TRACKING_MODEL detection_model;
-	/**
 	\brief The list of detected objects
 	 */
 	struct SL_BodyData body_list[MAX_NUMBER_OBJECT];
@@ -2253,13 +2259,12 @@ struct SL_InputType
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum SL_FUSION_ERROR_CODE {
-	SL_FUSION_ERROR_CODE_WRONG_BODY_TRACKING_MODEL = -8, /**< The requested body tracking model is not available*/
-	SL_FUSION_ERROR_CODE_NOT_ENABLE = -7, /**< The following module was not enabled*/
-	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -6, /**< Some source are provided by SVO and some sources are provided by LIVE stream */
-	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -5, /**< Connection timed out ... impossible to reach the sender... this may be due to ZedHub absence*/
-	SL_FUSION_ERROR_CODE_SHARED_MEMORY_LEAK = -4, /**< Detect multiple instance of SHARED_MEMORY communicator ... only one is authorised*/
-	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -3, /**< The IP format provided is wrong, please provide IP in this format a.b.c.d where (a, b, c, d) are numbers between 0 and 255.*/
-	SL_FUSION_ERROR_CODE_CONNECTION_ERROR = -2, /**< Something goes bad in the connection between sender and receiver.*/
+	SL_FUSION_ERROR_CODE_WRONG_BODY_FORMAT = -7, /**< The requested body tracking model is not available*/
+	SL_FUSION_ERROR_CODE_NOT_ENABLE = -6, /**< The following module was not enabled*/
+	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -5, /**< Some source are provided by SVO and some sources are provided by LIVE stream */
+	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -4, /**< Connection timed out ... impossible to reach the sender... this may be due to ZedHub absence*/
+	SL_FUSION_ERROR_CODE_MEMORY_ALREADY_USED = -3, /**< Detect multiple instance of SHARED_MEMORY communicator ... only one is authorised*/
+	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -2, /**< The IP format provided is wrong, please provide IP in this format a.b.c.d where (a, b, c, d) are numbers between 0 and 255.*/
 	SL_FUSION_ERROR_CODE_FAILURE = -1, /**< Standard code for unsuccessful behavior.*/
 	SL_FUSION_ERROR_CODE_SUCCESS = 0,
 	SL_FUSION_ERROR_CODE_FUSION_ERRATIC_FPS = 1, /**< Some big differences has been observed between senders FPS*/
@@ -2333,49 +2338,25 @@ struct SL_InitFusionParameters
  *
  */
 struct SL_PositionalTrackingFusionParameters {
-
 	/**
-	Position of the camera system in the world frame when the camera is started. By default, it should be identity.
-	\note The camera frame (which defines the reference frame for the camera) is by default positioned at the world frame when tracking is started.
+	 * @brief Is the gnss fusion is enabled
+	 *
 	 */
-	struct SL_Vector3 initial_world_position;
+	bool enable_GNSS_fusion;
 	/**
-	Rotation of the camera system in the world frame when the camera is started. By default, it should be identity.
-	\note The camera frame (which defines the reference frame for the camera) is by default positioned at the world frame when tracking is started.
+	 * @brief Distance necessary for initializing the transformation between cameras coordinate system and  GNSS coordinate system (north aligned)
+	 *
 	 */
-	struct SL_Quaternion initial_world_rotation;
-
+	float gnss_initialisation_distance;
 	/**
-	This setting allows you to enable or disable IMU fusion. When set to false, only the optical odometry will be used.
-	\n default: true
-	\note This setting has no impact on the tracking of a ZED camera; only the ZED Mini uses a built-in IMU.
+	 * @brief Value used by Fusion for ignoring high covariance input GNSS data
+	 *
 	 */
-	bool enable_imu_fusion;
-
-	/**
-	* @brief This setting allows you to change the minimum depth used by the SDK for Positional Tracking. It may be useful for example
-	* if any steady objects are in front of the camera and may perturbate the positional tracking algorithm.
-	* default : -1 which means no minimum depth
-	*/
-	float depth_min_range;
+	float gnss_ignore_threshold;
 };
 
 struct SL_BodyTrackingFusionParameters
 {
-	enum SL_DETECTION_MODEL detection_model;
-
-	/**
-	 * \brief Defines the body format outputed by the sdk when \ref retrieveObjects is called.
-	 *
-	 */
-	enum SL_BODY_FORMAT body_format;
-
-	/**
-	 * @brief not yet available for this version
-	 *
-	 */
-	//char* reid_database_file;
-
 	/**
 	* \brief Defines if the object detection will track objects across images flow
 	*/
@@ -2385,7 +2366,6 @@ struct SL_BodyTrackingFusionParameters
 	* \brief Defines if the body fitting will be applied
 	*/
 	bool enable_body_fitting;
-
 };
 
 struct SL_BodyTrackingFusionRuntimeParameters

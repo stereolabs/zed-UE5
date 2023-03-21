@@ -1286,7 +1286,7 @@ extern "C" {
     *
     * \return SL_FUSION_ERROR_CODE
     */
-    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking();
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_enable_positional_tracking(struct SL_PositionalTrackingFusionParameters* params);
 
     /**
      * \brief Get the Fused Position of the camera system
@@ -1297,7 +1297,7 @@ extern "C" {
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_COORDINATE_SYSTEM coordinate_system, enum SL_UNIT unit,
-                                                           struct SL_CameraIdentifier* uuid);
+                                                           struct SL_CameraIdentifier* uuid, enum SL_POSITION_TYPE retrieve_type);
 
     /**
      * \brief disable the positional tracking
