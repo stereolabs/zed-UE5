@@ -18,182 +18,182 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(ZEDFunctionLibrary, Log, All);
 
-static TArray<FSlBone18> BodyBonesBody18 = TArray<FSlBone18>{
-	FSlBone18(ESlBodyPartsBody18::NOSE, ESlBodyPartsBody18::NECK),
-	FSlBone18(ESlBodyPartsBody18::NECK, ESlBodyPartsBody18::RIGHT_SHOULDER),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_SHOULDER, ESlBodyPartsBody18::RIGHT_ELBOW),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_ELBOW, ESlBodyPartsBody18::RIGHT_WRIST),
-	FSlBone18(ESlBodyPartsBody18::NECK, ESlBodyPartsBody18::LEFT_SHOULDER),
-	FSlBone18(ESlBodyPartsBody18::LEFT_SHOULDER, ESlBodyPartsBody18::LEFT_ELBOW),
-	FSlBone18(ESlBodyPartsBody18::LEFT_ELBOW, ESlBodyPartsBody18::LEFT_WRIST),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_SHOULDER, ESlBodyPartsBody18::RIGHT_HIP),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_HIP, ESlBodyPartsBody18::RIGHT_KNEE),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_KNEE, ESlBodyPartsBody18::RIGHT_ANKLE),
-	FSlBone18(ESlBodyPartsBody18::LEFT_SHOULDER, ESlBodyPartsBody18::LEFT_HIP),
-	FSlBone18(ESlBodyPartsBody18::LEFT_HIP, ESlBodyPartsBody18::LEFT_KNEE),
-	FSlBone18(ESlBodyPartsBody18::LEFT_KNEE, ESlBodyPartsBody18::LEFT_ANKLE),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_SHOULDER, ESlBodyPartsBody18::LEFT_SHOULDER),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_HIP, ESlBodyPartsBody18::LEFT_HIP),
-	FSlBone18(ESlBodyPartsBody18::NOSE, ESlBodyPartsBody18::RIGHT_EYE),
-	FSlBone18(ESlBodyPartsBody18::RIGHT_EYE, ESlBodyPartsBody18::RIGHT_EAR),
-	FSlBone18(ESlBodyPartsBody18::NOSE, ESlBodyPartsBody18::LEFT_EYE),
-	FSlBone18(ESlBodyPartsBody18::LEFT_EYE, ESlBodyPartsBody18::LEFT_EAR),
+static TArray<FSlBody18Bone> Body18Bones = TArray<FSlBody18Bone>{
+	FSlBody18Bone(ESlBody18Parts::NOSE, ESlBody18Parts::NECK),
+	FSlBody18Bone(ESlBody18Parts::NECK, ESlBody18Parts::RIGHT_SHOULDER),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_SHOULDER, ESlBody18Parts::RIGHT_ELBOW),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_ELBOW, ESlBody18Parts::RIGHT_WRIST),
+	FSlBody18Bone(ESlBody18Parts::NECK, ESlBody18Parts::LEFT_SHOULDER),
+	FSlBody18Bone(ESlBody18Parts::LEFT_SHOULDER, ESlBody18Parts::LEFT_ELBOW),
+	FSlBody18Bone(ESlBody18Parts::LEFT_ELBOW, ESlBody18Parts::LEFT_WRIST),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_SHOULDER, ESlBody18Parts::RIGHT_HIP),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_HIP, ESlBody18Parts::RIGHT_KNEE),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_KNEE, ESlBody18Parts::RIGHT_ANKLE),
+	FSlBody18Bone(ESlBody18Parts::LEFT_SHOULDER, ESlBody18Parts::LEFT_HIP),
+	FSlBody18Bone(ESlBody18Parts::LEFT_HIP, ESlBody18Parts::LEFT_KNEE),
+	FSlBody18Bone(ESlBody18Parts::LEFT_KNEE, ESlBody18Parts::LEFT_ANKLE),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_SHOULDER, ESlBody18Parts::LEFT_SHOULDER),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_HIP, ESlBody18Parts::LEFT_HIP),
+	FSlBody18Bone(ESlBody18Parts::NOSE, ESlBody18Parts::RIGHT_EYE),
+	FSlBody18Bone(ESlBody18Parts::RIGHT_EYE, ESlBody18Parts::RIGHT_EAR),
+	FSlBody18Bone(ESlBody18Parts::NOSE, ESlBody18Parts::LEFT_EYE),
+	FSlBody18Bone(ESlBody18Parts::LEFT_EYE, ESlBody18Parts::LEFT_EAR),
 };
 
-static TArray<FSlBone34> BodyBonesBody34 = TArray<FSlBone34>{
-	FSlBone34(ESlBodyPartsBody34::PELVIS, ESlBodyPartsBody34::NAVAL_SPINE),
-	FSlBone34(ESlBodyPartsBody34::NAVAL_SPINE, ESlBodyPartsBody34::CHEST_SPINE),
-	FSlBone34(ESlBodyPartsBody34::CHEST_SPINE, ESlBodyPartsBody34::LEFT_CLAVICLE),
-	FSlBone34(ESlBodyPartsBody34::LEFT_CLAVICLE, ESlBodyPartsBody34::LEFT_SHOULDER),
-	FSlBone34(ESlBodyPartsBody34::LEFT_SHOULDER, ESlBodyPartsBody34::LEFT_ELBOW),
-	FSlBone34(ESlBodyPartsBody34::LEFT_ELBOW, ESlBodyPartsBody34::LEFT_WRIST),
-	FSlBone34(ESlBodyPartsBody34::LEFT_WRIST, ESlBodyPartsBody34::LEFT_HAND),
-	FSlBone34(ESlBodyPartsBody34::LEFT_HAND, ESlBodyPartsBody34::LEFT_HANDTIP),
-	FSlBone34(ESlBodyPartsBody34::LEFT_WRIST, ESlBodyPartsBody34::LEFT_THUMB),
-	FSlBone34(ESlBodyPartsBody34::CHEST_SPINE, ESlBodyPartsBody34::RIGHT_CLAVICLE),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_CLAVICLE, ESlBodyPartsBody34::RIGHT_SHOULDER),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_SHOULDER, ESlBodyPartsBody34::RIGHT_ELBOW),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_ELBOW, ESlBodyPartsBody34::RIGHT_WRIST),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_WRIST, ESlBodyPartsBody34::RIGHT_HAND),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_HAND, ESlBodyPartsBody34::RIGHT_HANDTIP),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_WRIST, ESlBodyPartsBody34::RIGHT_THUMB),
-	FSlBone34(ESlBodyPartsBody34::PELVIS, ESlBodyPartsBody34::LEFT_HIP),
-	FSlBone34(ESlBodyPartsBody34::LEFT_HIP, ESlBodyPartsBody34::LEFT_KNEE),
-	FSlBone34(ESlBodyPartsBody34::LEFT_KNEE, ESlBodyPartsBody34::LEFT_ANKLE),
-	FSlBone34(ESlBodyPartsBody34::LEFT_ANKLE, ESlBodyPartsBody34::LEFT_FOOT),
-	FSlBone34(ESlBodyPartsBody34::PELVIS, ESlBodyPartsBody34::RIGHT_HIP),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_HIP, ESlBodyPartsBody34::RIGHT_KNEE),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_KNEE, ESlBodyPartsBody34::RIGHT_ANKLE),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_ANKLE, ESlBodyPartsBody34::RIGHT_FOOT),
-	FSlBone34(ESlBodyPartsBody34::CHEST_SPINE, ESlBodyPartsBody34::NECK),
-	FSlBone34(ESlBodyPartsBody34::NECK, ESlBodyPartsBody34::HEAD),
-	FSlBone34(ESlBodyPartsBody34::HEAD, ESlBodyPartsBody34::NOSE),
-	FSlBone34(ESlBodyPartsBody34::NOSE, ESlBodyPartsBody34::LEFT_EYE),
-	FSlBone34(ESlBodyPartsBody34::LEFT_EYE, ESlBodyPartsBody34::LEFT_EAR),
-	FSlBone34(ESlBodyPartsBody34::NOSE, ESlBodyPartsBody34::RIGHT_EYE),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_EYE, ESlBodyPartsBody34::RIGHT_EAR),
-	FSlBone34(ESlBodyPartsBody34::LEFT_ANKLE, ESlBodyPartsBody34::LEFT_HEEL),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_ANKLE, ESlBodyPartsBody34::RIGHT_HEEL),
-	FSlBone34(ESlBodyPartsBody34::LEFT_HEEL, ESlBodyPartsBody34::LEFT_FOOT),
-	FSlBone34(ESlBodyPartsBody34::RIGHT_HEEL, ESlBodyPartsBody34::RIGHT_FOOT)
+static TArray<FSlBody34Bone> Body34Bones = TArray<FSlBody34Bone>{
+	FSlBody34Bone(ESlBody34Parts::PELVIS, ESlBody34Parts::NAVAL_SPINE),
+	FSlBody34Bone(ESlBody34Parts::NAVAL_SPINE, ESlBody34Parts::CHEST_SPINE),
+	FSlBody34Bone(ESlBody34Parts::CHEST_SPINE, ESlBody34Parts::LEFT_CLAVICLE),
+	FSlBody34Bone(ESlBody34Parts::LEFT_CLAVICLE, ESlBody34Parts::LEFT_SHOULDER),
+	FSlBody34Bone(ESlBody34Parts::LEFT_SHOULDER, ESlBody34Parts::LEFT_ELBOW),
+	FSlBody34Bone(ESlBody34Parts::LEFT_ELBOW, ESlBody34Parts::LEFT_WRIST),
+	FSlBody34Bone(ESlBody34Parts::LEFT_WRIST, ESlBody34Parts::LEFT_HAND),
+	FSlBody34Bone(ESlBody34Parts::LEFT_HAND, ESlBody34Parts::LEFT_HANDTIP),
+	FSlBody34Bone(ESlBody34Parts::LEFT_WRIST, ESlBody34Parts::LEFT_THUMB),
+	FSlBody34Bone(ESlBody34Parts::CHEST_SPINE, ESlBody34Parts::RIGHT_CLAVICLE),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_CLAVICLE, ESlBody34Parts::RIGHT_SHOULDER),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_SHOULDER, ESlBody34Parts::RIGHT_ELBOW),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_ELBOW, ESlBody34Parts::RIGHT_WRIST),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_WRIST, ESlBody34Parts::RIGHT_HAND),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_HAND, ESlBody34Parts::RIGHT_HANDTIP),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_WRIST, ESlBody34Parts::RIGHT_THUMB),
+	FSlBody34Bone(ESlBody34Parts::PELVIS, ESlBody34Parts::LEFT_HIP),
+	FSlBody34Bone(ESlBody34Parts::LEFT_HIP, ESlBody34Parts::LEFT_KNEE),
+	FSlBody34Bone(ESlBody34Parts::LEFT_KNEE, ESlBody34Parts::LEFT_ANKLE),
+	FSlBody34Bone(ESlBody34Parts::LEFT_ANKLE, ESlBody34Parts::LEFT_FOOT),
+	FSlBody34Bone(ESlBody34Parts::PELVIS, ESlBody34Parts::RIGHT_HIP),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_HIP, ESlBody34Parts::RIGHT_KNEE),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_KNEE, ESlBody34Parts::RIGHT_ANKLE),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_ANKLE, ESlBody34Parts::RIGHT_FOOT),
+	FSlBody34Bone(ESlBody34Parts::CHEST_SPINE, ESlBody34Parts::NECK),
+	FSlBody34Bone(ESlBody34Parts::NECK, ESlBody34Parts::HEAD),
+	FSlBody34Bone(ESlBody34Parts::HEAD, ESlBody34Parts::NOSE),
+	FSlBody34Bone(ESlBody34Parts::NOSE, ESlBody34Parts::LEFT_EYE),
+	FSlBody34Bone(ESlBody34Parts::LEFT_EYE, ESlBody34Parts::LEFT_EAR),
+	FSlBody34Bone(ESlBody34Parts::NOSE, ESlBody34Parts::RIGHT_EYE),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_EYE, ESlBody34Parts::RIGHT_EAR),
+	FSlBody34Bone(ESlBody34Parts::LEFT_ANKLE, ESlBody34Parts::LEFT_HEEL),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_ANKLE, ESlBody34Parts::RIGHT_HEEL),
+	FSlBody34Bone(ESlBody34Parts::LEFT_HEEL, ESlBody34Parts::LEFT_FOOT),
+	FSlBody34Bone(ESlBody34Parts::RIGHT_HEEL, ESlBody34Parts::RIGHT_FOOT)
 };
 
-static TArray<FSlBone38> BodyBonesBody38 = TArray<FSlBone38>{
-	FSlBone38(ESlBodyPartsBody38::PELVIS,         ESlBodyPartsBody38::SPINE_1),
-	FSlBone38(ESlBodyPartsBody38::SPINE_1,        ESlBodyPartsBody38::SPINE_2),
-	FSlBone38(ESlBodyPartsBody38::SPINE_2,        ESlBodyPartsBody38::SPINE_3),
-	FSlBone38(ESlBodyPartsBody38::SPINE_3,        ESlBodyPartsBody38::NECK),
+static TArray<FSlBody38Bone> Body38Bones = TArray<FSlBody38Bone>{
+	FSlBody38Bone(ESlBody38Parts::PELVIS,         ESlBody38Parts::SPINE_1),
+	FSlBody38Bone(ESlBody38Parts::SPINE_1,        ESlBody38Parts::SPINE_2),
+	FSlBody38Bone(ESlBody38Parts::SPINE_2,        ESlBody38Parts::SPINE_3),
+	FSlBody38Bone(ESlBody38Parts::SPINE_3,        ESlBody38Parts::NECK),
 	// neck
-	FSlBone38(ESlBodyPartsBody38::NECK,           ESlBodyPartsBody38::NOSE),
-	FSlBone38(ESlBodyPartsBody38::NOSE,           ESlBodyPartsBody38::LEFT_EYE),
-	FSlBone38(ESlBodyPartsBody38::LEFT_EYE,       ESlBodyPartsBody38::LEFT_EAR),
-	FSlBone38(ESlBodyPartsBody38::NOSE,           ESlBodyPartsBody38::RIGHT_EYE),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_EYE,      ESlBodyPartsBody38::RIGHT_EAR),
+	FSlBody38Bone(ESlBody38Parts::NECK,           ESlBody38Parts::NOSE),
+	FSlBody38Bone(ESlBody38Parts::NOSE,           ESlBody38Parts::LEFT_EYE),
+	FSlBody38Bone(ESlBody38Parts::LEFT_EYE,       ESlBody38Parts::LEFT_EAR),
+	FSlBody38Bone(ESlBody38Parts::NOSE,           ESlBody38Parts::RIGHT_EYE),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_EYE,      ESlBody38Parts::RIGHT_EAR),
 	// Left arm
-	FSlBone38(ESlBodyPartsBody38::SPINE_3,        ESlBodyPartsBody38::LEFT_CLAVICLE),
-	FSlBone38(ESlBodyPartsBody38::LEFT_CLAVICLE,  ESlBodyPartsBody38::LEFT_SHOULDER),
-	FSlBone38(ESlBodyPartsBody38::LEFT_SHOULDER,  ESlBodyPartsBody38::LEFT_ELBOW),
-	FSlBone38(ESlBodyPartsBody38::LEFT_ELBOW,     ESlBodyPartsBody38::LEFT_WRIST),
-	FSlBone38(ESlBodyPartsBody38::LEFT_WRIST,     ESlBodyPartsBody38::LEFT_HAND_THUMB_4),
-	FSlBone38(ESlBodyPartsBody38::LEFT_WRIST,     ESlBodyPartsBody38::LEFT_HAND_INDEX_1),
-	FSlBone38(ESlBodyPartsBody38::LEFT_WRIST,     ESlBodyPartsBody38::LEFT_HAND_MIDDLE_4),
-	FSlBone38(ESlBodyPartsBody38::LEFT_WRIST,     ESlBodyPartsBody38::LEFT_HAND_PINKY_1),
+	FSlBody38Bone(ESlBody38Parts::SPINE_3,        ESlBody38Parts::LEFT_CLAVICLE),
+	FSlBody38Bone(ESlBody38Parts::LEFT_CLAVICLE,  ESlBody38Parts::LEFT_SHOULDER),
+	FSlBody38Bone(ESlBody38Parts::LEFT_SHOULDER,  ESlBody38Parts::LEFT_ELBOW),
+	FSlBody38Bone(ESlBody38Parts::LEFT_ELBOW,     ESlBody38Parts::LEFT_WRIST),
+	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_THUMB_4),
+	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_INDEX_1),
+	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_MIDDLE_4),
+	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_PINKY_1),
 	// Right Arm
-	FSlBone38(ESlBodyPartsBody38::SPINE_3,        ESlBodyPartsBody38::LEFT_CLAVICLE),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_CLAVICLE, ESlBodyPartsBody38::RIGHT_SHOULDER),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_SHOULDER, ESlBodyPartsBody38::RIGHT_ELBOW),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_ELBOW,    ESlBodyPartsBody38::RIGHT_WRIST),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_WRIST,    ESlBodyPartsBody38::RIGHT_HAND_THUMB_4),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_WRIST,    ESlBodyPartsBody38::RIGHT_HAND_INDEX_1),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_WRIST,    ESlBodyPartsBody38::RIGHT_HAND_MIDDLE_4),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_WRIST,    ESlBodyPartsBody38::RIGHT_HAND_PINKY_1),
+	FSlBody38Bone(ESlBody38Parts::SPINE_3,        ESlBody38Parts::LEFT_CLAVICLE),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_CLAVICLE, ESlBody38Parts::RIGHT_SHOULDER),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_SHOULDER, ESlBody38Parts::RIGHT_ELBOW),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_ELBOW,    ESlBody38Parts::RIGHT_WRIST),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_WRIST,    ESlBody38Parts::RIGHT_HAND_THUMB_4),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_WRIST,    ESlBody38Parts::RIGHT_HAND_INDEX_1),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_WRIST,    ESlBody38Parts::RIGHT_HAND_MIDDLE_4),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_WRIST,    ESlBody38Parts::RIGHT_HAND_PINKY_1),
 	// Left Leg
-	FSlBone38(ESlBodyPartsBody38::PELVIS,         ESlBodyPartsBody38::LEFT_HIP),
-	FSlBone38(ESlBodyPartsBody38::LEFT_HIP,       ESlBodyPartsBody38::LEFT_KNEE),
-	FSlBone38(ESlBodyPartsBody38::LEFT_KNEE,      ESlBodyPartsBody38::LEFT_ANKLE),
-	FSlBone38(ESlBodyPartsBody38::LEFT_ANKLE,     ESlBodyPartsBody38::LEFT_HEEL),
-	FSlBone38(ESlBodyPartsBody38::LEFT_ANKLE,     ESlBodyPartsBody38::LEFT_BIG_TOE),
-	FSlBone38(ESlBodyPartsBody38::LEFT_ANKLE,     ESlBodyPartsBody38::LEFT_SMALL_TOE),
+	FSlBody38Bone(ESlBody38Parts::PELVIS,         ESlBody38Parts::LEFT_HIP),
+	FSlBody38Bone(ESlBody38Parts::LEFT_HIP,       ESlBody38Parts::LEFT_KNEE),
+	FSlBody38Bone(ESlBody38Parts::LEFT_KNEE,      ESlBody38Parts::LEFT_ANKLE),
+	FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,     ESlBody38Parts::LEFT_HEEL),
+	FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,     ESlBody38Parts::LEFT_BIG_TOE),
+	FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,     ESlBody38Parts::LEFT_SMALL_TOE),
 	//Right Leg 
-	FSlBone38(ESlBodyPartsBody38::PELVIS,         ESlBodyPartsBody38::RIGHT_HIP),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_HIP,      ESlBodyPartsBody38::RIGHT_KNEE),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_KNEE,     ESlBodyPartsBody38::RIGHT_ANKLE),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_ANKLE,    ESlBodyPartsBody38::RIGHT_HEEL),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_ANKLE,    ESlBodyPartsBody38::RIGHT_BIG_TOE),
-	FSlBone38(ESlBodyPartsBody38::RIGHT_ANKLE,    ESlBodyPartsBody38::RIGHT_SMALL_TOE)
+	FSlBody38Bone(ESlBody38Parts::PELVIS,         ESlBody38Parts::RIGHT_HIP),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_HIP,      ESlBody38Parts::RIGHT_KNEE),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_KNEE,     ESlBody38Parts::RIGHT_ANKLE),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_ANKLE,    ESlBody38Parts::RIGHT_HEEL),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_ANKLE,    ESlBody38Parts::RIGHT_BIG_TOE),
+	FSlBody38Bone(ESlBody38Parts::RIGHT_ANKLE,    ESlBody38Parts::RIGHT_SMALL_TOE)
 };
 
-static TArray<FSlBone70> BodyBonesBody70 = TArray<FSlBone70>{
-	FSlBone70(ESlBodyPartsBody70::PELVIS,         ESlBodyPartsBody70::SPINE_1),
-	FSlBone70(ESlBodyPartsBody70::SPINE_1,        ESlBodyPartsBody70::SPINE_2),
-	FSlBone70(ESlBodyPartsBody70::SPINE_2,        ESlBodyPartsBody70::SPINE_3),
-	FSlBone70(ESlBodyPartsBody70::SPINE_3,        ESlBodyPartsBody70::NECK),
+static TArray<FSlBody70Bone> Body70Bones = TArray<FSlBody70Bone>{
+	FSlBody70Bone(ESlBody70Parts::PELVIS,         ESlBody70Parts::SPINE_1),
+	FSlBody70Bone(ESlBody70Parts::SPINE_1,        ESlBody70Parts::SPINE_2),
+	FSlBody70Bone(ESlBody70Parts::SPINE_2,        ESlBody70Parts::SPINE_3),
+	FSlBody70Bone(ESlBody70Parts::SPINE_3,        ESlBody70Parts::NECK),
 	// neck
-	FSlBone70(ESlBodyPartsBody70::NECK,           ESlBodyPartsBody70::NOSE),
-	FSlBone70(ESlBodyPartsBody70::NOSE,           ESlBodyPartsBody70::LEFT_EYE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_EYE,       ESlBodyPartsBody70::LEFT_EAR),
-	FSlBone70(ESlBodyPartsBody70::NOSE,           ESlBodyPartsBody70::RIGHT_EYE),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_EYE,      ESlBodyPartsBody70::RIGHT_EAR),
+	FSlBody70Bone(ESlBody70Parts::NECK,           ESlBody70Parts::NOSE),
+	FSlBody70Bone(ESlBody70Parts::NOSE,           ESlBody70Parts::LEFT_EYE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_EYE,       ESlBody70Parts::LEFT_EAR),
+	FSlBody70Bone(ESlBody70Parts::NOSE,           ESlBody70Parts::RIGHT_EYE),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_EYE,      ESlBody70Parts::RIGHT_EAR),
 	// Left arm
-	FSlBone70(ESlBodyPartsBody70::SPINE_3,        ESlBodyPartsBody70::LEFT_CLAVICLE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_CLAVICLE,  ESlBodyPartsBody70::LEFT_SHOULDER),
-	FSlBone70(ESlBodyPartsBody70::LEFT_SHOULDER,  ESlBodyPartsBody70::LEFT_ELBOW),
-	FSlBone70(ESlBodyPartsBody70::LEFT_ELBOW,     ESlBodyPartsBody70::LEFT_WRIST),
+	FSlBody70Bone(ESlBody70Parts::SPINE_3,        ESlBody70Parts::LEFT_CLAVICLE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_CLAVICLE,  ESlBody70Parts::LEFT_SHOULDER),
+	FSlBody70Bone(ESlBody70Parts::LEFT_SHOULDER,  ESlBody70Parts::LEFT_ELBOW),
+	FSlBody70Bone(ESlBody70Parts::LEFT_ELBOW,     ESlBody70Parts::LEFT_WRIST),
 	// Left hand
-	FSlBone70(ESlBodyPartsBody70::LEFT_WRIST,            ESlBodyPartsBody70::LEFT_HAND_THUMB_1),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_THUMB_1,     ESlBodyPartsBody70::LEFT_HAND_THUMB_2),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_THUMB_2,     ESlBodyPartsBody70::LEFT_HAND_THUMB_3),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_THUMB_3,     ESlBodyPartsBody70::LEFT_HAND_THUMB_4),
-	FSlBone70(ESlBodyPartsBody70::LEFT_WRIST,            ESlBodyPartsBody70::LEFT_HAND_INDEX_1),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_INDEX_1,     ESlBodyPartsBody70::LEFT_HAND_INDEX_2),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_INDEX_2,     ESlBodyPartsBody70::LEFT_HAND_INDEX_3),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_INDEX_3,     ESlBodyPartsBody70::LEFT_HAND_INDEX_4),
-	FSlBone70(ESlBodyPartsBody70::LEFT_WRIST,            ESlBodyPartsBody70::LEFT_HAND_MIDDLE_1),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_MIDDLE_1,    ESlBodyPartsBody70::LEFT_HAND_MIDDLE_2),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_MIDDLE_2,    ESlBodyPartsBody70::LEFT_HAND_MIDDLE_3),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_MIDDLE_3,    ESlBodyPartsBody70::LEFT_HAND_MIDDLE_4),
-	FSlBone70(ESlBodyPartsBody70::LEFT_WRIST,            ESlBodyPartsBody70::LEFT_HAND_PINKY_1),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_PINKY_1,     ESlBodyPartsBody70::LEFT_HAND_PINKY_2),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_PINKY_2,     ESlBodyPartsBody70::LEFT_HAND_PINKY_3),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HAND_PINKY_3,     ESlBodyPartsBody70::LEFT_HAND_PINKY_4),
+	FSlBody70Bone(ESlBody70Parts::LEFT_WRIST,            ESlBody70Parts::LEFT_HAND_THUMB_1),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_THUMB_1,     ESlBody70Parts::LEFT_HAND_THUMB_2),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_THUMB_2,     ESlBody70Parts::LEFT_HAND_THUMB_3),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_THUMB_3,     ESlBody70Parts::LEFT_HAND_THUMB_4),
+	FSlBody70Bone(ESlBody70Parts::LEFT_WRIST,            ESlBody70Parts::LEFT_HAND_INDEX_1),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_INDEX_1,     ESlBody70Parts::LEFT_HAND_INDEX_2),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_INDEX_2,     ESlBody70Parts::LEFT_HAND_INDEX_3),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_INDEX_3,     ESlBody70Parts::LEFT_HAND_INDEX_4),
+	FSlBody70Bone(ESlBody70Parts::LEFT_WRIST,            ESlBody70Parts::LEFT_HAND_MIDDLE_1),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_MIDDLE_1,    ESlBody70Parts::LEFT_HAND_MIDDLE_2),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_MIDDLE_2,    ESlBody70Parts::LEFT_HAND_MIDDLE_3),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_MIDDLE_3,    ESlBody70Parts::LEFT_HAND_MIDDLE_4),
+	FSlBody70Bone(ESlBody70Parts::LEFT_WRIST,            ESlBody70Parts::LEFT_HAND_PINKY_1),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_PINKY_1,     ESlBody70Parts::LEFT_HAND_PINKY_2),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_PINKY_2,     ESlBody70Parts::LEFT_HAND_PINKY_3),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HAND_PINKY_3,     ESlBody70Parts::LEFT_HAND_PINKY_4),
 
 	// Right Arm
-	FSlBone70(ESlBodyPartsBody70::SPINE_3,        ESlBodyPartsBody70::RIGHT_CLAVICLE),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_CLAVICLE, ESlBodyPartsBody70::RIGHT_SHOULDER),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_SHOULDER, ESlBodyPartsBody70::RIGHT_ELBOW),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_ELBOW,    ESlBodyPartsBody70::RIGHT_WRIST),
+	FSlBody70Bone(ESlBody70Parts::SPINE_3,        ESlBody70Parts::RIGHT_CLAVICLE),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_CLAVICLE, ESlBody70Parts::RIGHT_SHOULDER),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_SHOULDER, ESlBody70Parts::RIGHT_ELBOW),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_ELBOW,    ESlBody70Parts::RIGHT_WRIST),
 	// Right hand
-	FSlBone70(ESlBodyPartsBody70::RIGHT_WRIST,            ESlBodyPartsBody70::RIGHT_HAND_THUMB_1),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_THUMB_1,     ESlBodyPartsBody70::RIGHT_HAND_THUMB_2),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_THUMB_2,     ESlBodyPartsBody70::RIGHT_HAND_THUMB_3),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_THUMB_3,     ESlBodyPartsBody70::RIGHT_HAND_THUMB_4),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_WRIST,            ESlBodyPartsBody70::RIGHT_HAND_INDEX_1),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_INDEX_1,     ESlBodyPartsBody70::RIGHT_HAND_INDEX_2),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_INDEX_2,     ESlBodyPartsBody70::RIGHT_HAND_INDEX_3),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_INDEX_3,     ESlBodyPartsBody70::RIGHT_HAND_INDEX_4),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_WRIST,            ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_1),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_1,    ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_2),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_2,    ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_3),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_3,    ESlBodyPartsBody70::RIGHT_HAND_MIDDLE_4),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_WRIST,            ESlBodyPartsBody70::RIGHT_HAND_PINKY_1),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_PINKY_1,     ESlBodyPartsBody70::RIGHT_HAND_PINKY_2),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_PINKY_2,     ESlBodyPartsBody70::RIGHT_HAND_PINKY_3),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HAND_PINKY_3,     ESlBodyPartsBody70::RIGHT_HAND_PINKY_4),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_WRIST,            ESlBody70Parts::RIGHT_HAND_THUMB_1),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_THUMB_1,     ESlBody70Parts::RIGHT_HAND_THUMB_2),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_THUMB_2,     ESlBody70Parts::RIGHT_HAND_THUMB_3),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_THUMB_3,     ESlBody70Parts::RIGHT_HAND_THUMB_4),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_WRIST,            ESlBody70Parts::RIGHT_HAND_INDEX_1),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_INDEX_1,     ESlBody70Parts::RIGHT_HAND_INDEX_2),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_INDEX_2,     ESlBody70Parts::RIGHT_HAND_INDEX_3),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_INDEX_3,     ESlBody70Parts::RIGHT_HAND_INDEX_4),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_WRIST,            ESlBody70Parts::RIGHT_HAND_MIDDLE_1),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_MIDDLE_1,    ESlBody70Parts::RIGHT_HAND_MIDDLE_2),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_MIDDLE_2,    ESlBody70Parts::RIGHT_HAND_MIDDLE_3),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_MIDDLE_3,    ESlBody70Parts::RIGHT_HAND_MIDDLE_4),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_WRIST,            ESlBody70Parts::RIGHT_HAND_PINKY_1),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_PINKY_1,     ESlBody70Parts::RIGHT_HAND_PINKY_2),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_PINKY_2,     ESlBody70Parts::RIGHT_HAND_PINKY_3),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HAND_PINKY_3,     ESlBody70Parts::RIGHT_HAND_PINKY_4),
 	// Left Leg
-	FSlBone70(ESlBodyPartsBody70::PELVIS,         ESlBodyPartsBody70::LEFT_HIP),
-	FSlBone70(ESlBodyPartsBody70::SPINE_3,        ESlBodyPartsBody70::LEFT_CLAVICLE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_HIP,       ESlBodyPartsBody70::LEFT_KNEE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_KNEE,      ESlBodyPartsBody70::LEFT_ANKLE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_ANKLE,     ESlBodyPartsBody70::LEFT_HEEL),
-	FSlBone70(ESlBodyPartsBody70::LEFT_ANKLE,     ESlBodyPartsBody70::LEFT_BIG_TOE),
-	FSlBone70(ESlBodyPartsBody70::LEFT_ANKLE,     ESlBodyPartsBody70::LEFT_SMALL_TOE),
+	FSlBody70Bone(ESlBody70Parts::PELVIS,         ESlBody70Parts::LEFT_HIP),
+	FSlBody70Bone(ESlBody70Parts::SPINE_3,        ESlBody70Parts::LEFT_CLAVICLE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_HIP,       ESlBody70Parts::LEFT_KNEE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_KNEE,      ESlBody70Parts::LEFT_ANKLE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,     ESlBody70Parts::LEFT_HEEL),
+	FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,     ESlBody70Parts::LEFT_BIG_TOE),
+	FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,     ESlBody70Parts::LEFT_SMALL_TOE),
 	//Right Leg 
-	FSlBone70(ESlBodyPartsBody70::PELVIS,         ESlBodyPartsBody70::RIGHT_HIP),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_HIP,      ESlBodyPartsBody70::RIGHT_KNEE),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_KNEE,     ESlBodyPartsBody70::RIGHT_ANKLE),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_ANKLE,    ESlBodyPartsBody70::RIGHT_HEEL),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_ANKLE,    ESlBodyPartsBody70::RIGHT_BIG_TOE),
-	FSlBone70(ESlBodyPartsBody70::RIGHT_ANKLE,    ESlBodyPartsBody70::RIGHT_SMALL_TOE)
+	FSlBody70Bone(ESlBody70Parts::PELVIS,         ESlBody70Parts::RIGHT_HIP),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_HIP,      ESlBody70Parts::RIGHT_KNEE),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_KNEE,     ESlBody70Parts::RIGHT_ANKLE),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_ANKLE,    ESlBody70Parts::RIGHT_HEEL),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_ANKLE,    ESlBody70Parts::RIGHT_BIG_TOE),
+	FSlBody70Bone(ESlBody70Parts::RIGHT_ANKLE,    ESlBody70Parts::RIGHT_SMALL_TOE)
 };
 
 UCLASS()
@@ -657,28 +657,28 @@ public:
 	 * Get the index corresponding to the enum value
 	* @param ESlBodyPartsVal The body part value
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesBody38", Keywords = "GetBodyBonesBody38"), Category = "Stereolabs|Zed")
-	static const TArray<FSlBone38> GetBodyBonesBody38()
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody38Bones", Keywords = "GetBody38Bones"), Category = "Stereolabs|Zed")
+	static const TArray<FSlBody38Bone> GetBody38Bones()
 	{
-		return BodyBonesBody38;
+		return Body38Bones;
 	}
 
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesBody70", Keywords = "GetBodyBonesBody70"), Category = "Stereolabs|Zed")
-	static const TArray<FSlBone70> GetBodyBonesBody70()
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody70Bones", Keywords = "GetBody70Bones"), Category = "Stereolabs|Zed")
+	static const TArray<FSlBody70Bone> GetBody70Bones()
 	{
-		return BodyBonesBody70;
+		return Body70Bones;
 	}
 
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesBody34", Keywords = "GetBodyBonesBody34"), Category = "Stereolabs|Zed")
-		static const TArray<FSlBone34> GetBodyBonesBody34()
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody34Bones", Keywords = "GetBody34Bones"), Category = "Stereolabs|Zed")
+		static const TArray<FSlBody34Bone> GetBody34Bones()
 	{
-		return BodyBonesBody34;
+		return Body34Bones;
 	}
 
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBodyBonesBody18", Keywords = "GetBodyBonesBody18"), Category = "Stereolabs|Zed")
-		static const TArray<FSlBone18> GetBodyBonesBody18()
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody18Bones", Keywords = "GetBody18Bones"), Category = "Stereolabs|Zed")
+		static const TArray<FSlBody18Bone> GetBody18Bones()
 	{
-		return BodyBonesBody18;
+		return Body18Bones;
 	}
 
 

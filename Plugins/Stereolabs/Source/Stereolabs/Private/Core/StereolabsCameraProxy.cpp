@@ -1397,7 +1397,7 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 
 	BodyTrackingParameters = BTParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel);
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel, (SL_BODY_FORMAT)BodyTrackingParameters.BodyFormat);
 
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 

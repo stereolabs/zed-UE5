@@ -359,20 +359,6 @@ enum SL_INPUT_TYPE {
 };
 
 /**
-\enum BUS_TYPE
-\ingroup Video_group
-\brief Lists available input type in SDK
- */
-enum SL_BUS_TYPE {
-	SL_BUS_TYPE_USB, /**< USB input mode  */
-	SL_BUS_TYPE_GMSL, /** < GMSL input mode (only on NVIDIA Jetson) */
-	SL_BUS_TYPE_AUTO, /** < Automatically select the input type (trying first for availabled USB cameras, then GMSL) */
-	///@cond SHOWHIDDEN 
-	SL_BUS_TYPE_LAST
-	///@endcond
-};
-
-/**
 \brief Defines which type of position matrix is used to store camera path and pose.
  */
 enum SL_REFERENCE_FRAME
@@ -415,14 +401,14 @@ enum SL_VIDEO_SETTINGS {
 	SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, /**< Defines the color temperature value. Setting a value will automatically set @WHITEBALANCE_AUTO to 0. Affected value should be between 2800 and 6500 with a step of 100.*/
 	SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO, /**< Defines if the White balance is in automatic mode or not*/
 	SL_VIDEO_SETTINGS_LED_STATUS, /**< Defines the status of the camera front LED. Set to 0 to disable the light, 1 to enable the light. Default value is on. Requires Camera FW 1523 at least.*/
-	SL_VIDEO_SETTINGS_EXPOSURE_TIME,
-	SL_VIDEO_SETTINGS_SENSOR_GAIN_DB,
-	SL_VIDEO_SETTINGS_ISP_GAIN_FACTOR,
-	SL_VIDEO_SETTINGS_AEC_RANGE,
-	SL_VIDEO_SETTINGS_ASGC_RANGE, /**< Defines the range of sensor gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int). Min/Max range between [1000 - 16000]mdB  */
-	SL_VIDEO_SETTINGS_ADGC_RANGE, /**< Defines the range of digital ISP gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int) */
-	SL_VIDEO_SETTINGS_EXPOSURE_TARGET_COMPENSATION, /**< Exposure target compensation made after AE. Reduces the overall illumination by factor of F-stops. values range is [0 - 100] (mapped between [-2.0,2.0]).  Only available for GMSL based cameras*/
-	SL_VIDEO_SETTINGS_DENOISER, /**< Defines the level of denoising applied on both left and right images. values range is [0-100]. Only available for GMSL based cameras*/
+	SL_VIDEO_SETTINGS_EXPOSURE_TIME,/**< Defines the real exposure time in microseconds. Only available for GMSL based cameras. Recommended for ZED-X/ZED-XM to control manual exposure (instead of EXPOSURE setting)*/
+	SL_VIDEO_SETTINGS_ANALOG_GAIN,/**< Defines the real analog gain (sensor) in mDB. Range is defined by Jetson DTS and by default [1000-16000].  Recommended for ZED-X/ZED-XM to control manual sensor gain (instead of GAIN setting). Only available for GMSL based cameras.*/
+	SL_VIDEO_SETTINGS_DIGITAL_GAIN,/**< Defines the real digital gain (ISP) as a factor. Range is defined by Jetson DTS and by default [1-256].  Recommended for ZED-X/ZED-XM to control manual ISP gain (instead of GAIN setting). Only available for GMSL based cameras.*/
+	SL_VIDEO_SETTINGS_AUTO_EXPOSURE_TIME_RANGE,/**< Defines the range of exposure auto control in micro seconds.Used with \ref setCameraSettings(VIDEO_SETTINGS,int,int).  Min/Max range between Max range defined in DTS. By default : [28000 - <fps_time> or 19000] us. Only available for GMSL based cameras.*/
+	SL_VIDEO_SETTINGS_AUTO_ANALOG_GAIN_RANGE, /**< Defines the range of sensor gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int). Min/Max range between [1000 - 16000]mdB  */
+	SL_VIDEO_SETTINGS_AUTO_DIGITAL_GAIN_RANGE, /**< Defines the range of digital ISP gain in automatic control. Used in setCameraSettings(VIDEO_SETTINGS,int,int) */
+	SL_VIDEO_SETTINGS_EXPOSURE_COMPENSATION, /**< Exposure target compensation made after AE. Reduces the overall illumination by factor of F-stops. values range is [0 - 100] (mapped between [-2.0,2.0]).  Only available for GMSL based cameras*/
+	SL_VIDEO_SETTINGS_DENOISING, /**< Defines the level of denoising applied on both left and right images. values range is [0-100].Default value is 50. Only available for GMSL based cameras*/
 	SL_VIDEO_SETTINGS_LAST
 };
 
@@ -552,7 +538,7 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NONE, /** This mode does not compute any depth map. Only rectified stereo images will be available.*/
 	SL_DEPTH_MODE_PERFORMANCE, /** Computation mode optimized for speed.*/
 	SL_DEPTH_MODE_QUALITY, /**< Computation mode designed for challenging areas with untextured surfaces.*/
-	SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
+	//SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
 	SL_DEPTH_MODE_ULTRA, /** Computation mode favorising edges and sharpness. Requires more GPU memory and computation power.*/
 	SL_DEPTH_MODE_NEURAL /**< End to End Neural disparity estimation, requires AI module */
 };
@@ -676,6 +662,12 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
 	SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_MEDIUM
 	SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_ACCURATE
+	SL_AI_MODELS_HUMAN_BODY_38_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	SL_AI_MODELS_HUMAN_BODY_38_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	SL_AI_MODELS_HUMAN_BODY_38_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
 	SL_AI_MODELS_PERSON_HEAD_DETECTION, // related to sl::DETECTION_MODEL::PERSON_HEAD_BOX
 	SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::PERSON_HEAD_BOX_ACCURATE
 	SL_AI_MODELS_REID_ASSOCIATION, // related to sl::BatchParameters::enable
@@ -747,134 +739,214 @@ enum SL_BODY_KEYPOINTS_SELECTION
 	//SL_BODY_KEYPOINTS_SELECTION_HAND
 };
 
+
 /**
- * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::POSE_38.
+ * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::BODY_18.
  */
-enum SL_BODY_PARTS_POSE_38
+enum SL_BODY_18_PARTS
 {
-	SL_BODY_PARTS_POSE_38_PELVIS,
-	SL_BODY_PARTS_POSE_38_SPINE_1,
-	SL_BODY_PARTS_POSE_38_SPINE_2,
-	SL_BODY_PARTS_POSE_38_SPINE_3,
-	SL_BODY_PARTS_POSE_38_NECK,
-	SL_BODY_PARTS_POSE_38_NOSE,
-	SL_BODY_PARTS_POSE_38_LEFT_EYE,
-	SL_BODY_PARTS_POSE_38_RIGHT_EYE,
-	SL_BODY_PARTS_POSE_38_LEFT_EAR,
-	SL_BODY_PARTS_POSE_38_RIGHT_EAR,
-	SL_BODY_PARTS_POSE_38_LEFT_CLAVICLE,
-	SL_BODY_PARTS_POSE_38_RIGHT_CLAVICLE,
-	SL_BODY_PARTS_POSE_38_LEFT_SHOULDER,
-	SL_BODY_PARTS_POSE_38_RIGHT_SHOULDER,
-	SL_BODY_PARTS_POSE_38_LEFT_ELBOW,
-	SL_BODY_PARTS_POSE_38_RIGHT_ELBOW,
-	SL_BODY_PARTS_POSE_38_LEFT_WRIST,
-	SL_BODY_PARTS_POSE_38_RIGHT_WRIST,
-	SL_BODY_PARTS_POSE_38_LEFT_HIP,
-	SL_BODY_PARTS_POSE_38_RIGHT_HIP,
-	SL_BODY_PARTS_POSE_38_LEFT_KNEE,
-	SL_BODY_PARTS_POSE_38_RIGHT_KNEE,
-	SL_BODY_PARTS_POSE_38_LEFT_ANKLE,
-	SL_BODY_PARTS_POSE_38_RIGHT_ANKLE,
-	SL_BODY_PARTS_POSE_38_LEFT_BIG_TOE,
-	SL_BODY_PARTS_POSE_38_RIGHT_BIG_TOE,
-	SL_BODY_PARTS_POSE_38_LEFT_SMALL_TOE,
-	SL_BODY_PARTS_POSE_38_RIGHT_SMALL_TOE,
-	SL_BODY_PARTS_POSE_38_LEFT_HEEL,
-	SL_BODY_PARTS_POSE_38_RIGHT_HEEL,
-	// Hands
-	SL_BODY_PARTS_POSE_38_LEFT_HAND_THUMB_4,
-	SL_BODY_PARTS_POSE_38_RIGHT_HAND_THUMB_4,
-	SL_BODY_PARTS_POSE_38_LEFT_HAND_INDEX_1,
-	SL_BODY_PARTS_POSE_38_RIGHT_HAND_INDEX_1,
-	SL_BODY_PARTS_POSE_38_LEFT_HAND_MIDDLE_4,
-	SL_BODY_PARTS_POSE_38_RIGHT_HAND_MIDDLE_4,
-	SL_BODY_PARTS_POSE_38_LEFT_HAND_PINKY_1,
-	SL_BODY_PARTS_POSE_38_RIGHT_HAND_PINKY_1,
-	SL_BODY_PARTS_POSE_38_LAST
+	SL_BODY_18_PARTS_NOSE,
+	SL_BODY_18_PARTS_NECK,
+	SL_BODY_18_PARTS_RIGHT_SHOULDER,
+	SL_BODY_18_PARTS_RIGHT_ELBOW,
+	SL_BODY_18_PARTS_RIGHT_WRIST,
+	SL_BODY_18_PARTS_LEFT_SHOULDER,
+	SL_BODY_18_PARTS_LEFT_ELBOW,
+	SL_BODY_18_PARTS_LEFT_WRIST,
+	SL_BODY_18_PARTS_RIGHT_HIP,
+	SL_BODY_18_PARTS_RIGHT_KNEE,
+	SL_BODY_18_PARTS_RIGHT_ANKLE,
+	SL_BODY_18_PARTS_LEFT_HIP,
+	SL_BODY_18_PARTS_LEFT_KNEE,
+	SL_BODY_18_PARTS_LEFT_ANKLE,
+	SL_BODY_18_PARTS_RIGHT_EYE,
+	SL_BODY_18_PARTS_LEFT_EYE,
+	SL_BODY_18_PARTS_RIGHT_EAR,
+	SL_BODY_18_PARTS_LEFT_EAR,
+	SL_BODY_18_PARTS_LAST
 };
 
 /**
- * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::POSE_70.
+ * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::BODY_34.
  */
-enum SL_BODY_PARTS_POSE_70
+enum SL_BODY_34_PARTS
 {
-	SL_BODY_PARTS_POSE_70_PELVIS,
-	SL_BODY_PARTS_POSE_70_SPINE_1,
-	SL_BODY_PARTS_POSE_70_SPINE_2,
-	SL_BODY_PARTS_POSE_70_SPINE_3,
-	SL_BODY_PARTS_POSE_70_NECK,
-	SL_BODY_PARTS_POSE_70_NOSE,
-	SL_BODY_PARTS_POSE_70_LEFT_EYE,
-	SL_BODY_PARTS_POSE_70_RIGHT_EYE,
-	SL_BODY_PARTS_POSE_70_LEFT_EAR,
-	SL_BODY_PARTS_POSE_70_RIGHT_EAR,
-	SL_BODY_PARTS_POSE_70_LEFT_CLAVICLE,
-	SL_BODY_PARTS_POSE_70_RIGHT_CLAVICLE,
-	SL_BODY_PARTS_POSE_70_LEFT_SHOULDER,
-	SL_BODY_PARTS_POSE_70_RIGHT_SHOULDER,
-	SL_BODY_PARTS_POSE_70_LEFT_ELBOW,
-	SL_BODY_PARTS_POSE_70_RIGHT_ELBOW,
-	SL_BODY_PARTS_POSE_70_LEFT_WRIST,
-	SL_BODY_PARTS_POSE_70_RIGHT_WRIST,
-	SL_BODY_PARTS_POSE_70_LEFT_HIP,
-	SL_BODY_PARTS_POSE_70_RIGHT_HIP,
-	SL_BODY_PARTS_POSE_70_LEFT_KNEE,
-	SL_BODY_PARTS_POSE_70_RIGHT_KNEE,
-	SL_BODY_PARTS_POSE_70_LEFT_ANKLE,
-	SL_BODY_PARTS_POSE_70_RIGHT_ANKLE,
-	SL_BODY_PARTS_POSE_70_LEFT_BIG_TOE,
-	SL_BODY_PARTS_POSE_70_RIGHT_BIG_TOE,
-	SL_BODY_PARTS_POSE_70_LEFT_SMALL_TOE,
-	SL_BODY_PARTS_POSE_70_RIGHT_SMALL_TOE,
-	SL_BODY_PARTS_POSE_70_LEFT_HEEL,
-	SL_BODY_PARTS_POSE_70_RIGHT_HEEL,
+	SL_BODY_34_PARTS_PELVIS,
+	SL_BODY_34_PARTS_NAVAL_SPINE,
+	SL_BODY_34_PARTS_CHEST_SPINE,
+	SL_BODY_34_PARTS_NECK,
+	SL_BODY_34_PARTS_LEFT_CLAVICLE,
+	SL_BODY_34_PARTS_LEFT_SHOULDER,
+	SL_BODY_34_PARTS_LEFT_ELBOW,
+	SL_BODY_34_PARTS_LEFT_WRIST,
+	SL_BODY_34_PARTS_LEFT_HAND,
+	SL_BODY_34_PARTS_LEFT_HANDTIP,
+	SL_BODY_34_PARTS_LEFT_THUMB,
+	SL_BODY_34_PARTS_RIGHT_CLAVICLE,
+	SL_BODY_34_PARTS_RIGHT_SHOULDER,
+	SL_BODY_34_PARTS_RIGHT_ELBOW,
+	SL_BODY_34_PARTS_RIGHT_WRIST,
+	SL_BODY_34_PARTS_RIGHT_HAND,
+	SL_BODY_34_PARTS_RIGHT_HANDTIP,
+	SL_BODY_34_PARTS_RIGHT_THUMB,
+	SL_BODY_34_PARTS_LEFT_HIP,
+	SL_BODY_34_PARTS_LEFT_KNEE,
+	SL_BODY_34_PARTS_LEFT_ANKLE,
+	SL_BODY_34_PARTS_LEFT_FOOT,
+	SL_BODY_34_PARTS_RIGHT_HIP,
+	SL_BODY_34_PARTS_RIGHT_KNEE,
+	SL_BODY_34_PARTS_RIGHT_ANKLE,
+	SL_BODY_34_PARTS_RIGHT_FOOT,
+	SL_BODY_34_PARTS_HEAD,
+	SL_BODY_34_PARTS_NOSE,
+	SL_BODY_34_PARTS_LEFT_EYE,
+	SL_BODY_34_PARTS_LEFT_EAR,
+	SL_BODY_34_PARTS_RIGHT_EYE,
+	SL_BODY_34_PARTS_RIGHT_EAR,
+	SL_BODY_34_PARTS_LEFT_HEEL,
+	SL_BODY_34_PARTS_RIGHT_HEEL,
+	SL_BODY_34_PARTS_LAST
+};
+
+
+/**
+ * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::BODY_38.
+ */
+enum SL_BODY_38_PARTS
+{
+	SL_BODY_38_PARTS_PELVIS,
+	SL_BODY_38_PARTS_SPINE_1,
+	SL_BODY_38_PARTS_SPINE_2,
+	SL_BODY_38_PARTS_SPINE_3,
+	SL_BODY_38_PARTS_NECK,
+	SL_BODY_38_PARTS_NOSE,
+	SL_BODY_38_PARTS_LEFT_EYE,
+	SL_BODY_38_PARTS_RIGHT_EYE,
+	SL_BODY_38_PARTS_LEFT_EAR,
+	SL_BODY_38_PARTS_RIGHT_EAR,
+	SL_BODY_38_PARTS_LEFT_CLAVICLE,
+	SL_BODY_38_PARTS_RIGHT_CLAVICLE,
+	SL_BODY_38_PARTS_LEFT_SHOULDER,
+	SL_BODY_38_PARTS_RIGHT_SHOULDER,
+	SL_BODY_38_PARTS_LEFT_ELBOW,
+	SL_BODY_38_PARTS_RIGHT_ELBOW,
+	SL_BODY_38_PARTS_LEFT_WRIST,
+	SL_BODY_38_PARTS_RIGHT_WRIST,
+	SL_BODY_38_PARTS_LEFT_HIP,
+	SL_BODY_38_PARTS_RIGHT_HIP,
+	SL_BODY_38_PARTS_LEFT_KNEE,
+	SL_BODY_38_PARTS_RIGHT_KNEE,
+	SL_BODY_38_PARTS_LEFT_ANKLE,
+	SL_BODY_38_PARTS_RIGHT_ANKLE,
+	SL_BODY_38_PARTS_LEFT_BIG_TOE,
+	SL_BODY_38_PARTS_RIGHT_BIG_TOE,
+	SL_BODY_38_PARTS_LEFT_SMALL_TOE,
+	SL_BODY_38_PARTS_RIGHT_SMALL_TOE,
+	SL_BODY_38_PARTS_LEFT_HEEL,
+	SL_BODY_38_PARTS_RIGHT_HEEL,
+	// Hands
+	SL_BODY_38_PARTS_LEFT_HAND_THUMB_4,
+	SL_BODY_38_PARTS_RIGHT_HAND_THUMB_4,
+	SL_BODY_38_PARTS_LEFT_HAND_INDEX_1,
+	SL_BODY_38_PARTS_RIGHT_HAND_INDEX_1,
+	SL_BODY_38_PARTS_LEFT_HAND_MIDDLE_4,
+	SL_BODY_38_PARTS_RIGHT_HAND_MIDDLE_4,
+	SL_BODY_38_PARTS_LEFT_HAND_PINKY_1,
+	SL_BODY_38_PARTS_RIGHT_HAND_PINKY_1,
+	SL_BODY_38_PARTS_LAST
+};
+
+/**
+ * \brief semantic of human body parts and order of \ref ObjectData::keypoint for BODY_FORMAT::BODY_70.
+ */
+enum SL_BODY_70_PARTS
+{
+	SL_BODY_70_PARTS_PELVIS,
+	SL_BODY_70_PARTS_SPINE_1,
+	SL_BODY_70_PARTS_SPINE_2,
+	SL_BODY_70_PARTS_SPINE_3,
+	SL_BODY_70_PARTS_NECK,
+	SL_BODY_70_PARTS_NOSE,
+	SL_BODY_70_PARTS_LEFT_EYE,
+	SL_BODY_70_PARTS_RIGHT_EYE,
+	SL_BODY_70_PARTS_LEFT_EAR,
+	SL_BODY_70_PARTS_RIGHT_EAR,
+	SL_BODY_70_PARTS_LEFT_CLAVICLE,
+	SL_BODY_70_PARTS_RIGHT_CLAVICLE,
+	SL_BODY_70_PARTS_LEFT_SHOULDER,
+	SL_BODY_70_PARTS_RIGHT_SHOULDER,
+	SL_BODY_70_PARTS_LEFT_ELBOW,
+	SL_BODY_70_PARTS_RIGHT_ELBOW,
+	SL_BODY_70_PARTS_LEFT_WRIST,
+	SL_BODY_70_PARTS_RIGHT_WRIST,
+	SL_BODY_70_PARTS_LEFT_HIP,
+	SL_BODY_70_PARTS_RIGHT_HIP,
+	SL_BODY_70_PARTS_LEFT_KNEE,
+	SL_BODY_70_PARTS_RIGHT_KNEE,
+	SL_BODY_70_PARTS_LEFT_ANKLE,
+	SL_BODY_70_PARTS_RIGHT_ANKLE,
+	SL_BODY_70_PARTS_LEFT_BIG_TOE,
+	SL_BODY_70_PARTS_RIGHT_BIG_TOE,
+	SL_BODY_70_PARTS_LEFT_SMALL_TOE,
+	SL_BODY_70_PARTS_RIGHT_SMALL_TOE,
+	SL_BODY_70_PARTS_LEFT_HEEL,
+	SL_BODY_70_PARTS_RIGHT_HEEL,
 	// Hands
 	// Left
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_THUMB_1,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_THUMB_2,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_THUMB_3,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_THUMB_4,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_INDEX_1,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_INDEX_2,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_INDEX_3,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_INDEX_4,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_MIDDLE_1,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_MIDDLE_2,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_MIDDLE_3,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_MIDDLE_4,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_RING_1,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_RING_2,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_RING_3,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_RING_4,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_PINKY_1,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_PINKY_2,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_PINKY_3,
-	SL_BODY_PARTS_POSE_70_LEFT_HAND_PINKY_4,
+	SL_BODY_70_PARTS_LEFT_HAND_THUMB_1,
+	SL_BODY_70_PARTS_LEFT_HAND_THUMB_2,
+	SL_BODY_70_PARTS_LEFT_HAND_THUMB_3,
+	SL_BODY_70_PARTS_LEFT_HAND_THUMB_4,
+	SL_BODY_70_PARTS_LEFT_HAND_INDEX_1,
+	SL_BODY_70_PARTS_LEFT_HAND_INDEX_2,
+	SL_BODY_70_PARTS_LEFT_HAND_INDEX_3,
+	SL_BODY_70_PARTS_LEFT_HAND_INDEX_4,
+	SL_BODY_70_PARTS_LEFT_HAND_MIDDLE_1,
+	SL_BODY_70_PARTS_LEFT_HAND_MIDDLE_2,
+	SL_BODY_70_PARTS_LEFT_HAND_MIDDLE_3,
+	SL_BODY_70_PARTS_LEFT_HAND_MIDDLE_4,
+	SL_BODY_70_PARTS_LEFT_HAND_RING_1,
+	SL_BODY_70_PARTS_LEFT_HAND_RING_2,
+	SL_BODY_70_PARTS_LEFT_HAND_RING_3,
+	SL_BODY_70_PARTS_LEFT_HAND_RING_4,
+	SL_BODY_70_PARTS_LEFT_HAND_PINKY_1,
+	SL_BODY_70_PARTS_LEFT_HAND_PINKY_2,
+	SL_BODY_70_PARTS_LEFT_HAND_PINKY_3,
+	SL_BODY_70_PARTS_LEFT_HAND_PINKY_4,
 	//Right
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_THUMB_1,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_THUMB_2,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_THUMB_3,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_THUMB_4,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_INDEX_1,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_INDEX_2,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_INDEX_3,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_INDEX_4,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_MIDDLE_1,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_MIDDLE_2,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_MIDDLE_3,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_MIDDLE_4,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_RING_1,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_RING_2,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_RING_3,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_RING_4,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_PINKY_1,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_PINKY_2,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_PINKY_3,
-	SL_BODY_PARTS_POSE_70_RIGHT_HAND_PINKY_4,
-	SL_BODY_PARTS_POSE_70_LAST
+	SL_BODY_70_PARTS_RIGHT_HAND_THUMB_1,
+	SL_BODY_70_PARTS_RIGHT_HAND_THUMB_2,
+	SL_BODY_70_PARTS_RIGHT_HAND_THUMB_3,
+	SL_BODY_70_PARTS_RIGHT_HAND_THUMB_4,
+	SL_BODY_70_PARTS_RIGHT_HAND_INDEX_1,
+	SL_BODY_70_PARTS_RIGHT_HAND_INDEX_2,
+	SL_BODY_70_PARTS_RIGHT_HAND_INDEX_3,
+	SL_BODY_70_PARTS_RIGHT_HAND_INDEX_4,
+	SL_BODY_70_PARTS_RIGHT_HAND_MIDDLE_1,
+	SL_BODY_70_PARTS_RIGHT_HAND_MIDDLE_2,
+	SL_BODY_70_PARTS_RIGHT_HAND_MIDDLE_3,
+	SL_BODY_70_PARTS_RIGHT_HAND_MIDDLE_4,
+	SL_BODY_70_PARTS_RIGHT_HAND_RING_1,
+	SL_BODY_70_PARTS_RIGHT_HAND_RING_2,
+	SL_BODY_70_PARTS_RIGHT_HAND_RING_3,
+	SL_BODY_70_PARTS_RIGHT_HAND_RING_4,
+	SL_BODY_70_PARTS_RIGHT_HAND_PINKY_1,
+	SL_BODY_70_PARTS_RIGHT_HAND_PINKY_2,
+	SL_BODY_70_PARTS_RIGHT_HAND_PINKY_3,
+	SL_BODY_70_PARTS_RIGHT_HAND_PINKY_4,
+	SL_BODY_70_PARTS_LAST
 };
 
+/**
+\brief Change the type of outputed position for the Fusion positional tracking (raw data or fusion data projected into zed camera)
+*/
+enum SL_POSITION_TYPE {
+	RAW = 0, /*The output position will be the raw position data*/
+	FUSION, /*The output position will be the fused position projected into the requested camera repository*/
+	///@cond SHOWHIDDEN 
+	LAST
+	///@endcond
+};
 
 /**
 * \brief Resolution
@@ -1114,6 +1186,10 @@ struct SL_DeviceProperties {
 	\n Not provided for Windows
 	 */
 	unsigned int sn;
+	/**
+	 camera input type
+	 */
+	enum SL_INPUT_TYPE input_type;
 };
 
 struct SL_CameraParameters {
@@ -2101,10 +2177,6 @@ struct SL_Bodies
 	 */
 	int is_tracked;
 	/**
-	\brief Detection model used (SL_BODY_TRACKING_MODEL).
-	 */
-	enum  SL_BODY_TRACKING_MODEL detection_model;
-	/**
 	\brief The list of detected objects
 	 */
 	struct SL_BodyData body_list[MAX_NUMBER_OBJECT];
@@ -2187,13 +2259,12 @@ struct SL_InputType
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum SL_FUSION_ERROR_CODE {
-	SL_FUSION_ERROR_CODE_WRONG_BODY_TRACKING_MODEL = -8, /**< The requested body tracking model is not available*/
-	SL_FUSION_ERROR_CODE_NOT_ENABLE = -7, /**< The following module was not enabled*/
-	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -6, /**< Some source are provided by SVO and some sources are provided by LIVE stream */
-	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -5, /**< Connection timed out ... impossible to reach the sender... this may be due to ZedHub absence*/
-	SL_FUSION_ERROR_CODE_SHARED_MEMORY_LEAK = -4, /**< Detect multiple instance of SHARED_MEMORY communicator ... only one is authorised*/
-	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -3, /**< The IP format provided is wrong, please provide IP in this format a.b.c.d where (a, b, c, d) are numbers between 0 and 255.*/
-	SL_FUSION_ERROR_CODE_CONNECTION_ERROR = -2, /**< Something goes bad in the connection between sender and receiver.*/
+	SL_FUSION_ERROR_CODE_WRONG_BODY_FORMAT = -7, /**< The requested body tracking model is not available*/
+	SL_FUSION_ERROR_CODE_NOT_ENABLE = -6, /**< The following module was not enabled*/
+	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -5, /**< Some source are provided by SVO and some sources are provided by LIVE stream */
+	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -4, /**< Connection timed out ... impossible to reach the sender... this may be due to ZedHub absence*/
+	SL_FUSION_ERROR_CODE_MEMORY_ALREADY_USED = -3, /**< Detect multiple instance of SHARED_MEMORY communicator ... only one is authorised*/
+	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -2, /**< The IP format provided is wrong, please provide IP in this format a.b.c.d where (a, b, c, d) are numbers between 0 and 255.*/
 	SL_FUSION_ERROR_CODE_FAILURE = -1, /**< Standard code for unsuccessful behavior.*/
 	SL_FUSION_ERROR_CODE_SUCCESS = 0,
 	SL_FUSION_ERROR_CODE_FUSION_ERRATIC_FPS = 1, /**< Some big differences has been observed between senders FPS*/
@@ -2267,49 +2338,25 @@ struct SL_InitFusionParameters
  *
  */
 struct SL_PositionalTrackingFusionParameters {
-
 	/**
-	Position of the camera system in the world frame when the camera is started. By default, it should be identity.
-	\note The camera frame (which defines the reference frame for the camera) is by default positioned at the world frame when tracking is started.
+	 * @brief Is the gnss fusion is enabled
+	 *
 	 */
-	struct SL_Vector3 initial_world_position;
+	bool enable_GNSS_fusion;
 	/**
-	Rotation of the camera system in the world frame when the camera is started. By default, it should be identity.
-	\note The camera frame (which defines the reference frame for the camera) is by default positioned at the world frame when tracking is started.
+	 * @brief Distance necessary for initializing the transformation between cameras coordinate system and  GNSS coordinate system (north aligned)
+	 *
 	 */
-	struct SL_Quaternion initial_world_rotation;
-
+	float gnss_initialisation_distance;
 	/**
-	This setting allows you to enable or disable IMU fusion. When set to false, only the optical odometry will be used.
-	\n default: true
-	\note This setting has no impact on the tracking of a ZED camera; only the ZED Mini uses a built-in IMU.
+	 * @brief Value used by Fusion for ignoring high covariance input GNSS data
+	 *
 	 */
-	bool enable_imu_fusion;
-
-	/**
-	* @brief This setting allows you to change the minimum depth used by the SDK for Positional Tracking. It may be useful for example
-	* if any steady objects are in front of the camera and may perturbate the positional tracking algorithm.
-	* default : -1 which means no minimum depth
-	*/
-	float depth_min_range;
+	float gnss_ignore_threshold;
 };
 
 struct SL_BodyTrackingFusionParameters
 {
-	enum SL_DETECTION_MODEL detection_model;
-
-	/**
-	 * \brief Defines the body format outputed by the sdk when \ref retrieveObjects is called.
-	 *
-	 */
-	enum SL_BODY_FORMAT body_format;
-
-	/**
-	 * @brief not yet available for this version
-	 *
-	 */
-	//char* reid_database_file;
-
 	/**
 	* \brief Defines if the object detection will track objects across images flow
 	*/
@@ -2319,7 +2366,6 @@ struct SL_BodyTrackingFusionParameters
 	* \brief Defines if the body fitting will be applied
 	*/
 	bool enable_body_fitting;
-
 };
 
 struct SL_BodyTrackingFusionRuntimeParameters
@@ -2428,9 +2474,9 @@ struct SL_ECEF
 
 struct SL_LatLng
 {
-	double lat;
-	double lng;
-	double height;
+	double latitude;
+	double longitude;
+	double altitude;
 };
 
 struct SL_UTM
