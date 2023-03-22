@@ -515,6 +515,17 @@ public:
 	int GetNumberOfKeypoints();
 
 	/*
+	* Get number of bones, lines between two keypoints for the skeleton display.
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get number of bones"), Category = "Zed|Body Tracking")
+	int GetNumberOfBones();
+
+	/*
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get current body format"), Category = "Zed|Body Tracking")
+	ESlBodyFormat GetBodyFormat();
+
+	/*
 	 * Call this function to get the current error of the open camera async task.
 	 * @return The current error code
 	 */

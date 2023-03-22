@@ -1513,6 +1513,35 @@ int USlCameraProxy::GetNumberOfKeypoints()
 	}
 }
 
+int USlCameraProxy::GetNumberOfBones()
+{
+	if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_18)
+	{
+		return 19;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_34)
+	{
+		return 35;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_38)
+	{
+		return 37;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	{
+		return 69;
+	}
+	else
+	{
+		return 37;
+	}
+}
+
+ESlBodyFormat USlCameraProxy::GetBodyFormat()
+{
+	return BodyTrackingParameters.BodyFormat;
+}
+
 void USlCameraProxy::SetHitTestDepthAndNormals(bool bEnableDepth, bool bEnableNormals)
 {
 	bHitTestDepthEnabled = bEnableDepth;
