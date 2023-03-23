@@ -1423,6 +1423,13 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 	return bBodyTrackingEnabled;
 }
 
+FSlBodyTrackingRuntimeParameters USlCameraProxy::GetBodyTrackingRuntimeParameters() {
+	FSlBodyTrackingRuntimeParameters fslrtp = FSlBodyTrackingRuntimeParameters();
+	fslrtp.DetectionConfidenceThreshold = BodyTrackingRuntimeParameters.detection_confidence_threshold;
+	fslrtp.MinimumKeypointsThreshold = BodyTrackingRuntimeParameters.minimum_keypoints_threshold;
+	return fslrtp;
+}
+
 bool USlCameraProxy::IsObjectDetectionEnabled()
 {
 	return bObjectDetectionEnabled;

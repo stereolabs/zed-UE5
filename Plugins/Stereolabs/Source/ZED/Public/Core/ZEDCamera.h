@@ -137,6 +137,12 @@ public:
 	void SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewValue);
 
 	/*
+	 * Get the current body tracking runtime parameters.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|OD")
+	FSlBodyTrackingRuntimeParameters GetBodyTrackingRuntimeParameters();
+
+	/*
 	 * Set the camera settings. Take effect next grab 
 	 * @param NewValue The news camera settings
 	 */

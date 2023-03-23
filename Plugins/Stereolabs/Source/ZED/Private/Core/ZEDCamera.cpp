@@ -694,6 +694,11 @@ void AZEDCamera::SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimePa
 	GSlCameraProxy->SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
 }
 
+FSlBodyTrackingRuntimeParameters AZEDCamera::GetBodyTrackingRuntimeParameters()
+{
+	return GSlCameraProxy->GetBodyTrackingRuntimeParameters();
+}
+
 void AZEDCamera::SetCameraSettings(const FSlVideoSettings& NewValue)
 {
 	if (NewValue.bDefault)
@@ -852,6 +857,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	}
 	SetRuntimeParameters(RuntimeParameters);
 	SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
+	SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
 	EnableMultiThreadedRenderingMode(true);
 
 	ZedLeftEyeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(ZedSourceMaterial, nullptr);
