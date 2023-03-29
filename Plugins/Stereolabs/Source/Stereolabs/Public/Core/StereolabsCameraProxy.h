@@ -49,7 +49,12 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FSlCameraProxyGrabDelegate, ESlErrorCode, c
 /*
 * Notify new objects are retrieved
 */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveObjectDelegate, const FSlObjects&, objects);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveObjectsDelegate, const FSlObjects&, objects);
+
+/*
+* Notify new bodies are retrieved
+*/
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSlCameraProxyRetrieveBodiesDelegate, const FSlBodies&, bodies);
 
 class FOpenCameraAsyncTask;
 class FEnableTrackingAsyncTask;
@@ -209,9 +214,15 @@ public:
 	 * Set the object detection runtime parameters
 	 * @param NewObjectDetectionRuntimeParameters The object detection runtime parameters
 	 */
-	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera object detection runtime parameters"), Category = "Zed|Camera")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera object detection runtime parameters"), Category = "Zed|Object Detection")
 	void SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters);
 
+	/*
+	 * Set the body tracking runtime parameters
+	 * @param NewBodyTrackingRuntimeParameters The body tracking runtime parameters
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "set zed camera body tracking runtime parameters"), Category = "Zed|Body Tracking")
+	void SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewBodyTrackingRuntimeParameters);
 
 	/*
 	 * Get the camera informations
@@ -454,11 +465,28 @@ public:
 	bool EnableObjectDetection(const FSlObjectDetectionParameters& ObjectDetectionParameters);
 
 	/*
+	 * Enable Zed Body Tracking module
+	 * @param BodyTrackingParameters The body tracking parameters to use
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "enable zed body tracking"), Category = "Zed|Body Tracking")
+	bool EnableBodyTracking(const FSlBodyTrackingParameters& BodyTrackingParameters);
+
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Body Tracking Parameters"), Category = "Zed|Body Tracking")
+	FSlBodyTrackingRuntimeParameters GetBodyTrackingRuntimeParameters();
+
+	/*
 	 * Tell if the Object detection module is enabled.
 	 * @return True is object detection is enabled
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "is object detection enabled"), Category = "Zed|Object Detection")
 	bool IsObjectDetectionEnabled();
+
+	/*
+	 * Tell if the Body Tracking module is enabled.
+	 * @return True is Body Tracking is enabled
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "is Body Tracking enabled"), Category = "Zed|Body Tracking")
+	bool IsBodyTrackingEnabled();
 
 	/*
 	 * Disable Zed Object Detection module
@@ -467,13 +495,38 @@ public:
 	void DisableObjectDetection();
 
 	/*
+	 * Disable Zed Body Tracking module
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "disable zed Body Tracking"), Category = "Zed|Body Tracking")
+	void DisableBodyTracking();
+
+	/*
 	 * Retrieve objects detected by the object detection module.
-	 * @param objects The detected objects will be saved into this object. If the object already contains data from a previous detection, 
-	 *	it will be updated, keeping a unique ID for the same person.
-	 * @param ObjectDetectionRuntimeParameters Object detection runtime settings, can be changed at each detection. 
 	 * @return True if returned sl::SUCCESS
 	 */
 	bool RetrieveObjects();
+
+	/*
+	 * Retrieve bodies detected by the body tracking module.
+	 * @return True if returned sl::SUCCESS
+	 */
+	bool RetrieveBodies();
+
+	/*
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get number of keypoints"), Category = "Zed|Body Tracking")
+	int GetNumberOfKeypoints();
+
+	/*
+	* Get number of bones, lines between two keypoints for the skeleton display.
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get number of bones"), Category = "Zed|Body Tracking")
+	int GetNumberOfBones();
+
+	/*
+	*/
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get current body format"), Category = "Zed|Body Tracking")
+	ESlBodyFormat GetBodyFormat();
 
 	/*
 	 * Call this function to get the current error of the open camera async task.
@@ -717,7 +770,14 @@ public:
 	 * @param bEnable True to enable
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
-	void EnableAIThread(bool bEnable);
+	void EnableObjectDetectionThread(bool bEnable);
+
+	/*
+	 * Enable/disable the AI thread
+	 * @param bEnable True to enable
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed|Camera")
+	void EnableBodyTrackingThread(bool bEnable);
 
 	// ------------------------------------------------------------------
 
@@ -759,6 +819,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	bool bObjectDetectionEnabled;
 
+	/** True if body tracking is currently enabled */
+	UPROPERTY(BlueprintReadOnly, Category = "Zed")
+	bool bBodyTrackingEnabled;
+
 	/** True if hit test should return depth */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	bool bHitTestDepthEnabled;
@@ -791,8 +855,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	FIntPoint RetrieveMatSize;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Zed")
+	UPROPERTY(BlueprintReadOnly, Category = "Zed|Object Detection")
 	FSlObjects objects;
+
+
+	UPROPERTY(BlueprintReadOnly, Category = "Zed|Body Tracking")
+	FSlBodies bodies;
 
 public:
 	/** Broadcast after the AI model is optimized*/
@@ -849,7 +917,15 @@ public:
 
 	/** Object detection retrieve event dispatcher */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
-	FSlCameraProxyRetrieveObjectDelegate OnObjectDetectionRetrieved;
+	FSlCameraProxyRetrieveObjectsDelegate OnObjectDetectionRetrieved;
+
+	/** Body Tracking enabled event dispatcher */
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyTwoParamsDelegate OnBodyTrackingEnabled;
+
+	/** Body Tracking retrieve event dispatcher */
+	UPROPERTY(BlueprintAssignable, Category = "Zed")
+	FSlCameraProxyRetrieveBodiesDelegate OnBodyTrackingRetrieved;
 
 	/** End of SVO has been reached and looping is enabled */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
@@ -896,12 +972,17 @@ private:
 	/** Runtime parameters */
 	SL_RuntimeParameters RuntimeParameters;
 
-	/** Runtime parameters */
-	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
-
 	/** OD parameters */
 	FSlObjectDetectionParameters ObjectDetectionParameters;
 
+	/** Runtime parameters */
+	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+
+	/** BT parameters */
+	FSlBodyTrackingParameters BodyTrackingParameters;
+
+	/** Runtime parameters */
+	SL_BodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
 private:
 	/** A worker to thread the Grab calls */
 	class FSlGrabRunnable* GrabWorker;
@@ -909,8 +990,11 @@ private:
 	/** A worker to thread CPU depth get calls */
 	class FSlMeasureRunnable* MeasuresWorker;
 
-	/** A worker to thread AI detection */
-	class FSlAIDetectionRunnable* AIWorker;
+	/** A worker to thread OD */
+	class FSlObjectDetectionRunnable* ObjectDetectionWorker;
+
+	/** A worker to thread BT */
+	class FSlBodyTrackingRunnable* BodyTrackingWorker;
 
 private:
 	/** True if camera opened by OpenCamera */
@@ -945,7 +1029,7 @@ private:
 	/** Underlying sensors data (imu, ...)
 	* One for current ts, one for image ts.
 	*/
-	SL_SensorData CurrentSensorsData;
-	SL_SensorData ImageRefSensorsData;
+	SL_SensorsData CurrentSensorsData;
+	SL_SensorsData ImageRefSensorsData;
 	SL_ERROR_CODE IMUErrorCode;
 };

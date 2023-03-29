@@ -688,6 +688,17 @@ void AZEDCamera::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRun
 	GSlCameraProxy->SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
 }
 
+void AZEDCamera::SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewValue)
+{
+	BodyTrackingRuntimeParameters = NewValue;
+	GSlCameraProxy->SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
+}
+
+FSlBodyTrackingRuntimeParameters AZEDCamera::GetBodyTrackingRuntimeParameters()
+{
+	return GSlCameraProxy->GetBodyTrackingRuntimeParameters();
+}
+
 void AZEDCamera::SetCameraSettings(const FSlVideoSettings& NewValue)
 {
 	if (NewValue.bDefault)
@@ -720,14 +731,28 @@ void AZEDCamera::EnableObjectDetection()
 {
 	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
 
-	GSlCameraProxy->EnableAIThread(true);
+	GSlCameraProxy->EnableObjectDetectionThread(true);
 }
 
 void AZEDCamera::DisableObjectDetection()
 {
 	if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->DisableObjectDetection();
 
-	GSlCameraProxy->EnableAIThread(false);
+	GSlCameraProxy->EnableObjectDetectionThread(false);
+}
+
+void AZEDCamera::EnableBodyTracking()
+{
+	GSlCameraProxy->EnableBodyTracking(BodyTrackingParameters);
+
+	GSlCameraProxy->EnableBodyTrackingThread(true);
+}
+
+void AZEDCamera::DisableBodyTracking()
+{
+	if (GSlCameraProxy->IsBodyTrackingEnabled()) GSlCameraProxy->DisableBodyTracking();
+
+	GSlCameraProxy->EnableBodyTrackingThread(false);
 }
 
 void AZEDCamera::DisableTracking()
@@ -772,6 +797,9 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 
 	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
 	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
+
+	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
+	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
 
 	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
 
@@ -829,6 +857,7 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	}
 	SetRuntimeParameters(RuntimeParameters);
 	SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
+	SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
 	EnableMultiThreadedRenderingMode(true);
 
 	ZedLeftEyeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(ZedSourceMaterial, nullptr);

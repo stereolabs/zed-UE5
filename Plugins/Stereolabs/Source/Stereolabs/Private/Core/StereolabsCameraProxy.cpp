@@ -189,12 +189,21 @@ void USlCameraProxy::BeginDestroy()
 	}
 
 	// Disable ai thread
-	if (AIWorker)
+	if (ObjectDetectionWorker)
 	{
-		AIWorker->EnsureCompletion();
-		delete AIWorker;
-		AIWorker = nullptr;
+		ObjectDetectionWorker->EnsureCompletion();
+		delete ObjectDetectionWorker;
+		ObjectDetectionWorker = nullptr;
 	}
+
+	// Disable ai thread
+	if (BodyTrackingWorker)
+	{
+		BodyTrackingWorker->EnsureCompletion();
+		delete BodyTrackingWorker;
+		BodyTrackingWorker = nullptr;
+	}
+
 
 	CloseCamera();
 	Super::BeginDestroy();
@@ -250,6 +259,8 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.sensors_required = InitParameters.bSensorsRequired;
 	sl_init_parameters.enable_right_side_measure = InitParameters.bEnableRightSideMeasure;
 	sl_init_parameters.svo_real_time_mode = InitParameters.bRealTime;
+	sl_init_parameters.async_grab_camera_recovery = InitParameters.bAsyncGrabCameraRecovery;
+	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
 
 	InputType = (SL_INPUT_TYPE)InitParameters.InputType;
 	bool IsCameraCreated = sl_create_camera(CameraID);
@@ -257,15 +268,16 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	SL_ERROR_CODE ErrorCode;
 	do
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, TCHAR_TO_UTF8(*InitParameters.SvoPath), TCHAR_TO_UTF8(*InitParameters.StreamIP),
+		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath), TCHAR_TO_UTF8(*InitParameters.StreamIP),
 			InitParameters.StreamPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath), TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath),
 				TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile));
 
-		SetOpenCameraErrorCode((ESlErrorCode)ErrorCode);
+		SetOpenCameraErrorCode(sl::unreal::ToUnrealType(ErrorCode));
 
 		if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 		{
-			SL_CAMERA_PROXY_LOG_E("Error during initialization: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+			SL_CAMERA_PROXY_LOG_E("Error during initialization: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+			
 			if (ErrorCode != SL_ERROR_CODE_CAMERA_NOT_DETECTED &&
 				ErrorCode != SL_ERROR_CODE_SENSORS_NOT_AVAILABLE)
 			{
@@ -370,9 +382,15 @@ void USlCameraProxy::CloseCamera()
 		}
 
 		// Disable AI thread
-		if (AIWorker)
+		if (ObjectDetectionWorker)
 		{
-			EnableAIThread(false);
+			EnableObjectDetectionThread(false);
+		}
+
+		// Disable AI thread
+		if (BodyTrackingWorker)
+		{
+			EnableBodyTrackingThread(false);
 		}
 
 		// Disable measures thread
@@ -434,12 +452,12 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't enable tracking: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't enable tracking: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 	}
 
 	if (InputType == SL_INPUT_TYPE_USB && IMUDataErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't retrieve IMU Data after enable tracking: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't retrieve IMU Data after enable tracking: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 	}
 	SL_Vector3 cam_imu_t;
 	SL_Quaternion cam_imu_r;
@@ -470,7 +488,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 		bTrackingEnabled = (ErrorCode == SL_ERROR_CODE_SUCCESS);
 		bSpatialMemoryEnabled = NewTrackingParameters.bEnableAreaMemory && bTrackingEnabled;
 
-		OnTrackingEnabled.Broadcast(bTrackingEnabled, (ESlErrorCode)ErrorCode, NewTrackingParameters.Location, IMURotation);
+		OnTrackingEnabled.Broadcast(bTrackingEnabled, sl::unreal::ToUnrealType(ErrorCode), NewTrackingParameters.Location, IMURotation);
 	});
 }
 
@@ -509,12 +527,12 @@ void USlCameraProxy::ResetTracking(const FRotator& Rotation, const FVector& Loca
 
 		if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 		{
-			SL_CAMERA_PROXY_LOG_E("Can't reset tracking: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+			SL_CAMERA_PROXY_LOG_E("Can't reset tracking: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 		}
 
 		if (IMUDataErrorCode != SL_ERROR_CODE_SUCCESS)
 		{
-			SL_CAMERA_PROXY_LOG_E("Can't retrieve IMU Data after reset tracking: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+			SL_CAMERA_PROXY_LOG_E("Can't retrieve IMU Data after reset tracking: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 		}
 		SL_Vector3 cam_imu_t;
 		SL_Quaternion cam_imu_r;
@@ -529,7 +547,7 @@ void USlCameraProxy::ResetTracking(const FRotator& Rotation, const FVector& Loca
 		Pp.transpose();
 		FRotator IMURotation = sl::unreal::ToUnrealType(P * imu_pose * Pp).Rotator();
 
-	OnTrackingReset.Broadcast(bTrackingEnabled,(ESlErrorCode)ErrorCode, Location, IMURotation);
+	OnTrackingReset.Broadcast(bTrackingEnabled,sl::unreal::ToUnrealType(ErrorCode), Location, IMURotation);
 }
 
 ESlTrackingState USlCameraProxy::GetPosition(FSlPose& Pose, ESlReferenceFrame ReferenceFrame)
@@ -556,11 +574,11 @@ ESlErrorCode USlCameraProxy::GetIMUData(FSlIMUData& IMUData, ESlTimeReference Ti
 {
 	SL_ERROR_CODE ErrorCode = SL_ERROR_CODE_FAILURE;
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		sl_get_sensors_data(CameraID, &CurrentSensorsData, (SL_TIME_REFERENCE)TimeReference);
+		ErrorCode = (SL_ERROR_CODE)sl_get_sensors_data(CameraID, &CurrentSensorsData, (SL_TIME_REFERENCE)TimeReference);
 
 		if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 		{
-			SL_CAMERA_PROXY_LOG_E("Error while retrieving IMU data: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+			SL_CAMERA_PROXY_LOG_E("Error while retrieving IMU data: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 		}
 
 		SL_Vector3 cam_imu_t;
@@ -578,7 +596,7 @@ ESlErrorCode USlCameraProxy::GetIMUData(FSlIMUData& IMUData, ESlTimeReference Ti
 
 		IMUData.Transform.SetRotation(IMURotation.Quaternion());
 
-		return (ESlErrorCode)ErrorCode;
+		return sl::unreal::ToUnrealType(ErrorCode);
 
 	SL_SCOPE_UNLOCK
 }
@@ -599,7 +617,9 @@ bool USlCameraProxy::SaveSpatialMemoryArea(const FString& AreaSavingPath)
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't save spatial memory: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't save spatial memory: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+
+		return false;
 	}
 
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
@@ -624,7 +644,12 @@ void USlCameraProxy::SetObjectDetectionRuntimeParameters(const FSlObjectDetectio
 	SL_SCOPE_UNLOCK
 }
 
-
+void USlCameraProxy::SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewBodyTrackingRuntimeParameters)
+{
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		BodyTrackingRuntimeParameters = sl::unreal::ToSlType(NewBodyTrackingRuntimeParameters);
+	SL_SCOPE_UNLOCK
+}
 
 FSlCameraInformation USlCameraProxy::GetCameraInformation(const FIntPoint& CustomResolution/* = FIntPoint::ZeroValue*/)
 {
@@ -772,25 +797,49 @@ void USlCameraProxy::Grab()
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabDelegateSection)
-		OnGrabDoneDelegate.Broadcast((ESlErrorCode)ErrorCode, FSlTimestamp(sl_get_image_timestamp(CameraID)));
+		OnGrabDoneDelegate.Broadcast(sl::unreal::ToUnrealType(ErrorCode), FSlTimestamp(sl_get_image_timestamp(CameraID)));
 	SL_SCOPE_UNLOCK
 }
 
 FSlVideoSettings USlCameraProxy::GetCameraSettings()
 {
 	FSlVideoSettings CameraSettings;
+	int value;
 
-	CameraSettings.Brightness           = sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_BRIGHTNESS);
-	CameraSettings.Contrast				= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_CONTRAST);
-	CameraSettings.Hue					= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_HUE);
-	CameraSettings.Saturation			= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_SATURATION);
-	CameraSettings.Sharpness			= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_SHARPNESS);
-	CameraSettings.Gamma                = sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_GAMMA);
-	CameraSettings.WhiteBalance			= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE);
-	CameraSettings.Gain					= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_GAIN);
-	CameraSettings.Exposure				= sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_EXPOSURE);
-	CameraSettings.bAutoWhiteBalance    = sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO) == 0 ? false : true;
-	CameraSettings.bAutoGainAndExposure = sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_AEC_AGC) == 0 ? false : true;
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_BRIGHTNESS, &value);
+	CameraSettings.Brightness           = value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_CONTRAST, &value);
+	CameraSettings.Contrast				= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_HUE, &value);
+	CameraSettings.Hue                  = value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_SATURATION, &value);
+	CameraSettings.Saturation			= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_SHARPNESS, &value);
+	CameraSettings.Sharpness			= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_GAMMA, &value);
+	CameraSettings.Gamma                = value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, &value);
+	CameraSettings.WhiteBalance			= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_GAIN, &value);
+	CameraSettings.Gain					= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_EXPOSURE, &value);
+	CameraSettings.Exposure				= value;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO, &value);
+	CameraSettings.bAutoWhiteBalance    = value == 0 ? false : true;
+
+	sl_get_camera_settings(CameraID, SL_VIDEO_SETTINGS_AEC_AGC, &value);
+	CameraSettings.bAutoGainAndExposure = value == 0 ? false : true;
+
+
 	bAutoGainAndExposure = CameraSettings.bAutoGainAndExposure;
 	CameraSettings.bDefault			    = false;
 
@@ -810,10 +859,11 @@ bool USlCameraProxy::EnableSpatialMapping(const FSlSpatialMappingParameters& Spa
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't enable spatial mapping: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't enable spatial mapping: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+		return bSpatialMappingEnabled;
 	}
 
-	OnSpatialMappingEnabled.Broadcast(bSpatialMappingEnabled, (ESlErrorCode)ErrorCode);
+	OnSpatialMappingEnabled.Broadcast(bSpatialMappingEnabled, sl::unreal::ToUnrealType(ErrorCode));
 
 	return bSpatialMappingEnabled;
 }
@@ -854,7 +904,7 @@ bool USlCameraProxy::RetrieveMeshAsync(USlMesh* Mesh)
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't update mesh: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't update mesh: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 		return false;
 	}
 
@@ -865,7 +915,8 @@ bool USlCameraProxy::RetrieveMeshAsync(USlMesh* Mesh)
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't retrieve mesh: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't retrieve mesh: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+		return false;
 	}
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
@@ -876,7 +927,8 @@ bool USlCameraProxy::ExtractWholeMesh(USlMesh* Mesh)
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't extract the mesh: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't extract the mesh: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+		return false;
 	}
 	return  (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
@@ -919,7 +971,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Error while retrieving texture image : \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Error while retrieving texture image : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 
 		return false;
 	}
@@ -940,7 +992,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Error while converting texture image format : \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Error while converting texture image format : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 
 		return false;
 	}
@@ -956,7 +1008,7 @@ bool USlCameraProxy::RetrieveMeasure(void* Mat, ESlMeasure MeasureType, ESlMemor
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Error while retrieving texture measure : \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Error while retrieving texture measure : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 	}
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
@@ -1047,30 +1099,59 @@ void USlCameraProxy::EnableGrabThread(bool bEnable)
 	}
 }
 
-void USlCameraProxy::EnableAIThread(bool bEnable)
+void USlCameraProxy::EnableObjectDetectionThread(bool bEnable)
 {
 	if (bEnable)
 	{
-		if (AIWorker)
+		if (ObjectDetectionWorker)
 		{
 			return;
 		}
 
-		AIWorker = new FSlAIDetectionRunnable();
-		AIWorker->Start(0.001f);
+		ObjectDetectionWorker = new FSlObjectDetectionRunnable();
+		ObjectDetectionWorker->Start(0.001f);
 
 		//OnAIhreadEnabled.Broadcast(true);
 	}
 	else
 	{
-		if (!AIWorker)
+		if (!ObjectDetectionWorker)
 		{
 			return;
 		}
 
-		AIWorker->EnsureCompletion();
-		delete AIWorker;
-		AIWorker = nullptr;
+		ObjectDetectionWorker->EnsureCompletion();
+		delete ObjectDetectionWorker;
+		ObjectDetectionWorker = nullptr;
+
+		//OnAIWorkerThreadEnabled.Broadcast(false);
+	}
+}
+
+void USlCameraProxy::EnableBodyTrackingThread(bool bEnable)
+{
+	if (bEnable)
+	{
+		if (BodyTrackingWorker)
+		{
+			return;
+		}
+
+		BodyTrackingWorker = new FSlBodyTrackingRunnable();
+		BodyTrackingWorker->Start(0.001f);
+
+		//OnAIhreadEnabled.Broadcast(true);
+	}
+	else
+	{
+		if (!BodyTrackingWorker)
+		{
+			return;
+		}
+
+		BodyTrackingWorker->EnsureCompletion();
+		delete BodyTrackingWorker;
+		BodyTrackingWorker = nullptr;
 
 		//OnAIWorkerThreadEnabled.Broadcast(false);
 	}
@@ -1284,7 +1365,7 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 
 	ObjectDetectionParameters = ODParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
 
 	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
 
@@ -1297,18 +1378,56 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 	SL_SCOPE_LOCK(Lock, GrabSection)
 
 		SL_ObjectDetectionParameters ODParams = sl::unreal::ToSlType(ObjectDetectionParameters);
-		ErrorCode = (SL_ERROR_CODE)sl_enable_objects_detection(CameraID, &ODParams);
+		ErrorCode = (SL_ERROR_CODE)sl_enable_object_detection(CameraID, &ODParams);
 	SL_SCOPE_UNLOCK
 
 	bObjectDetectionEnabled = (ErrorCode == SL_ERROR_CODE_SUCCESS);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't enable object detection: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't enable object detection: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 	}
 
-	OnObjectDetectionEnabled.Broadcast(bObjectDetectionEnabled, (ESlErrorCode)ErrorCode);
+	OnObjectDetectionEnabled.Broadcast(bObjectDetectionEnabled, sl::unreal::ToUnrealType(ErrorCode));
 	return bObjectDetectionEnabled;
+}
+
+bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParameters) {
+	SL_ERROR_CODE ErrorCode;
+
+
+	BodyTrackingParameters = BTParameters;
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel, (SL_BODY_FORMAT)BodyTrackingParameters.BodyFormat);
+
+	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+
+	if (!ai_model_status->optimized)
+	{
+		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
+		//return false;
+	}
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		SL_BodyTrackingParameters BTParams = sl::unreal::ToSlType(BodyTrackingParameters);
+	ErrorCode = (SL_ERROR_CODE)sl_enable_body_tracking(CameraID, &BTParams);
+	SL_SCOPE_UNLOCK
+
+		bBodyTrackingEnabled = (ErrorCode == SL_ERROR_CODE_SUCCESS);
+
+	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
+	{
+		SL_CAMERA_PROXY_LOG_E("Can't enable BodyTracking: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+	}
+
+	OnBodyTrackingEnabled.Broadcast(bBodyTrackingEnabled, sl::unreal::ToUnrealType(ErrorCode));
+	return bBodyTrackingEnabled;
+}
+
+FSlBodyTrackingRuntimeParameters USlCameraProxy::GetBodyTrackingRuntimeParameters() {
+	FSlBodyTrackingRuntimeParameters fslrtp = FSlBodyTrackingRuntimeParameters();
+	fslrtp.DetectionConfidenceThreshold = BodyTrackingRuntimeParameters.detection_confidence_threshold;
+	fslrtp.MinimumKeypointsThreshold = BodyTrackingRuntimeParameters.minimum_keypoints_threshold;
+	return fslrtp;
 }
 
 bool USlCameraProxy::IsObjectDetectionEnabled()
@@ -1319,21 +1438,36 @@ bool USlCameraProxy::IsObjectDetectionEnabled()
 void USlCameraProxy::DisableObjectDetection()
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		sl_disable_objects_detection(CameraID);
+		sl_disable_object_detection(CameraID, 0, false);
 	SL_SCOPE_UNLOCK
 
 	bObjectDetectionEnabled = false;
 }
 
+void USlCameraProxy::DisableBodyTracking()
+{
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		sl_disable_body_tracking(CameraID, 0, false);
+	SL_SCOPE_UNLOCK
+
+	bBodyTrackingEnabled = false;
+}
+
+bool USlCameraProxy::IsBodyTrackingEnabled()
+{
+	return bBodyTrackingEnabled;
+}
+
 bool USlCameraProxy::RetrieveObjects()
 {
 	SL_Objects sl_objects;
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ObjectDetectionRuntimeParameters, &sl_objects);
-	objects = sl::unreal::ToUnrealType(sl_objects, ObjectDetectionParameters.BodyFormat);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ObjectDetectionRuntimeParameters, &sl_objects, 0);
+	objects = sl::unreal::ToUnrealType(sl_objects);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
-		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+		SL_CAMERA_PROXY_LOG_E("Can't retrieve objects: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+		return false;
 	}
 
 	AsyncTask(ENamedThreads::GameThread, [this, sl_objects]()
@@ -1343,6 +1477,77 @@ bool USlCameraProxy::RetrieveObjects()
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
 
+bool USlCameraProxy::RetrieveBodies()
+{
+	SL_Bodies sl_bodies;
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &BodyTrackingRuntimeParameters, &sl_bodies, 0);
+	bodies = sl::unreal::ToUnrealType(sl_bodies, BodyTrackingParameters.BodyFormat);
+
+	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
+	{
+		SL_CAMERA_PROXY_LOG_E("Can't retrieve bodies: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
+		return false;
+	}
+
+	AsyncTask(ENamedThreads::GameThread, [this, sl_bodies]()
+		{
+			OnBodyTrackingRetrieved.Broadcast(bodies);
+		});
+	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
+}
+
+int USlCameraProxy::GetNumberOfKeypoints()
+{
+	if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_18)
+	{
+		return 18;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_34)
+	{
+		return 34;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_38)
+	{
+		return 38;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	{
+		return 70;
+	}
+	else
+	{
+		return 38;
+	}
+}
+
+int USlCameraProxy::GetNumberOfBones()
+{
+	if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_18)
+	{
+		return 19;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_34)
+	{
+		return 35;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_38)
+	{
+		return 37;
+	}
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	{
+		return 69;
+	}
+	else
+	{
+		return 37;
+	}
+}
+
+ESlBodyFormat USlCameraProxy::GetBodyFormat()
+{
+	return BodyTrackingParameters.BodyFormat;
+}
 
 void USlCameraProxy::SetHitTestDepthAndNormals(bool bEnableDepth, bool bEnableNormals)
 {
@@ -1431,10 +1636,10 @@ ESlErrorCode USlCameraProxy::EnableSVORecording(FSlRecordingParameters Recording
 
 		if (!bSVORecordingEnabled)
 		{
-			SL_CAMERA_PROXY_LOG_E("Can't enable SVO recording : \"%s\"", *EnumToString((ESlErrorCode)ErrorCode));
+			SL_CAMERA_PROXY_LOG_E("Can't enable SVO recording : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 		}
 
-		return (ESlErrorCode)ErrorCode;
+		return sl::unreal::ToUnrealType(ErrorCode);
 	SL_SCOPE_UNLOCK
 }
 

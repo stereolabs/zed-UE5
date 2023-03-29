@@ -507,7 +507,6 @@ bool USlGPUTextureBatch::Tick()
 							(*TextureIt)->UpdateTexture();
 						}		
 					}
-
 				}
 			}
 		);
