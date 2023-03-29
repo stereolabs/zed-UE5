@@ -1310,32 +1310,43 @@ extern "C" {
 
     /**
      * \brief Add GNSS that will be used by fusion for computing fused pose.
+     * \param out [in]: the current GNSS data
+     * \param radian [in] : true if the gnssdata is set in radian
      */
-    INTERFACE_API void sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data);
+    INTERFACE_API void sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data, bool radian);
 
     /**
-     * \brief disable the positional tracking
+     * @brief returns the current GNSS data
+     * \param out [out]: the current GNSS data
+     * \param radian [in] : true if the gnss data is set in radian
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data);
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data, bool radian);
 
     /**
-     * \brief disable the positional tracking
+     * @brief returns the current GeoPose
+     * \param pose [out]: the current GeoPose
+     * \param radian [in] : true if the geopose is set in radian.
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose);
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
 
     /**
-     * \brief disable the positional tracking
+     * \brief Convert latitude / longitude into position in sl::Fusion coordinate system.
+     * \param in: the current GeoPose
+     * \param out [out]: the current Pose
+     * \param radian [in] : true if the geopose is set in radian.
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out);
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
 
     /**
-     * \brief disable the positional tracking
+     * @brief returns the current GeoPose
+     * \param pose [out]: the current GeoPose
+     * \param radian [in] : true if the geopose is set in radian.
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out);
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
 
 	/**
 	\brief Close Multi Camera instance.

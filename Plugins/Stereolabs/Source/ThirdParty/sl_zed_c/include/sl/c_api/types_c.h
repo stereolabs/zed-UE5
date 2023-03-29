@@ -1143,6 +1143,13 @@ struct SL_RuntimeParameters
 	\n default : true
 	 */
 	bool enable_depth;
+        
+        /**
+        Defines if the depth map should be completed or not, similar to the removed SENSING_MODE::FILL
+        \warning Enabling this will override the confidence values confidence_threshold and texture_confidence_threshold as well as remove_saturated_areas
+         */
+	bool enable_fill_mode;
+        
 	/**
 	Threshold to reject depth values based on their confidence.
 	\n Each depth pixel has a corresponding confidence. (\ref MEASURE "MEASURE_CONFIDENCE"), the confidence range is [1,100].
@@ -1735,7 +1742,6 @@ struct SL_ObjectDetectionRuntimeParameters
 };
 
 /**
-\class BodyTrackingParameters
 \brief Sets the object detection parameters.
 
 The default constructor sets all parameters to their default settings.
@@ -1824,8 +1830,6 @@ struct SL_BodyTrackingParameters {
 };
 
 /**
-\class BodyTrackingRuntimeParameters
-\ingroup Object_group
 \brief Sets the object detection runtime parameters.
 
 The default constructor sets all parameters to their default settings.
@@ -2449,6 +2453,14 @@ struct SL_GNSSData
 	double altitude_std;
 };
 
+struct SL_LatLng
+{
+	double latitude;
+	double longitude;
+	double altitude;
+};
+
+
 struct SL_GeoPose
 {
 	struct SL_Vector3 translation;
@@ -2456,12 +2468,7 @@ struct SL_GeoPose
 	float pose_covariance[36];
 	double horizontal_accuracy;
 	double vertical_accuracy;
-	double latidude;
-	double longitude;
-	double altitude;
-	double east;
-	double down;
-	double north;
+	struct SL_LatLng latlng_coordinates;
 	double heading;
 };
 
@@ -2471,14 +2478,6 @@ struct SL_ECEF
 	double y;
 	double z;
 };
-
-struct SL_LatLng
-{
-	double latitude;
-	double longitude;
-	double altitude;
-};
-
 struct SL_UTM
 {
 	double northing;
