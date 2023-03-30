@@ -22,7 +22,6 @@ FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPo
     return (FCompactPoseBoneIndex)INDEX_NONE;
 }
 
-
 void FAnimNode_ZEDPose::PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames) 
 {
     for (auto & i : SourceBoneNames)
@@ -323,7 +322,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
 FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
 {
-
 }
 
 void FAnimNode_ZEDPose::OnInitializeAnimInstance(const FAnimInstanceProxy* InProxy, const UAnimInstance* InAnimInstance)
