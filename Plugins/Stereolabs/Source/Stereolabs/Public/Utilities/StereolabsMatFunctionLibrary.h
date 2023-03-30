@@ -54,7 +54,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode UpdateCPUFromGPU(UPARAM(ref) FSlMat& Mat)
 	{
-		return (ESlErrorCode)sl_mat_update_cpu_from_gpu(Mat.Mat);
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_update_cpu_from_gpu(Mat.Mat));
 	}
 
 	/*
@@ -66,7 +66,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode UpdateGPUFromCPU(UPARAM(ref) FSlMat& Mat)
 	{
-		return (ESlErrorCode)sl_mat_update_gpu_from_cpu(Mat.Mat);
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_update_gpu_from_cpu(Mat.Mat));
 	}
 
 	/*
@@ -80,7 +80,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 		static ESlErrorCode CopyTo(const  FSlMat& Mat, UPARAM(ref) FSlMat& Dst, ESlCopyType CopyType = ESlCopyType::CT_CPUToCPU)
 	{
-		return (ESlErrorCode)sl_mat_copy_to(Mat.Mat, Dst.Mat, (SL_COPY_TYPE)CopyType);
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_copy_to(Mat.Mat, Dst.Mat, (SL_COPY_TYPE)CopyType));
 	}
 
 	/*
@@ -94,7 +94,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetFrom(UPARAM(ref) FSlMat& Mat, const FSlMat& Src, ESlCopyType CopyType = ESlCopyType::CT_CPUToCPU)
 	{
-		return (ESlErrorCode)sl_mat_set_from(Mat.Mat, Src.Mat, (SL_COPY_TYPE)CopyType);
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_from(Mat.Mat, Src.Mat, (SL_COPY_TYPE)CopyType));
 	}
 
 	/*
@@ -107,7 +107,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode Read(UPARAM(ref) FSlMat& Mat, const FString& Path)
 	{
-		return (ESlErrorCode)sl_mat_read(Mat.Mat, (TCHAR_TO_UTF8(*Path)));
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_read(Mat.Mat, (TCHAR_TO_UTF8(*Path))));
 	}
 
 	/*
@@ -120,7 +120,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode Write(UPARAM(ref) FSlMat& Mat, const FString& Path)
 	{
-		return (ESlErrorCode)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path)));
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path))));
 	}
 
 	//TODO
@@ -649,6 +649,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode Clone(UPARAM(ref) FSlMat& Mat, UPARAM(ref) FSlMat& Src)
 	{
-		return (ESlErrorCode)sl_mat_clone(Mat.Mat, Src.Mat);
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_clone(Mat.Mat, Src.Mat));
 	}
 };

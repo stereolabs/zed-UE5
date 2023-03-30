@@ -109,6 +109,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
 
+	/* Body Tracking parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlBodyTrackingParameters BodyTrackingParameters;
+
+	/* Body Tracking runtime parameters*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlBodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
+
 	/** Camera settings */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlVideoSettings CameraSettings;

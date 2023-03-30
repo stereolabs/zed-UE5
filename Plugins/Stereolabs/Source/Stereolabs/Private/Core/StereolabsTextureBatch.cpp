@@ -121,7 +121,6 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 			USlTexture* Texture = *TextureIt;
 			FIntPoint Resolution(Texture->Width, Texture->Height);
 
-#if WITH_EDITOR
 			bool bSuccess;
 
 			if (Texture->IsTypeOf(ESlTextureType::TT_Measure))
@@ -147,26 +146,6 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 			{
 				SL_LOG_E(SlTextureBatch, "Retrieve of texture %s for the batch %s failed.", *Texture->Name.ToString(), *Name.ToString());
 			}
-#else
-			if (Texture->IsTypeOf(ESlTextureType::TT_Measure))
-			{
-				SL_MAT_TYPE MeasureType = sl::unreal::MeasureToMatType((SL_MEASURE)(static_cast<USlMeasureTexture*>(Texture)->MeasureType));
-				if (!Buffers[0]->Mats[TextureIt.GetIndex()]) {
-					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MeasureType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
-				}
-
-				GSlCameraProxy->RetrieveMeasure(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), Resolution);
-			}
-			else
-			{
-				SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(static_cast<USlViewTexture*>(Texture)->ViewType));
-				if (!Buffers[0]->Mats[TextureIt.GetIndex()]) {
-					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
-				}
-
-				GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution, static_cast<USlViewTexture*>(Texture)->ViewFormat);
-			}
-#endif
 
 		}
 
@@ -310,7 +289,6 @@ bool USlTextureBatch::Tick()
 
 			for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 			{
-#if WITH_EDITOR
 				USlTexture* Texture = *TextureIt;
 
 				bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
@@ -319,9 +297,6 @@ bool USlTextureBatch::Tick()
 				{
 					SL_LOG_E(SlTextureBatch, "Retrieve of texture %s for the batch %s failed.", *Texture->Name.ToString(), *Name.ToString());
 				}
-#else
-				GSlCameraProxy->RetrieveTexture(*TextureIt);
-#endif
 			}
 		SL_SCOPE_UNLOCK
 
@@ -497,7 +472,6 @@ bool USlGPUTextureBatch::Tick()
 
 					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 					{
-#if WITH_EDITOR
 						USlTexture* Texture = *TextureIt;
 
 						bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
@@ -509,12 +483,7 @@ bool USlGPUTextureBatch::Tick()
 						else
 						{
 							(*TextureIt)->UpdateTexture();
-						}
-#else
-						GSlCameraProxy->RetrieveTexture(*TextureIt);
-
-						(*TextureIt)->UpdateTexture();
-#endif			
+						}		
 					}
 
 					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
@@ -525,7 +494,6 @@ bool USlGPUTextureBatch::Tick()
 				{
 					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 					{
-#if WITH_EDITOR
 						USlTexture* Texture = *TextureIt;
 
 						bool bSuccess = GSlCameraProxy->RetrieveTexture(Texture);
@@ -537,14 +505,8 @@ bool USlGPUTextureBatch::Tick()
 						else
 						{
 							(*TextureIt)->UpdateTexture();
-						}
-#else
-						GSlCameraProxy->RetrieveTexture(*TextureIt);
-
-						(*TextureIt)->UpdateTexture();
-#endif			
+						}		
 					}
-
 				}
 			}
 		);

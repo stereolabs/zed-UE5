@@ -262,7 +262,7 @@ namespace sl
 				case sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
 					return ESlErrorCode::EC_SVOUnsupportedCompression;
 				case sl::ERROR_CODE::END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-					return ESlErrorCode::EC_SVOEndOfSVOFile;
+					return ESlErrorCode::EC_EndOfSVOFile;
 				case sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
 					return ESlErrorCode::EC_InvalidCoordinateSystem;
 				case sl::ERROR_CODE::INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
@@ -309,6 +309,89 @@ namespace sl
 
 					return (ESlErrorCode)0;
 				}
+			}
+		}
+
+		FORCEINLINE ESlErrorCode ToUnrealType(SL_ERROR_CODE SlType)
+		{
+			switch (SlType)
+			{
+			case -1:
+				return ESlErrorCode::EC_CameraRebooting;
+			case SL_ERROR_CODE_SUCCESS: /**< Standard code for successful behavior.*/
+				return ESlErrorCode::EC_Success;
+			case SL_ERROR_CODE_FAILURE: /**< Standard code for unsuccessful behavior.*/
+				return ESlErrorCode::EC_Failure;
+			case SL_ERROR_CODE_NO_GPU_COMPATIBLE: /**< No GPU found or CUDA capability of the device is not supported.*/
+				return ESlErrorCode::EC_NoGpuCompatible;
+			case SL_ERROR_CODE_NOT_ENOUGH_GPU_MEMORY: /**< Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
+				return ESlErrorCode::EC_NotEnoughGPUMemory;
+			case SL_ERROR_CODE_CAMERA_NOT_DETECTED: /**< The ZED camera is not plugged or detected.*/
+				return ESlErrorCode::EC_CameraNotDetected;
+			case SL_ERROR_CODE_SENSORS_NOT_INITIALIZED: /**< The Object detection module is only compatible with the ZED 2*/
+				return ESlErrorCode::EC_SensorNotInitialized;
+			case SL_ERROR_CODE_SENSORS_NOT_AVAILABLE: /**< The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
+				return ESlErrorCode::EC_SensorNotAvailable;
+			case SL_ERROR_CODE_INVALID_RESOLUTION: /**< In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
+				return ESlErrorCode::EC_InvalidResolution;
+			case SL_ERROR_CODE_LOW_USB_BANDWIDTH: /**< This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
+				return ESlErrorCode::EC_LowUSBBandwidth;
+			case SL_ERROR_CODE_CALIBRATION_FILE_NOT_AVAILABLE: /**< ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
+				return ESlErrorCode::EC_CalibrationFileNotAvailable;
+			case SL_ERROR_CODE_INVALID_CALIBRATION_FILE: /**< ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
+				return ESlErrorCode::EC_InvalidCalibrationFile;
+			case SL_ERROR_CODE_INVALID_SVO_FILE: /**< The provided SVO file is not valid.*/
+				return ESlErrorCode::EC_InvalidSVOFile;
+			case SL_ERROR_CODE_SVO_RECORDING_ERROR: /**< An recorder related error occurred (not enough free storage, invalid file).*/
+				return ESlErrorCode::EC_SVORecordingError;
+			case SL_ERROR_CODE_SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
+				return ESlErrorCode::EC_SVOUnsupportedCompression;
+			case SL_ERROR_CODE_END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
+				return ESlErrorCode::EC_EndOfSVOFile;
+			case SL_ERROR_CODE_INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
+				return ESlErrorCode::EC_InvalidCoordinateSystem;
+			case SL_ERROR_CODE_INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
+				return ESlErrorCode::EC_InvalidFirmware;
+			case SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS: /**< An invalid parameter has been set for the function. */
+				return ESlErrorCode::EC_InvalidFunctionParameters;
+			case SL_ERROR_CODE_CUDA_ERROR: /**< In grab() only, a CUDA error has been detected in the process. Activate verbose in sl::Camera::open for more info.*/
+				return ESlErrorCode::EC_CUDAError;
+			case SL_ERROR_CODE_CAMERA_NOT_INITIALIZED: /**< In grab() only, ZED SDK is not initialized. Probably a missing call to sl::Camera::open.*/
+				return ESlErrorCode::EC_CameraNotInitialized;
+			case SL_ERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE: /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
+				return ESlErrorCode::EC_NVIDIADriverOutOfDate;
+			case SL_ERROR_CODE_INVALID_FUNCTION_CALL: /**< The call of the function is not valid in the current context. Could be a missing call of sl::Camera::open. */
+				return ESlErrorCode::EC_InvalidFunctionCall;
+			case SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION: /**< The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
+				return ESlErrorCode::EC_CorruptedSDKInstallation;
+			case SL_ERROR_CODE_INCOMPATIBLE_SDK_VERSION: /**< The installed SDK is incompatible SDK used to compile the program. */
+				return ESlErrorCode::EC_IncompatibleSDKVersion;
+			case SL_ERROR_CODE_INVALID_AREA_FILE: /**< The given area file does not exist, check the path. */
+				return ESlErrorCode::EC_InvalidAreaFile;
+			case SL_ERROR_CODE_INCOMPATIBLE_AREA_FILE: /**< The area file does not contain enought data to be used or the sl::DEPTH_MODE used during the creation of the area file is different from the one currently set. */
+				return ESlErrorCode::EC_IncompatibleAreaFile;
+			case SL_ERROR_CODE_CAMERA_FAILED_TO_SETUP: /**< Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
+				return ESlErrorCode::EC_CameraFailedToSetup;
+			case SL_ERROR_CODE_CAMERA_DETECTION_ISSUE: /**< Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
+				return ESlErrorCode::EC_CameraDetectionIssue;
+			case SL_ERROR_CODE_CANNOT_START_CAMERA_STREAM: /**< Cannot start camera stream. Make sure your camera is not already used by another process or blocked by firewall or antivirus.*/
+				return ESlErrorCode::EC_CameraStreamFailedToStart;
+			case SL_ERROR_CODE_NO_GPU_DETECTED: /**< No GPU found, CUDA is unable to list it. Can be a driver/reboot issue.*/
+				return ESlErrorCode::EC_NoGpuDetected;
+			case SL_ERROR_CODE_PLANE_NOT_FOUND: /**< Plane not found, either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given*/
+				return ESlErrorCode::EC_NoplaneFound;
+			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA: /**< The Object detection module is not compatible with this camera model*/
+				return ESlErrorCode::EC_ModuleNotCompatibleWithCamera;
+			case SL_ERROR_CODE_MOTION_SENSORS_REQUIRED: /**< The module needs the sensors to be enabled (see InitParameters::disable_sensors) */
+				return ESlErrorCode::EC_MotionSensorsRequired;
+			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
+				return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
+
+				return (ESlErrorCode)0;
+			}
 			}
 		}
 
@@ -564,26 +647,6 @@ namespace sl
 		}
 
 		/*
-	 	 * Convert from sl::SENSING_MODE to ESlSensingMode
-	 	 */
-		FORCEINLINE ESlSensingMode ToUnrealType(sl::SENSING_MODE SlType)
-		{
-			switch (SlType)
-			{
-				case sl::SENSING_MODE::FILL:
-					return ESlSensingMode::SM_Fill;
-				case sl::SENSING_MODE::STANDARD:
-					return ESlSensingMode::SM_Standard;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::SENSING_MODE entry %u"), (uint32)SlType);
-
-					return (ESlSensingMode)0;
-				}
-			}
-		}
-
-		/*
 		 * Convert from ESlTimeReference to sl::TIME_REFERENCE
 		 */
 		FORCEINLINE sl::TIME_REFERENCE ToSlType(ESlTimeReference UnrealType)
@@ -682,8 +745,8 @@ namespace sl
 					return sl::DEPTH_MODE::NONE;
 				case ESlDepthMode::DM_Performance:
 					return sl::DEPTH_MODE::PERFORMANCE;
-				case ESlDepthMode::DM_Quality:
-					return sl::DEPTH_MODE::QUALITY;
+				//case ESlDepthMode::DM_NeuralFast:
+				//	return sl::DEPTH_MODE::NEURAL_FAST;
 				case ESlDepthMode::DM_Ultra:
 					return sl::DEPTH_MODE::ULTRA;
 				case ESlDepthMode::DM_Neural:
@@ -851,7 +914,7 @@ namespace sl
 					return sl::ERROR_CODE::SVO_RECORDING_ERROR;
 				case ESlErrorCode::EC_SVOUnsupportedCompression : /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
 					return sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION;
-				case ESlErrorCode::EC_SVOEndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
+				case ESlErrorCode::EC_EndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
 					return sl::ERROR_CODE::END_OF_SVOFILE_REACHED;
 				case ESlErrorCode::EC_InvalidCoordinateSystem: /**< The requested coordinate system is not available.*/
 					return sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM ;
@@ -1235,26 +1298,6 @@ namespace sl
 					ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingResolution entry %u"), (uint32)UnrealType);
 
 					return (sl::SpatialMappingParameters::MAPPING_RESOLUTION)0;
-				}
-			}
-		}
-
-		/*
-	 	 * Convert from ESlSensingMode to sl::SENSING_MODE
-	 	 */
-		FORCEINLINE sl::SENSING_MODE ToSlType(ESlSensingMode UnrealType)
-		{
-			switch (UnrealType)
-			{
-				case ESlSensingMode::SM_Fill:
-					return sl::SENSING_MODE::FILL;
-				case ESlSensingMode::SM_Standard:
-					return sl::SENSING_MODE::STANDARD;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSensingMode entry %u"), (uint32)UnrealType);
-
-					return (sl::SENSING_MODE)0;
 				}
 			}
 		}
@@ -1692,7 +1735,7 @@ namespace sl
 		}
 
 
-		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData, ESlBodyFormat BodyFormat)
+		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData)
 		{
 			FSlObjectData ObjectData;
 			
@@ -1722,45 +1765,113 @@ namespace sl
 				ObjectData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
 			}
 
-			int NbKP = BodyFormat == ESlBodyFormat::BF_POSE_34 ? 34 : 18;
-
-			for (int i = 0; i < NbKP; i++) {
-
-				ObjectData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
-				ObjectData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
-				ObjectData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
-				ObjectData.LocalOrientationPerJoint.Add(ToUnrealType(SlData.local_orientation_per_joint[i]));
-			}
-
 			for (int i = 0; i < 8; i++) {
 
 				ObjectData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
 			}
 
 			ObjectData.HeadPosition = ToUnrealType(SlData.head_position);
-
-			ObjectData.KeypointConfidence.Append(&SlData.keypoint_confidence[0], 34);
-
-			ObjectData.GlobalRootOrientation = ToUnrealType(SlData.global_root_orientation);
 			
 			return ObjectData;
 		}
 
-		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData, ESlBodyFormat BodyFormat)
+		FORCEINLINE FSlObjects ToUnrealType(const SL_Objects SlData)
 		{
 			FSlObjects objects;
 
-			objects.Timestamp = FSlTimestamp(SlData.image_ts);
+			objects.Timestamp = FSlTimestamp(SlData.timestamp);
 			objects.bIsNew = (bool)SlData.is_new;
 
 
-			objects.ObjectsList.SetNum(SlData.nb_object);
-			for (int i = 0; i < SlData.nb_object; i++) {
-				objects.ObjectsList[i] = sl::unreal::ToUnrealType(SlData.object_list[i], BodyFormat);
+			objects.ObjectList.SetNum(SlData.nb_objects);
+			for (int i = 0; i < SlData.nb_objects; i++) {
+				objects.ObjectList[i] = sl::unreal::ToUnrealType(SlData.object_list[i]);
 			}
 			objects.bIsTracked = (bool)SlData.is_tracked;
 
 			return objects;
+		}
+
+		FORCEINLINE FSlBodyData ToUnrealType(const SL_BodyData SlData, ESlBodyFormat BodyFormat)
+		{
+			FSlBodyData BodyData;
+
+			BodyData.Id = SlData.id;
+			BodyData.UniqueObjectId = FString(TCHAR_TO_UTF8(SlData.unique_object_id));
+			BodyData.TrackingState = (ESlObjectTrackingState)SlData.tracking_state;
+			BodyData.ActionState = (ESlObjectActionState)SlData.action_state;
+			BodyData.Position = ToUnrealType(SlData.position);
+			BodyData.Velocity = ToUnrealType(SlData.velocity);
+			BodyData.Dimensions = ToUnrealType(SlData.dimensions);
+			BodyData.PositionCovariance.SetNumUninitialized(6);
+			BodyData.PositionCovariance.Append(&SlData.position_covariance[0], 6);
+
+			for (int i = 0; i < 4; i++)
+			{
+				BodyData.BoundingBox2D.Add(ToUnrealType(SlData.bounding_box_2d[i]));
+			}
+
+			BodyData.Mask = SlData.mask;
+			BodyData.Confidence = SlData.confidence;
+
+			for (int i = 0; i < 8; i++) {
+
+				BodyData.BoundingBox.Add(ToUnrealType(SlData.bounding_box[i]));
+				BodyData.HeadBoundingBox.Add(ToUnrealType(SlData.head_bounding_box[i]));
+
+			}
+
+			int NbKP = 34;
+
+			if (BodyFormat == ESlBodyFormat::BF_BODY_34)
+			{
+				NbKP = 34;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_18)
+			{
+				NbKP = 18;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_38)
+			{
+				NbKP = 38;
+			}
+			else if (BodyFormat == ESlBodyFormat::BF_BODY_70)
+			{
+				NbKP = 70;
+			}
+
+			for (int i = 0; i < NbKP; i++)
+			{
+				BodyData.Keypoint2D.Add(ToUnrealType(SlData.keypoint_2d[i]));
+				BodyData.Keypoint.Add(ToUnrealType(SlData.keypoint[i]));
+				BodyData.LocalPositionPerJoint.Add(ToUnrealType(SlData.local_position_per_joint[i]));
+				BodyData.LocalOrientationPerJoint.Add(ToUnrealType(SlData.local_orientation_per_joint[i]));
+			}
+
+			BodyData.HeadPosition = ToUnrealType(SlData.head_position);
+
+			BodyData.KeypointConfidence.Append(&SlData.keypoint_confidence[0], NbKP);
+
+			BodyData.GlobalRootOrientation = ToUnrealType(SlData.global_root_orientation);
+
+			return BodyData;
+		}
+
+		FORCEINLINE FSlBodies ToUnrealType(const SL_Bodies SlData, ESlBodyFormat BodyFormat)
+		{
+			FSlBodies bodies;
+
+			bodies.Timestamp = FSlTimestamp(SlData.timestamp);
+			bodies.bIsNew = (bool)SlData.is_new;
+
+
+			bodies.BodyList.SetNum(SlData.nb_bodies);
+			for (int i = 0; i < SlData.nb_bodies; i++) {
+				bodies.BodyList[i] = sl::unreal::ToUnrealType(SlData.body_list[i], BodyFormat);
+			}
+			bodies.bIsTracked = (bool)SlData.is_tracked;
+
+			return bodies;
 		}
 
 		/*
@@ -2038,13 +2149,13 @@ namespace sl
 		{
 			struct SL_ObjectDetectionParameters ODParameters;
 
+			ODParameters.instance_module_id = 0;
+
 			ODParameters.enable_tracking = UnrealData.bEnableTracking;
 			ODParameters.image_sync = UnrealData.bImageSync;
-			ODParameters.enable_mask_output = UnrealData.bEnableMaskOutput;
-			ODParameters.model = (SL_DETECTION_MODEL)UnrealData.DetectionModel;
-			ODParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
-			ODParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
+			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
+			ODParameters.detection_model = (SL_OBJECT_DETECTION_MODEL)UnrealData.DetectionModel;
 
 			SL_BatchParameters batchParameters;
 			batchParameters.enable = UnrealData.BatchParameters.bEnable;
@@ -2056,6 +2167,7 @@ namespace sl
 			ODParameters.batch_parameters = batchParameters;
 			ODParameters.filtering_mode = (SL_OBJECT_FILTERING_MODE)UnrealData.FilteringMode;
 			ODParameters.prediction_timeout_s = UnrealData.PredictionTimeout_s;
+			ODParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;
 
 			return ODParameters;
 		}
@@ -2073,9 +2185,35 @@ namespace sl
 				ODParameters.object_confidence_threshold[conf.Key] = conf.Value;
 			}
 
-			ODParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
-
 			return ODParameters;
+		}
+
+		FORCEINLINE SL_BodyTrackingParameters ToSlType(const FSlBodyTrackingParameters& UnrealData)
+		{
+			struct SL_BodyTrackingParameters BTParameters;
+
+			BTParameters.enable_tracking = UnrealData.bEnableTracking;
+			BTParameters.image_sync = UnrealData.bImageSync;
+			BTParameters.enable_segmentation = UnrealData.bEnableSegmentation;
+			BTParameters.max_range = UnrealData.MaxRange;
+			BTParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;
+			BTParameters.prediction_timeout_s = UnrealData.PredictionTimeout_s;
+			BTParameters.detection_model = (SL_BODY_TRACKING_MODEL)UnrealData.DetectionModel;
+			BTParameters.enable_body_fitting = UnrealData.bEnableBodyFitting;
+			BTParameters.body_format = (SL_BODY_FORMAT)UnrealData.BodyFormat;
+			BTParameters.body_selection = (SL_BODY_KEYPOINTS_SELECTION)UnrealData.BodySelection;
+			BTParameters.instance_module_id = 0;
+
+			return BTParameters;
+		}
+
+		FORCEINLINE SL_BodyTrackingRuntimeParameters ToSlType(const FSlBodyTrackingRuntimeParameters& UnrealData)
+		{
+			struct SL_BodyTrackingRuntimeParameters BTParameters;
+			BTParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
+			BTParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
+
+			return BTParameters;
 		}
 
 		/*
@@ -2089,28 +2227,10 @@ namespace sl
 			RuntimeParameters.confidence_threshold = UnrealData.ConfidenceThreshold;
 			RuntimeParameters.texture_confidence_threshold = UnrealData.TextureConfidenceThreshold;
 			RuntimeParameters.reference_frame = (SL_REFERENCE_FRAME)UnrealData.ReferenceFrame;
-			RuntimeParameters.sensing_mode = (SL_SENSING_MODE)UnrealData.SensingMode;
+			RuntimeParameters.remove_saturated_areas = UnrealData.bRemoveSaturatedAreas;
 
 			return RuntimeParameters;
 		}
-
-		/*
-		 * Convert from FSlSpatialMappingParameters to sl::SpatialMappingParameters
-		 */
-		//FORCEINLINE sl::SpatialMappingParameters ToSlType(const FSlSpatialMappingParameters& UnrealData)
-		//{
-		//	sl::SpatialMappingParameters SpatialMappingParameters;
-
-		//	SpatialMappingParameters.max_memory_usage = UnrealData.MaxMemoryUsage;
-		//	SpatialMappingParameters.save_texture = UnrealData.bSaveTexture;
-		//	SpatialMappingParameters.set(sl::unreal::ToSlType(UnrealData.PresetRange));
-		//	SpatialMappingParameters.set(sl::unreal::ToSlType(UnrealData.PresetResolution));
-		//  SpatialMappingParameters.use_chunk_only = UnrealData.GetUseChunksOnly();
-		//	SpatialMappingParameters.reverse_vertex_order = true;
-
-		//	return SpatialMappingParameters;
-		//}
-
 
 		FORCEINLINE float GetMappingRange(ESlSpatialMappingRange mapping_range)
 		{
@@ -2251,18 +2371,54 @@ namespace sl
 			return CameraInformation;
 		}
 
-		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_DETECTION_MODEL& m_in) {
+		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_OBJECT_DETECTION_MODEL& m_in) {
 			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;
 			switch (m_in) {
-			case SL_DETECTION_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
-			case SL_DETECTION_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE: m_out = SL_AI_MODELS_MULTI_CLASS_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM:   m_out = SL_AI_MODELS_MULTI_CLASS_MEDIUM_DETECTION; break;
-			case SL_DETECTION_MODEL_MULTI_CLASS_BOX:          m_out = SL_AI_MODELS_MULTI_CLASS_DETECTION; break;
-			case SL_DETECTION_MODEL_PERSON_HEAD_BOX:          m_out = SL_AI_MODELS_PERSON_HEAD_DETECTION; break;
-			case SL_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE: m_out = SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION; break;
-			case SL_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE: m_out = SL_AI_MODELS_MULTI_CLASS_ACCURATE_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_MEDIUM:   m_out = SL_AI_MODELS_MULTI_CLASS_MEDIUM_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_FAST:          m_out = SL_AI_MODELS_MULTI_CLASS_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST:          m_out = SL_AI_MODELS_PERSON_HEAD_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE: m_out = SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION; break;
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:break;
+			}
+			return m_out;
+		}
+
+		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_BODY_TRACKING_MODEL& m_in, const SL_BODY_FORMAT body_format) {
+			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;
+			if (body_format == SL_BODY_FORMAT_BODY_18 || body_format == SL_BODY_FORMAT_BODY_34)
+			{
+				switch (m_in)
+				{
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
+				}
+			}
+			else if (body_format == SL_BODY_FORMAT_BODY_38)
+			{
+				switch (m_in)
+				{
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_38_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_38_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_38_FAST_DETECTION; break;
+				}
+			}
+			else if (body_format == SL_BODY_FORMAT_BODY_70)
+			{
+				switch (m_in) {
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION; break;
+				}
+			}
+			else
+			{
+				switch (m_in) {
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE:      m_out = SL_AI_MODELS_HUMAN_BODY_ACCURATE_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM:        m_out = SL_AI_MODELS_HUMAN_BODY_MEDIUM_DETECTION; break;
+				case SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST:          m_out = SL_AI_MODELS_HUMAN_BODY_FAST_DETECTION; break;
+				}
 			}
 			return m_out;
 		}

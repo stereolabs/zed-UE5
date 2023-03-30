@@ -8,7 +8,7 @@
 DECLARE_LOG_CATEGORY_EXTERN(SlAIThread, Log, All);
 
 
-class FSlAIDetectionRunnable : public FSlRunnable
+class FSlObjectDetectionRunnable : public FSlRunnable
 {
 public:
 	virtual bool Init() override;
@@ -22,6 +22,25 @@ public:
 	FDelegateHandle AIRetrieveDelegateHandle;
 
 private :
+	float Fps;
+	std::chrono::milliseconds PreviousTS;
+};
+
+
+class FSlBodyTrackingRunnable : public FSlRunnable
+{
+public:
+	virtual bool Init() override;
+	virtual uint32 Run() override;
+	virtual void Stop() override;
+	virtual void Exit() override;
+	virtual void Start(float Frequency) override;
+
+	void RetrieveBodies(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp);
+
+	FDelegateHandle AIRetrieveDelegateHandle;
+
+private:
 	float Fps;
 	std::chrono::milliseconds PreviousTS;
 };

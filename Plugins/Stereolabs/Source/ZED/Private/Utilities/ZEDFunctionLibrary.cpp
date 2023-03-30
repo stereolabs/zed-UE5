@@ -666,7 +666,6 @@ bool UZEDFunctionLibrary::HitTestReal(AZEDPlayerController* PlayerController, co
 bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerController, const TArray<FVector>& Locations, const TArray<float>& HitThresholds, bool bGetNormal, bool bHitIfBehind, TArray<FZEDHitResult>& HitResults)
 {
 	bool bOneThreshold = HitThresholds.Num() == 1;
-#if WITH_EDITOR
 	if (HitThresholds.Num() != 1 && HitThresholds.Num() != Locations.Num())
 	{
 		SL_LOG_W(ZEDFunctionLibrary, "Thresholds size differ from Locations size : %d - %d", HitThresholds.Num(), Locations.Num());
@@ -675,7 +674,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerContr
 
 		bOneThreshold = true;
 	}
-#endif
 
 	float ThresholdTemp = HitThresholds[0];
 	uint32 LocationsNum = Locations.Num();
@@ -749,7 +747,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsReal(AZEDPlayerController* PlayerContr
 bool UZEDFunctionLibrary::MultipleHitTestsRealOneResult(AZEDPlayerController* PlayerController, const TArray<FVector>& Locations, const TArray<float>& HitThresholds, bool bGetNormal, bool bHitIfBehind, FZEDHitResult& HitResult)
 {
 	bool bOneThreshold = HitThresholds.Num() == 1;
-#if WITH_EDITOR
 	if (HitThresholds.Num() != 1 && HitThresholds.Num() != Locations.Num())
 	{
 		SL_LOG_W(ZEDFunctionLibrary, "Thresholds size differ from Locations size : %d - %d", HitThresholds.Num(), Locations.Num());
@@ -758,7 +755,6 @@ bool UZEDFunctionLibrary::MultipleHitTestsRealOneResult(AZEDPlayerController* Pl
 
 		bOneThreshold = true;
 	}
-#endif
 
 	uint32 LocationsNum = Locations.Num();
 	float ThresholdTemp = HitThresholds[0];
@@ -868,7 +864,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 	FIntPoint ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
 	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), true);
 
-	ESlErrorCode ErrorCode = (ESlErrorCode)planeData->error_code;
+	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Plane not found"));
 		return false;
@@ -880,7 +876,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 	PlaneMeshTriangles.SetNum(65000);
 	int NbVertices, NbTriangles = 0;
 
-	ErrorCode = (ESlErrorCode)sl_convert_hitplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles);
+	ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_convert_hitplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles));
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Cannont convert plane to mesh"));
 		return false;
@@ -919,7 +915,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
 
 	SL_PlaneData* planeData = sl_find_floor_plane(CameraID, &reset_quaternion, &reset_translation, prior_rotation, prior_translation);
 
-	ESlErrorCode ErrorCode = (ESlErrorCode)planeData->error_code;
+	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Plane not found"));
 		return false;
@@ -931,7 +927,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
 	PlaneMeshTriangles.SetNum(65000);
 	int NbVertices, NbTriangles = 0;
 
-	ErrorCode = (ESlErrorCode)sl_convert_floorplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles);
+	ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_convert_floorplane_to_mesh(CameraID, PlaneMeshVertices.GetData(), PlaneMeshTriangles.GetData(), &NbVertices, &NbTriangles));
 	if (ErrorCode != ESlErrorCode::EC_Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Cannont convert plane to mesh"));
 		return false;
@@ -1018,166 +1014,3 @@ void UZEDFunctionLibrary::LatencyCorrectorAddOffset(const int offset)
 	sl::mr::latencyCorrectorAdjOffset(offset);
 }
 
-float UZEDFunctionLibrary::FromLengthToScale(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor) {
-	float ret = 0.0f;
-
-	switch (zedMannyBone) {
-	case EZED_UE_Manny_Bones::SPINE:
-		ret = boneLengths[0] * 0.016; // divide by 21+4 (length from hips to spine 2, with 4cm offset) and multiply by 10/25 (ratio of spine-spine1 on spine(more accurately sdk hips)-spine2)
-		break;
-	case EZED_UE_Manny_Bones::SPINE1:
-		ret = boneLengths[0] * (0.0176 * 2); // divide by 21+4 (length from hips to spine 2, with 4cm offset) and multiply by 11/25 (ratio of spine1-spine2 on spine(more accurately sdk hips)-spine2)
-		break;
-	case EZED_UE_Manny_Bones::SPINE2:
-		ret = boneLengths[1] / (13+4);
-		break;
-	case EZED_UE_Manny_Bones::L_TOSHOULDER:
-		ret = boneLengths[2] / 14;
-		break;
-	case EZED_UE_Manny_Bones::L_TOARM:
-		ret = boneLengths[3] / 13;
-		break;
-	case EZED_UE_Manny_Bones::L_TOFOREARM:
-		ret = boneLengths[4] / 26;
-		break;
-	case EZED_UE_Manny_Bones::L_TOHAND:
-		ret = boneLengths[5] / 29;
-		break;
-	case EZED_UE_Manny_Bones::L_TOHANDTIP:
-		ret = (boneLengths[13] + boneLengths[14]) / 20;
-		break;
-	case EZED_UE_Manny_Bones::R_TOSHOULDER:
-		ret = boneLengths[9] / 14;
-		break;
-	case EZED_UE_Manny_Bones::R_TOARM:
-		ret = boneLengths[10] / 13;
-		break;
-	case EZED_UE_Manny_Bones::R_TOFOREARM:
-		ret = boneLengths[11] / 26;
-		break;
-	case EZED_UE_Manny_Bones::R_TOHAND:
-		ret = boneLengths[12] / 29;
-		break;
-	case EZED_UE_Manny_Bones::R_TOHANDTIP:
-		ret = (boneLengths[13] + boneLengths[14]) / 20;
-		break;
-	case EZED_UE_Manny_Bones::TONECK:
-		ret = boneLengths[24] / (14+4);
-		break;
-	case EZED_UE_Manny_Bones::TOHEAD:
-		ret = boneLengths[25] / 9;
-		break;
-	case EZED_UE_Manny_Bones::L_TOUPLEG:
-		ret = boneLengths[16] / 12;
-		break;
-	case EZED_UE_Manny_Bones::L_TOLEG:
-		ret = boneLengths[17] / 46;
-		break;
-	case EZED_UE_Manny_Bones::L_TOFOOT:
-		ret = boneLengths[18] / 41;
-		break;
-	case EZED_UE_Manny_Bones::R_TOUPLEG:
-		ret = boneLengths[20] / 12;
-		break;
-	case EZED_UE_Manny_Bones::R_TOLEG:
-		ret = boneLengths[21] / 46;
-		break;
-	case EZED_UE_Manny_Bones::R_TOFOOT:
-		ret = boneLengths[22] / 41;
-		break;
-	case EZED_UE_Manny_Bones::L_TOTOEBASE:
-		ret = boneLengths[19] / 18;
-		break;
-	case EZED_UE_Manny_Bones::R_TOTOEBASE:
-		ret = boneLengths[23] / 18;
-		break;
-	}
-
-	FString logstring = FString(UE_Manny_BonesToString(zedMannyBone));
-	UE_LOG(LogTemp, Warning, TEXT("New scale for bone %s : %f"), *logstring, ret);
-
-	return ret;
-}
-
-FString UZEDFunctionLibrary::UE_Manny_BonesToString(EZED_UE_Manny_Bones bone) {
-	FString ret = "";
-
-	switch (bone) {
-	case EZED_UE_Manny_Bones::SPINE:
-		ret = "SPINE"; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
-		break;
-	case EZED_UE_Manny_Bones::SPINE1:
-		ret = "SPINE1"; // special case, since the UE skeleton has 2 bones where the SDK only has one, we divide it by two.
-		break;
-	case EZED_UE_Manny_Bones::SPINE2:
-		ret = "SPINE2";
-		break;
-	case EZED_UE_Manny_Bones::L_TOSHOULDER:
-		ret = "L_TOSHOULDER";
-		break;
-	case EZED_UE_Manny_Bones::L_TOARM:
-		ret = "L_TOARM";
-		break;
-	case EZED_UE_Manny_Bones::L_TOFOREARM:
-		ret = "L_TOFOREARM";
-		break;
-	case EZED_UE_Manny_Bones::L_TOHAND:
-		ret = "L_TOHAND";
-		break;
-	case EZED_UE_Manny_Bones::L_TOHANDTIP:
-		ret = "L_TOHANDTIP";
-		break;
-	case EZED_UE_Manny_Bones::R_TOSHOULDER:
-		ret = "R_TOSHOULDER";
-		break;
-	case EZED_UE_Manny_Bones::R_TOARM:
-		ret = "R_TOARM";
-		break;
-	case EZED_UE_Manny_Bones::R_TOFOREARM:
-		ret = "R_TOFOREARM";
-		break;
-	case EZED_UE_Manny_Bones::R_TOHAND:
-		ret = "R_TOHAND";
-		break;
-	case EZED_UE_Manny_Bones::R_TOHANDTIP:
-		ret = "R_TOHANDTIP";
-		break;
-	case EZED_UE_Manny_Bones::TONECK:
-		ret = "TONECK";
-		break;
-	case EZED_UE_Manny_Bones::TOHEAD:
-		ret = "TOHEAD";
-		break;
-	case EZED_UE_Manny_Bones::L_TOUPLEG:
-		ret = "L_TOUPLEG";
-		break;
-	case EZED_UE_Manny_Bones::L_TOLEG:
-		ret = "L_TOLEG";
-		break;
-	case EZED_UE_Manny_Bones::L_TOFOOT:
-		ret = "L_TOFOOT";
-		break;
-	case EZED_UE_Manny_Bones::R_TOUPLEG:
-		ret = "R_TOUPLEG";
-		break;
-	case EZED_UE_Manny_Bones::R_TOLEG:
-		ret = "R_TOLEG";
-		break;
-	case EZED_UE_Manny_Bones::R_TOFOOT:
-		ret = "R_TOFOOT";
-		break;
-	case EZED_UE_Manny_Bones::L_TOTOEBASE:
-		ret = "L_TOTOEBASE";
-		break;
-	case EZED_UE_Manny_Bones::R_TOTOEBASE:
-		ret = "R_TOTOEBASE";
-		break;
-	}
-
-	return ret;
-}
-
-FVector UZEDFunctionLibrary::FromLengthToScaleVector(const TArray<float>& boneLengths, EZED_UE_Manny_Bones zedMannyBone, float globalScaleFactor) {
-	FVector ret = FVector(1.0,1.0, FromLengthToScale(boneLengths, zedMannyBone, globalScaleFactor));
-	return ret;
-}

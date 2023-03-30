@@ -125,19 +125,6 @@ enum class ESlEye : uint8
 };
 
 /*
- * Threading mode selected to perform grab
- * MultiThreaded  = Grab called asynchronously at max rate
- * SingleThreaded = Grab called in game thread at game FPS rate
- */
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlThreadingMode : uint8
-{
-	TM_MultiThreaded		 UMETA(DisplayName = "MultiThreaded"),
-	TM_SingleThreaded		 UMETA(DisplayName = "SingleThreaded"),
-	TM_None					 UMETA(Hidden, DisplayName = "Unselected")
-};
-
-/*
  * SDK Memory types
  * see sl::MEM
  */
@@ -171,20 +158,10 @@ enum class ESlDepthMode : uint8
 {
 	DM_None				     UMETA(DisplayName = "None"),
 	DM_Performance			 UMETA(DisplayName = "Performance"),
-	DM_Quality				 UMETA(DisplayName = "Quality"),
+	DM_Quality		     	 UMETA(DisplayName = "Quality"),
+	//DM_NeuralFast			 UMETA(DisplayName = "NeuralFast"),
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
 	DM_Neural				 UMETA(DisplayName = "Neural")
-};
-
-/*
- * SDK Sensing modes
- * see sl::SENSING_MODE
- */
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlSensingMode : uint8
-{
-	SM_Standard				 UMETA(DisplayName = "Standard"),
-	SM_Fill					 UMETA(DisplayName = "Fill")
 };
 
 /*
@@ -219,6 +196,7 @@ enum class ESlInputType : uint8
 	IT_USB   			 UMETA(DisplayName = "USB input mode"),
 	IT_SVO   			 UMETA(DisplayName = "SVO input mode"),
 	IT_STREAM   		 UMETA(DisplayName = "Stream input mode"),
+	IT_GMSL				 UMETA(DisplayName = "GMSL")
 };
 
 /*
@@ -349,7 +327,8 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
- 	EC_Success					     UMETA(DisplayName = "Success"),
+	EC_CameraRebooting  = 255		 UMETA(DisplayName = "Camera rebooting"),
+ 	EC_Success		    = 0			 UMETA(DisplayName = "Success"),
 	EC_Failure					     UMETA(DisplayName = "Failure"),
 	EC_NoGpuCompatible			     UMETA(DisplayName = "No GPU compatible"),
 	EC_NotEnoughGPUMemory		     UMETA(DisplayName = "Not enough GPU memory"),
@@ -363,7 +342,7 @@ enum class ESlErrorCode : uint8
 	EC_InvalidSVOFile			     UMETA(DisplayName = "Invalid SVO file"),
 	EC_SVORecordingError		     UMETA(DisplayName = "SVO recording error"),
 	EC_SVOUnsupportedCompression     UMETA(DisplayName = "SVO unsupported compression"),
-	EC_SVOEndOfSVOFile               UMETA(DisplayName = "End of SVO file reached"),
+	EC_EndOfSVOFile                  UMETA(DisplayName = "End of SVO file reached"),
 	EC_InvalidCoordinateSystem	     UMETA(DisplayName = "Invalid coordinate system"),
 	EC_InvalidFirmware			     UMETA(DisplayName = "Invalid firmware"),
 	EC_InvalidFunctionParameters     UMETA(DisplayName = "Invalid function parameters"),
@@ -450,6 +429,8 @@ enum class ESlModel : uint8
 	M_ZedM					UMETA(DisplayName = "ZED Mini"),
 	M_Zed2					UMETA(DisplayName = "ZED 2"),
 	M_Zed2i          		UMETA(DisplayName = "ZED 2i"),
+	M_ZedX					UMETA(DisplayName = "ZED X"),
+	M_ZedXM					UMETA(DisplayName = "ZED X Mini"),
 	M_Unknown				UMETA(DisplayName = "Unknown")
 };
 
@@ -563,31 +544,46 @@ enum class ESlObjectActionState : uint8
 * List of available models for detection.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlDetectionModel : uint8
+enum class ESlObjectDetectionModel : uint8
 {
-	DM_MultiClassBox			UMETA(DisplayName = "Multi class box"),
-	DM_MultiClassBoxAccurate	UMETA(DisplayName = "Multi class box accurate"),
-	DM_HumanBodyFast			UMETA(DisplayName = "Human body fast"),
-	DM_HumanBodyAccurate		UMETA(DisplayName = "Human body accurate"),
-	DM_MultiClassBoxMedium		UMETA(DisplayName = "Multi class box medium"),
-	DM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
-	DM_PersonHeadBox			UMETA(DisplayName = "Person head box"),
-	DM_PersonHeadAccurateBox	UMETA(DisplayName = "Person head accurate box"),
-	DM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects")
+	ODM_MultiClassBoxFast			UMETA(DisplayName = "Multi class box fast"),
+	ODM_MultiClassBoxMedium		    UMETA(DisplayName = "Multi class box medium"),
+	ODM_MultiClassBoxAccurate		UMETA(DisplayName = "Multi class box accurate"),
+	ODM_PersonHeadBoxFast			UMETA(DisplayName = "Person head box fast"),
+	ODM_PersonHeadAccurateBox		UMETA(DisplayName = "Person head accurate box"),
+	ODM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
+};
+
+/*
+* List of available models for body tracking.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyTrackingModel : uint8
+{
+	BTM_HumanBodyFast			UMETA(DisplayName = "Human body fast"),
+	BTM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
+	BTM_HumanBodyAccurate		UMETA(DisplayName = "Human body accurate")
+
 };
 
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlAIModels : uint8
 {
-	AIM_MultiClassDetection			    UMETA(DisplayName = "Multi class Detection"),
+	AIM_MultiClassFastDetection		    UMETA(DisplayName = "Multi class fast Detection"),
 	AIM_MultiClassMediumDetection		UMETA(DisplayName = "Multi class medium Detection"),
 	AIM_MultiClassAccurateDetection		UMETA(DisplayName = "Multi class accurate Detection"),
 	AIM_HumanBodyFastDetection			UMETA(DisplayName = "Human body fast Detection"),
 	AIM_HumanBodyMediumDetection		UMETA(DisplayName = "Human body medium Detection"),
 	AIM_HumanBodyAccurateDetection		UMETA(DisplayName = "Human body accurate Detection"),
-	AIM_PersonHeadDetection				UMETA(DisplayName = "Person head Detection"),
+	AIM_HumanBody38FastDetection		UMETA(DisplayName = "Human body 38 fast Detection"),
+	AIM_HumanBody38MediumDetection		UMETA(DisplayName = "Human body 38 medium Detection"),
+	AIM_HumanBody38AccurateDetection	UMETA(DisplayName = "Human body 38 accurate Detection"),
+	AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
+	AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
+	AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
+	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
-	AIM_REIDAssociation					UMETA(DisplayName = "REID Associaiton"),
+	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 };
 
@@ -597,8 +593,21 @@ enum class ESlAIModels : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlBodyFormat : uint8
 {
-	BF_POSE_18    UMETA(DisplayName = "Pose 18"),
-	BF_POSE_34		  UMETA(DisplayName = "Pose 34")
+	BF_BODY_18    UMETA(DisplayName = "Body 18"),
+	BF_BODY_34    UMETA(DisplayName = "Body 34"),
+	BF_BODY_38    UMETA(DisplayName = "Body 38"),
+	BF_BODY_70	  UMETA(DisplayName = "Body 70")
+};
+
+/*
+* List of supported skeleton body model.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBodyKeypointsSelection : uint8
+{
+	BKS_FULL          UMETA(DisplayName = "Full"),
+	BKS_UPPER_BODY	  UMETA(DisplayName = "Upper body"),
+	//BKS_HAND	      UMETA(DisplayName = "Hand"),
 };
 
 /*
@@ -661,10 +670,10 @@ enum class ESlObjectSubClass : uint8
 };
 
 /*
-* List of human body parts and order of SlObjectData::keypoint for BODY_FORMAT::POSE_18.
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::Body_18.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyParts : uint8 {
+enum class ESlBody18Parts : uint8 {
 	NOSE = 0,
 	NECK = 1,
 	RIGHT_SHOULDER = 2,
@@ -685,13 +694,11 @@ enum class ESlBodyParts : uint8 {
 	LEFT_EAR = 17
 };
 
-
-
 /*
-* List of human body parts and order of SlObjectData::keypoint for BODY_FORMAT::POSE_34.
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_34.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlBodyPartsPose34 : uint8 {
+enum class ESlBody34Parts : uint8 {
 	PELVIS = 0,
 	NAVAL_SPINE = 1,
 	CHEST_SPINE = 2,
@@ -725,38 +732,138 @@ enum class ESlBodyPartsPose34 : uint8 {
 	RIGHT_EYE = 30,
 	RIGHT_EAR = 31,
 	LEFT_HEEL = 32,
-	RIGHT_HEEL = 33
+	RIGHT_HEEL = 33,
+	LAST = 34
 };
 
 /*
-* List of our version of the UE5 skeleton bones pertinent for resizing.
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_38.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class EZED_UE_Manny_Bones : uint8 {
-	SPINE = 0,
-	SPINE1 = 1,
-	SPINE2 = 2,
-	L_TOSHOULDER = 3,
-	L_TOARM = 4,
-	L_TOFOREARM = 5,
-	L_TOHAND = 6,
-	R_TOSHOULDER = 7,
-	R_TOARM = 8,
-	R_TOFOREARM = 9,
-	R_TOHAND = 10,
-	TONECK = 11,
-	TOHEAD = 12,
-	L_TOUPLEG = 13,
-	L_TOLEG = 14,
-	L_TOFOOT = 15,
-	R_TOUPLEG = 16,
-	R_TOLEG = 17,
-	R_TOFOOT = 18,
-	L_TOTOEBASE = 19,
-	R_TOTOEBASE = 20,
-	L_TOHANDTIP = 21,
-	R_TOHANDTIP = 22
+enum class ESlBody38Parts : uint8 {
+	PELVIS = 0,
+	SPINE_1 = 1,
+	SPINE_2 = 2,
+	SPINE_3 = 3,
+	NECK = 4,
+	NOSE = 5,
+	LEFT_EYE = 6,
+	RIGHT_EYE = 7,
+	LEFT_EAR = 8,
+	RIGHT_EAR = 9,
+	LEFT_CLAVICLE = 10,
+	RIGHT_CLAVICLE = 11,
+	LEFT_SHOULDER = 12,
+	RIGHT_SHOULDER = 13,
+	LEFT_ELBOW = 14,
+	RIGHT_ELBOW = 15,
+	LEFT_WRIST = 16,
+	RIGHT_WRIST = 17,
+	LEFT_HIP = 18,
+	RIGHT_HIP = 19,
+	LEFT_KNEE = 20,
+	RIGHT_KNEE = 21,
+	LEFT_ANKLE = 22,
+	RIGHT_ANKLE = 23,
+	LEFT_BIG_TOE = 24,
+	RIGHT_BIG_TOE = 25,
+	LEFT_SMALL_TOE = 26,
+	RIGHT_SMALL_TOE = 27,
+	LEFT_HEEL = 28,
+	RIGHT_HEEL = 29,
+	// Hands
+	LEFT_HAND_THUMB_4 = 30, // tip
+	RIGHT_HAND_THUMB_4 = 31,
+	LEFT_HAND_INDEX_1 = 32, // knuckle
+	RIGHT_HAND_INDEX_1 = 33,
+	LEFT_HAND_MIDDLE_4 = 34, // tip
+	RIGHT_HAND_MIDDLE_4 = 35,
+	LEFT_HAND_PINKY_1 = 36, // knuckle
+	RIGHT_HAND_PINKY_1 = 37,
+	LAST = 38
 };
+
+/*
+* List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_70.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlBody70Parts : uint8 {
+	PELVIS = 0,
+	SPINE_1 = 1,
+	SPINE_2 = 2,
+	SPINE_3 = 3,
+	NECK = 4,
+	NOSE = 5,
+	LEFT_EYE = 6,
+	RIGHT_EYE = 7,
+	LEFT_EAR = 8,
+	RIGHT_EAR = 9,
+	LEFT_CLAVICLE = 10,
+	RIGHT_CLAVICLE = 11,
+	LEFT_SHOULDER = 12,
+	RIGHT_SHOULDER = 13,
+	LEFT_ELBOW = 14,
+	RIGHT_ELBOW = 15,
+	LEFT_WRIST = 16,
+	RIGHT_WRIST = 17,
+	LEFT_HIP = 18,
+	RIGHT_HIP = 19,
+	LEFT_KNEE = 20,
+	RIGHT_KNEE = 21,
+	LEFT_ANKLE = 22,
+	RIGHT_ANKLE = 23,
+	LEFT_BIG_TOE = 24,
+	RIGHT_BIG_TOE = 25,
+	LEFT_SMALL_TOE = 26,
+	RIGHT_SMALL_TOE = 27,
+	LEFT_HEEL = 28,
+	RIGHT_HEEL = 29,
+	// Hands
+	// Left
+	LEFT_HAND_THUMB_1 = 30,
+	LEFT_HAND_THUMB_2 = 31,
+	LEFT_HAND_THUMB_3 = 32,
+	LEFT_HAND_THUMB_4 = 33, // tip
+	LEFT_HAND_INDEX_1 = 34, // knuckle
+	LEFT_HAND_INDEX_2 = 35,
+	LEFT_HAND_INDEX_3 = 36,
+	LEFT_HAND_INDEX_4 = 37, // tip
+	LEFT_HAND_MIDDLE_1 = 38,
+	LEFT_HAND_MIDDLE_2 = 39,
+	LEFT_HAND_MIDDLE_3 = 40,
+	LEFT_HAND_MIDDLE_4 = 41,
+	LEFT_HAND_RING_1 = 42,
+	LEFT_HAND_RING_2 = 43,
+	LEFT_HAND_RING_3 = 44,
+	LEFT_HAND_RING_4 = 45,
+	LEFT_HAND_PINKY_1 = 46,
+	LEFT_HAND_PINKY_2 = 47,
+	LEFT_HAND_PINKY_3 = 48,
+	LEFT_HAND_PINKY_4 = 49,
+	// Right
+	RIGHT_HAND_THUMB_1 = 50,
+	RIGHT_HAND_THUMB_2 = 51,
+	RIGHT_HAND_THUMB_3 = 52,
+	RIGHT_HAND_THUMB_4 = 53,
+	RIGHT_HAND_INDEX_1 = 54,
+	RIGHT_HAND_INDEX_2 = 55,
+	RIGHT_HAND_INDEX_3 = 56,
+	RIGHT_HAND_INDEX_4 = 57,
+	RIGHT_HAND_MIDDLE_1 = 58,
+	RIGHT_HAND_MIDDLE_2 = 59,
+	RIGHT_HAND_MIDDLE_3 = 60,
+	RIGHT_HAND_MIDDLE_4 = 61,
+	RIGHT_HAND_RING_1 = 62,
+	RIGHT_HAND_RING_2 = 63,
+	RIGHT_HAND_RING_3 = 64,
+	RIGHT_HAND_RING_4 = 65,
+	RIGHT_HAND_PINKY_1 = 66,
+	RIGHT_HAND_PINKY_2 = 67,
+	RIGHT_HAND_PINKY_3 = 68,
+	RIGHT_HAND_PINKY_4 = 69,
+	LAST = 70
+};
+
 
 /************************************************************************/
 /*							    Structs				    				*/
@@ -767,14 +874,14 @@ enum class EZED_UE_Manny_Bones : uint8 {
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone18
+struct STEREOLABS_API FSlBody18Bone
 {
 	GENERATED_BODY()
 
-	FSlBone18()
+	FSlBody18Bone()
 	{}
 
-	FSlBone18(ESlBodyParts first, ESlBodyParts second)
+	FSlBody18Bone(ESlBody18Parts first, ESlBody18Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -782,26 +889,27 @@ struct STEREOLABS_API FSlBone18
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyParts FirstEnd;
+	ESlBody18Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyParts SecondEnd;
+	ESlBody18Parts SecondEnd;
 };
 
+
 /*
- * Bone descriptor, pair of ESlBodyPartsPose34
+ * Bone descriptor, pair of ESlBodyParts
  * To be used in the correspondance array in ZEDPlayerController
  */
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlBone34
+struct STEREOLABS_API FSlBody34Bone
 {
 	GENERATED_BODY()
 
-	FSlBone34()
+		FSlBody34Bone()
 	{}
 
-	FSlBone34(ESlBodyPartsPose34 first, ESlBodyPartsPose34 second)
+	FSlBody34Bone(ESlBody34Parts first, ESlBody34Parts second)
 	{
 		FirstEnd = first;
 		SecondEnd = second;
@@ -809,11 +917,65 @@ struct STEREOLABS_API FSlBone34
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsPose34 FirstEnd;
+	ESlBody34Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-	ESlBodyPartsPose34 SecondEnd;
+	ESlBody34Parts SecondEnd;
+};
+
+/*
+ * Bone descriptor, pair of ESlBodyParts
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBody38Bone
+{
+	GENERATED_BODY()
+
+		FSlBody38Bone()
+	{}
+
+	FSlBody38Bone(ESlBody38Parts first, ESlBody38Parts second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBody38Parts FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBody38Parts SecondEnd;
+};
+
+/*
+ * Bone descriptor, pair of ESlBodyPartsPose70
+ * To be used in the correspondance array in ZEDPlayerController
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBody70Bone
+{
+	GENERATED_BODY()
+
+		FSlBody70Bone()
+	{}
+
+	FSlBody70Bone(ESlBody70Parts first, ESlBody70Parts second)
+	{
+		FirstEnd = first;
+		SecondEnd = second;
+	}
+
+	/** First end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBody70Parts FirstEnd;
+
+	/** Second end of the bone */
+	UPROPERTY(BlueprintReadOnly)
+		ESlBody70Parts SecondEnd;
 };
 
 /*
@@ -838,7 +1000,7 @@ struct STEREOLABS_API FSlDeviceProperties
 	/** The camera system path */
 	FString Path;
 
-	/** The camera ID (Notice that only the camera with ID '0' can be used on Windows) */
+	/** The camera ID*/
 	int32 ID;
 
 	/** he camera serial number */
@@ -1493,9 +1655,8 @@ struct STEREOLABS_API FSlRuntimeParameters
 
 	FSlRuntimeParameters()
 		:
-		SensingMode(ESlSensingMode::SM_Fill),
 		bEnableDepth(true),
-		ConfidenceThreshold(100),
+		ConfidenceThreshold(95),
 		TextureConfidenceThreshold(100),
 		ReferenceFrame(ESlReferenceFrame::RF_World),
 		bRemoveSaturatedAreas(true)
@@ -1504,15 +1665,6 @@ struct STEREOLABS_API FSlRuntimeParameters
 
 	FORCEINLINE void Load(const FString& Path)
 	{
-		int32 ConfigSensingMode;
-		GConfig->GetInt(
-			Section,
-			TEXT("SensingMode"),
-			ConfigSensingMode,
-			*Path
-			);
-		SensingMode = (ESlSensingMode)ConfigSensingMode;
-
 		GConfig->GetBool(
 			Section,
 			TEXT("bEnableDepth"),
@@ -1553,13 +1705,6 @@ struct STEREOLABS_API FSlRuntimeParameters
 
 	FORCEINLINE void Save(const FString& Path) const
 	{
-		GConfig->SetInt(
-			Section,
-			TEXT("SensingMode"),
-			static_cast<int32>(SensingMode),
-			*Path
-			);
-
 		GConfig->SetBool(
 			Section,
 			TEXT("bEnableDepth"),
@@ -1595,10 +1740,6 @@ struct STEREOLABS_API FSlRuntimeParameters
 			*Path
 		);
 	}
-
-	/** Sensing mode */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlSensingMode SensingMode;
 
 	/** Enable depth (need to be true if tracking enabled) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2071,6 +2212,7 @@ struct STEREOLABS_API FSlInitParameters
 	FSlInitParameters()
 		:
 		InputType(ESlInputType::IT_USB),
+		SerialNumber(0),
 		SvoPath(""),
 		bLoop(false),
 		StreamIP(""),
@@ -2094,8 +2236,8 @@ struct STEREOLABS_API FSlInitParameters
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		VerboseFilePath("")
-
+		VerboseFilePath(""),
+		bAsyncGrabCameraRecovery(false)
 	{
 	}
 
@@ -2225,6 +2367,13 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 		);
 
+		GConfig->GetInt(
+			Section,
+			TEXT("SerialNumber"),
+			SerialNumber,
+			*Path
+		);
+
 		GConfig->GetString(
 			Section,
 			TEXT("VerboseFilePath"),
@@ -2246,6 +2395,13 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 		);
 
+		GConfig->GetBool(
+			Section,
+			TEXT("AsyncGrabCameraRecovery"),
+			bAsyncGrabCameraRecovery,
+			*Path
+		);
+
 		bool bConfigLoop;
 		GConfig->GetBool(
 			Section,
@@ -2264,6 +2420,13 @@ struct STEREOLABS_API FSlInitParameters
 			static_cast<int32>(Resolution),
 			*Path
 			);
+
+		GConfig->SetInt(
+			Section,
+			TEXT("SerialNumber"),
+			static_cast<int32>(SerialNumber),
+			*Path
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -2383,6 +2546,13 @@ struct STEREOLABS_API FSlInitParameters
 			DepthStabilization,
 			*Path
 			);
+		GConfig->SetBool(
+			Section,
+			TEXT("bAsyncGrabCameraRecovery"),
+			bAsyncGrabCameraRecovery,
+			*Path
+		);
+
 
 		GConfig->SetBool(
 			Section,
@@ -2402,6 +2572,10 @@ struct STEREOLABS_API FSlInitParameters
 	/** Input type used in the ZED SDK */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlInputType InputType;
+
+	/* Serial number of the camera (default is 0)*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SerialNumber;
 
 	/** Path to a SVO file if inputType is set to SVO */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2478,6 +2652,15 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int DepthStabilization;
 
+	/**
+	 Define the behavior of the automatic camera recovery during grab() function call. When async is enabled and there's an issue with the communication with the camera
+	 the grab() will exit after a short period and return the ERROR_CODE::CAMERA_REBOOTING warning. The recovery will run in the background until the correct communication is restored.
+	 When async_grab_camera_recovery is false, the grab() function is blocking and will return only once the camera communication is restored or the timeout is reached.
+	 The default behavior is synchronous, like previous ZED SDK versions
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAsyncGrabCameraRecovery;
+
 	/* Set the optional path where the SDK has to search for the settings file (SN<XXXX>.conf file). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString OptionalSettingPath;
@@ -2552,19 +2735,11 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 
 	/* Defines if the mask object will be computed. 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bEnableMaskOutput;
+	bool bEnableSegmentation;
 
 	/* Enable human pose estimation with skeleton keypoints output. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlDetectionModel DetectionModel;
-
-	/* Defines if the body fitting will be applied.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bEnableBodyFitting;
-
-	/* Defines the body format outputed by the sdk when retrieveObjects is called. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlBodyFormat BodyFormat;
+	ESlObjectDetectionModel DetectionModel;
 
 	/* Defines a upper depth range for detections. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2583,17 +2758,28 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PredictionTimeout_s;
 
+	/**
+	\brief Allow inference to run at a lower precision to improve runtime and memory usage,
+	 * it might increase the initial optimization time and could include downloading calibration data or calibration cache and slightly reduce the accuracy
+	 * \note The fp16 is automatically enabled if the GPU is compatible and provides a speed up of almost x2 and reduce memory usage by almost half, no precision loss.
+	 * \note This setting allow int8 precision which can speed up by another x2 factor (compared to fp16, or x4 compared to fp32) and half the fp16 memory usage, however some accuracy can be lost.
+	 * The accuracy loss should not exceed 1-2% on the compatible models.
+	 * The current compatible models are all HUMAN_BODY_XXXX
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+
+	bool bAllowReducedPrecisionInference;
+
 	FSlObjectDetectionParameters() :
 		bImageSync(true),
 		bEnableTracking(true),
-		bEnableMaskOutput(false),
-		DetectionModel(ESlDetectionModel::DM_MultiClassBox),
-		bEnableBodyFitting(true),
-		BodyFormat(ESlBodyFormat::BF_POSE_34),
+		bEnableSegmentation(false),
+		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxFast),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
 		FilteringMode(ESlObjectFilteringMode::OFM_NMS3D),
-		PredictionTimeout_s(0.2f)
+		PredictionTimeout_s(0.2f),
+		bAllowReducedPrecisionInference(false)
 	{}
 };
 
@@ -2619,17 +2805,8 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<int, float> ObjectClassDetectionConfidenceThreshold;
 
-	/**
-	\brief Defines the minimum keypoints threshold.
-	 * the SDK will outputs skeletons with more keypoints than this threshold
-	 * it is useful for example to remove unstable fitting results when a skeleton is partially occluded
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int MinimumKeypointsThreshold;
-
 	FSlObjectDetectionRuntimeParameters() :
-		DetectionConfidenceThreshold(35.0f),
-		MinimumKeypointsThreshold(10)
+		DetectionConfidenceThreshold(35.0f)
 	{
 		ObjectClassFilter = TArray<int>();
 		ObjectClassFilter.Init(0, (int)SL_OBJECT_CLASS_LAST);
@@ -2668,6 +2845,206 @@ struct STEREOLABS_API FSlObjectData
 	/* Object subclass.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectSubClass Sublabel;
+
+	/* Defines the object tracking state.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlObjectTrackingState TrackingState;
+
+	/* Defines the object action state.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlObjectActionState ActionState;
+
+	/* Defines the object 3D centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Position;
+
+	/* Defines the object 3D velocity Defined in sl:InitParameters::UNIT / seconds, expressed in RuntimeParameters::measure3D_reference_frame.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Velocity;
+
+	/* the covariance matrix of the 3d position, represented by its upper triangular matrix value
+	*	[p0, p1, p2]
+	*	[p1, p3, p4]
+	*	[p2, p4, p5]
+	*	where pi is position_covariance[i]*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<float> PositionCovariance;
+
+	/*2D bounding box of the person represented as four 2D points starting at the top left corner and rotation clockwise. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
+	*	A ------ B
+	*	| Object |
+	*	D ------ C
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector2D> BoundingBox2D;
+
+	/* Defines for the bounding_box_2d the pixels which really belong to the object (set to 255) and those of the background (set to 0).*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSlMat Mask;
+
+	/* Defines the detection confidence value of the object. From 0 to 100, a low value means the object might not be localized perfectly or the label (OBJECT_CLASS) is uncertain.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Confidence;
+
+	/* 3D bounding box of the person represented as eight 3D points Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
+	*	  1 ------ 2
+	*	 /        /|
+	*	0 ------ 3 |
+	*	| Object | 6
+	*	|        |/
+	*	4 ------ 7
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector> BoundingBox;
+
+	/* 3D object dimensions: width, height, length Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Dimensions;
+
+	/* Bounds the head with four 2D points. Expressed in pixels on the original image resolution.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector2D> HeadBoundingBox2D;
+
+	/* Bounds the head with eight 3D points. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVector> HeadBoundingBox;
+
+	/* 3D head centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector HeadPosition;
+};
+
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlObjects
+{
+	GENERATED_BODY()
+
+	const TCHAR* Section = TEXT("Objects");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSlTimestamp Timestamp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FSlObjectData> ObjectList;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsNew;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsTracked;
+};
+
+/*
+* Body Tracking parameters
+*/
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBodyTrackingParameters
+{
+	GENERATED_BODY()
+
+	const TCHAR* Section = TEXT("BodyTracking");
+
+	/* Defines if the object detection is synchronized to the image or runs in a separate thread.	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bImageSync;
+
+	/* Defines if the object detection will track objects across images flow.	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableTracking;
+
+	/* Defines if the mask object will be computed. 	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableSegmentation;
+
+	/* Enable human pose estimation with skeleton keypoints output. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlBodyTrackingModel DetectionModel;
+
+	/* Enable body fitting */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableBodyFitting;
+
+	/* Defines the body format output by the sdk when \ref retrieveBodies is called. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlBodyFormat BodyFormat;
+
+	/* Defines the body format output by the sdk when \ref retrieveBodies is called. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlBodyKeypointsSelection BodySelection;
+
+	/* Defines a upper depth range for detections. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxRange;
+
+	/*When an object is not detected anymore, the SDK will predict its positions during a short period of time before switching its state to SEARCHING.
+	/* Defines the duration of this prediction.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PredictionTimeout_s;
+	/**
+	\brief Allow inference to run at a lower precision to improve runtime and memory usage,
+	 * it might increase the initial optimization time and could include downloading calibration data or calibration cache and slightly reduce the accuracy
+	 * \note The fp16 is automatically enabled if the GPU is compatible and provides a speed up of almost x2 and reduce memory usage by almost half, no precision loss.
+	 * \note This setting allow int8 precision which can speed up by another x2 factor (compared to fp16, or x4 compared to fp32) and half the fp16 memory usage, however some accuracy can be lost.
+	 * The accuracy loss should not exceed 1-2% on the compatible models.
+	 * The current compatible models are all HUMAN_BODY_XXXX
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAllowReducedPrecisionInference;
+
+	FSlBodyTrackingParameters() :
+		bImageSync(true),
+		bEnableTracking(true),
+		bEnableSegmentation(false),
+		DetectionModel(ESlBodyTrackingModel::BTM_HumanBodyMedium),
+		MaxRange(-1.0f),
+		PredictionTimeout_s(0.2f),
+		bAllowReducedPrecisionInference(false),
+		BodySelection(ESlBodyKeypointsSelection::BKS_FULL),
+		BodyFormat(ESlBodyFormat::BF_BODY_38),
+		bEnableBodyFitting(true)
+	{}
+};
+
+/*
+* Object Detection parameters
+*/
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBodyTrackingRuntimeParameters
+{
+	GENERATED_BODY()
+
+	const TCHAR* Section = TEXT("BodyTrackingRuntime");
+
+	/* Defines the confidence threshold: interval between 1 and 99. A confidence of 1 meaning a low threshold, more uncertain objects and 99 very few but very precise objects.  */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DetectionConfidenceThreshold;
+
+	/* the SDK will outputs skeleton with more detected keypoints than this threshold*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int MinimumKeypointsThreshold;
+
+	FSlBodyTrackingRuntimeParameters():
+		DetectionConfidenceThreshold(20.0f),
+		MinimumKeypointsThreshold(-1)
+	{}
+};
+
+
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlBodyData
+{
+	GENERATED_BODY()
+
+	const TCHAR* Section = TEXT("BodyData");
+
+	/* Object identification number, used as a reference when tracking the object through the frames.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Id;
+
+	/* Unique ID to help identify and track AI detections. Can be either generated externally, or using generate_unique_id() or left empty.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString UniqueObjectId;
 
 	/* Defines the object tracking state.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2767,17 +3144,17 @@ struct STEREOLABS_API FSlObjectData
 };
 
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlObjects
+struct STEREOLABS_API FSlBodies
 {
 	GENERATED_BODY()
 
-	const TCHAR* Section = TEXT("Objects");
+	const TCHAR* Section = TEXT("Bodies");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSlTimestamp Timestamp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSlObjectData> ObjectsList;
+	TArray<FSlBodyData> BodyList;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsNew;
@@ -2858,8 +3235,7 @@ struct STEREOLABS_API FSlRenderingParameters
 	FSlRenderingParameters()
 		:
 		PerceptionDistance(100.0f),
-		SRemapEnable(false),
-		ThreadingMode(ESlThreadingMode::TM_MultiThreaded)
+		SRemapEnable(false)
 	{}
 
 	FORCEINLINE void Load(const FString& Path)
@@ -2877,15 +3253,6 @@ struct STEREOLABS_API FSlRenderingParameters
 			SRemapEnable,
 			*Path
 		);
-
-		int32 ConfigThreadingMode;
-		GConfig->GetInt(
-			Section,
-			TEXT("ThreadingMode"),
-			ConfigThreadingMode,
-			*Path
-			);
-		ThreadingMode = static_cast<ESlThreadingMode>(ConfigThreadingMode);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2903,13 +3270,6 @@ struct STEREOLABS_API FSlRenderingParameters
 			SRemapEnable,
 			*Path
 		);
-
-		GConfig->SetInt(
-			Section,
-			TEXT("ThreadingMode"),
-			static_cast<int32>(ThreadingMode),
-			*Path
-			);
 	}
 
 	/** Distance in cm at which real object perfectly match their real size, between 75 and 300. */
@@ -2919,10 +3279,6 @@ struct STEREOLABS_API FSlRenderingParameters
 	/** ! Experimental ! : enable SRemap. */
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool SRemapEnable;
-
-	/** Threading mode of the Grab. Multithreading is recommended for better performance. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESlThreadingMode ThreadingMode;
 };
 
 /** Environmental lighting settings */

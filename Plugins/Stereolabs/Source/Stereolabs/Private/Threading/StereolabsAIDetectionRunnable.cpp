@@ -8,19 +8,19 @@
 
 DEFINE_LOG_CATEGORY(SlAIThread);
 
-bool FSlAIDetectionRunnable::Init()
+bool FSlObjectDetectionRunnable::Init()
 {
 	return FSlRunnable::Init();
 }
 
-uint32 FSlAIDetectionRunnable::Run()
+uint32 FSlObjectDetectionRunnable::Run()
 {
 	FPlatformProcess::SleepNoStats(0.001f);
 
 	return 0;
 }
 
-void FSlAIDetectionRunnable::Stop()
+void FSlObjectDetectionRunnable::Stop()
 {
 	FSlRunnable::Stop();
 
@@ -28,21 +28,21 @@ void FSlAIDetectionRunnable::Stop()
 
 	GSlCameraProxy->RemoveFromGrabDelegate(AIRetrieveDelegateHandle);
 
-	SL_LOG(SlAIThread, "AI Thread stopped");
+	SL_LOG(SlAIThread, "OD Thread stopped");
 	SL_LOG(SlAIThread, "FPS OD %f", Fps);
 }
 
-void FSlAIDetectionRunnable::Exit()
+void FSlObjectDetectionRunnable::Exit()
 {
 }
 
-void FSlAIDetectionRunnable::Start(float Frequency)
+void FSlObjectDetectionRunnable::Start(float Frequency)
 {
 	static uint64 ThreadCounter = 0;
 
 	Timer.SetFrequency(Frequency);
 
-	FString ThreadName("SlAIRunnable");
+	FString ThreadName("SlODRunnable");
 	ThreadName.AppendInt(ThreadCounter++);
 
 	Thread = FRunnableThread::Create(this, *ThreadName, 0, TPri_BelowNormal);
@@ -54,14 +54,84 @@ void FSlAIDetectionRunnable::Start(float Frequency)
 
 
 	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-	SL_LOG(SlAIThread, "AI Thread started ");
+	SL_LOG(SlAIThread, "OD Thread started ");
 }
 
-void FSlAIDetectionRunnable::RetrieveObjects(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
+void FSlObjectDetectionRunnable::RetrieveObjects(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
 
 	if (bIsRunning && GSlCameraProxy->IsObjectDetectionEnabled())
 	{
 		GSlCameraProxy->RetrieveObjects();
+
+		// Compute OD FPS
+		std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+		auto ObjectDetectionTime = now.count() - PreviousTS.count();
+		float CurrentFPS = (1000.0f / ObjectDetectionTime);
+
+		Fps = (Fps + CurrentFPS) / 2;
+		PreviousTS = now;
+	}
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////  Body Tracking ///////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool FSlBodyTrackingRunnable::Init()
+{
+	return FSlRunnable::Init();
+}
+
+uint32 FSlBodyTrackingRunnable::Run()
+{
+	FPlatformProcess::SleepNoStats(0.001f);
+
+	return 0;
+}
+
+void FSlBodyTrackingRunnable::Stop()
+{
+	FSlRunnable::Stop();
+
+	GSlCameraProxy->DisableBodyTracking();
+
+	GSlCameraProxy->RemoveFromGrabDelegate(AIRetrieveDelegateHandle);
+
+	SL_LOG(SlAIThread, "BT Thread stopped");
+	SL_LOG(SlAIThread, "FPS BT %f", Fps);
+}
+
+void FSlBodyTrackingRunnable::Exit()
+{
+}
+
+void FSlBodyTrackingRunnable::Start(float Frequency)
+{
+	static uint64 ThreadCounter = 0;
+
+	Timer.SetFrequency(Frequency);
+
+	FString ThreadName("SlBTRunnable");
+	ThreadName.AppendInt(ThreadCounter++);
+
+	Thread = FRunnableThread::Create(this, *ThreadName, 0, TPri_BelowNormal);
+
+	AIRetrieveDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
+		{
+			RetrieveBodies(ErrorCode, Timestamp);
+		});
+
+
+	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	SL_LOG(SlAIThread, "BT Thread started ");
+}
+
+void FSlBodyTrackingRunnable::RetrieveBodies(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
+
+	if (bIsRunning && GSlCameraProxy->IsBodyTrackingEnabled())
+	{
+		GSlCameraProxy->RetrieveBodies();
 
 		// Compute OD FPS
 		std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());

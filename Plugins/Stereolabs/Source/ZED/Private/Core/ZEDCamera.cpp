@@ -225,11 +225,6 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 			SetRuntimeParameters(RuntimeParameters);
 		}
 	}
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRenderingParameters, ThreadingMode))
-	{
-		SetThreadingMode(RenderingParameters.ThreadingMode);
-	}
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
 	{
 		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
@@ -309,11 +304,6 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 		return !GSlCameraProxy->bSVORecordingEnabled && GSlCameraProxy->GetSVONumberOfFrames() == -1;
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRenderingParameters, ThreadingMode))
-	{
-		return InitParameters.InputType != ESlInputType::IT_SVO;
-	}
-
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, bEnablePoseSmoothing))
 	{
 		return TrackingParameters.bEnableAreaMemory;
@@ -331,13 +321,6 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 void AZEDCamera::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	if (RenderingParameters.ThreadingMode == ESlThreadingMode::TM_SingleThreaded)
-	{
-		GSlCameraProxy->Grab();
-
-		if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->RetrieveObjects();
-	}
 
 	bool bUpdateTracking = false;
 	SL_SCOPE_LOCK(Lock, TrackingUpdateSection)
@@ -524,12 +507,10 @@ void AZEDCamera::Tick(float DeltaSeconds)
 				//ZedRightEyeMaterialInstanceDynamic->SetTextureParameterValue("Normals", RightEyeNormals->Texture);
 			}
 		}
-#if WITH_EDITOR
 		else
 		{
 			ZED_CAMERA_LOG_E("Resizing depth and normal without depth enabled in runtime parameters");
 		}
-#endif
 
 		// Depth retrieve toggle
 		if (bCurrentDepthEnabled != RuntimeParameters.bEnableDepth)
@@ -603,7 +584,6 @@ void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timest
 		CurrentFrameTrackingData.TrackingState = (ESlTrackingState)TrackingState;
 		CurrentFrameTrackingData.Timestamp = Timestamp;
 
-#if WITH_EDITOR
 		if (TrackingState == SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW)
 		{
 			ZED_CAMERA_LOG_W("FPS too low for good tracking.");
@@ -612,7 +592,6 @@ void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timest
 		{
 			ZED_CAMERA_LOG_W("Tracking trying to relocate.");
 		}
-#endif
 
 		// Get the IMU rotation
 		if (TrackingState == SL_POSITIONAL_TRACKING_STATE_OK ||
@@ -630,12 +609,10 @@ void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timest
 			{
 				CurrentFrameTrackingData.IMURotator = sl::unreal::ToUnrealType(imuPose).Rotator();
 			}
-		#if WITH_EDITOR
 			else
 			{
 				ZED_CAMERA_LOG_E("Error while getting IMU data : \"%i\"", ErrorCode);
 			}
-		#endif
 
 		}
 	SL_SCOPE_UNLOCK
@@ -678,18 +655,9 @@ void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
 	}
 }
 
-void AZEDCamera::SetThreadingMode(ESlThreadingMode NewValue)
+void AZEDCamera::EnableMultiThreadedRenderingMode(const bool EnableMTR)
 {
-	if (NewValue == ESlThreadingMode::TM_None)
-	{
-#if WITH_EDITOR
-		ZED_CAMERA_LOG_E("EZEDThreadingMode::TM_None is not a valid mode");
-#endif
-		return;
-	}
-
-	GSlCameraProxy->EnableGrabThread(RenderingParameters.ThreadingMode == ESlThreadingMode::TM_MultiThreaded);
-	RenderingParameters.ThreadingMode = NewValue;
+	GSlCameraProxy->EnableGrabThread(EnableMTR);
 }
 
 void AZEDCamera::SetDepthClampThreshold(const float DepthDistance) {
@@ -718,6 +686,17 @@ void AZEDCamera::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRun
 {
 	ObjectDetectionRuntimeParameters = NewValue;
 	GSlCameraProxy->SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
+}
+
+void AZEDCamera::SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewValue)
+{
+	BodyTrackingRuntimeParameters = NewValue;
+	GSlCameraProxy->SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
+}
+
+FSlBodyTrackingRuntimeParameters AZEDCamera::GetBodyTrackingRuntimeParameters()
+{
+	return GSlCameraProxy->GetBodyTrackingRuntimeParameters();
 }
 
 void AZEDCamera::SetCameraSettings(const FSlVideoSettings& NewValue)
@@ -752,14 +731,28 @@ void AZEDCamera::EnableObjectDetection()
 {
 	GSlCameraProxy->EnableObjectDetection(ObjectDetectionParameters);
 
-	GSlCameraProxy->EnableAIThread(RenderingParameters.ThreadingMode == ESlThreadingMode::TM_MultiThreaded);
+	GSlCameraProxy->EnableObjectDetectionThread(true);
 }
 
 void AZEDCamera::DisableObjectDetection()
 {
 	if (GSlCameraProxy->IsObjectDetectionEnabled()) GSlCameraProxy->DisableObjectDetection();
 
-	GSlCameraProxy->EnableAIThread(false);
+	GSlCameraProxy->EnableObjectDetectionThread(false);
+}
+
+void AZEDCamera::EnableBodyTracking()
+{
+	GSlCameraProxy->EnableBodyTracking(BodyTrackingParameters);
+
+	GSlCameraProxy->EnableBodyTrackingThread(true);
+}
+
+void AZEDCamera::DisableBodyTracking()
+{
+	if (GSlCameraProxy->IsBodyTrackingEnabled()) GSlCameraProxy->DisableBodyTracking();
+
+	GSlCameraProxy->EnableBodyTrackingThread(false);
 }
 
 void AZEDCamera::DisableTracking()
@@ -804,6 +797,9 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer, bool bHMD
 
 	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
 	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
+
+	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
+	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
 
 	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
 
@@ -861,7 +857,8 @@ void AZEDCamera::Init(bool bHMDEnabled)
 	}
 	SetRuntimeParameters(RuntimeParameters);
 	SetObjectDetectionRuntimeParameters(ObjectDetectionRuntimeParameters);
-	SetThreadingMode(RenderingParameters.ThreadingMode);
+	SetBodyTrackingRuntimeParameters(BodyTrackingRuntimeParameters);
+	EnableMultiThreadedRenderingMode(true);
 
 	ZedLeftEyeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(ZedSourceMaterial, nullptr);
 	ZedLeftEyeMaterialInstanceDynamic->SetScalarParameterValue("MinDepth", InitParameters.DepthMinimumDistance);
@@ -1158,19 +1155,11 @@ void AZEDCamera::SetupComponents(bool stereo)
 	{
 		InterRightCamera->bUseCustomProjectionMatrix = true;
 		USlFunctionLibrary::GetSceneCaptureProjectionMatrix(InterRightCamera->CustomProjectionMatrix, ESlEye::E_Right);
-	}
 
 	// Set calibration Zed-HMD
-	if (stereo)
-	{
 		InterLeftRoot->SetRelativeLocation(AntiDriftParameters.CalibrationTransform.GetLocation());
 		InterLeftPlaneRotationRoot->SetRelativeRotation(AntiDriftParameters.CalibrationTransform.GetRotation());
 		InterRightPlaneRotationRoot->SetRelativeRotation(AntiDriftParameters.CalibrationTransform.GetRotation());
-	}
-
-	// Spectator screen texture
-	if (stereo)
-	{
 		UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenTexture(InterLeftCamera->TextureTarget);
 		UHeadMountedDisplayFunctionLibrary::SetSpectatorScreenMode(ESpectatorScreenMode::Texture);
 	}
@@ -1249,9 +1238,7 @@ void AZEDCamera::InitializeRenderingCpp()
 		stereo = true;
 
 	SetupComponents(stereo);
-
 	if (bShowZedImage) {
-
 		ToggleInterComponents(true, stereo);
 		ToggleFinalComponents(true, stereo);
 	}
