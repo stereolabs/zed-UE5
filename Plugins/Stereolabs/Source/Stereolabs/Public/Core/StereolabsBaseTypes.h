@@ -244,15 +244,8 @@ enum class ESlView : uint8
 {
 	V_Left					 UMETA(DisplayName = "Left"),
 	V_Right					 UMETA(DisplayName = "Right"),
-	//Not supported for the moment"
-	//V_LeftGray				 UMETA(DisplayName = "Left gray"),
-	//V_RightGray				 UMETA(DisplayName = "Right gray"),
 	V_LeftUnrectified		 UMETA(DisplayName = "Left unrectified"),
 	V_RightUnrectified		 UMETA(DisplayName = "Right unrectified"),
-	//Not supported for the moment"
-	//V_LeftUnrectifiedGray	 UMETA(DisplayName = "Left unrectified gray"),
-	//V_RightUnrectifiedGray	 UMETA(DisplayName = "Right unrectified gray"),
-	V_SideBySide			 UMETA(DisplayName = "Side by side"),
 	V_Depth					 UMETA(DisplayName = "Depth"),
 	V_Confidence			 UMETA(DisplayName = "Confidence"),
 	V_Normals				 UMETA(DisplayName = "Normals"),

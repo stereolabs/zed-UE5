@@ -967,7 +967,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (UnsignedLeftImage == nullptr) UnsignedLeftImage = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, (SL_VIEW)ViewType, SL_MEM_GPU, Resolution.X, Resolution.Y);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, sl::unreal::ToSlType(ViewType), SL_MEM_GPU, Resolution.X, Resolution.Y);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
