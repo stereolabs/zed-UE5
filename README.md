@@ -6,10 +6,8 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 ## Getting started
 
-This version of the plugin is compatible with Unreal Engine versions **5.0.3** and **UE 5.1**, and requires the [**ZED SDK 4.0**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk).
-However, we strongly advise you to use UE 5.1 as we will put all our efforts into this version of Unreal Engine.
+This version of the plugin is compatible with Unreal Engine **5.1**, and requires the [**ZED SDK 4.0**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk).
 
-- For the UE4 plugin, see here : [UE4.21 Plugin](https://github.com/stereolabs/zed-unreal-plugin)
 - To see our implementation of Live Link with the ZED, go here : [ZED Live Link Plugin](https://github.com/stereolabs/zed-LiveLink-plugin)
 
 ### Installation
