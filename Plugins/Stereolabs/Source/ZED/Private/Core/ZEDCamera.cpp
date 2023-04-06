@@ -48,54 +48,47 @@ AZEDCamera::AZEDCamera()
 
 	// components creation
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	InterLeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("InterLeftRoot"));
-	InterLeftPlaneRotationRoot = CreateDefaultSubobject<USceneComponent>(TEXT("InterLeftPlaneRotationRoot"));
-	InterLeftPlaneTranslationRoot = CreateDefaultSubobject<USceneComponent>(TEXT("InterLeftPlaneTranslationRoot"));
-	InterLeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("InterLeftCamera"));
-	InterLeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("InterLeftPlane"));
+	LeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LeftRoot"));
+	LeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LeftCamera"));
+	LeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftPlane"));
 
-
-	// Attachment
-	InterLeftRoot->SetupAttachment(RootComponent);
-	InterLeftPlaneRotationRoot->SetupAttachment(InterLeftRoot);
-	InterLeftPlaneTranslationRoot->SetupAttachment(InterLeftPlaneRotationRoot);
-	InterLeftCamera->SetupAttachment(InterLeftRoot);
-	InterLeftPlane->SetupAttachment(InterLeftPlaneTranslationRoot);
+	LeftRoot->SetupAttachment(RootComponent);
+	LeftPlane->SetupAttachment(LeftRoot);
 
 	// Initial camera setup
-	InterLeftCamera->bCaptureEveryFrame = true;
-	InterLeftCamera->bCaptureOnMovement = false;
-	InterLeftCamera->SetAutoActivate(false);
+	LeftCamera->bCaptureEveryFrame = true;
+	LeftCamera->bCaptureOnMovement = false;
+	LeftCamera->SetAutoActivate(false);
 
 	// Add static mesh to planes
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMesh(TEXT("StaticMesh'/Stereolabs/ZED/Shapes/SM_Plane_100x100.SM_Plane_100x100'"));
-	InterLeftPlane->SetStaticMesh(PlaneMesh.Object);
+	LeftPlane->SetStaticMesh(PlaneMesh.Object);
 
 	// Initial planes rotation setup
-	InterLeftPlane->SetRelativeRotation(FRotator(0, 90, 90));
+	LeftPlane->SetRelativeRotation(FRotator(0, 90, 90));
 
 	// Remove collision
-	InterLeftPlane->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	LeftPlane->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Remove shadow cast
-	InterLeftPlane->SetCastShadow(false);
+	LeftPlane->SetCastShadow(false);
 
 	// Ignore Postprocessing
-	InterLeftPlane->SetRenderCustomDepth(true);
-	InterLeftPlane->CustomDepthStencilValue = 1;
+	LeftPlane->SetRenderCustomDepth(true);
+	LeftPlane->CustomDepthStencilValue = 1;
 
-	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-	InterLeftCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
-	InterLeftCamera->PostProcessSettings.VignetteIntensity = 0;
-	InterLeftCamera->PostProcessSettings.bOverride_ToneCurveAmount = true;
-	InterLeftCamera->PostProcessSettings.ToneCurveAmount = 0;
+	LeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
+	LeftCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
+	LeftCamera->PostProcessSettings.VignetteIntensity = 0;
+	LeftCamera->PostProcessSettings.bOverride_ToneCurveAmount = true;
+	LeftCamera->PostProcessSettings.ToneCurveAmount = 0;
 
-	InterLeftCamera->PostProcessSettings.bOverride_AutoExposureBias = true;
-	InterLeftCamera->PostProcessSettings.AutoExposureBias = 0;
-	InterLeftCamera->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
-	InterLeftCamera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
+	LeftCamera->PostProcessSettings.bOverride_AutoExposureBias = true;
+	LeftCamera->PostProcessSettings.AutoExposureBias = 0;
+	LeftCamera->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
+	LeftCamera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
 	// Set light channels
-	InterLeftPlane->LightingChannels.bChannel0 = false;
+	LeftPlane->LightingChannels.bChannel0 = false;
 }
 
 void AZEDCamera::BeginPlay()
@@ -611,10 +604,10 @@ void AZEDCamera::SetSVOPlaybackLooping(bool bLooping)
 	GSlCameraProxy->SetSVOPlaybackLooping(bLooping);
 }
 
-void AZEDCamera::ToggleInterComponents(bool enable)
+void AZEDCamera::ToggleComponents(bool enable)
 {
-	InterLeftPlane->SetVisibility(enable);
-	InterLeftCamera->SetActive(enable);
+	LeftPlane->SetVisibility(enable);
+	LeftCamera->SetActive(enable);
 }
 
 void AZEDCamera::SetupComponents()
@@ -624,29 +617,22 @@ void AZEDCamera::SetupComponents()
 
 	// Setup final plane material and render targets
 	LeftEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);
-	InterLeftCamera->TextureTarget = LeftEyeRenderTarget;
-	InterLeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
+	LeftCamera->TextureTarget = LeftEyeRenderTarget;
+	LeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
 
 	// Set camera FOV
-	InterLeftCamera->FOVAngle = cameraParam.HFOV;
-
+	LeftCamera->FOVAngle = cameraParam.HFOV;
+	
+	LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
 	// Set plane size
-	SetPlaneSize(InterLeftPlane, CameraRenderPlaneDistance);
-
-	// Forward offset Inter
-	InterLeftPlaneTranslationRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
-
-	//// Optical center and baseline offsets (Inter planes)
-	//FVector4 opticalCenterOffsets = USlFunctionLibrary::GetOpticalCentersOffsets(cameraParam.Resolution, CameraRenderPlaneDistance);
-	//InterLeftPlane->SetRelativeLocation(FVector(0, opticalCenterOffsets.X, -opticalCenterOffsets.Y));
+	SetPlaneSize(LeftPlane, CameraRenderPlaneDistance);
 
 	// Set inter planes materials
-	InterLeftPlane->SetMaterial(0, ZedLeftEyeMaterialInstanceDynamic);
+	LeftPlane->SetMaterial(0, ZedLeftEyeMaterialInstanceDynamic);
 
 	// Set camera projection matrix
-	InterLeftCamera->bUseCustomProjectionMatrix = true;
-	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(InterLeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
-
+	LeftCamera->bUseCustomProjectionMatrix = true;
+	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(LeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
 }
 
 void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
@@ -667,12 +653,12 @@ void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)
 
 void AZEDCamera::AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight)
 {
-	InterLeftCamera->AddOrUpdateBlendable(NewPostProcess, NewWeight);
+	LeftCamera->AddOrUpdateBlendable(NewPostProcess, NewWeight);
 }
 
 void AZEDCamera::DisableRenderingCpp()
 {
-	ToggleInterComponents(false);
+	ToggleComponents(false);
 }
 
 void AZEDCamera::InitializeRenderingCpp()
@@ -680,10 +666,10 @@ void AZEDCamera::InitializeRenderingCpp()
 	SetupComponents();
 	if (bShowZedImage) 
 	{
-		ToggleInterComponents(true);
+		ToggleComponents(true);
 	}
 	else 
 	{
-		ToggleInterComponents(false);
+		ToggleComponents(false);
 	}
 }

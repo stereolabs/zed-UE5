@@ -371,31 +371,20 @@ private:
 
 	public:
 
-		/** Root component for intermediate cameras and planes
-		* This component takes the camera-HMD calibration translation 
-		*/
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneComponent* InterLeftRoot;
-
-		/** Root for intermediate planes that takes camera-HMD calibration rotation */
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneComponent* InterLeftPlaneRotationRoot;
-
-		/** Root for intermediate planes that a inter camera forward translation (to be far enough from the camera) */
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneComponent* InterLeftPlaneTranslationRoot;
+		USceneComponent * LeftRoot;
 
 		/** Left intermediate camera (virtual equivalent of physical left zed camera) */
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneCaptureComponent2D* InterLeftCamera;
+		USceneCaptureComponent2D* LeftCamera;
 
 		/** Intermediate left plane on which Zed left image is displayed */
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		UStaticMeshComponent* InterLeftPlane;
+		UStaticMeshComponent* LeftPlane;
 
 	private:
 
-		void ToggleInterComponents(bool enable);
+		void ToggleComponents(bool enable);
 		void SetupComponents();
 		void SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance);
 		void SetPlaneSize(UStaticMeshComponent* plane, float planeDistance);
