@@ -241,10 +241,6 @@ public:
 
 	static UTexture2D* GenerateTextureFromSlMat(const sl::Mat* mat);
 
-	/** Return HMD HFocal et VFocal lenght*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "HmdFocal", Keywords = "Focal"), Category = "Stereolabs")
-	static FVector2D GetHmdFocale();
-
 	/* Compute 3d box position, orientation and scale based on Objectdata informations*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set3DBoxTransform"), Category = "Stereolabs")
 	static void Set3DBoxTransform(UPARAM(ref) AActor*& BBox, const FSlObjectData ObjectData);

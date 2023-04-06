@@ -497,21 +497,6 @@ enum class ESlSelfCalibrationState : uint8
 };
 
 /*
-* Tracking type selection
-* Allow to chose which tracking is selected for the pawn.
-* ZED : Zed tracking only
-* HMD : Hmd tracking only
-* Mixte : Zed Imu rotations and Hmd translations
-*/
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ETrackingType : uint8
-{
-	TrT_ZED			UMETA(DisplayName = "Zed"),
-	TrT_HMD			UMETA(DisplayName = "Hmd"),
-	TrT_Mixte		UMETA(DisplayName = "Mixte"),
-};
-
-/*
 * Lists available object tracking state.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
@@ -1933,8 +1918,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		bSetGravityAsOrigin(true),
-		TrackingType(ETrackingType::TrT_ZED)
+		bSetGravityAsOrigin(true)
 	{
 	}
 
@@ -1988,15 +1972,6 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			Rotation,
 			*Path
 			);
-
-		int32 ConfigTrackingType;
-		GConfig->GetInt(
-			Section,
-			TEXT("TrackingType"),
-			ConfigTrackingType,
-			*Path
-		);
-		TrackingType = (ETrackingType)ConfigTrackingType;
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2049,13 +2024,6 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			Rotation,
 			*Path
 			);
-
-		GConfig->SetInt(
-			Section,
-			TEXT("TrackingType"),
-			static_cast<int32>(TrackingType),
-			*Path
-		);
 	}
 
 	/*
@@ -2111,15 +2079,6 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSetGravityAsOrigin;
-
-	/** Tracking type
-	* Allow to chose which tracking is selected for the pawn.
-	* ZED : Zed tracking only
-	* HMD : Hmd tracking only
-	* Mixte : Zed Imu rotations and Hmd translations
-	*/
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ETrackingType TrackingType;
 };
 
 /*
@@ -3154,65 +3113,6 @@ struct STEREOLABS_API FSlBodies
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTracked;
-};
-
-
-/*
- * Anti drift parameters
- */
-USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlAntiDriftParameters
-{
-	GENERATED_BODY()
-
-	const TCHAR* Section = TEXT("HMD");
-
-	FSlAntiDriftParameters()
-		:
-		CalibrationTransform(FTransform(FQuat::Identity, FVector(13.5, -3.15, 0)))
-	{
-	}
-
-	FORCEINLINE void Load(const FString& Path)
-	{
-		FVector HMDToZedVector;
-		GConfig->GetVector(
-			Section,
-			TEXT("HMDToZedVector"),
-			HMDToZedVector,
-			*Path
-			);
-
-		FRotator HMDToZedRotator;
-		GConfig->GetRotator(
-			Section,
-			TEXT("HMDToZedRotator"),
-			HMDToZedRotator,
-			*Path
-			);
-		CalibrationTransform = FTransform(HMDToZedRotator, HMDToZedVector);
-	}
-
-	FORCEINLINE void Save(const FString& Path) const
-	{
-		GConfig->SetVector(
-			Section,
-			TEXT("HMDToZedVector"),
-			CalibrationTransform.GetLocation(),
-			*Path
-			);
-
-		GConfig->SetRotator(
-			Section,
-			TEXT("HMDToZedRotator"),
-			CalibrationTransform.Rotator(),
-			*Path
-			);
-	}
-
-	/** Zed to HMD offset */
-	UPROPERTY(BlueprintReadWrite)
-	FTransform CalibrationTransform;
 };
 
 /*

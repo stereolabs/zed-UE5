@@ -67,12 +67,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Zed")
 	void ResetSettings();
 
-private:
-	/*
-	 * Load anti drift parameters
-	 */
-	void LoadAntiDriftParameters();
-
 public:
 
 	/** Type of view displayed on the scene.
@@ -133,14 +127,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	uint8 bLoadCameraSettingsFromConfigFile:1;
 
-	/*
-	 * Use the HMD transform as tracking origin, else the HMD tracking origin is reset.
-	 * Enable if the player must match his real world location/rotation. 
-	 * Not loaded from config file
-	 */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bUseHMDTrackingAsOrigin:1;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	uint8 bDepthOcclusion : 1;
 
@@ -153,11 +139,4 @@ public:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	float DepthClampThreshold;
-
-public:
-	/** Calibration parameters */
-	FSlAntiDriftParameters AntiDriftParameters;
-
-	/** Parameters for external view */
-	FZEDExternalViewParameters ExternalViewParameters;
 };

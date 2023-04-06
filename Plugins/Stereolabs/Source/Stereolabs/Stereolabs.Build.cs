@@ -30,8 +30,7 @@ public class Stereolabs : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "MixedReality",
-                "HeadMountedDisplay"
+                "MixedReality"
 
 				// ... add other public dependencies that you statically link with here ...
 			}

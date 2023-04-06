@@ -266,17 +266,6 @@ UTexture2D* USlFunctionLibrary::GenerateTextureFromSlMat(const sl::Mat* mat)
 	return texture;
 }
 
-FVector2D USlFunctionLibrary::GetHmdFocale()
-{
-	FMatrix ProjectionMatrix = GEngine->StereoRenderingDevice->GetStereoProjectionMatrix(eSSE_LEFT_EYE);
-	FIntPoint IdealRenderSize = GEngine->XRSystem->GetHMDDevice()->GetIdealRenderTargetSize();
-	FVector2D focales;
-	focales.X = (IdealRenderSize.X / 4.0f * ProjectionMatrix.M[0][0]);
-	focales.Y = (IdealRenderSize.Y / 2.0f * ProjectionMatrix.M[1][1]);
-	SL_LOG_W(SLFunctionLibrary, "HMD focal compute on viewport %f x %f", (float)IdealRenderSize.X, (float)IdealRenderSize.Y);
-	return focales;
-}
-
 void USlFunctionLibrary::Set3DBoxTransform(AActor*& BBox, const FSlObjectData ObjectData) {
 
 	if (!GSlCameraProxy) return;

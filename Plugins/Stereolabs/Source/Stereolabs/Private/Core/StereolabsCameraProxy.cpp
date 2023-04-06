@@ -317,8 +317,6 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 		SL_CameraParameters leftCameraParameters = sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)->camera_configuration.calibration_parameters.left_cam;
 		RetrieveLeftCameraParameters = sl::unreal::ToUnrealType(leftCameraParameters);
 
-		GSlEyeHalfBaseline = CameraInformation.HalfBaseline;
-
 		OpenCameraAsyncTask->EnsureCompletion(false);
 
 		delete OpenCameraAsyncTask;
