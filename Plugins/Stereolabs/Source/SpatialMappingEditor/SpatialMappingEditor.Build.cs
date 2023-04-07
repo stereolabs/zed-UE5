@@ -34,7 +34,6 @@ namespace UnrealBuildTool.Rules
                     "SlateCore",
                     "Engine",
                     "UnrealEd",
-                    "HeadMountedDisplay",
                     "DesktopPlatform",
                     "InputCore"
                 }

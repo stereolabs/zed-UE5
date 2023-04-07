@@ -57,8 +57,6 @@ public class ZED : ModuleRules
                 "RenderCore",
                 "InputCore",
 
-                "HeadMountedDisplay",
-
                 "RHI", 
                 "RHICore",
                 "D3D11RHI"

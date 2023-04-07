@@ -6,7 +6,6 @@
 
 #include "Math/Matrix.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "HeadMountedDisplay.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <sl_mr_core/defines.hpp>
@@ -23,9 +22,6 @@ extern STEREOLABS_API uint32 GSlGrabThreadId;
 
 /** True if the grab thread has been initialized */
 extern STEREOLABS_API bool GSlIsGrabThreadIdInitialized;
-
-/** Eye half baseline of the Zed */
-extern STEREOLABS_API float GSlEyeHalfBaseline;
 
 /** Camera proxy instance */
 extern STEREOLABS_API class USlCameraProxy* GSlCameraProxy;

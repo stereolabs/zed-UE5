@@ -129,7 +129,7 @@ void FSlBodyTrackingRunnable::Start(float Frequency)
 
 void FSlBodyTrackingRunnable::RetrieveBodies(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
 
-	if (bIsRunning && GSlCameraProxy->IsBodyTrackingEnabled())
+	if (bIsRunning && GSlCameraProxy->IsBodyTrackingEnabled() && !GSlCameraProxy->bSVOPlaybackPaused)
 	{
 		GSlCameraProxy->RetrieveBodies();
 
