@@ -24,16 +24,11 @@ A more detailed documentation is available on our website, see here :  https://w
 
 ## Overview
 
-Body Tracking | Camera Tracking | Point Cloud 
-:-----------: |  :------------: | :--------: |
-
-[![Body Tracking](https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4)](https://www.stereolabs.com/docs/ue5/body-tracking/) | [![Cammera Tracking](https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4)](https://www.stereolabs.com/docs/ue5/camera-tracking/) | ![Point Cloud](https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4)
-
-
-Object Detection | Background substraction | Spatial mapping
-:--------------: |  :--------------------: | :------------: |
-
-[![Object Detection](https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4)](https://www.stereolabs.com/docs/ue5/object-detection/) | [![Background susbtraction](https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4)](https://www.stereolabs.com/docs/ue5/background-subtraction/) | [![Spatial mapping](https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4)](https://www.stereolabs.com/docs/ue5/spatial-mapping/)
+| Body Tracking | Camera Tracking | Point Cloud 
+| :-----------: |  :------------: | :--------: |
+| [<video src="https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4" controls="controls" style="max-width: 100;"></video>](https://www.stereolabs.com/docs/ue5/body-tracking/) | [<video src="https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4"></video>](https://www.stereolabs.com/docs/ue5/camera-tracking/) | <video src="https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4"></video>
+| Object Detection | Background substraction | Spatial mapping
+| [<video src="https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4" ></video>](https://www.stereolabs.com/docs/ue5/object-detection/) | [<video src="https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4"></video>](https://www.stereolabs.com/docs/ue5/background-subtraction/) | [<video src="https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4"></video>](https://www.stereolabs.com/docs/ue5/spatial-mapping/)
 
 ## Support
 
