@@ -2,11 +2,14 @@
 
 #pragma once
 
+#include "Zed/Public/HUD/ZEDWidget.h"
 #include "ZEDBaseTypes.h"
 #include "ZEDInitializer.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTexture.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTextureBatch.h"
 #include "../../../ThirdParty/MixedReality/include/sl_mr_core/defines.hpp"
+
+#include "CineCameraComponent.h"
 
 #include "ZEDCamera.generated.h"
 
@@ -177,6 +180,11 @@ public:
 	 * Initialize actor
 	 */
 	void Init();
+
+	/** Set the location offset, i.e. when starting the level */
+	UFUNCTION()
+	void SetStartOffsetLocation(const FVector& locOffset);
+
 	
 	// ------------------------------------------------------------------
 
@@ -196,8 +204,6 @@ private:
 	void CameraClosed();
 
 	// ------------------------------------------------------------------
-
-private:
 	/*
 	 * Create left eye textures
 	 *
@@ -206,11 +212,13 @@ private:
 	void CreateLeftTextures(bool bCreateColorTexture = true);
 
 	/*
-	 * Create right eye textures
-	 *
-	 * @param bCeateColorTexture True to create color texture
+	 * Event binded to OnTrackingDataUpdated
+	 * @param NewTrackingData The new tracking data
 	 */
-	void CreateRightTextures(bool bCreateColorTexture = true);
+	UFUNCTION()
+	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData);
+
+	FVector RealTranslationToVirtualTranslation(const FVector& realTranslation);
 	
 	// ------------------------------------------------------------------
 
@@ -224,7 +232,6 @@ public:
 	FZEDCameraActorInitializedDelegate OnCameraActorInitialized;
 
 	// ------------------------------------------------------------------
-
 	/** Left eye image texture */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
 	USlTexture* LeftEyeColor;
@@ -233,21 +240,26 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
 	USlTexture* LeftEyeDepth;
 
-	/** Right eye image texture */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* RightEyeColor;
-
-	/** Right eye depth texture  */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* RightEyeDepth;
-
 	/** Render target left eye */
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
 	UTextureRenderTarget2D* LeftEyeRenderTarget;
-	
-	/** Render target right eye */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
-	UTextureRenderTarget2D* RightEyeRenderTarget;
+
+	/** Dynamic left Zed eye material */
+	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
+	UMaterialInstanceDynamic* ZedLeftEyeMaterialInstanceDynamic;
+
+	// ------------------------------------------------------------------
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	uint8 bShowZedImage : 1;
+
+	/** When enabled, the real world can occlude (cover up) virtual objects that are behind it. Otherwise, virtual objects will appear in front. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	uint8 bDepthOcclusion : 1;
+
+	/** Max depth distance. Can be modified at runtime */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	float DepthClampThreshold;
 
 	/** Type of view displayed on the scene.
 	* Default is ESlView::LEFT.
@@ -257,45 +269,22 @@ public:
 
 	// ------------------------------------------------------------------
 
+	/** Init parameters */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zed")
+
+	FSlInitParameters InitParameters;
+
+	/** Tracking parameters */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlPositionalTrackingParameters TrackingParameters;
+
 	/** Runtime parameters */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zed")
 	FSlRuntimeParameters RuntimeParameters;
 
-	/** Camera settings */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zed")
-	FSlVideoSettings CameraSettings;
-
-	// ------------------------------------------------------------------
-
-	/** Config rendering parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	FSlRenderingParameters RenderingParameters;
-
-	/**  Render distance of the ZED planes */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-	float CameraRenderPlaneDistance;
-
-	// ------------------------------------------------------------------
-
 	/** The current tracking data */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Tracking")
 	FZEDTrackingData TrackingData;
-
-	/** Tracking parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-    FSlPositionalTrackingParameters TrackingParameters;
-
-	// ------------------------------------------------------------------
-
-	/** Dynamic left Zed eye material */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-	UMaterialInstanceDynamic* ZedLeftEyeMaterialInstanceDynamic;
-
-	/** Dynamic HMD left eye material */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-		UMaterialInstanceDynamic* HMDLeftEyeMaterialInstanceDynamic;
-
-	// ------------------------------------------------------------------
 
 	/** Object Detection Parameters */
 
@@ -315,30 +304,84 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlBodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
 
-	// ------------------------------------------------------------------
-
 	/** Recording parameters */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlRecordingParameters RecordingParameters;
 
-	// ------------------------------------------------------------------
-	
-	/** When enabled, the real world can occlude (cover up) virtual objects that are behind it. Otherwise, virtual objects will appear in front. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bDepthOcclusion : 1;
+	/** Camera settings */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Zed")
+	FSlVideoSettings CameraSettings;
 
-	/** Max depth distance. Can be modified at runtime */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	float DepthClampThreshold;
+	/** Custom spring arm that offset the camera */
+	UPROPERTY()
+	USceneComponent* SpringArm;
+
+	/** Main camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCineCameraComponent* Camera;
+
+	/** Should enable lerp with specified alpha*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool EnableLerp;
+
+	/** Lerp Speed value*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float LerpIntensity;
+
+	/** Transform used during Lerp smoothing*/
+	FTransform LerpTransform;
+
+	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool ToggleFreeze;
+
+	/** Save the rotation of the camera when freezing, and apply offset to the camera after unfreezing.*/
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool UseRotationOffset;
+
+	/** Has the camera been frozen by the toggle freeze*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool IsFrozen;
+
+	FVector StartOffsetLocation;
+
+	// If there is a translation modifier different than (1,1,1), it will also apply on the translation
+	// given by the boolean "bSetFloorAsOrigin" of the tracking parameters, which will move the ZEDPawn
+	// accordingly to the height of the real camera.
+	// This bool is to ignore the translation modifier on the first offset.
+	bool SetFloorAsOriginCorrected;
+
+	/** The previous location given by the slcamera (not the last frame)*/
+	FVector PreviousLocation;
+
+	/** From Previous to current location given by the slcamera*/
+	FVector PreviousToCurrentLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector TranslationMultiplier;
+
+	/** The new virtual target location for lerp and direct movement*/
+	FVector VirtualLocation;
+	FVector PrevVirtualLocation;
+
+
+	/** Zed loading widget */
+	UPROPERTY()
+	UZEDWidget* ZedLoadingWidget;
+
+	/** Zed error widget */
+	UPROPERTY()
+	UZEDWidget* ZedErrorWidget;
 
 private:
+
+
+	/**  Render distance of the ZED planes */
+	float CameraRenderPlaneDistance;
 
 	/** Current batch */
 	UPROPERTY()
 	USlTextureBatch* Batch;
-
-	/** Init parameters */
-	FSlInitParameters InitParameters;
 
 	/** Zed material resource */
 	UPROPERTY()
@@ -365,32 +408,47 @@ private:
 	/** True if initialized */
 	uint8 bInit:1;
 
-	uint8 bShowZedImage:1;
+	/** Zed loading source widget */
+	UPROPERTY()
+		UClass* ZedLoadingSourceWidget;
 
-	/************************ Section from old blueprint **********************/
+	/** Zed error source widget */
+	UPROPERTY()
+		UClass* ZedErrorSourceWidget;
 
-	public:
+	/** Zed widget material */
+	UPROPERTY()
+		UMaterial* ZedWidgetSourceMaterial;
 
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneComponent * LeftRoot;
+	/** Transform offset used to reposition the camera, taking into account movement multipliers or offsetters*/
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FTransform TransformOffset;
 
-		/** Left intermediate camera (virtual equivalent of physical left zed camera) */
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneCaptureComponent2D* LeftCamera;
+	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FTransform RealCameraTransform;
 
-		/** Intermediate left plane on which Zed left image is displayed */
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		UStaticMeshComponent* LeftPlane;
+public:
 
-	private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
+	USceneComponent * LeftRoot;
 
-		void ToggleComponents(bool enable);
-		void SetupComponents();
-		void SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance);
-		void SetPlaneSize(UStaticMeshComponent* plane, float planeDistance);
+	/** Left intermediate camera (virtual equivalent of physical left zed camera) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
+	USceneCaptureComponent2D* LeftCamera;
 
-		void AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight);
+	/** Intermediate left plane on which Zed left image is displayed */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
+	UStaticMeshComponent* LeftPlane;
 
-		void DisableRenderingCpp();
-		void InitializeRenderingCpp();
+private:
+
+	void ToggleComponents(bool enable);
+	void SetupComponents();
+	void SetPlaneSize(UStaticMeshComponent* plane, float planeDistance);
+
+	void AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight);
+
+	void DisableRenderingCpp();
+	void InitializeRenderingCpp();
 };

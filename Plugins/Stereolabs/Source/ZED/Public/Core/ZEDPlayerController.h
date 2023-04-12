@@ -5,7 +5,6 @@
 #include "Stereolabs/Public/Utilities/StereolabsViewportHelper.h"
 
 #include "ZED/Public/Core/ZEDCamera.h"
-#include "ZED/Public/Core/ZEDPawn.h"
 #include "ZED/Public/Core/ZEDBaseTypes.h"	
 
 #include "Components/TimelineComponent.h"
@@ -61,11 +60,11 @@ public:
 	void MakeDefaultInit();
 
 	/*
-	 * Spawn the pawn
-	 * @return The pawn
+	 * Spawn the camera
+	 * @return The camera
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed")
-	UObject* SpawnPawn(UClass* NewPawnClass, bool bPossess = true);
+	UObject* SpawnCamera(UClass* NewPawnClass, bool bPossess = true);
 
 	/*
 	 * Spawn the zed actor
@@ -194,10 +193,10 @@ private:
 	void ZedCameraActorInitialized();
 
 	/*
-	 * Network notification for pawn spawning
+	 * Network notification for camera spawning
 	 */
 	UFUNCTION()
-	void OnRep_ZedPawn();
+	void OnRep_ZedCamera();
 
 	UFUNCTION()
 	void ZedReady();
@@ -246,24 +245,20 @@ private:
 	void FadeOutToGame();
 
 public:
-	/** The pawn class to spawn */
+	/** The camera class to spawn */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
-	TSubclassOf<AZEDPawn> PawnClass;
+	TSubclassOf<AZEDCamera> CameraClass;
 
 	/** Pawn spawned delegate */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
-	FZEDPlayerControllerDelegate OnPawnSpawned;
+	FZEDPlayerControllerDelegate OnCameraSpawned;
 
 	/** Zed camera actor initialization */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FZEDPlayerControllerDelegate OnPreZedCameraOpening;
 
-	/** The current Zed pawn possessed */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed", ReplicatedUsing = OnRep_ZedPawn)
-	AZEDPawn* ZedPawn;
-
-	/** The current Zed actor attached to the pawn */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed")
+	/** The current Zed actor */
+	UPROPERTY(BlueprintReadOnly, Category = "Zed", ReplicatedUsing = OnRep_ZedCamera)
 	AZEDCamera* ZedCamera;
 
 	/** True to use pawn and Zed default spawn sequence and start initialization of the controller after pawn spawned */

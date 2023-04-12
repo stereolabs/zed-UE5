@@ -30,6 +30,18 @@ static TAutoConsoleVariable<int32> CVarZEDDepthTextureQualityPreset(
 
 AZEDCamera::AZEDCamera()
 	:
+	EnableLerp(true),
+	LerpIntensity(10.0),
+	IsFrozen(false),
+	ToggleFreeze(false),
+	UseRotationOffset(true),
+	StartOffsetLocation(FVector::ZeroVector),
+	SetFloorAsOriginCorrected(false),
+	PreviousLocation(FVector::ZeroVector),
+	PreviousToCurrentLocation(FVector::ZeroVector),
+	TranslationMultiplier(FVector::OneVector),
+	VirtualLocation(FVector::ZeroVector),
+	PrevVirtualLocation(FVector::ZeroVector),
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
 	LeftEyeRenderTarget(nullptr),
@@ -40,14 +52,80 @@ AZEDCamera::AZEDCamera()
 	bShowZedImage(true),
 	ImageView(ESlView::V_Left)
 {
-	// Controller tick the camera to make it the first actor to tick
+
+	// ------------------------------------------------------------------ //
+	// ------------------------- Init Pawn ------------------------------ //
+	// ------------------------------------------------------------------ //
+
+
+	TransformOffset = FTransform();
+	ToggleFreeze = false;
 	PrimaryActorTick.bCanEverTick = false;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
+	SpringArm = CreateDefaultSubobject<USceneComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+
+	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("MainCamera"));
+	Camera->SetupAttachment(SpringArm);
+	Camera->SetFieldOfView(80);
+
+	Camera->bConstrainAspectRatio = true;
+	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
+	Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
+
+	// Widget material
+	static ConstructorHelpers::FObjectFinder<UMaterial> ZedWidgetMaterial(TEXT("Material'/Stereolabs/ZED/Materials/M_ZED_3DWidgetPassthroughNoDepth.M_ZED_3DWidgetPassthroughNoDepth'"));
+	ZedWidgetSourceMaterial = ZedWidgetMaterial.Object;
+
+	// Zed loading source widget
+	static ConstructorHelpers::FObjectFinder<UClass> ZedLoadingWidgetBlueprint(TEXT("'/Stereolabs/ZED/Blueprints/HUD/Loading/W_ZED_Loading.W_ZED_Loading_C'"));
+	ZedLoadingSourceWidget = ZedLoadingWidgetBlueprint.Object;
+
+	// Zed error source widget
+	static ConstructorHelpers::FObjectFinder<UClass> ZedErrorWidgetBlueprint(TEXT("'/Stereolabs/ZED/Blueprints/HUD/Error/W_ZED_Error.W_ZED_Error_C'"));
+	ZedErrorSourceWidget = ZedErrorWidgetBlueprint.Object;
+
+	// Zed loading widget
+	ZedLoadingWidget = CreateDefaultSubobject<UZEDWidget>(TEXT("LoadingMessage"));
+	ZedLoadingWidget->SetupAttachment(Camera);
+	ZedLoadingWidget->SetWorldScale3D(FVector(0.5f));
+	ZedLoadingWidget->SetRelativeLocation(FVector(300.0f, 0.0f, 0.0f));
+	ZedLoadingWidget->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
+	ZedLoadingWidget->WidgetComponent->SetMaterial(0, ZedWidgetSourceMaterial);
+	ZedLoadingWidget->WidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	ZedLoadingWidget->WidgetComponent->SetWidgetClass(ZedLoadingSourceWidget);
+	ZedLoadingWidget->WidgetComponent->SetDrawSize(FVector2D(1920, 1080));
+	ZedLoadingWidget->WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Cylinder);
+	ZedLoadingWidget->WidgetComponent->SetCylinderArcAngle(80.0f);
+	ZedLoadingWidget->WidgetComponent->SetBlendMode(EWidgetBlendMode::Transparent);
+	ZedLoadingWidget->SetVisibility(false);
+
+	// Zed error widget
+	ZedErrorWidget = CreateDefaultSubobject<UZEDWidget>(TEXT("ErrorMessage"));
+	ZedErrorWidget->SetupAttachment(Camera);
+	ZedErrorWidget->SetWorldScale3D(FVector(0.5f));
+	ZedErrorWidget->SetRelativeLocation(FVector(300.0f, 0.0f, 0.0f));
+	ZedErrorWidget->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
+	ZedErrorWidget->WidgetComponent->SetMaterial(0, ZedWidgetSourceMaterial);
+	ZedErrorWidget->WidgetComponent->SetWidgetSpace(EWidgetSpace::World);
+	ZedErrorWidget->WidgetComponent->SetWidgetClass(ZedErrorSourceWidget);
+	ZedErrorWidget->WidgetComponent->SetDrawSize(FVector2D(1920, 1080));
+	ZedErrorWidget->WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Cylinder);
+	ZedErrorWidget->WidgetComponent->SetCylinderArcAngle(80.0f);
+	ZedErrorWidget->WidgetComponent->SetBlendMode(EWidgetBlendMode::Transparent);
+	ZedErrorWidget->SetVisibility(false);
+
+
+	// ------------------------------------------------------------------ //
+	// ------------------------- Init ZED Camera ------------------------ //
+	// ------------------------------------------------------------------ //
 
 	static ConstructorHelpers::FObjectFinder<UMaterial> ZedMaterial(TEXT("Material'/Stereolabs/ZED/Materials/Mono/M_ZED_Mono.M_ZED_Mono'"));
 	ZedSourceMaterial = ZedMaterial.Object;
 
 	// components creation
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	LeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LeftRoot"));
 	LeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LeftCamera"));
 	LeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftPlane"));
@@ -293,6 +371,36 @@ void AZEDCamera::Tick(float DeltaSeconds)
 			}
 		}
 	}
+
+	if (!IsFrozen) {
+		if (EnableLerp)
+		{
+			// Apply rotational offset on transform as global rotation
+
+			float lerpAlpha = DeltaSeconds * LerpIntensity;
+			LerpTransform = UKismetMathLibrary::TLerp(
+				LerpTransform,
+				FTransform(
+					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+					VirtualLocation,
+					RealCameraTransform.GetScale3D()
+				),
+				FMath::Clamp(lerpAlpha, 0.0f, 1.0f));
+			SetActorTransform(LerpTransform);
+		}
+		else
+		{
+			SetActorTransform(
+				FTransform(
+					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+					VirtualLocation,
+					RealCameraTransform.GetScale3D()
+				)
+			);
+
+			LerpTransform = RealCameraTransform;
+		}
+	}
 }
 
 void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
@@ -358,24 +466,6 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
 
 		LeftEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_Depth, true, ESlTextureFormat::TF_R32_FLOAT);
-	}
-}
-
-void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
-{
-	if (bCreateColorTexture)
-	{
-		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters.Resolution;
-
-		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_Right, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
-
-	}
-
-	if (RuntimeParameters.bEnableDepth)
-	{
-		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
-
-		RightEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("RightEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_DepthRight, true, ESlTextureFormat::TF_R32_FLOAT);
 	}
 }
 
@@ -497,7 +587,6 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer)
 	TrackingParameters = ZedInitializer->TrackingParameters;
 	InitParameters = ZedInitializer->InitParameters;
 	RuntimeParameters = ZedInitializer->RuntimeParameters;
-	RenderingParameters = ZedInitializer->RenderingParameters;
 	CameraSettings = ZedInitializer->CameraSettings;
 	RecordingParameters = ZedInitializer->RecordingParameters;
 	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
@@ -571,6 +660,7 @@ void AZEDCamera::CameraClosed()
 {
 	GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
 	DisableObjectDetection();
+	DisableBodyTracking();
 
 	if (Batch) Batch->Clear();
 	if (LeftEyeColor) {
@@ -579,13 +669,7 @@ void AZEDCamera::CameraClosed()
 	if (LeftEyeDepth) {
 		LeftEyeDepth->ConditionalBeginDestroy();
 	}
-	if (RightEyeColor) {
-		RightEyeColor->ConditionalBeginDestroy();
-	}
 
-	if (RightEyeDepth) {
-		RightEyeDepth->ConditionalBeginDestroy();
-	}
 	bInit = false;
 }
 
@@ -635,14 +719,6 @@ void AZEDCamera::SetupComponents()
 	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(LeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
 }
 
-void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
-{
-	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-
-	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSizeWithGamma(this, cameraParam.Resolution, RenderingParameters.PerceptionDistance, cameraParam.HFocal, planeDistance/100.0f); // because plane is already of side 100
-	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
-}
-
 void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)
 {
 	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
@@ -671,5 +747,54 @@ void AZEDCamera::InitializeRenderingCpp()
 	else 
 	{
 		ToggleComponents(false);
+	}
+}
+
+void AZEDCamera::SetStartOffsetLocation(const FVector& locOffset)
+{
+	StartOffsetLocation = locOffset;
+	PrevVirtualLocation = locOffset;
+	VirtualLocation = locOffset;
+}
+
+/** The realTranslation should be previousToCurrentLocation*/
+FVector AZEDCamera::RealTranslationToVirtualTranslation(const FVector& realTranslation)
+{
+	FVector ret = FVector::ZeroVector;
+	if (SetFloorAsOriginCorrected) {
+		ret = TransformOffset.GetRotation() * (realTranslation * TranslationMultiplier);
+	}
+	else {
+		ret = TransformOffset.GetRotation() * (realTranslation);
+		SetFloorAsOriginCorrected = true;
+	}
+	return ret;
+}
+
+void AZEDCamera::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
+{
+	PreviousLocation = RealCameraTransform.GetLocation();
+	RealCameraTransform = NewTrackingData.OffsetZedWorldTransform;
+	PreviousToCurrentLocation = RealCameraTransform.GetLocation() - PreviousLocation;
+
+	PrevVirtualLocation = VirtualLocation;
+	VirtualLocation = PrevVirtualLocation + RealTranslationToVirtualTranslation(PreviousToCurrentLocation);
+
+	if (ToggleFreeze) {
+		if (IsFrozen) {
+			// set new offset
+			VirtualLocation = GetActorTransform().GetLocation();
+
+			if (UseRotationOffset) {
+				// Get the rotational difference between where the actor is facing and the "real" camera orientation.
+				// [Actor - Real] is [Actor * Real.Inv] in quaternion
+				TransformOffset.SetRotation(GetActorTransform().GetRotation() * RealCameraTransform.GetRotation().Inverse());
+			}
+			else {
+				TransformOffset.SetRotation(FQuat::Identity);
+			}
+		}
+		IsFrozen = !IsFrozen;
+		ToggleFreeze = false;
 	}
 }

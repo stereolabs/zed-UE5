@@ -91,10 +91,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlRuntimeParameters RuntimeParameters;
 
-	/** Rendering parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	FSlRenderingParameters RenderingParameters;
-
 	/* Object Detection parameters*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	FSlObjectDetectionParameters ObjectDetectionParameters;

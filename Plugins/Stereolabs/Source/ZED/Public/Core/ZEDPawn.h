@@ -25,20 +25,9 @@ public:
 	AZEDPawn();
 
 private:
-	/*
-	 * Event binded to OnTrackingDataUpdated
-	 * @param NewTrackingData The new tracking data
-	 */
-	UFUNCTION()
-	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData);
 
 	UFUNCTION()
 	virtual void Tick(float DeltaSeconds) override;
-
-	/*
-	* Initialisation
-	*/
-	void InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp);
 
 public:
 	/** Custom spring arm that offset the camera */
@@ -72,10 +61,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool IsFrozen;
 
-	/** Set the location offset, i.e. when starting the level */
-	UFUNCTION()
-	void SetStartOffsetLocation(const FVector& locOffset);
-
 	FVector StartOffsetLocation;
 
 	// If there is a translation modifier different than (1,1,1), it will also apply on the translation
@@ -93,7 +78,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector TranslationMultiplier;
 
-	FVector RealTranslationToVirtualTranslation(const FVector& realTranslation);
 	/** The new virtual target location for lerp and direct movement*/
 	FVector VirtualLocation;
 	FVector PrevVirtualLocation;
@@ -106,22 +90,6 @@ public:
 	/** Zed error widget */
 	UPROPERTY()
 	UZEDWidget* ZedErrorWidget;
-
-	/** Remap material resource */
-	UPROPERTY()
-	UMaterial* RemapSourceMaterial;
-
-	/** Remap material*/
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-	UMaterialInstanceDynamic* RemapMaterialInstanceDynamic;
-
-	/** Remap Mx */
-	UPROPERTY()
-	UTexture2D* RemapMx;
-
-	/** Remap My */
-	UPROPERTY()
-	UTexture2D* RemapMy;
 
 private:
 	/** Zed loading source widget */

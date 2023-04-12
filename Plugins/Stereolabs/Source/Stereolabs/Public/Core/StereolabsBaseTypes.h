@@ -3115,65 +3115,6 @@ struct STEREOLABS_API FSlBodies
 	bool bIsTracked;
 };
 
-/*
- * Rendering parameters
- */
-USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlRenderingParameters
-{
-	GENERATED_BODY()
-
-	const TCHAR* Section = TEXT("Rendering");
-
-	FSlRenderingParameters()
-		:
-		PerceptionDistance(100.0f),
-		SRemapEnable(false)
-	{}
-
-	FORCEINLINE void Load(const FString& Path)
-	{
-		GConfig->GetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-			);
-
-		GConfig->GetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	FORCEINLINE void Save(const FString& Path) const
-	{
-		GConfig->SetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-			);
-
-		GConfig->SetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	/** Distance in cm at which real object perfectly match their real size, between 75 and 300. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "75", ClampMax = "3000"))
-	float PerceptionDistance;
-
-	/** ! Experimental ! : enable SRemap. */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool SRemapEnable;
-};
-
 /** Environmental lighting settings */
 USTRUCT(BlueprintType)
 struct FEnvironmentalLightingSettings
