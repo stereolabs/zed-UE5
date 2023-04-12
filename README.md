@@ -29,6 +29,8 @@ A more detailed documentation is available on our website, see here :  https://w
 | [<video src="https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4" controls="controls" style="max-width: 100;"></video>](https://www.stereolabs.com/docs/ue5/body-tracking/) | [<video src="https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4"></video>](https://www.stereolabs.com/docs/ue5/camera-tracking/) | <video src="https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4"></video>
 | Object Detection | Background substraction | Spatial mapping
 | [<video src="https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4" ></video>](https://www.stereolabs.com/docs/ue5/object-detection/) | [<video src="https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4"></video>](https://www.stereolabs.com/docs/ue5/background-subtraction/) | [<video src="https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4"></video>](https://www.stereolabs.com/docs/ue5/spatial-mapping/)
+| Object Placement | Dynamic Crosshair | Hit Test
+| <video src="https://user-images.githubusercontent.com/113181784/202236331-080affd6-bc61-4e31-b9f6-c1539d49b747.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236779-c97a72fd-bb92-486c-83bc-1d2ce660fe55.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236855-7c14916e-bbb0-465f-bdbf-23363a6880d8.mp4"></video>
 
 ## Samples
 
@@ -44,6 +46,11 @@ A more detailed documentation is available on our website, see here :  https://w
 
 * [Spatial Mapping](https://www.stereolabs.com/docs/ue5/spatial-mapping/) - Map your environment into a 3D mesh, then shoot balls at real objects that realistically bounce off using Unreal's collision detection and physics. Optionally, save the mesh, mesh texture and .area spatial memory file for later. Use to pre-scan an environment for when you need persistent geometry, such as when collisions with the real-world need to occur even when you can't see them. See our [spatial mapping](https://docs.stereolabs.com/mixed-reality/unreal/spatial-mapping/) documentation to learn how it works. 
 
+* [Object Placement](https://www.stereolabs.com/docs/ue5/) - Click on a flat, upwards-facing surface to spawn a box above it. Demonstrates how to use the ZED's Plane Detection feature to place objects without pre-scanning. See the level Blueprint and the GetFloorPlaneAtScreenPosition function to see how it works. Press F to visualize the floor plane.
+
+* [Dynamic Crosshair](https://www.stereolabs.com/docs/ue5/) - Puts a 3D crosshair as your cursor that moves itself closer or further to be just in front of the real-world object it overlaps. Explore to see how to use the GetDepthAtScreenPosition function, and experiment with the other GetDepth and GetNormal functions included in the plugin. 
+
+* [Hit Test](https://www.stereolabs.com/docs/ue5/) - Left click to shoot virtual balls that will stop when they collide with a real-world object. Demonstrates that you don't need to pre-scan an environment for such interactions thanks to the ZED's real-time depth map. See the BP_HitTestBall blueprint and the HitTestReal function to learn how it works.
 
 ## Support
 
