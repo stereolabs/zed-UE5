@@ -3,7 +3,6 @@
 #include "ZED/Public/Core/ZEDPlayerController.h"
 #include "ZEDPrivatePCH.h"
 #include "ZED/Public/Utilities/ZEDFunctionLibrary.h"
-#include "ZED/Public/Core/ZEDInitializer.h"
 #include "ZED/Classes/ZEDGameInstance.h"
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
@@ -32,13 +31,6 @@ DEFINE_LOG_CATEGORY(ZEDPlayerController);
 	Canvas->Canvas->DrawItem(String);\
 	Position.Y += RowHeight;\
 
-/** Activate/Deactivate noise */
-//static TAutoConsoleVariable<int32> CVarZEDNoise(
-//	TEXT("r.ZED.Noise"),
-//	0,
-//	TEXT("1 to enable noise, 0 to disable"),
-//	ECVF_RenderThreadSafe
-//);
 
 /** Show ZED FPS */
 static TAutoConsoleVariable<int32> CVarZEDShowFPS(
@@ -380,33 +372,7 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 	ZedCamera->ZedErrorWidget->WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Plane);
 	ZedCamera->ZedErrorWidget->SetWorldScale3D(FVector(0.3f));
 
-	// Get Zed initializer object
-	TArray<AActor*> ZedInitializer;
-	UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
-
-	if (!ZedInitializer.Num())
-	{
-		SL_LOG_E(ZEDPlayerController, "BP_ZED_Initializer must be placed in the world");
-		return;
-	}
-
-	AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
-
-	// Load
-	Initializer->LoadParametersAndSettings();
-
-	// Do some work before Zed actor initialization
-	OnPreZedCameraOpening.Broadcast();
-
-	for (auto ChildrenIt = Initializer->ChildActors.CreateConstIterator(); ChildrenIt; ++ChildrenIt)
-	{
-		(*ChildrenIt)->AttachToActor(ZedCamera, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true));
-	}
-
-	// Set parameters
-	ZedCamera->InitializeParameters(Initializer);
-
-	if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
+	if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
 
 		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth);
 		UpdateHUDOptimizingAIModel();
@@ -597,14 +563,8 @@ void AZEDPlayerController::Internal_ZedCameraDisconnected()
 
 	FadeOut();
 
-	// Apply last known transform to the initializer in case of a reconnection
-	TArray<AActor*> ZedInitializer;
-	UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
-	AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
-	Initializer->LoadParametersAndSettings();
-	Initializer->TrackingParameters.Location = ZedCamera->TrackingData.ZedWorldTransform.GetLocation();
-	Initializer->TrackingParameters.Rotation = ZedCamera->TrackingData.ZedWorldTransform.GetRotation().Rotator();
-
+	ZedCamera->TrackingParameters.Location = ZedCamera->TrackingData.ZedWorldTransform.GetLocation();
+	ZedCamera->TrackingParameters.Rotation = ZedCamera->TrackingData.ZedWorldTransform.GetRotation().Rotator();
 	// Search for reconnection
 	OpenZedCamera();
 }

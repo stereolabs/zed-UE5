@@ -4,7 +4,6 @@
 
 #include "Zed/Public/HUD/ZEDWidget.h"
 #include "ZEDBaseTypes.h"
-#include "ZEDInitializer.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTexture.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTextureBatch.h"
 #include "../../../ThirdParty/MixedReality/include/sl_mr_core/defines.hpp"
@@ -169,12 +168,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed|SVO")
 	void SetSVOPlaybackLooping(bool bLooping);
-
-	/*
-	 * Initialize parameters
-	 * @param ZedInitializer The initializer
-	 */
-	void InitializeParameters(AZEDInitializer* ZedInitializer);
 
 	/*
 	 * Initialize actor

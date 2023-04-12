@@ -582,30 +582,6 @@ void AZEDCamera::SaveSpatialMemoryArea()
 	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath);
 }
 
-void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer)
-{
-	TrackingParameters = ZedInitializer->TrackingParameters;
-	InitParameters = ZedInitializer->InitParameters;
-	RuntimeParameters = ZedInitializer->RuntimeParameters;
-	CameraSettings = ZedInitializer->CameraSettings;
-	RecordingParameters = ZedInitializer->RecordingParameters;
-	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
-	bShowZedImage = ZedInitializer->bShowZedImage;
-	ImageView = ZedInitializer->ImageView;
-
-	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
-	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
-
-	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
-	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
-
-	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
-
-	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
-
-	checkf(RuntimeParameters.ReferenceFrame == ESlReferenceFrame::RF_World, TEXT("Reference frame must be World when using the ZEDCamera"));
-}
-
 void AZEDCamera::Init()
 {
 	if (bInit)
