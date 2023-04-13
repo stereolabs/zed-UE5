@@ -4,6 +4,20 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 **UE5_Examples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
 
+## About Fusion
+
+To use the **Fusion API** of the ZED SDK with Unreal Engine 5, please take a look at our [ZED Live Link](https://github.com/stereolabs/zed-livelink) repository. The Fusion API is currently not implemented in the UE5 plugin itself, but it can still be easily integrated and tested in your UE projects!
+
+## Overview
+
+| [**Body Tracking**](https://www.stereolabs.com/docs/ue5/body-tracking/) | [**Camera Tracking**](https://www.stereolabs.com/docs/ue5/camera-tracking/) | [**Point Cloud**](https://www.stereolabs.com/docs/ue5/) 
+| :-----------: |  :------------: | :--------: |
+| <video src="https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4" controls="controls" style="max-width: 100;"></video> | <video src="https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4"></video>
+| [**Object Detection**](https://www.stereolabs.com/docs/ue5/object-detection/) | [**Background substraction**](https://www.stereolabs.com/docs/ue5/background-subtraction/) | [**Spatial mapping**](https://www.stereolabs.com/docs/ue5/spatial-mapping/)
+| <video src="https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4"></video>
+| [**Object Placement**](https://www.stereolabs.com/docs/ue5/) | [**Dynamic Crosshair**](https://www.stereolabs.com/docs/ue5/) | [**Hit Test**](https://www.stereolabs.com/docs/ue5/)
+| <video src="https://user-images.githubusercontent.com/113181784/202236331-080affd6-bc61-4e31-b9f6-c1539d49b747.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236779-c97a72fd-bb92-486c-83bc-1d2ce660fe55.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236855-7c14916e-bbb0-465f-bdbf-23363a6880d8.mp4"></video>
+
 ## Getting started
 
 This version of the plugin is compatible with Unreal Engine **5.1**, and requires the [**ZED SDK 4.0**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
@@ -21,16 +35,6 @@ You can now start the project with a double click on *ZEDSamples.uproject*.
 ### Documentation
 
 A more detailed documentation is available on our website, see here :  https://www.stereolabs.com/docs/ue5/
-
-## Overview
-
-| Body Tracking | Camera Tracking | Point Cloud 
-| :-----------: |  :------------: | :--------: |
-| [<video src="https://user-images.githubusercontent.com/113181784/202238672-b87ec681-a574-454c-ba09-683201d1dcbb.mp4" controls="controls" style="max-width: 100;"></video>](https://www.stereolabs.com/docs/ue5/body-tracking/) | [<video src="https://user-images.githubusercontent.com/113181784/202238297-cd069ece-1de4-4ca0-b811-387e182e7c5b.mp4"></video>](https://www.stereolabs.com/docs/ue5/camera-tracking/) | <video src="https://user-images.githubusercontent.com/113181784/202454461-5ecb0b60-e518-4d50-aba1-7cef4699d124.mp4"></video>
-| Object Detection | Background substraction | Spatial mapping
-| [<video src="https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4" ></video>](https://www.stereolabs.com/docs/ue5/object-detection/) | [<video src="https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4"></video>](https://www.stereolabs.com/docs/ue5/background-subtraction/) | [<video src="https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4"></video>](https://www.stereolabs.com/docs/ue5/spatial-mapping/)
-| Object Placement | Dynamic Crosshair | Hit Test
-| <video src="https://user-images.githubusercontent.com/113181784/202236331-080affd6-bc61-4e31-b9f6-c1539d49b747.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236779-c97a72fd-bb92-486c-83bc-1d2ce660fe55.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236855-7c14916e-bbb0-465f-bdbf-23363a6880d8.mp4"></video>
 
 ## Samples
 
