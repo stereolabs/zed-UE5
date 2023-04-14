@@ -204,7 +204,6 @@ void USlCameraProxy::BeginDestroy()
 		BodyTrackingWorker = nullptr;
 	}
 
-
 	CloseCamera();
 	Super::BeginDestroy();
 }
@@ -1363,14 +1362,27 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 
 
 	ObjectDetectionParameters = ODParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
 
-	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
-
-	if (!ai_model_status->optimized)
+	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects)
 	{
-		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
-		return false;
+		SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
+
+		SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+
+		if (!ai_model_status->optimized)
+		{
+			SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+			return false;
+
+			/*SL_ERROR_CODE optim_err_code = SL_ERROR_CODE_FAILURE;
+			OptimizeAIModel((ESlAIModels)ai_model);
+
+			while (!sl_check_AI_model_status(ai_model, 0)->optimized)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Optimizing AI Model %d ... The process can take few minutes...."), ObjectDetectionParameters.DetectionModel);
+				FPlatformProcess::Sleep(1.0f);
+			}*/
+		}
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
@@ -1401,8 +1413,8 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 	if (!ai_model_status->optimized)
 	{
-		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
-		//return false;
+		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
+		return false;
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
