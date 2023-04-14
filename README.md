@@ -1,14 +1,17 @@
-# Stereolabs ZED - UE5 Examples
+<h1 align="center">
+# ZED UE5 Plugin
+  <br>
+</h1>
 
+<p align="center">
 This repository contains Unreal examples projects that demonstrate how to create advanced Interactive Applications using the ZED SDK and Unreal Engine 5.
+**ZEDSamples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
+</p>
 
-**UE5_Examples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
-
-## About Fusion
-
-To use the **Fusion API** of the ZED SDK with Unreal Engine 5, please take a look at our [ZED Live Link](https://github.com/stereolabs/zed-livelink) repository. The Fusion API is currently not implemented in the UE5 plugin itself, but it can still be easily integrated and tested in your UE projects!
 
 ## Overview
+
+<div align="center">
 
 | [**Body Tracking**](https://www.stereolabs.com/docs/ue5/body-tracking/) | [**Camera Tracking**](https://www.stereolabs.com/docs/ue5/camera-tracking/) | [**Point Cloud**](https://www.stereolabs.com/docs/ue5/) 
 | :-----------: |  :------------: | :--------: |
@@ -17,6 +20,8 @@ To use the **Fusion API** of the ZED SDK with Unreal Engine 5, please take a loo
 | <video src="https://user-images.githubusercontent.com/113181784/202236582-774baffc-a04c-4b2c-8d76-fea8b03040c7.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236725-aa998d9e-b9c6-4635-9286-54073b702a1d.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236500-0c74579f-c084-44b0-b21e-de4f38e775ec.mp4"></video>
 | [**Object Placement**](https://www.stereolabs.com/docs/ue5/) | [**Dynamic Crosshair**](https://www.stereolabs.com/docs/ue5/) | [**Hit Test**](https://www.stereolabs.com/docs/ue5/)
 | <video src="https://user-images.githubusercontent.com/113181784/202236331-080affd6-bc61-4e31-b9f6-c1539d49b747.mp4" ></video> | <video src="https://user-images.githubusercontent.com/113181784/202236779-c97a72fd-bb92-486c-83bc-1d2ce660fe55.mp4"></video> | <video src="https://user-images.githubusercontent.com/113181784/202236855-7c14916e-bbb0-465f-bdbf-23363a6880d8.mp4"></video>
+
+</div>
 
 ## Getting started
 
