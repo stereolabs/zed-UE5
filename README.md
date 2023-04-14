@@ -1,11 +1,13 @@
 <h1 align="center">
-# ZED UE5 Plugin
+ZED UE5 Plugin
   <br>
 </h1>
 
 <p align="center">
+
 This repository contains Unreal examples projects that demonstrate how to create advanced Interactive Applications using the ZED SDK and Unreal Engine 5.
 **ZEDSamples** is a single project with a variety of small samples, each meant to highlight a single feature of the ZED UE5 plugin. 
+
 </p>
 
 ---
