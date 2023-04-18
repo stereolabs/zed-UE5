@@ -204,13 +204,6 @@ private:
 	 * @param bCeateColorTexture True to create color texture
 	 */
 	void CreateLeftTextures(bool bCreateColorTexture = true);
-
-	/*
-	 * Create right eye textures
-	 *
-	 * @param bCeateColorTexture True to create color texture
-	 */
-	void CreateRightTextures(bool bCreateColorTexture = true);
 	
 	// ------------------------------------------------------------------
 
@@ -233,21 +226,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
 	USlTexture* LeftEyeDepth;
 
-	/** Right eye image texture */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* RightEyeColor;
-
-	/** Right eye depth texture  */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
-	USlTexture* RightEyeDepth;
-
 	/** Render target left eye */
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
 	UTextureRenderTarget2D* LeftEyeRenderTarget;
-	
-	/** Render target right eye */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
-	UTextureRenderTarget2D* RightEyeRenderTarget;
 
 	/** Type of view displayed on the scene.
 	* Default is ESlView::LEFT.

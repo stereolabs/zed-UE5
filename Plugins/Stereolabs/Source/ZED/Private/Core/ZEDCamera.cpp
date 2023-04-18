@@ -361,24 +361,6 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 	}
 }
 
-void AZEDCamera::CreateRightTextures(bool bCreateColorTexture/* = true*/)
-{
-	if (bCreateColorTexture)
-	{
-		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters.Resolution;
-
-		RightEyeColor = USlViewTexture::CreateGPUViewTexture("RightEyeColor", Resolution.X, Resolution.Y, ESlView::V_Right, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
-
-	}
-
-	if (RuntimeParameters.bEnableDepth)
-	{
-		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
-
-		RightEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("RightEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_DepthRight, true, ESlTextureFormat::TF_R32_FLOAT);
-	}
-}
-
 void AZEDCamera::EnableMultiThreadedRenderingMode(const bool EnableMTR)
 {
 	GSlCameraProxy->EnableGrabThread(EnableMTR);
@@ -578,13 +560,6 @@ void AZEDCamera::CameraClosed()
 	}
 	if (LeftEyeDepth) {
 		LeftEyeDepth->ConditionalBeginDestroy();
-	}
-	if (RightEyeColor) {
-		RightEyeColor->ConditionalBeginDestroy();
-	}
-
-	if (RightEyeDepth) {
-		RightEyeDepth->ConditionalBeginDestroy();
 	}
 	bInit = false;
 }

@@ -799,10 +799,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	FSlCameraParameters RetrieveLeftCameraParameters;
 
-	/** X offset relative to the center of the HMD */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed")
-	float HMDToCameraOffset;
-
 	/** True if tracking enabled */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	bool bTrackingEnabled;

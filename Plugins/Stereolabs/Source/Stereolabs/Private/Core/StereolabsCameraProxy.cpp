@@ -142,7 +142,6 @@ protected:
 
 USlCameraProxy::USlCameraProxy()
 	:
-	HMDToCameraOffset(0.0f),
 	bTrackingEnabled(false),
 	bSpatialMemoryEnabled(false),
 	bSpatialMappingEnabled(false),
@@ -256,7 +255,6 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.depth_stabilization = InitParameters.DepthStabilization;
 	sl_init_parameters.enable_image_enhancement = InitParameters.bEnableImageEnhancement;
 	sl_init_parameters.sensors_required = InitParameters.bSensorsRequired;
-	sl_init_parameters.enable_right_side_measure = InitParameters.bEnableRightSideMeasure;
 	sl_init_parameters.svo_real_time_mode = InitParameters.bRealTime;
 	sl_init_parameters.async_grab_camera_recovery = InitParameters.bAsyncGrabCameraRecovery;
 	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
@@ -1226,7 +1224,7 @@ float USlCameraProxy::GetDepth(const FSlViewportHelper& ViewportHelper, const FI
 		}
 	}
 
-	return (Depth + HMDToCameraOffset);
+	return (Depth);
 }
 
 TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions)
@@ -1250,8 +1248,6 @@ TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper,
 				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
 			}
 		}
-
-		Depth += HMDToCameraOffset;
 	}
 
 	return Depths;
@@ -1311,8 +1307,6 @@ void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, 
 		}
 	}
 
-	Depth += HMDToCameraOffset;
-
 	Normal = FVector(DepthAndNormal.X, DepthAndNormal.Y, DepthAndNormal.Z);
 	float Size = Normal.SizeSquared();
 	if (!FMath::IsFinite(Size) || FMath::IsNaN(Size))
@@ -1345,7 +1339,7 @@ void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper
 				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
 			}
 		}
-		Depths.Add(Depth + HMDToCameraOffset);
+		Depths.Add(Depth);
 
 		FVector Normal(DepthsAndNormals[ScreenPositionsIndex]);
 		float Size = Normal.SizeSquared();
