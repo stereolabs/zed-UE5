@@ -246,6 +246,7 @@ enum class ESlView : uint8
 	V_Right					 UMETA(DisplayName = "Right"),
 	V_LeftUnrectified		 UMETA(DisplayName = "Left unrectified"),
 	V_RightUnrectified		 UMETA(DisplayName = "Right unrectified"),
+	V_SideBySide			 UMETA(DisplayName = "Side by Side"),
 	V_Depth					 UMETA(DisplayName = "Depth"),
 	V_Confidence			 UMETA(DisplayName = "Confidence"),
 	V_Normals				 UMETA(DisplayName = "Normals"),
