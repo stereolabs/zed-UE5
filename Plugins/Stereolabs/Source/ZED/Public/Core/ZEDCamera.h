@@ -272,10 +272,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
 	UMaterialInstanceDynamic* ZedLeftEyeMaterialInstanceDynamic;
 
-	/** Dynamic HMD left eye material */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-		UMaterialInstanceDynamic* HMDLeftEyeMaterialInstanceDynamic;
-
 	// ------------------------------------------------------------------
 
 	/** Object Detection Parameters */
