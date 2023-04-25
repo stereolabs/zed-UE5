@@ -38,24 +38,12 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Zed")
-	void AddShowOnlyComponent(UPrimitiveComponent* InComponent);
-
-	UFUNCTION(BlueprintCallable, Category = "Zed")
-	void EmptyShowOnlyComponentList();
-
-	/**
-	 * Builds a list of components that are shown based upon gameplay.
-	 * @param ShowOnlyComponentsOut this list will have all components that should be shown added to it
-	 */
-	void BuildShowOnlyComponentList(TSet<FPrimitiveComponentId>& ShowOnlyComponentsOut);
-
 public:
 	/*
 	 * Open the camera
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed")
-	void OpenZedCamera(bool bHideWorld = true);
+	void OpenZedCamera();
 
 	/*
 	 * Close the camera
@@ -206,12 +194,6 @@ private:
 	void ZedCameraActorInitialized();
 
 	/*
-	 * Reset HMD tracking to be close to world origin
-	 */
-	UFUNCTION()
-	void ResetHMDTrackingOrigin();
-
-	/*
 	 * Network notification for pawn spawning
 	 */
 	UFUNCTION()
@@ -292,29 +274,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
 	bool bOpenZedCameraAtInit;
 
-	/** True if stereo rendering is supported. If true the controller will automatically open th HMD before opening the camera if any HMD is connected. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
-	bool bStereoRenderingSupport;
-
 	/** True if player 1 */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	bool bIsFirstPlayer;
-
-	/** Whether to render primitives component. */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
-	bool bUseShowOnlyList;
-
-	/** True to hide the world when opening the camera */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
-	bool bHideWorldOpeningZedCamera;
 
 	/** Viewport helper */
 	UPROPERTY(BlueprintReadOnly)
 	FSlViewportHelper ViewportHelper;
 
 private:
-	/** Array of primitive components that will be only visible by the main camera */
-	TArray<TWeakObjectPtr<UPrimitiveComponent>> ShowOnlyPrimitiveComponents;
 
 	/** Previous noise factors */
 	FZEDNoiseFactors LastNoiseFactors;
@@ -396,9 +364,6 @@ private:
 
 	/** True to tick the camera */
 	uint8 bTickZedCamera:1;
-
-	/** HMD enabled */
-	uint8 bHMDEnabled:1;
 
 	/** True if initialized */
 	uint8 bInit:1;

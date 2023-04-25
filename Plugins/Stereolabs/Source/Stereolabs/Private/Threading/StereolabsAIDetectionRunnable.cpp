@@ -45,13 +45,12 @@ void FSlObjectDetectionRunnable::Start(float Frequency)
 	FString ThreadName("SlODRunnable");
 	ThreadName.AppendInt(ThreadCounter++);
 
-	Thread = FRunnableThread::Create(this, *ThreadName, 0, TPri_BelowNormal);
+	Thread = FRunnableThread::Create(this, *ThreadName, 0);
 
 	AIRetrieveDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
 		{
 			RetrieveObjects(ErrorCode, Timestamp);
 		});
-
 
 	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 	SL_LOG(SlAIThread, "OD Thread started ");
@@ -59,7 +58,7 @@ void FSlObjectDetectionRunnable::Start(float Frequency)
 
 void FSlObjectDetectionRunnable::RetrieveObjects(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
 
-	if (bIsRunning && GSlCameraProxy->IsObjectDetectionEnabled())
+	if (bIsRunning && GSlCameraProxy->IsObjectDetectionEnabled() && !GSlCameraProxy->bSVOPlaybackPaused)
 	{
 		GSlCameraProxy->RetrieveObjects();
 
@@ -115,13 +114,12 @@ void FSlBodyTrackingRunnable::Start(float Frequency)
 	FString ThreadName("SlBTRunnable");
 	ThreadName.AppendInt(ThreadCounter++);
 
-	Thread = FRunnableThread::Create(this, *ThreadName, 0, TPri_BelowNormal);
+	Thread = FRunnableThread::Create(this, *ThreadName, 0);
 
 	AIRetrieveDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
 		{
 			RetrieveBodies(ErrorCode, Timestamp);
 		});
-
 
 	PreviousTS = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 	SL_LOG(SlAIThread, "BT Thread started ");
@@ -129,7 +127,7 @@ void FSlBodyTrackingRunnable::Start(float Frequency)
 
 void FSlBodyTrackingRunnable::RetrieveBodies(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp) {
 
-	if (bIsRunning && GSlCameraProxy->IsBodyTrackingEnabled())
+	if (bIsRunning && GSlCameraProxy->IsBodyTrackingEnabled() && !GSlCameraProxy->bSVOPlaybackPaused)
 	{
 		GSlCameraProxy->RetrieveBodies();
 

@@ -29,7 +29,6 @@ AZEDInitializer::AZEDInitializer()
 	:
 	bLoadParametersFromConfigFile(false),
 	bLoadCameraSettingsFromConfigFile(false),
-	bUseHMDTrackingAsOrigin(false),
 	bDepthOcclusion(true),
 	bShowZedImage(true),
 	ImageView(ESlView::V_Left)
@@ -100,12 +99,6 @@ bool AZEDInitializer::CanEditChange(const FProperty* InProperty) const
 		return RuntimeParameters.bEnableDepth;
 	}
 
-	if(PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, Location) || 
-	   PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, Rotation))
-	{
-		return !bUseHMDTrackingAsOrigin;
-	}
-
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, bEnablePoseSmoothing))
 	{
 		return TrackingParameters.bEnableAreaMemory;
@@ -125,8 +118,6 @@ void AZEDInitializer::LoadParametersAndSettings()
 	{
 		LoadCameraSettings();
 	}
-
-	LoadAntiDriftParameters();
 }
 
 void AZEDInitializer::LoadParameters()
@@ -242,27 +233,4 @@ void AZEDInitializer::ResetParameters()
 void AZEDInitializer::ResetSettings()
 {
 	CameraSettings = FSlVideoSettings();
-}
-
-void AZEDInitializer::LoadAntiDriftParameters()
-{
-	if (!CheckGConfigAvailable())
-	{
-		return;
-	}
-
-	// Path set in build.cs
-	FString Path = ZED_CALIBRAITON_FILE_PATH;
-	FConfigFile* ConfigFile = GConfig->Find(Path);
-
-	if (!ConfigFile)
-	{
-		AntiDriftParameters.Save(Path);
-
-		GConfig->Flush(false, *Path);
-	}
-	else
-	{
-		AntiDriftParameters.Load(Path);
-	}
 }

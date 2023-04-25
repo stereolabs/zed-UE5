@@ -12,11 +12,6 @@
  * UGameViewportClient* GameViewport = GetLocalPlayer()->ViewportClient;
  * check(GameViewport);
  *
- *	if (!UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
- *  {
- *		ViewportHelper.AddToViewportResizeEvent(GameViewport);
- *	}
- *
  *	ViewportHelper.Update(GameViewport->Viewport->GetSizeXY());
  *
  */

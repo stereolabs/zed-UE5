@@ -6,7 +6,6 @@
 
 #include "Math/Matrix.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "HeadMountedDisplay.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <sl_mr_core/defines.hpp>
@@ -23,9 +22,6 @@ extern STEREOLABS_API uint32 GSlGrabThreadId;
 
 /** True if the grab thread has been initialized */
 extern STEREOLABS_API bool GSlIsGrabThreadIdInitialized;
-
-/** Eye half baseline of the Zed */
-extern STEREOLABS_API float GSlEyeHalfBaseline;
 
 /** Camera proxy instance */
 extern STEREOLABS_API class USlCameraProxy* GSlCameraProxy;
@@ -745,8 +741,6 @@ namespace sl
 					return sl::DEPTH_MODE::NONE;
 				case ESlDepthMode::DM_Performance:
 					return sl::DEPTH_MODE::PERFORMANCE;
-				//case ESlDepthMode::DM_NeuralFast:
-				//	return sl::DEPTH_MODE::NEURAL_FAST;
 				case ESlDepthMode::DM_Ultra:
 					return sl::DEPTH_MODE::ULTRA;
 				case ESlDepthMode::DM_Neural:
@@ -838,8 +832,8 @@ namespace sl
 				//	return sl::VIEW::LEFT_GRAY;
 				//case ESlView::V_RightGray:
 				//	return sl::VIEW::RIGHT_GRAY;
-				//case ESlView::V_SideBySide:
-				//	return sl::VIEW::SIDE_BY_SIDE;
+				case ESlView::V_SideBySide:
+					return SL_VIEW_SIDE_BY_SIDE;
 				case ESlView::V_Depth:
 					return SL_VIEW_DEPTH;
 				case ESlView::V_DepthRight:

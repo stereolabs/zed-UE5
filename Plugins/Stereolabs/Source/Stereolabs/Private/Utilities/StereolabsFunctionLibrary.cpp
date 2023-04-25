@@ -46,53 +46,7 @@ FVector2D USlFunctionLibrary::GetRenderPlaneSize(const FIntPoint& ImageResolutio
 
 FVector2D USlFunctionLibrary::GetRenderPlaneSizeWithGamma(UObject* WorldContextObject, const FIntPoint& ImageResolution, float PerceptionDistance, float ZedFocal, float PlaneDistance)
 {
-	float EyeToZedDistance = 0.0f;
-
-	if (GEngine->StereoRenderingDevice.IsValid() && GEngine->StereoRenderingDevice->IsStereoEnabled() && GEngine->XRSystem.IsValid() && GEngine->XRSystem->GetHMDDevice())
-	{
-		EyeToZedDistance = sl::mr::getEyeToZEDDistance(sl::unreal::ToSlType(GEngine->XRSystem->GetSystemName()));
-	}
-	else
-	{
-		SL_LOG_E(SLFunctionLibrary, "Eye to Zed distance not available for this HMD");
-
-		return FVector2D();
-	}
-
-	float HMDFocal = 0.0f;
-
-	if (GEngine->StereoRenderingDevice.IsValid() && GEngine->StereoRenderingDevice->IsStereoEnabled() && GEngine->XRSystem.IsValid() && GEngine->XRSystem->GetHMDDevice())
-	{
-		sl::mr::Resolution HMDScreenResolution;
-
-		FName Type = GEngine->XRSystem->GetSystemName();
-		if (Type == TEXT("SteamVR"))
-		{
-			HMDScreenResolution.width = 3024;
-			HMDScreenResolution.height = 1680;
-		}
-		else if (Type == TEXT("OculusHMD"))
-		{
-			HMDScreenResolution.width = 2720;
-			HMDScreenResolution.height = 1600;
-		}
-		else
-		{
-			SL_LOG_E(SLFunctionLibrary, "HMD not supported");
-		}
-
-		FMatrix ProjectionMatrix = GEngine->StereoRenderingDevice->GetStereoProjectionMatrix(eSSE_LEFT_EYE);
-
-		HMDFocal = sl::mr::computeHMDFocal(HMDScreenResolution, ProjectionMatrix.M[0][0], ProjectionMatrix.M[1][1]);
-	}
-	else
-	{
-		SL_LOG_E(SLFunctionLibrary, "Focal not available for this HMD");
-
-		return FVector2D();
-	}
-
-	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSizeWithGamma(sl::unreal::ToSlMrType2(ImageResolution), PerceptionDistance, EyeToZedDistance, PlaneDistance, HMDFocal, ZedFocal));
+	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSizeWithGamma(sl::unreal::ToSlMrType2(ImageResolution), PerceptionDistance, 0.0f, PlaneDistance, 0.0f, ZedFocal));
 }
 
 FVector4 USlFunctionLibrary::GetOpticalCentersOffsets(const FIntPoint& ImageResolution, float Distance)
@@ -264,17 +218,6 @@ UTexture2D* USlFunctionLibrary::GenerateTextureFromSlMat(const sl::Mat* mat)
 {
 	UTexture2D* texture = Texture32BitFromImage_Internal(mat);
 	return texture;
-}
-
-FVector2D USlFunctionLibrary::GetHmdFocale()
-{
-	FMatrix ProjectionMatrix = GEngine->StereoRenderingDevice->GetStereoProjectionMatrix(eSSE_LEFT_EYE);
-	FIntPoint IdealRenderSize = GEngine->XRSystem->GetHMDDevice()->GetIdealRenderTargetSize();
-	FVector2D focales;
-	focales.X = (IdealRenderSize.X / 4.0f * ProjectionMatrix.M[0][0]);
-	focales.Y = (IdealRenderSize.Y / 2.0f * ProjectionMatrix.M[1][1]);
-	SL_LOG_W(SLFunctionLibrary, "HMD focal compute on viewport %f x %f", (float)IdealRenderSize.X, (float)IdealRenderSize.Y);
-	return focales;
 }
 
 void USlFunctionLibrary::Set3DBoxTransform(AActor*& BBox, const FSlObjectData ObjectData) {

@@ -471,8 +471,17 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "enable zed body tracking"), Category = "Zed|Body Tracking")
 	bool EnableBodyTracking(const FSlBodyTrackingParameters& BodyTrackingParameters);
 
-	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Body Tracking Parameters"), Category = "Zed|Body Tracking")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Body Tracking Runtime Parameters"), Category = "Zed|Body Tracking")
 	FSlBodyTrackingRuntimeParameters GetBodyTrackingRuntimeParameters();
+
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Body Tracking Parameters"), Category = "Zed|Body Tracking")
+	FSlBodyTrackingParameters GetBodyTrackingParameters();
+
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Object Detection Parameters"), Category = "Zed|Object Detection")
+	FSlObjectDetectionParameters GetObjectDetectionParameters();
+
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Object Detection Runtime Parameters"), Category = "Zed|Object Detection")
+	FSlObjectDetectionRuntimeParameters GetObjectDetectionRuntimeParameters();
 
 	/*
 	 * Tell if the Object detection module is enabled.
@@ -799,10 +808,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	FSlCameraParameters RetrieveLeftCameraParameters;
 
-	/** X offset relative to the center of the HMD */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed")
-	float HMDToCameraOffset;
-
 	/** True if tracking enabled */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	bool bTrackingEnabled;
@@ -939,7 +944,6 @@ private:
 	/** Grab done event dispatcher */
 	FSlCameraProxyGrabDelegate OnGrabDoneDelegate;
 
-private:
 	/** Open camera task */
 	FAsyncTask<class FOpenCameraAsyncTask>* OpenCameraAsyncTask;
 
@@ -949,7 +953,6 @@ private:
 	/** AI Model optimization async task */
 	FAsyncTask<class FAIOptimizationAsyncTask>* AIOptimizationAsyncTask;
 
-private:
 	/** The status of the current async task */
 	ESlErrorCode OpenCameraErrorCode;
 
@@ -970,19 +973,19 @@ private:
 
 private:
 	/** Runtime parameters */
-	SL_RuntimeParameters RuntimeParameters;
+	FSlRuntimeParameters RuntimeParameters;
 
 	/** OD parameters */
 	FSlObjectDetectionParameters ObjectDetectionParameters;
 
 	/** Runtime parameters */
-	SL_ObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
+	FSlObjectDetectionRuntimeParameters ObjectDetectionRuntimeParameters;
 
 	/** BT parameters */
 	FSlBodyTrackingParameters BodyTrackingParameters;
 
 	/** Runtime parameters */
-	SL_BodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
+	FSlBodyTrackingRuntimeParameters BodyTrackingRuntimeParameters;
 private:
 	/** A worker to thread the Grab calls */
 	class FSlGrabRunnable* GrabWorker;

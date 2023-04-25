@@ -1313,7 +1313,7 @@ extern "C" {
      * \param out [in]: the current GNSS data
      * \param radian [in] : true if the gnssdata is set in radian
      */
-    INTERFACE_API void sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data, bool radian);
+    INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data, bool radian);
 
     /**
      * @brief returns the current GNSS data

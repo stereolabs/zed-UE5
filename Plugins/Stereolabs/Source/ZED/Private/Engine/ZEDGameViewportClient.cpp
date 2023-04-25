@@ -14,14 +14,11 @@
 #include "AudioDevice.h"
 #include "ContentStreaming.h"
 #include "BufferVisualizationData.h"
-#include "IHeadMountedDisplay.h"
 #include "SceneViewExtension.h"
 #include "FXSystem.h"
 #include "RenderCore.h"
 #include "ImageUtils.h"
 #include "SceneViewExtension.h"
-#include "IHeadMountedDisplay.h"
-#include "IXRTrackingSystem.h"
 #include "DynamicResolutionState.h"
 
 
@@ -181,12 +178,6 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 		ViewExt->SetupViewFamily(ViewFamily);
 	}
 
-	if (bStereoRendering && GEngine->XRSystem.IsValid() && GEngine->XRSystem->GetHMDDevice())
-	{
-		// Allow HMD to modify screen settings
-		GEngine->XRSystem->GetHMDDevice()->UpdateScreenSettings(Viewport);
-	}
-
 	ESplitScreenType::Type SplitScreenConfig = GetCurrentSplitscreenConfiguration();
 	ViewFamily.ViewMode = EViewModeIndex(ViewModeIndex);
 	EngineShowFlagOverride(ESFIM_Game, (EViewModeIndex)ViewModeIndex, ViewFamily.EngineShowFlags, false);
@@ -330,15 +321,6 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 								PlayerController->GetAudioListenerPosition(/*out*/ Location, /*out*/ ProjFront, /*out*/ ProjRight);
 
 								FTransform ListenerTransform(FRotationMatrix::MakeFromXY(ProjFront, ProjRight));
-
-								// Allow the HMD to adjust based on the head position of the player, as opposed to the view location
-								if (GEngine->XRSystem.IsValid() && GEngine->StereoRenderingDevice.IsValid() && GEngine->StereoRenderingDevice->IsStereoEnabled())
-								{
-									Location = GZedViewPointLocation;
-
-									const FVector Offset = GEngine->XRSystem->GetAudioListenerOffset();
-									Location += ListenerTransform.TransformPositionNoScale(Offset);
-								}
 
 								ListenerTransform.SetTranslation(Location);
 								ListenerTransform.NormalizeRotation();

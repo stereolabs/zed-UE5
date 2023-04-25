@@ -8,6 +8,4 @@ uint32 GSlGrabThreadId = 0;
 
 bool GSlIsGrabThreadIdInitialized = false;
 
-float GSlEyeHalfBaseline = 0.0f;
-
 USlCameraProxy* GSlCameraProxy = nullptr;

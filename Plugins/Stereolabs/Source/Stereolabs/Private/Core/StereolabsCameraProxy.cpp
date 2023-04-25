@@ -142,7 +142,6 @@ protected:
 
 USlCameraProxy::USlCameraProxy()
 	:
-	HMDToCameraOffset(0.0f),
 	bTrackingEnabled(false),
 	bSpatialMemoryEnabled(false),
 	bSpatialMappingEnabled(false),
@@ -204,7 +203,6 @@ void USlCameraProxy::BeginDestroy()
 		BodyTrackingWorker = nullptr;
 	}
 
-
 	CloseCamera();
 	Super::BeginDestroy();
 }
@@ -257,7 +255,6 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.depth_stabilization = InitParameters.DepthStabilization;
 	sl_init_parameters.enable_image_enhancement = InitParameters.bEnableImageEnhancement;
 	sl_init_parameters.sensors_required = InitParameters.bSensorsRequired;
-	sl_init_parameters.enable_right_side_measure = InitParameters.bEnableRightSideMeasure;
 	sl_init_parameters.svo_real_time_mode = InitParameters.bRealTime;
 	sl_init_parameters.async_grab_camera_recovery = InitParameters.bAsyncGrabCameraRecovery;
 	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
@@ -316,8 +313,6 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 		CameraInformation = sl::unreal::ToUnrealType(*SlCameraInformation);
 		SL_CameraParameters leftCameraParameters = sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)->camera_configuration.calibration_parameters.left_cam;
 		RetrieveLeftCameraParameters = sl::unreal::ToUnrealType(leftCameraParameters);
-
-		GSlEyeHalfBaseline = CameraInformation.HalfBaseline;
 
 		OpenCameraAsyncTask->EnsureCompletion(false);
 
@@ -633,21 +628,21 @@ ESlSpatialMemoryExportingState USlCameraProxy::GetSpatialMemoryExportState()
 void USlCameraProxy::SetRuntimeParameters(const FSlRuntimeParameters& NewRuntimeParameters)
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		RuntimeParameters = sl::unreal::ToSlType(NewRuntimeParameters);
+		RuntimeParameters = NewRuntimeParameters;
 	SL_SCOPE_UNLOCK
 }
 
 void USlCameraProxy::SetObjectDetectionRuntimeParameters(const FSlObjectDetectionRuntimeParameters& NewObjectDetectionRuntimeParameters)
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		ObjectDetectionRuntimeParameters = sl::unreal::ToSlType(NewObjectDetectionRuntimeParameters);
+		ObjectDetectionRuntimeParameters = NewObjectDetectionRuntimeParameters;
 	SL_SCOPE_UNLOCK
 }
 
 void USlCameraProxy::SetBodyTrackingRuntimeParameters(const FSlBodyTrackingRuntimeParameters& NewBodyTrackingRuntimeParameters)
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		BodyTrackingRuntimeParameters = sl::unreal::ToSlType(NewBodyTrackingRuntimeParameters);
+		BodyTrackingRuntimeParameters = NewBodyTrackingRuntimeParameters;
 	SL_SCOPE_UNLOCK
 }
 
@@ -747,7 +742,8 @@ void USlCameraProxy::Grab()
 	SL_SCOPE_UNLOCK
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		ErrorCode = (SL_ERROR_CODE)sl_grab(CameraID, &RuntimeParameters);
+		SL_RuntimeParameters rt_params = sl::unreal::ToSlType(RuntimeParameters);
+		ErrorCode = (SL_ERROR_CODE)sl_grab(CameraID, &rt_params);
 		IMUErrorCode = (SL_ERROR_CODE)sl_get_sensors_data(CameraID, &ImageRefSensorsData, SL_TIME_REFERENCE_IMAGE);
 	SL_SCOPE_UNLOCK
 
@@ -1229,7 +1225,7 @@ float USlCameraProxy::GetDepth(const FSlViewportHelper& ViewportHelper, const FI
 		}
 	}
 
-	return (Depth + HMDToCameraOffset);
+	return (Depth);
 }
 
 TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions)
@@ -1253,8 +1249,6 @@ TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper,
 				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
 			}
 		}
-
-		Depth += HMDToCameraOffset;
 	}
 
 	return Depths;
@@ -1314,8 +1308,6 @@ void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, 
 		}
 	}
 
-	Depth += HMDToCameraOffset;
-
 	Normal = FVector(DepthAndNormal.X, DepthAndNormal.Y, DepthAndNormal.Z);
 	float Size = Normal.SizeSquared();
 	if (!FMath::IsFinite(Size) || FMath::IsNaN(Size))
@@ -1348,7 +1340,7 @@ void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper
 				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
 			}
 		}
-		Depths.Add(Depth + HMDToCameraOffset);
+		Depths.Add(Depth);
 
 		FVector Normal(DepthsAndNormals[ScreenPositionsIndex]);
 		float Size = Normal.SizeSquared();
@@ -1363,16 +1355,29 @@ void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper
 bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& ODParameters) {
 	SL_ERROR_CODE ErrorCode;
 
-
 	ObjectDetectionParameters = ODParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
 
-	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
-
-	if (!ai_model_status->optimized)
+	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects)
 	{
-		SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
-		return false;
+		SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
+
+		SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+
+		if (!ai_model_status->optimized)
+		{
+			SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
+			return false;
+
+			//OptimizeAIModel((ESlAIModels)ai_model);
+
+			//SL_CAMERA_PROXY_LOG_W("Optimizing AI model : %i ");
+
+			/*while (!sl_check_AI_model_status(ai_model, 0)->optimized)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Optimizing AI Model %d ... The process can take few minutes...."), ObjectDetectionParameters.DetectionModel);
+				FPlatformProcess::Sleep(1.0f);
+			}*/
+		}
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
@@ -1403,8 +1408,8 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 	if (!ai_model_status->optimized)
 	{
-		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
-		//return false;
+		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
+		return false;
 	}
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
@@ -1423,11 +1428,20 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 	return bBodyTrackingEnabled;
 }
 
+FSlBodyTrackingParameters USlCameraProxy::GetBodyTrackingParameters() {
+	return BodyTrackingParameters;
+}
+
 FSlBodyTrackingRuntimeParameters USlCameraProxy::GetBodyTrackingRuntimeParameters() {
-	FSlBodyTrackingRuntimeParameters fslrtp = FSlBodyTrackingRuntimeParameters();
-	fslrtp.DetectionConfidenceThreshold = BodyTrackingRuntimeParameters.detection_confidence_threshold;
-	fslrtp.MinimumKeypointsThreshold = BodyTrackingRuntimeParameters.minimum_keypoints_threshold;
-	return fslrtp;
+	return BodyTrackingRuntimeParameters;
+}
+
+FSlObjectDetectionParameters USlCameraProxy::GetObjectDetectionParameters() {
+	return ObjectDetectionParameters;
+}
+
+FSlObjectDetectionRuntimeParameters USlCameraProxy::GetObjectDetectionRuntimeParameters() {
+	return ObjectDetectionRuntimeParameters;
 }
 
 bool USlCameraProxy::IsObjectDetectionEnabled()
@@ -1461,7 +1475,8 @@ bool USlCameraProxy::IsBodyTrackingEnabled()
 bool USlCameraProxy::RetrieveObjects()
 {
 	SL_Objects sl_objects;
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &ObjectDetectionRuntimeParameters, &sl_objects, 0);
+	SL_ObjectDetectionRuntimeParameters od_rt_params = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &od_rt_params, &sl_objects, 0);
 	objects = sl::unreal::ToUnrealType(sl_objects);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
@@ -1480,7 +1495,8 @@ bool USlCameraProxy::RetrieveObjects()
 bool USlCameraProxy::RetrieveBodies()
 {
 	SL_Bodies sl_bodies;
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &BodyTrackingRuntimeParameters, &sl_bodies, 0);
+	SL_BodyTrackingRuntimeParameters bt_rt_params = sl::unreal::ToSlType(BodyTrackingRuntimeParameters);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &bt_rt_params, &sl_bodies, 0);
 	bodies = sl::unreal::ToUnrealType(sl_bodies, BodyTrackingParameters.BodyFormat);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
@@ -1745,7 +1761,7 @@ int32 USlCameraProxy::GetConfidenceThreshold()
 void USlCameraProxy::SetConfidenceThreshold(int32 NewConfidenceThreshold)
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		RuntimeParameters.confidence_threshold = NewConfidenceThreshold;
+		RuntimeParameters.ConfidenceThreshold = NewConfidenceThreshold;
 	SL_SCOPE_UNLOCK
 }
 

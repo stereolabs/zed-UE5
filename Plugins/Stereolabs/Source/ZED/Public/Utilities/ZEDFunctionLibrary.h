@@ -99,7 +99,7 @@ static TArray<FSlBody38Bone> Body38Bones = TArray<FSlBody38Bone>{
 	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_MIDDLE_4),
 	FSlBody38Bone(ESlBody38Parts::LEFT_WRIST,     ESlBody38Parts::LEFT_HAND_PINKY_1),
 	// Right Arm
-	FSlBody38Bone(ESlBody38Parts::SPINE_3,        ESlBody38Parts::LEFT_CLAVICLE),
+	FSlBody38Bone(ESlBody38Parts::SPINE_3,        ESlBody38Parts::RIGHT_CLAVICLE),
 	FSlBody38Bone(ESlBody38Parts::RIGHT_CLAVICLE, ESlBody38Parts::RIGHT_SHOULDER),
 	FSlBody38Bone(ESlBody38Parts::RIGHT_SHOULDER, ESlBody38Parts::RIGHT_ELBOW),
 	FSlBody38Bone(ESlBody38Parts::RIGHT_ELBOW,    ESlBody38Parts::RIGHT_WRIST),
