@@ -14,6 +14,7 @@ public class SpatialMapping : ModuleRules
     public SpatialMapping(ReadOnlyTargetRules Target) : base(Target)
     {
         PrivatePCHHeaderFile = "Public/SpatialMapping.h";
+        bEnableUndefinedIdentifierWarnings = false;
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

@@ -21,6 +21,8 @@ public class Stereolabs : ModuleRules
     {
         PrivatePCHHeaderFile = "Public/Stereolabs.h";
 
+        bEnableUndefinedIdentifierWarnings = false;
+
         string CudaSDKPath = System.Environment.GetEnvironmentVariable("CUDA_PATH", EnvironmentVariableTarget.Machine);
         string ZEDSDKPath = System.Environment.GetEnvironmentVariable("ZED_SDK_ROOT_DIR", EnvironmentVariableTarget.Machine);
 
