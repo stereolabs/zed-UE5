@@ -14,6 +14,7 @@ public class EnvironmentalLighting : ModuleRules
     public EnvironmentalLighting(ReadOnlyTargetRules Target) : base(Target)
     {
         PrivatePCHHeaderFile = "Public/EnvironmentalLighting.h";
+        bEnableUndefinedIdentifierWarnings = false;
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
