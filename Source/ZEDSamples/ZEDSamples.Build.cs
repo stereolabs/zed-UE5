@@ -8,7 +8,7 @@ public class ZEDSamples : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Stereolabs", "ProceduralMeshComponent", "MeshDescription" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Stereolabs", "ProceduralMeshComponent", "MeshDescription" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
 			 "AnimGraphRuntime",
