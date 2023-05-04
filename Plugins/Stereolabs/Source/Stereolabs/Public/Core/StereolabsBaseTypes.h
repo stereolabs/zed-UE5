@@ -39,6 +39,7 @@ FString EnumToString(const T EnumValue)
 /*								 Enums									*/
 /************************************************************************/
 
+
 /*
  * List of possible camera state
  * see sl::CAMERA_STATE
@@ -543,6 +544,14 @@ enum class ESlBodyTrackingModel : uint8
 	BTM_HumanBodyMedium			UMETA(DisplayName = "Human body medium"),
 	BTM_HumanBodyAccurate		UMETA(DisplayName = "Human body accurate")
 
+};
+
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlAIType : uint8
+{
+	AIT_ObjectDetection			UMETA(DisplayName = "Object Detection"),
+	AIT_BodyTracking			UMETA(DisplayName = "Body Tracking"),
+	AIT_Depth					UMETA(DisplayName = "Depth"),
 };
 
 UENUM(BlueprintType, Category = "Stereolabs|Enum")

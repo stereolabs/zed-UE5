@@ -15,7 +15,11 @@ bool FSlObjectDetectionRunnable::Init()
 
 uint32 FSlObjectDetectionRunnable::Run()
 {
-	FPlatformProcess::SleepNoStats(0.001f);
+	if (!GSlCameraProxy->CheckAIModelOptimization((ESlAIModels)sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionModel)))
+	{	
+		SL_LOG_W(SlAIThread, "Optimizing AI model. The process can take few minutes", (int)ObjectDetectionModel);
+		FPlatformProcess::SleepNoStats(1.0f);
+	}
 
 	return 0;
 }
@@ -46,6 +50,8 @@ void FSlObjectDetectionRunnable::Start(float Frequency)
 	ThreadName.AppendInt(ThreadCounter++);
 
 	Thread = FRunnableThread::Create(this, *ThreadName, 0);
+
+	ObjectDetectionModel = GSlCameraProxy->GetObjectDetectionParameters().DetectionModel;
 
 	AIRetrieveDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
 		{
@@ -84,7 +90,12 @@ bool FSlBodyTrackingRunnable::Init()
 
 uint32 FSlBodyTrackingRunnable::Run()
 {
-	FPlatformProcess::SleepNoStats(0.001f);
+	FPlatformProcess::SleepNoStats(5.0f);
+
+	if (!GSlCameraProxy->CheckAIModelOptimization((ESlAIModels)sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingModel, (SL_BODY_FORMAT)GSlCameraProxy->GetBodyTrackingParameters().BodyFormat)))
+	{
+		SL_LOG_W(SlAIThread, "Optimizing AI model. The process can take few minutes");
+	}
 
 	return 0;
 }
@@ -115,6 +126,9 @@ void FSlBodyTrackingRunnable::Start(float Frequency)
 	ThreadName.AppendInt(ThreadCounter++);
 
 	Thread = FRunnableThread::Create(this, *ThreadName, 0);
+
+	BodyTrackingModel = GSlCameraProxy->GetBodyTrackingParameters().DetectionModel;
+
 
 	AIRetrieveDelegateHandle = GSlCameraProxy->AddToGrabDelegate([this](ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp)
 		{
