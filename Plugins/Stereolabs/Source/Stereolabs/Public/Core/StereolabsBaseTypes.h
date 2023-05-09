@@ -2894,6 +2894,13 @@ struct STEREOLABS_API FSlObjects
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTracked;
+
+	FSlObjects() :
+		Timestamp(FSlTimestamp()),
+		ObjectList(TArray<FSlObjectData>()),
+		bIsNew(false),
+		bIsTracked(false)
+	{}
 };
 
 /*
@@ -3123,6 +3130,13 @@ struct STEREOLABS_API FSlBodies
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTracked;
+
+	FSlBodies():
+		Timestamp(FSlTimestamp()),
+		BodyList(TArray<FSlBodyData>()),
+		bIsNew(false),
+		bIsTracked(false)
+	{}
 };
 
 /*
