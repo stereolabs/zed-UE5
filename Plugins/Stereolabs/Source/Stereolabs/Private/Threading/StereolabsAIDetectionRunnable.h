@@ -24,6 +24,7 @@ public:
 private :
 	float Fps;
 	std::chrono::milliseconds PreviousTS;
+	ESlObjectDetectionModel ObjectDetectionModel;
 };
 
 
@@ -43,4 +44,6 @@ public:
 private:
 	float Fps;
 	std::chrono::milliseconds PreviousTS;
+
+	ESlBodyTrackingModel BodyTrackingModel;
 };

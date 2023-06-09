@@ -454,7 +454,7 @@ public:
 	void GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper, const TArray<FIntPoint>& ScreenPositions, TArray<float>& Depths, TArray<FVector>& Normals);
 	
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "optimize AI Model"), Category = "Zed|AI")
-	void OptimizeAIModel(const ESlAIModels& AIModel);
+	void OptimizeAIModel(const ESlAIModels& AIModel, const ESlAIType& AIType);
 
 	/*
 	 * Enable Zed Object Detection module
@@ -462,14 +462,18 @@ public:
 	 * @return True is object detection enabled
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "enable zed Object detection"), Category = "Zed|Object Detection")
-	bool EnableObjectDetection(const FSlObjectDetectionParameters& ObjectDetectionParameters);
+	void EnableObjectDetection(const FSlObjectDetectionParameters& ObjectDetectionParameters);
+
+	bool enableObjectDetection();
 
 	/*
 	 * Enable Zed Body Tracking module
 	 * @param BodyTrackingParameters The body tracking parameters to use
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "enable zed body tracking"), Category = "Zed|Body Tracking")
-	bool EnableBodyTracking(const FSlBodyTrackingParameters& BodyTrackingParameters);
+	void EnableBodyTracking(const FSlBodyTrackingParameters& BodyTrackingParameters);
+
+	bool enableBodyTracking();
 
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Body Tracking Runtime Parameters"), Category = "Zed|Body Tracking")
 	FSlBodyTrackingRuntimeParameters GetBodyTrackingRuntimeParameters();
@@ -705,7 +709,7 @@ private:
 	 */
 	void Internal_EnableTracking(const FSlPositionalTrackingParameters& NewTrackingParameters);
 
-	void Internal_OptimizeAIModel(const ESlAIModels& AIModel);
+	void Internal_OptimizeAIModel(const ESlAIModels& AIModel, const ESlAIType& AIType);
 
 	// ------------------------------------------------------------------
 

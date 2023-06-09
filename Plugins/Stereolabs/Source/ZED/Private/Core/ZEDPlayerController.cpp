@@ -415,7 +415,7 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 
 	if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
 
-		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth);
+		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth, ESlAIType::AIT_Depth);
 		UpdateHUDOptimizingAIModel();
 	}
 	else 

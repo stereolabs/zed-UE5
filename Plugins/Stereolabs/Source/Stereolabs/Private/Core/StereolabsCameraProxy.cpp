@@ -120,15 +120,16 @@ class FAIOptimizationAsyncTask : public FNonAbandonableTask
 	friend class FAsyncTask<FAIOptimizationAsyncTask>;
 
 public:
-	FAIOptimizationAsyncTask(const ESlAIModels& AIModel)
+	FAIOptimizationAsyncTask(const ESlAIModels& _AIModel, const ESlAIType& _AIType )
 		:
-		AIModel(AIModel)
+		AIModel(_AIModel),
+		AIType(_AIType)
 	{}
 
 protected:
 	void DoWork()
 	{
-		GSlCameraProxy->Internal_OptimizeAIModel(AIModel);
+		GSlCameraProxy->Internal_OptimizeAIModel(AIModel, AIType);
 	}
 
 	FORCEINLINE TStatId GetStatId() const
@@ -138,6 +139,7 @@ protected:
 
 protected:
 	ESlAIModels AIModel;
+	ESlAIType AIType;
 };
 
 USlCameraProxy::USlCameraProxy()
@@ -1159,23 +1161,24 @@ bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel)
 
 	if (!ai_model_status->optimized)
 	{
-		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized", AiModel);
+		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized", AiModel);
 		return false;
 	}
 	return true;
 }
 
-void USlCameraProxy::OptimizeAIModel(const ESlAIModels& AIModel) {
+void USlCameraProxy::OptimizeAIModel(const ESlAIModels& AIModel, const ESlAIType& AIType) {
 
-	AIOptimizationAsyncTask = new FAsyncTask<FAIOptimizationAsyncTask>(AIModel);
+	AIOptimizationAsyncTask = new FAsyncTask<FAIOptimizationAsyncTask>(AIModel, AIType);
 	AIOptimizationAsyncTask->StartBackgroundTask();
 }
 
-void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel) {
+void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel, const ESlAIType& AIType) {
 
 	int err = sl_optimize_AI_model((SL_AI_MODELS)AIModel, 0);
 
-	AsyncTask(ENamedThreads::GameThread, [this]()
+	SL_CAMERA_PROXY_LOG_W("Optim done");
+	AsyncTask(ENamedThreads::GameThread, [this, err, AIModel, AIType]()
 		{
 			if (!GSlCameraProxy)
 			{
@@ -1187,8 +1190,24 @@ void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel) {
 			delete AIOptimizationAsyncTask;
 			AIOptimizationAsyncTask = nullptr;
 
-			GSlCameraProxy->OnAIModelOptimized.Broadcast();
-
+			if (err == SL_ERROR_CODE_SUCCESS) {
+				if (AIType == ESlAIType::AIT_Depth)
+				{
+					GSlCameraProxy->OnAIModelOptimized.Broadcast();
+				}
+				else if (AIType == ESlAIType::AIT_ObjectDetection)
+				{
+					enableObjectDetection();
+				}
+				else if (AIType == ESlAIType::AIT_BodyTracking)
+				{
+					enableBodyTracking();
+				}
+			}
+			else
+			{
+				SL_CAMERA_PROXY_LOG_E("Error during model optimization");
+			}
 		});
 }
 
@@ -1352,35 +1371,14 @@ void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper
 	}
 }
 
-bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& ODParameters) {
+
+bool USlCameraProxy::enableObjectDetection() 
+{
 	SL_ERROR_CODE ErrorCode;
 
-	ObjectDetectionParameters = ODParameters;
-
-	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects)
-	{
-		SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionParameters.DetectionModel);
-
-		SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
-
-		if (!ai_model_status->optimized)
-		{
-			SL_CAMERA_PROXY_LOG_E("AI model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", ObjectDetectionParameters.DetectionModel);
-			return false;
-
-			//OptimizeAIModel((ESlAIModels)ai_model);
-
-			//SL_CAMERA_PROXY_LOG_W("Optimizing AI model : %i ");
-
-			/*while (!sl_check_AI_model_status(ai_model, 0)->optimized)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Optimizing AI Model %d ... The process can take few minutes...."), ObjectDetectionParameters.DetectionModel);
-				FPlatformProcess::Sleep(1.0f);
-			}*/
-		}
-	}
-
 	SL_SCOPE_LOCK(Lock, GrabSection)
+
+		UE_LOG(LogTemp, Warning, TEXT("Enable OD"));
 
 		SL_ObjectDetectionParameters ODParams = sl::unreal::ToSlType(ObjectDetectionParameters);
 		ErrorCode = (SL_ERROR_CODE)sl_enable_object_detection(CameraID, &ODParams);
@@ -1397,20 +1395,36 @@ bool USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 	return bObjectDetectionEnabled;
 }
 
-bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParameters) {
-	SL_ERROR_CODE ErrorCode;
+void USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& ODParameters)
+{
+	ObjectDetectionParameters = ODParameters;
 
-
-	BodyTrackingParameters = BTParameters;
-	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel, (SL_BODY_FORMAT)BodyTrackingParameters.BodyFormat);
-
-	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
-
-	if (!ai_model_status->optimized)
+	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects)
 	{
-		SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized, please optimize it using the ZED Diagnostic tool (use the *-h* option to have all the informations needed", BodyTrackingParameters.DetectionModel);
-		return false;
+		SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ODParameters.DetectionModel);
+
+		SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+
+		if (!ai_model_status->optimized)
+		{
+			OptimizeAIModel((ESlAIModels)ai_model, ESlAIType::AIT_ObjectDetection);
+
+			SL_CAMERA_PROXY_LOG_W("Optimizing AI model : %i The process can take few minutes", (int)ai_model);
+		}
+		else
+		{
+			enableObjectDetection();
+		}
 	}
+	else
+	{
+		enableObjectDetection();
+	}
+}
+
+bool USlCameraProxy::enableBodyTracking() 
+{
+	SL_ERROR_CODE ErrorCode;
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		SL_BodyTrackingParameters BTParams = sl::unreal::ToSlType(BodyTrackingParameters);
@@ -1426,6 +1440,25 @@ bool USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 
 	OnBodyTrackingEnabled.Broadcast(bBodyTrackingEnabled, sl::unreal::ToUnrealType(ErrorCode));
 	return bBodyTrackingEnabled;
+}
+
+void USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParameters) 
+{
+	BodyTrackingParameters = BTParameters;
+	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel, (SL_BODY_FORMAT)BodyTrackingParameters.BodyFormat);
+
+	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+
+	if (!ai_model_status->optimized)
+	{
+		OptimizeAIModel((ESlAIModels)ai_model, ESlAIType::AIT_BodyTracking);
+
+		SL_CAMERA_PROXY_LOG_W("Optimizing AI model. The process can take few minutes ...");
+	}
+	else
+	{
+		enableBodyTracking();
+	}
 }
 
 FSlBodyTrackingParameters USlCameraProxy::GetBodyTrackingParameters() {
