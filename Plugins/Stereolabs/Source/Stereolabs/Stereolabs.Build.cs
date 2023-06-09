@@ -135,7 +135,7 @@ public class Stereolabs : ModuleRules
             }
 
             // Set the paths to the SDK
-            string[] LibrariesNames = Directory.GetFiles(Path.Combine(DirPath, "lib"));
+            //string[] LibrariesNames = Directory.GetFiles(Path.Combine(DirPath, "lib"));
 
             PublicIncludePaths.Add(Path.Combine(DirPath, "include"));
             //PublicLibraryPaths.Add(Path.Combine(DirPath, "lib"));
