@@ -10,7 +10,8 @@ FSlSpatialMappingParameters::FSlSpatialMappingParameters()
 	PresetResolution(ESlSpatialMappingResolution::SMR_Medium),
 	PresetRange(ESlSpatialMappingRange::SMR_Auto),
 	bSaveTexture(false)/*,
-	bUseChunkOnly(bUseChunkOnly)*/
+	bUseChunkOnly(bUseChunkOnly)*/,
+	StabilityCounter(0)
 {
 	MaxRange = sl::SpatialMappingParameters::get(sl::unreal::ToSlType(PresetRange));
 	Resolution = sl::SpatialMappingParameters::get(sl::unreal::ToSlType(PresetResolution));

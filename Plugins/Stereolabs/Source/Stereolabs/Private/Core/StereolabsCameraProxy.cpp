@@ -1559,10 +1559,10 @@ int USlCameraProxy::GetNumberOfKeypoints()
 	{
 		return 38;
 	}
-	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 70;
-	}
+	}*/
 	else
 	{
 		return 38;
@@ -1583,10 +1583,10 @@ int USlCameraProxy::GetNumberOfBones()
 	{
 		return 37;
 	}
-	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 69;
-	}
+	}*/
 	else
 	{
 		return 37;

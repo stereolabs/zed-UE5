@@ -566,9 +566,9 @@ enum class ESlAIModels : uint8
 	AIM_HumanBody38FastDetection		UMETA(DisplayName = "Human body 38 fast Detection"),
 	AIM_HumanBody38MediumDetection		UMETA(DisplayName = "Human body 38 medium Detection"),
 	AIM_HumanBody38AccurateDetection	UMETA(DisplayName = "Human body 38 accurate Detection"),
-	AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
-	AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
-	AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
+	//AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
+	//AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
+	//AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
 	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
@@ -584,7 +584,7 @@ enum class ESlBodyFormat : uint8
 	BF_BODY_18    UMETA(DisplayName = "Body 18"),
 	BF_BODY_34    UMETA(DisplayName = "Body 34"),
 	BF_BODY_38    UMETA(DisplayName = "Body 38"),
-	BF_BODY_70	  UMETA(DisplayName = "Body 70")
+	//BF_BODY_70	  UMETA(DisplayName = "Body 70")
 };
 
 /*

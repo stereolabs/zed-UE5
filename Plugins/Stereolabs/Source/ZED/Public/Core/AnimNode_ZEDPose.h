@@ -33,7 +33,7 @@ public:
 	bool bMirrorOnZAxis;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
-	float HeightOffset;
+	float ManualHeightOffset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	bool bStickAvatarOnFloor;
@@ -93,13 +93,15 @@ private:
 
 	TMap<FName, FVector> BonesScale;
 
-	// factor used to computer foot offset over time.
 	float BoneScaleAlpha = 0.2f;
 
-	int FeetOffsetBufferSize = 120;
-	std::deque<float> FeetOffsetBuffer;
-	float FeetOffset = 0;
-	float FeetOffsetAlpha = 1.0f;
+    float DurationOffsetErrorThreshold = 2.0f;
+    float DurationOffsetError = 0.0f;
+    long long PreviousTS_ms = 0;
+
+    float DistanceToFloorThreshold = 8.f;
+
+	float AutomaticHeightOffset = 0;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;

@@ -665,9 +665,9 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_HUMAN_BODY_38_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
 	SL_AI_MODELS_HUMAN_BODY_38_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
 	SL_AI_MODELS_HUMAN_BODY_38_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
-	SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
-	SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
-	SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	//SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	//SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
+	//SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::HUMAN_BODY_FAST
 	SL_AI_MODELS_PERSON_HEAD_DETECTION, // related to sl::DETECTION_MODEL::PERSON_HEAD_BOX
 	SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION, // related to sl::DETECTION_MODEL::PERSON_HEAD_BOX_ACCURATE
 	SL_AI_MODELS_REID_ASSOCIATION, // related to sl::BatchParameters::enable
@@ -719,7 +719,7 @@ enum SL_BODY_FORMAT
 	 * \brief 70 keypoint model.
 	 * Body model, including feet and full hands models (and simplified face)
 	 */
-	 SL_BODY_FORMAT_BODY_70,
+	 //SL_BODY_FORMAT_BODY_70,
 };
 
 enum SL_BODY_KEYPOINTS_SELECTION
@@ -2128,36 +2128,36 @@ struct SL_BodyData
 	 * Expressed in pixels on the original image resolution, [0,0] is the top left corner.
 	  \warning in some cases, eg. body partially out of the image, some keypoint can not be detected, they will have negatives coordinates.
 	 */
-	struct SL_Vector2 keypoint_2d[70];
+	struct SL_Vector2 keypoint_2d[38];
 	/**
 	 * \brief A set of useful points representing the human body, expressed in 3D.
 	 * We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS.
 	 * Defined in \ref sl:InitParameters::UNIT, expressed in \ref RuntimeParameters::measure3D_reference_frame.
 	  \warning in some cases, eg. body partially out of the image or missing depth data, some keypoint can not be detected, they will have non finite values.
 	 */
-	struct SL_Vector3 keypoint[70];
+	struct SL_Vector3 keypoint[38];
 
 	/**
 	 * \brief Per keypoint detection confidence, can not be lower than the \ref ObjectDetectionRuntimeParameters::detection_confidence_threshold.
 	  \warning in some cases, eg. body partially out of the image or missing depth data, some keypoint can not be detected, they will have non finite values.
 	 */
-	float keypoint_confidence[70];
+	float keypoint_confidence[38];
 	/**
 	 * \brief Per keypoint detection 3d covariance
 	  \warning in some cases, eg. body partially out of the image or missing depth data, some keypoint can not be detected, they covariance will be 0.
 	  see \ref position_covariance for the storage format
 	 */
-	float keypoint_covariances[70][6];
+	float keypoint_covariances[38][6];
 	/**
 	\brief Per keypoint local position (the position of the child keypoint with respect to its parent expressed in its parent coordinate frame)
 	\note it is expressed in sl::REFERENCE_CAMERA or sl::REFERENCE_WORLD
 	*/
-	struct SL_Vector3 local_position_per_joint[70];
+	struct SL_Vector3 local_position_per_joint[38];
 	/**
 		\brief Per keypoint local orientation
 		\note the orientation is represented by a quaternion which is stored in sl::float4 (sl::float4 q = sl::float4(qx,qy,qz,qw);)
 	*/
-	struct SL_Quaternion local_orientation_per_joint[70];
+	struct SL_Quaternion local_orientation_per_joint[38];
 	/**
 		\brief global root orientation of the skeleton. The orientation is also represented by a quaternion with the same format as \ref local_orientation_per_joint
 	*/
