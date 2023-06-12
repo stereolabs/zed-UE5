@@ -2280,6 +2280,7 @@ namespace sl
 			SpatialMappingParameters.resolution_meter = GetResolution(UnrealData.PresetResolution);
 			SpatialMappingParameters.use_chunk_only = UnrealData.GetUseChunksOnly();
 			SpatialMappingParameters.reverse_vertex_order = true;
+			SpatialMappingParameters.stability_counter = UnrealData.StabilityCounter;
 
 			return SpatialMappingParameters;
 		}

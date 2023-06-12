@@ -286,7 +286,7 @@ enum SL_UNIT {
 \image html CoordinateSystem.png
  */
 enum SL_COORDINATE_SYSTEM {
-	SL_COORDINATE_SYSTEM_IMAGE, /**< Standard coordinates system in computer vision. Used in OpenCV : see here : http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html */
+	SL_COORDINATE_SYSTEM_IMAGE, /**< Standard coordinates system in computer vision. Used in OpenCV : see <a href="http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html">here</a>. */
 	SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP, /**< Left-Handed with Y up and Z forward. Used in Unity with DirectX. */
 	SL_COORDINATE_SYSTEM_RIGHT_HANDED_Y_UP, /**< Right-Handed with Y pointing up and Z backward. Used in OpenGL. */
 	SL_COORDINATE_SYSTEM_RIGHT_HANDED_Z_UP, /**< Right-Handed with Z pointing up and Y forward. Used in 3DSMax. */
@@ -1594,6 +1594,12 @@ struct SL_SpatialMappingParameters {
 	\brief The type of spatial map to be created. This dictates the format that will be used for the mapping(e.g. mesh, point cloud). See \ref SPATIAL_MAP_TYPE
 	 */
 	enum SL_SPATIAL_MAP_TYPE map_type;
+	/**
+		\brief Control the integration rate of the current depth into the mapping process.
+		This parameter controls how many times a stable 3D points should be seen before it is integrated into the spatial mapping.
+		Default value is 0, this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter.
+	*/
+	int stability_counter;
 };
 
 

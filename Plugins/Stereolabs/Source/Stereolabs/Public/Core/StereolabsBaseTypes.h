@@ -1316,6 +1316,14 @@ struct STEREOLABS_API FSlSpatialMappingParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlSpatialMappingRange PresetRange;
 
+	/**
+	   \brief Control the integration rate of the current depth into the mapping process.
+	   This parameter controls how many times a stable 3D points should be seen before it is integrated into the spatial mapping.
+	   Default value is 0, this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int StabilityCounter;
+
 	/*
 	 * Set to true if you want be able to apply texture to your mesh after its creation.
 	 * This option will take more memory.
