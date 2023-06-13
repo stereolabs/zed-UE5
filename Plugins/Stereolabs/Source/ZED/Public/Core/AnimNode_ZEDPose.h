@@ -95,13 +95,16 @@ private:
 
 	float BoneScaleAlpha = 0.2f;
 
-    float DurationOffsetErrorThreshold = 2.0f;
+    float DurationOffsetErrorThreshold = 3.0f;
     float DurationOffsetError = 0.0f;
     long long PreviousTS_ms = 0;
 
-    float DistanceToFloorThreshold = 8.f;
+    float DistanceToFloorThreshold = 3.f;
 
 	float AutomaticHeightOffset = 0;
+
+    float LeftAnkleToHeelOffset = 0;
+    float RightAnkleToHeelOffset = 0;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;

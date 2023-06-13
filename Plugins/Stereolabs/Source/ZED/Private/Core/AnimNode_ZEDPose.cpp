@@ -109,21 +109,39 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     SkeletalMesh->GetBoneNames(TargetBoneNames);
 
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
-    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("LEFT_ANKLE"))] > 90 && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("RIGHT_ANKLE"))] > 90) { //if both foot are visible/detected
+    if (bStickAvatarOnFloor && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("LEFT_ANKLE"))] > 0 && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("RIGHT_ANKLE"))] > 0) { //if both foot are visible/detected
         if (SkeletalMesh) {
 
             FVector LeftFootPosition;
             FVector RightFootPosition;
             if (BodyData.Keypoint.Num() == 34) // body 34
             {
-                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]);
-                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
+                if (LeftAnkleToHeelOffset == 0 && RightAnkleToHeelOffset == 0)
+                {
+                    LeftAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[21]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[20]]).Z;
+                    RightAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]).Z;
+
+                }
+
+                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[20]]) + LeftAnkleToHeelOffset;
+                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]) + RightAnkleToHeelOffset;
+
             }
             else // body 38 or 70
             {
-                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]);
-                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]);
+                if (LeftAnkleToHeelOffset == 0 && RightAnkleToHeelOffset == 0)
+                {
+                    LeftAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[22]]).Z;
+                    RightAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[23]]).Z;
+                    
+                    UE_LOG(LogTemp, Warning, TEXT("Recomputing foot position ... %f"), LeftAnkleToHeelOffset);
+
+                }
+
+                LeftFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[22]]) + LeftAnkleToHeelOffset;
+                RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[23]]) + RightAnkleToHeelOffset;
             }
+
 
             // Shot raycast to the ground.
             FHitResult HitLeftFoot;
@@ -149,8 +167,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                 RightFootFloorDistance = (RightFootPosition + FVector(0, 0, AutomaticHeightOffset) - HitRightFoot.ImpactPoint).Z;
             }
 
-            UE_LOG(LogTemp, Warning, TEXT("%f"), AutomaticHeightOffset);
-
             //UE_LOG(LogTemp, Warning, TEXT("%f"), abs(fminf(LeftFootFloorDistance, RightFootFloorDistance)));
             if (abs(fminf(LeftFootFloorDistance, RightFootFloorDistance)) <= DistanceToFloorThreshold)
             {
@@ -165,7 +181,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                 
                 if (DurationOffsetError > DurationOffsetErrorThreshold)
                 {
-                    AutomaticHeightOffset = fmax(LeftFootFloorDistance, RightFootFloorDistance);
+                    AutomaticHeightOffset = fmin(LeftFootFloorDistance, RightFootFloorDistance);
                     DurationOffsetError = 0;
 
                     UE_LOG(LogTemp, Warning, TEXT("Recomputing offset ... %f"), AutomaticHeightOffset);
@@ -316,7 +332,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
 FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
 {
-    PreviousTS_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
 }
 
@@ -330,7 +345,7 @@ void FAnimNode_ZEDPose::Initialize_AnyThread(const FAnimationInitializeContext& 
 	InputPose.Initialize(Context);
 
     BoneScaleAlpha = 0.2f;
-
+    PreviousTS_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 void FAnimNode_ZEDPose::PreUpdate(const UAnimInstance* InAnimInstance)
