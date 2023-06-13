@@ -110,8 +110,8 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
     if (bStickAvatarOnFloor && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("LEFT_ANKLE"))] > 0 && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("RIGHT_ANKLE"))] > 0) { //if both foot are visible/detected
-        if (SkeletalMesh) {
-
+        if (SkeletalMesh) 
+        {
             FVector LeftFootPosition;
             FVector RightFootPosition;
             if (BodyData.Keypoint.Num() == 34) // body 34
@@ -134,7 +134,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                     LeftAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[22]]).Z;
                     RightAnkleToHeelOffset = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[25]]).Z - SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[23]]).Z;
                     
-                    UE_LOG(LogTemp, Warning, TEXT("Recomputing foot position ... %f"), LeftAnkleToHeelOffset);
+                    //UE_LOG(LogTemp, Warning, TEXT("Recomputing foot position ... %f"), LeftAnkleToHeelOffset);
 
                 }
 
@@ -184,7 +184,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                     AutomaticHeightOffset = fmin(LeftFootFloorDistance, RightFootFloorDistance);
                     DurationOffsetError = 0;
 
-                    UE_LOG(LogTemp, Warning, TEXT("Recomputing offset ... %f"), AutomaticHeightOffset);
+                    //UE_LOG(LogTemp, Warning, TEXT("Recomputing offset ... %f"), AutomaticHeightOffset);
                 }
             }
         }
@@ -346,6 +346,12 @@ void FAnimNode_ZEDPose::Initialize_AnyThread(const FAnimationInitializeContext& 
 
     BoneScaleAlpha = 0.2f;
     PreviousTS_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    if (bStickAvatarOnFloor)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Automatic offset of avatar and Foot IK can not be enabled together. FootIK will be ignored"));
+
+    }
 }
 
 void FAnimNode_ZEDPose::PreUpdate(const UAnimInstance* InAnimInstance)
