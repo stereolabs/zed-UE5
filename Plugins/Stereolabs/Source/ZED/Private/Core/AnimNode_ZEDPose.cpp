@@ -308,7 +308,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                         ParentBoneScale = *ZEDBoneSize.Find(TargetParentBoneName) / *RefPoseBoneSize.Find(TargetParentBoneName);
                         BoneScale /= ParentBoneScale;
 
-
                         FinalScale = BoneScaleAlpha * (*BonesScale.Find(TargetBoneName)) + (1 - BoneScaleAlpha) * FVector(BoneScale, BoneScale, BoneScale);
                     }
                     else
@@ -332,7 +331,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
 
 FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
 {
-
 }
 
 void FAnimNode_ZEDPose::OnInitializeAnimInstance(const FAnimInstanceProxy* InProxy, const UAnimInstance* InAnimInstance)
@@ -350,7 +348,6 @@ void FAnimNode_ZEDPose::Initialize_AnyThread(const FAnimationInitializeContext& 
     if (bStickAvatarOnFloor)
     {
         UE_LOG(LogTemp, Warning, TEXT("Automatic offset of avatar and Foot IK can not be enabled together. FootIK will be ignored"));
-
     }
 }
 
