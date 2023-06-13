@@ -2206,6 +2206,7 @@ namespace sl
 			struct SL_BodyTrackingRuntimeParameters BTParameters;
 			BTParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 			BTParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
+			BTParameters.skeleton_smoothing = UnrealData.SkeletonSmoothing;
 
 			return BTParameters;
 		}

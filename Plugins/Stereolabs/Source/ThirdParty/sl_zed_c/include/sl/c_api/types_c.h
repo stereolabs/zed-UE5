@@ -1858,6 +1858,11 @@ struct SL_BodyTrackingRuntimeParameters {
 	 * it is useful for example to remove unstable fitting results when a skeleton is partially occluded.
 	 */
 	int minimum_keypoints_threshold;
+	/**
+	 * @brief this value controls the smoothing of the fitted fused skeleton.
+	 * it is ranged from 0 (low smoothing) and 1 (high smoothing)
+	 */
+	float skeleton_smoothing = 0.f;
 };
 
 /**

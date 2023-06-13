@@ -3020,9 +3020,17 @@ struct STEREOLABS_API FSlBodyTrackingRuntimeParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int MinimumKeypointsThreshold;
 
-	FSlBodyTrackingRuntimeParameters():
+	/**
+	 * @brief this value controls the smoothing of the fitted fused skeleton.
+	 * it is ranged from 0 (low smoothing) and 1 (high smoothing)
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SkeletonSmoothing;
+
+	FSlBodyTrackingRuntimeParameters() :
 		DetectionConfidenceThreshold(20.0f),
-		MinimumKeypointsThreshold(-1)
+		MinimumKeypointsThreshold(-1),
+		SkeletonSmoothing(0.0f)
 	{}
 };
 
