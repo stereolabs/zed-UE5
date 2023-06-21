@@ -482,6 +482,20 @@ enum SL_POSITIONAL_TRACKING_STATE {
 };
 
 /**
+ \enum POSITIONAL_TRACKING_MODE
+ \ingroup PositionalTracking_group
+ \brief Lists the mode of positional tracking that can be used.
+  */
+enum SL_POSITIONAL_TRACKING_MODE {
+	SL_POSITIONAL_TRACKING_MODE_STANDARD, /**< Default mode, best compromise in performance and accuracy */
+	SL_POSITIONAL_TRACKING_MODE_QUALITY, /**< Improve accuracy in more challening scenes such as outdoor repetitive patterns like extensive field. Curently works best with ULTRA depth mode, requires more compute power */
+	///@cond SHOWHIDDEN
+	SL_POSITIONAL_TRACKING_MODE_LAST
+	///@endcond
+};
+
+
+/**
 \brief Lists the different states of spatial memory area export.
  */
 enum SL_AREA_EXPORTING_STATE {
@@ -1390,6 +1404,12 @@ d	\warning: This mode requires more resources to run, but greatly improves track
 	 * @brief This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
 	 */
 	bool set_gravity_as_origin;
+	/**
+	* @brief Positional tracking mode used. Can be used to improve accuracy in some type of scene at the cost of longer runtime
+	* default : POSITIONAL_TRACKING_MODE::STANDARD
+	*/
+	enum SL_POSITIONAL_TRACKING_MODE mode;
+
 };
 
 /**

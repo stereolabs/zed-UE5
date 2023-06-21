@@ -499,6 +499,16 @@ enum class ESlSelfCalibrationState : uint8
 };
 
 /*
+* Lists the mode of positional tracking that can be used.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlPositionalTrackingMode : uint8
+{
+	PTM_Standard		UMETA(DisplayName = "Standard"),
+	PTM_Quality			UMETA(DisplayName = "Quality")
+};
+
+/*
 * Lists available object tracking state.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
@@ -1955,7 +1965,8 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		bSetGravityAsOrigin(true)
+		bSetGravityAsOrigin(true),
+		Mode(ESlPositionalTrackingMode::PTM_Standard)
 	{
 	}
 
@@ -2116,6 +2127,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSetGravityAsOrigin;
+
+	/**
+	* @brief Positional tracking mode used. Can be used to improve accuracy in some type of scene at the cost of longer runtime
+	* default : POSITIONAL_TRACKING_MODE::STANDARD
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlPositionalTrackingMode Mode;
 };
 
 /*

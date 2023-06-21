@@ -440,6 +440,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	sl_positional_tracking_parameters.set_as_static = NewTrackingParameters.bSetAsStatic;
 	sl_positional_tracking_parameters.set_floor_as_origin = NewTrackingParameters.bSetFloorAsOrigin;
 	sl_positional_tracking_parameters.set_gravity_as_origin = NewTrackingParameters.bSetGravityAsOrigin;
+	sl_positional_tracking_parameters.mode = (SL_POSITIONAL_TRACKING_MODE)NewTrackingParameters.Mode;
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		ErrorCode = (SL_ERROR_CODE)sl_enable_positional_tracking(CameraID, &sl_positional_tracking_parameters, TCHAR_TO_UTF8(*NewTrackingParameters.AreaFilePath));
