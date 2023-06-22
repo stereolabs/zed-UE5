@@ -72,6 +72,7 @@ protected:
 private:
 	void BuildPoseFromSlBodyData(FPoseContext& PoseContext);
 	//void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
+    float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& InBodyData);
 
 	void PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse);
 	void PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames);

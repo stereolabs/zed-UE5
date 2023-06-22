@@ -8,6 +8,46 @@
 #include "Math/Quat.h"
 #include "Math/UnrealMathUtility.h"
 
+
+float FAnimNode_ZEDPose::ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& InBodyData)
+{
+    float avatarTotalTranslation = 0.f;
+    float SDKTotalTranslation = 0.f;
+    if (NbKeypoints <= 34)
+    {
+        for (int32 i = 22; i < 24; i++)
+        {
+            FVector BonePosition = InBodyData.LocalPositionPerJoint[i];
+            FCompactPoseBoneIndex CPIndex = GetCPIndex(i, OutPose);
+            if (CPIndex != INDEX_NONE)
+            {
+                avatarTotalTranslation += OutPose[CPIndex].GetTranslation().Size();
+                SDKTotalTranslation += BonePosition.Size();
+            }
+        }
+    }
+    else
+    {
+        for (int32 i = 19; i < 23; i++)
+        {
+            FVector BonePosition = InBodyData.LocalPositionPerJoint[i];
+            FCompactPoseBoneIndex CPIndex = GetCPIndex(i, OutPose);
+            if (CPIndex != INDEX_NONE)
+            {
+                avatarTotalTranslation += OutPose[CPIndex].GetTranslation().Size();
+                SDKTotalTranslation += BonePosition.Size();
+            }
+        }
+    }
+
+    float factor = avatarTotalTranslation / SDKTotalTranslation;
+    float scale = 1.f;
+    FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
+    if (CPIndexRoot != INDEX_NONE)
+        scale = OutPose[CPIndexRoot].GetScale3D().Z;
+    return FMath::Abs(scale * factor);
+}
+
 FCompactPoseBoneIndex FAnimNode_ZEDPose::GetCPIndex(int32 i, FCompactPose& OutPose) 
 {
     FName Name = bMirrorOnZAxis ? KeypointsMirrored[i] : Keypoints[i];
@@ -230,9 +270,12 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             // Only use position + rotation data for root. For all other bones, set rotation only.
             if (TargetBoneName == *RemapAsset.Find(GetTargetRootName()))
             {
+                float rootScaleFactor = ComputeRootTranslationFactor(OutPose, BodyData);
                 FVector RootPosition = BodyData.Keypoint[0];
                 RootPosition.Z += ManualHeightOffset;
                 RootPosition.Z -= AutomaticHeightOffset;
+                RootPosition.Z *= rootScaleFactor;
+
 
                 Translation = FMath::Lerp(
                     PreviousRootPosition,
