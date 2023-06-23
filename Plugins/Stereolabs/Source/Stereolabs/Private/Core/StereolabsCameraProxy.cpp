@@ -910,7 +910,9 @@ bool USlCameraProxy::RetrieveMeshAsync(USlMesh* Mesh)
 	Mesh->Vertices.SetNum(Mesh->NbVertices * 3);
 	Mesh->Triangles.SetNum(Mesh->NbTriangles * 3);
 	Mesh->UVs.SetNum(Mesh->NbVertices * 2);
-	ErrorCode = (SL_ERROR_CODE)sl_retrieve_whole_mesh(CameraID, Mesh->Vertices.GetData(), Mesh->Triangles.GetData(), Mesh->UVs.GetData(), Mesh->Texture.GetData());
+	Mesh->Colors.SetNum(Mesh->NbVertices * 3);
+
+	ErrorCode = (SL_ERROR_CODE)sl_retrieve_whole_mesh(CameraID, Mesh->Vertices.GetData(), Mesh->Triangles.GetData(), Mesh->Colors.GetData(), Mesh->UVs.GetData(), Mesh->Texture.GetData());
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
@@ -1560,10 +1562,10 @@ int USlCameraProxy::GetNumberOfKeypoints()
 	{
 		return 38;
 	}
-	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 70;
-	}*/
+	}
 	else
 	{
 		return 38;
@@ -1584,10 +1586,10 @@ int USlCameraProxy::GetNumberOfBones()
 	{
 		return 37;
 	}
-	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 69;
-	}*/
+	}
 	else
 	{
 		return 37;

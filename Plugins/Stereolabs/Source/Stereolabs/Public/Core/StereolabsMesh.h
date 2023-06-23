@@ -103,6 +103,8 @@ public:
 
 	TArray<int> Triangles;
 
+	TArray<unsigned char> Colors;
+
 	TArray<float> UVs;
 
 	TArray<unsigned char> Texture;
