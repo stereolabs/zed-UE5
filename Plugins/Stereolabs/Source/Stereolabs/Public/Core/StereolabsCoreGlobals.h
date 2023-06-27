@@ -2206,6 +2206,7 @@ namespace sl
 			struct SL_BodyTrackingRuntimeParameters BTParameters;
 			BTParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 			BTParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
+			BTParameters.skeleton_smoothing = UnrealData.SkeletonSmoothing;
 
 			return BTParameters;
 		}
@@ -2280,6 +2281,7 @@ namespace sl
 			SpatialMappingParameters.resolution_meter = GetResolution(UnrealData.PresetResolution);
 			SpatialMappingParameters.use_chunk_only = UnrealData.GetUseChunksOnly();
 			SpatialMappingParameters.reverse_vertex_order = true;
+			SpatialMappingParameters.stability_counter = UnrealData.StabilityCounter;
 
 			return SpatialMappingParameters;
 		}

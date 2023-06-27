@@ -286,7 +286,7 @@ enum SL_UNIT {
 \image html CoordinateSystem.png
  */
 enum SL_COORDINATE_SYSTEM {
-	SL_COORDINATE_SYSTEM_IMAGE, /**< Standard coordinates system in computer vision. Used in OpenCV : see here : http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html */
+	SL_COORDINATE_SYSTEM_IMAGE, /**< Standard coordinates system in computer vision. Used in OpenCV : see <a href="http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html">here</a>. */
 	SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP, /**< Left-Handed with Y up and Z forward. Used in Unity with DirectX. */
 	SL_COORDINATE_SYSTEM_RIGHT_HANDED_Y_UP, /**< Right-Handed with Y pointing up and Z backward. Used in OpenGL. */
 	SL_COORDINATE_SYSTEM_RIGHT_HANDED_Z_UP, /**< Right-Handed with Z pointing up and Y forward. Used in 3DSMax. */
@@ -480,6 +480,20 @@ enum SL_POSITIONAL_TRACKING_STATE {
 	SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW, /** Effective FPS is too low to give proper results for motion tracking. Consider using PERFORMANCES parameters (DEPTH_MODE_PERFORMANCE, low camera resolution (VGA,HD720))*/
 	SL_POSITIONAL_TRACKING_STATE_SEARCHING_FLOOR_PLANE, /**< The camera is searching for the floor plane to locate itself related to it, the REFERENCE_FRAME::WORLD will be set afterward.*/
 };
+
+/**
+ \enum POSITIONAL_TRACKING_MODE
+ \ingroup PositionalTracking_group
+ \brief Lists the mode of positional tracking that can be used.
+  */
+enum SL_POSITIONAL_TRACKING_MODE {
+	SL_POSITIONAL_TRACKING_MODE_STANDARD, /**< Default mode, best compromise in performance and accuracy */
+	SL_POSITIONAL_TRACKING_MODE_QUALITY, /**< Improve accuracy in more challening scenes such as outdoor repetitive patterns like extensive field. Curently works best with ULTRA depth mode, requires more compute power */
+	///@cond SHOWHIDDEN
+	SL_POSITIONAL_TRACKING_MODE_LAST
+	///@endcond
+};
+
 
 /**
 \brief Lists the different states of spatial memory area export.
@@ -719,7 +733,7 @@ enum SL_BODY_FORMAT
 	 * \brief 70 keypoint model.
 	 * Body model, including feet and full hands models (and simplified face)
 	 */
-	 SL_BODY_FORMAT_BODY_70,
+	SL_BODY_FORMAT_BODY_70,
 };
 
 enum SL_BODY_KEYPOINTS_SELECTION
@@ -1390,6 +1404,12 @@ d	\warning: This mode requires more resources to run, but greatly improves track
 	 * @brief This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
 	 */
 	bool set_gravity_as_origin;
+	/**
+	* @brief Positional tracking mode used. Can be used to improve accuracy in some type of scene at the cost of longer runtime
+	* default : POSITIONAL_TRACKING_MODE::STANDARD
+	*/
+	enum SL_POSITIONAL_TRACKING_MODE mode;
+
 };
 
 /**
@@ -1594,6 +1614,12 @@ struct SL_SpatialMappingParameters {
 	\brief The type of spatial map to be created. This dictates the format that will be used for the mapping(e.g. mesh, point cloud). See \ref SPATIAL_MAP_TYPE
 	 */
 	enum SL_SPATIAL_MAP_TYPE map_type;
+	/**
+		\brief Control the integration rate of the current depth into the mapping process.
+		This parameter controls how many times a stable 3D points should be seen before it is integrated into the spatial mapping.
+		Default value is 0, this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter.
+	*/
+	int stability_counter;
 };
 
 
@@ -1852,6 +1878,12 @@ struct SL_BodyTrackingRuntimeParameters {
 	 * it is useful for example to remove unstable fitting results when a skeleton is partially occluded.
 	 */
 	int minimum_keypoints_threshold;
+	/**
+	 * @brief this value controls the smoothing of the fitted fused skeleton.
+	 * it is ranged from 0 (low smoothing) and 1 (high smoothing)
+	 * Default is 0;
+	 */
+	float skeleton_smoothing;
 };
 
 /**

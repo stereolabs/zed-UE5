@@ -4,6 +4,9 @@
 RuntimeMeshComponent/Binaries/*
 RuntimeMeshComponent/Intermediate/*
 
+# MetaHumans
+Content/MetaHumans/*
+
 # Local tests
 Content/LocalTest/*
 Content/LocalTests/*

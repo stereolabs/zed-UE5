@@ -33,7 +33,7 @@ public:
 	bool bMirrorOnZAxis;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
-	float HeightOffset;
+	float ManualHeightOffset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SourceData, meta = (PinShownByDefault))
 	bool bStickAvatarOnFloor;
@@ -72,6 +72,7 @@ protected:
 private:
 	void BuildPoseFromSlBodyData(FPoseContext& PoseContext);
 	//void BuildPoseFromSlObjectData(FComponentSpacePoseContext& PoseContext);
+    float ComputeRootTranslationFactor(FCompactPose& OutPose, const FSlBodyData& InBodyData);
 
 	void PropagateRestPoseRotations(int32 parentIdx, FCompactPose& OutPose, FQuat restPoseRot, bool inverse);
 	void PutInRefPose(FCompactPose& OutPose, TArray<FName> SourceBoneNames);
@@ -93,13 +94,18 @@ private:
 
 	TMap<FName, FVector> BonesScale;
 
-	// factor used to computer foot offset over time.
 	float BoneScaleAlpha = 0.2f;
 
-	int FeetOffsetBufferSize = 120;
-	std::deque<float> FeetOffsetBuffer;
-	float FeetOffset = 0;
-	float FeetOffsetAlpha = 1.0f;
+    float DurationOffsetErrorThreshold = 3.0f;
+    float DurationOffsetError = 0.0f;
+    long long PreviousTS_ms = 0;
+
+    float DistanceToFloorThreshold = 0.f;
+
+	float AutomaticHeightOffset = 0;
+
+    float LeftAnkleToHeelOffset = 0;
+    float RightAnkleToHeelOffset = 0;
 
 	// Used for slerping rotations to avoid stuttering
 	TArray<FQuat> PreviousRotations;

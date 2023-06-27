@@ -141,13 +141,16 @@ ENUM_CLASS_FLAGS(ESlMemoryType)
  * SDK Video resolutions
  * see sl::RESOLUTION
  */
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlResolution : uint8
+	UENUM(BlueprintType, Category = "Stereolabs|Enum")
+	enum class ESlResolution : uint8
 {
 	R_HD2K			   		 UMETA(DisplayName = "HD 2K"),
 	R_HD1080		   		 UMETA(DisplayName = "HD 1080p"),
+	R_HD1200			     UMETA(DisplayName = "HD 1200p (ZED X only)"),
 	R_HD720		   			 UMETA(DisplayName = "HD 720p"),
-	R_VGA			   		 UMETA(DisplayName = "VGA")
+	R_SVGA			   		 UMETA(DisplayName = "SVGA (ZED X only)"),
+	R_VGA			   		 UMETA(DisplayName = "VGA"),
+	R_AUTO				     UMETA(DisplayName = "AUTO, 1200p for ZEDX and 720 otherwise")
 };
 
 /*
@@ -496,6 +499,16 @@ enum class ESlSelfCalibrationState : uint8
 	SCS_Running				UMETA(DisplayName = "Running"),
 	SCS_Failed				UMETA(DisplayName = "Failed"),
 	SCS_Success				UMETA(DisplayName = "Success"),
+};
+
+/*
+* Lists the mode of positional tracking that can be used.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlPositionalTrackingMode : uint8
+{
+	PTM_Standard		UMETA(DisplayName = "Standard"),
+	PTM_Quality			UMETA(DisplayName = "Quality")
 };
 
 /*
@@ -1316,6 +1329,14 @@ struct STEREOLABS_API FSlSpatialMappingParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlSpatialMappingRange PresetRange;
 
+	/**
+	   \brief Control the integration rate of the current depth into the mapping process.
+	   This parameter controls how many times a stable 3D points should be seen before it is integrated into the spatial mapping.
+	   Default value is 0, this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int StabilityCounter;
+
 	/*
 	 * Set to true if you want be able to apply texture to your mesh after its creation.
 	 * This option will take more memory.
@@ -1947,7 +1968,8 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
-		bSetGravityAsOrigin(true)
+		bSetGravityAsOrigin(true),
+		Mode(ESlPositionalTrackingMode::PTM_Standard)
 	{
 	}
 
@@ -2108,6 +2130,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSetGravityAsOrigin;
+
+	/**
+	* @brief Positional tracking mode used. Can be used to improve accuracy in some type of scene at the cost of longer runtime
+	* default : POSITIONAL_TRACKING_MODE::STANDARD
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlPositionalTrackingMode Mode;
 };
 
 /*
@@ -3012,9 +3041,17 @@ struct STEREOLABS_API FSlBodyTrackingRuntimeParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int MinimumKeypointsThreshold;
 
-	FSlBodyTrackingRuntimeParameters():
+	/**
+	 * @brief this value controls the smoothing of the fitted fused skeleton.
+	 * it is ranged from 0 (low smoothing) and 1 (high smoothing)
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SkeletonSmoothing;
+
+	FSlBodyTrackingRuntimeParameters() :
 		DetectionConfidenceThreshold(20.0f),
-		MinimumKeypointsThreshold(-1)
+		MinimumKeypointsThreshold(-1),
+		SkeletonSmoothing(0.0f)
 	{}
 };
 

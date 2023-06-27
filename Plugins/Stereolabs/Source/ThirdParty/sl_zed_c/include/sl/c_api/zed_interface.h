@@ -657,12 +657,13 @@ extern "C" {
     \param camera_id : id of the camera instance.
     \param vertices : Vertices of the mesh
     \param triangles : Triangles of the mesh.
+    \param colors :  (b,g,r) colors of each vertex.
     \param max_submeshes : Maximum number of submesh that can be handled.
     \param uvs : uvs of the texture.
     \param texture_ptr : Texture of the mesh (if enabled).
     \return SUCCESS if the mesh is retrieved.
      */
-    INTERFACE_API int sl_retrieve_mesh(int camera_id, float* vertices, int* triangles, float* uvs, unsigned char* texture_ptr, const int max_submeshes);
+    INTERFACE_API int sl_retrieve_mesh(int camera_id, float* vertices, int* triangles, unsigned char* colors, float* uvs, unsigned char* texture_ptr, const int max_submeshes);
     /**
     \brief Updates the internal version of the mesh and returns the sizes of the meshes.
     \param camera_id : id of the camera instance.
@@ -683,11 +684,12 @@ extern "C" {
     \param max_submesh : Maximum number of submesh that can be handled.
     \param vertices : Vertices of the chunk
     \param triangles : Triangles of the chunk.
+    \param colors : b,g,r colors of the chunk
     \param uvs : uvs of the texture.
     \param texture_ptr : Texture of the mesh (if enabled).
     \return SUCCESS if the chunk is retrieved.
      */
-    INTERFACE_API int sl_retrieve_chunks(int camera_id, float* vertices, int* triangles, float* uvs, unsigned char* texture_ptr, const int max_submesh);
+    INTERFACE_API int sl_retrieve_chunks(int camera_id, float* vertices, int* triangles, unsigned char* colors, float* uvs, unsigned char* texture_ptr, const int max_submesh);
 
     /**
     \brief Updates the fused point cloud (if spatial map type was FUSED_POINT_CLOUD).
@@ -792,13 +794,14 @@ extern "C" {
     \brief Retrieves the full mesh. Call update_mesh before calling this.
     Vertex and triangles arrays must be at least of the sizes returned by update_mesh (nb_vertices and nbTriangles).
     \param camera_id : id of the camera instance.
-    \param vertices : Vertices of the chunk
-    \param triangles : Triangles of the chunk.
+    \param vertices : Vertices of the mesh
+    \param triangles : Triangles of the mesh.
+    \param colors : (b,g,r) colors of the mesh.
     \param uvs : uvs of the texture.
     \param texture_ptr : Texture of the mesh (if enabled).
     \return SUCCESS if the chunk is retrieved.
      */
-    INTERFACE_API int sl_retrieve_whole_mesh(int camera_id, float* vertices, int* triangles, float* uvs, unsigned char* texture_ptr);
+    INTERFACE_API int sl_retrieve_whole_mesh(int camera_id, float* vertices, int* triangles, unsigned char* colors,  float* uvs, unsigned char* texture_ptr);
     /**
     \brief Loads a saved mesh file.
     \param camera_id : id of the camera instance.
