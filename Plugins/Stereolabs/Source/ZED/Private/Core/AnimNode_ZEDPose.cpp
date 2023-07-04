@@ -122,16 +122,16 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
             KeypointsMirrored = Keypoints38Mirrored;
             ParentsIdx = parents38Idx;
         }
-        else if (BodyData.Keypoint.Num() == Keypoints70.Num())
+        /*else if (BodyData.Keypoint.Num() == Keypoints70.Num())
         {
             NbKeypoints = 70;
             Keypoints = Keypoints70;
             KeypointsMirrored = Keypoints70Mirrored;
             ParentsIdx = parents70Idx;
-        }
+        }*/
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("Incompatible body format, please use either body 34/38 or 70"));
+            UE_LOG(LogTemp, Warning, TEXT("Incompatible body format, please use either body 34 or 38 "));
         }
     }
 
@@ -167,7 +167,7 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
                 RightFootPosition = SkeletalMesh->GetBoneLocation(RemapAsset[Keypoints[24]]) + RightAnkleToHeelOffset;
 
             }
-            else // body 38 or 70
+            else // body 38
             {
                 if (LeftAnkleToHeelOffset == 0 && RightAnkleToHeelOffset == 0)
                 {

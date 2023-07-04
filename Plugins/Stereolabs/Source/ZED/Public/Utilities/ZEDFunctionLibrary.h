@@ -123,6 +123,7 @@ static TArray<FSlBody38Bone> Body38Bones = TArray<FSlBody38Bone>{
 	FSlBody38Bone(ESlBody38Parts::RIGHT_ANKLE,    ESlBody38Parts::RIGHT_SMALL_TOE)
 };
 
+#if 0
 static TArray<FSlBody70Bone> Body70Bones = TArray<FSlBody70Bone>{
 	FSlBody70Bone(ESlBody70Parts::PELVIS,         ESlBody70Parts::SPINE_1),
 	FSlBody70Bone(ESlBody70Parts::SPINE_1,        ESlBody70Parts::SPINE_2),
@@ -195,6 +196,8 @@ static TArray<FSlBody70Bone> Body70Bones = TArray<FSlBody70Bone>{
 	FSlBody70Bone(ESlBody70Parts::RIGHT_ANKLE,    ESlBody70Parts::RIGHT_BIG_TOE),
 	FSlBody70Bone(ESlBody70Parts::RIGHT_ANKLE,    ESlBody70Parts::RIGHT_SMALL_TOE)
 };
+
+#endif
 
 UCLASS()
 class ZED_API UZEDFunctionLibrary : public UBlueprintFunctionLibrary
@@ -663,11 +666,14 @@ public:
 		return Body38Bones;
 	}
 
+#if 0
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody70Bones", Keywords = "GetBody70Bones"), Category = "Stereolabs|Zed")
 	static const TArray<FSlBody70Bone> GetBody70Bones()
 	{
 		return Body70Bones;
 	}
+
+#endif
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "GetBody34Bones", Keywords = "GetBody34Bones"), Category = "Stereolabs|Zed")
 		static const TArray<FSlBody34Bone> GetBody34Bones()

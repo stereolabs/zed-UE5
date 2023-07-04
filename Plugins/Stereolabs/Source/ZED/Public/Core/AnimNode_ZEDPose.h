@@ -281,6 +281,7 @@ static TMap<int, FName> Keypoints34Mirrored = TMap<int, FName>{
     {33, "LEFT_HEEL"}
 };
 
+#if 0
 const TArray<int> parents70Idx = {
     -1,
     0,
@@ -354,87 +355,6 @@ const TArray<int> parents70Idx = {
     52,
 };
 
-static TMap<int, FName> Keypoints38 = TMap<int, FName>{
-    {0, "PELVIS"},
-    {1, "SPINE_1"},
-    {2, "SPINE_2"},
-    {3, "SPINE_3"},
-    {4, "NECK"},
-    {5, "NOSE"},
-    {6, "LEFT_EYE"},
-    {7, "RIGHT_EYE"},
-    {8, "LEFT_EAR"},
-    {9, "RIGHT_EAR"},
-    {10, "LEFT_CLAVICLE"},
-    {11, "RIGHT_CLAVICLE"},
-    {12, "LEFT_SHOULDER"},
-    {13, "RIGHT_SHOULDER"},
-    {14, "LEFT_ELBOW"},
-    {15, "RIGHT_ELBOW"},
-    {16, "LEFT_WRIST"},
-    {17, "RIGHT_WRIST"},
-    {18, "LEFT_HIP"},
-    {19, "RIGHT_HIP"},
-    {20, "LEFT_KNEE"},
-    {21, "RIGHT_KNEE"},
-    {22, "LEFT_ANKLE"},
-    {23, "RIGHT_ANKLE"},
-    {24, "LEFT_BIG_TOE"},
-    {25, "RIGHT_BIG_TOE"},
-    {26, "LEFT_SMALL_TOE"},
-    {27, "RIGHT_SMALL_TOE"},
-    {28, "LEFT_HEEL"},
-    {29, "RIGHT_HEEL"},
-    {30, "LEFT_HAND_THUMB_4"},
-    {31, "RIGHT_HAND_THUMB_4"},
-    {32, "LEFT_HAND_INDEX_1"},
-    {33, "RIGHT_HAND_INDEX_1"},
-    {34, "LEFT_HAND_MIDDLE_4"},
-    {35, "RIGHT_HAND_MIDDLE_4"},
-    {36, "LEFT_HAND_PINKY_1"},
-    {37, "RIGHT_HAND_PINKY_1"},
-};
-
-static TMap<int, FName> Keypoints38Mirrored = TMap<int, FName>{
-     {0, "PELVIS"},
-    {1, "SPINE_1"},
-    {2, "SPINE_2"},
-    {3, "SPINE_3"},
-    {4, "NECK"},
-    {5, "NOSE"},
-    {6, "RIGHT_EYE"},
-    {7, "LEFT_EYE"},
-    {8, "RIGHT_EAR"},
-    {9, "LEFT_EAR"},
-    {10, "RIGHT_CLAVICLE"},
-    {11, "LEFT_CLAVICLE"},
-    {12, "RIGHT_SHOULDER"},
-    {13, "LEFT_SHOULDER"},
-    {14, "RIGHT_ELBOW"},
-    {15, "LEFT_ELBOW"},
-    {16, "RIGHT_WRIST"},
-    {17, "LEFT_WRIST"},
-    {18, "RIGHT_HIP"},
-    {19, "LEFT_HIP"},
-    {20, "RIGHT_KNEE"},
-    {21, "LEFT_KNEE"},
-    {22, "RIGHT_ANKLE"},
-    {23, "LEFT_ANKLE"},
-    {24, "RIGHT_BIG_TOE"},
-    {25, "LEFT_BIG_TOE"},
-    {26, "RIGHT_SMALL_TOE"},
-    {27, "LEFT_SMALL_TOE"},
-    {28, "RIGHT_HEEL"},
-    {29, "LEFT_HEEL"},
-    {30, "RIGHT_HAND_THUMB_4"},
-    {31, "LEFT_HAND_THUMB_4"},
-    {32, "RIGHT_HAND_INDEX_1"},
-    {33, "LEFT_HAND_INDEX_1"},
-    {34, "RIGHT_HAND_MIDDLE_4"},
-    {35, "LEFT_HAND_MIDDLE_4"},
-    {36, "RIGHT_HAND_PINKY_1"},
-    {37, "LEFT_HAND_PINKY_1"},
-};
 
 static TMap<int, FName> Keypoints70 = TMap<int, FName>{
     {0, "PELVIS"},
@@ -580,6 +500,238 @@ static TMap<int, FName> Keypoints70Mirrored = TMap<int, FName>{
     {67, "LEFT_HAND_PINKY_2"},
     {68, "LEFT_HAND_PINKY_3"},
     {69, "LEFT_HAND_PINKY_4"}
+};
+
+static FName GetParent70BoneName(FName BoneName)
+{
+    FName ParentBoneName = "None";
+
+    if (BoneName.IsEqual("PELVIS"))
+        ParentBoneName = "None";
+    else if (BoneName.IsEqual("SPINE_1"))
+        ParentBoneName = "PELVIS";
+    else if (BoneName.IsEqual("SPINE_2"))
+        ParentBoneName = "SPINE_1";
+    else if (BoneName.IsEqual("SPINE_3"))
+        ParentBoneName = "SPINE_2";
+    else if (BoneName.IsEqual("NECK"))
+        ParentBoneName = "SPINE_3";
+    else if (BoneName.IsEqual("LEFT_CLAVICLE"))
+        ParentBoneName = "SPINE_3";
+    else if (BoneName.IsEqual("LEFT_SHOULDER"))
+        ParentBoneName = "LEFT_CLAVICLE";
+    else if (BoneName.IsEqual("LEFT_ELBOW"))
+        ParentBoneName = "LEFT_SHOULDER";
+    else if (BoneName.IsEqual("LEFT_WRIST"))
+        ParentBoneName = "LEFT_ELBOW";
+    else if (BoneName.IsEqual("LEFT_HAND_THUMB_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_THUMB_2"))
+        ParentBoneName = "LEFT_HAND_THUMB_1";
+    else if (BoneName.IsEqual("LEFT_HAND_THUMB_3"))
+        ParentBoneName = "LEFT_HAND_THUMB_2";
+    else if (BoneName.IsEqual("LEFT_HAND_THUMB_4"))
+        ParentBoneName = "LEFT_HAND_THUMB_3";
+    else if (BoneName.IsEqual("LEFT_HAND_INDEX_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_INDEX_2"))
+        ParentBoneName = "LEFT_HAND_INDEX_1";
+    else if (BoneName.IsEqual("LEFT_HAND_INDEX_3"))
+        ParentBoneName = "LEFT_HAND_INDEX_2";
+    else if (BoneName.IsEqual("LEFT_HAND_INDEX_4"))
+        ParentBoneName = "LEFT_HAND_INDEX_3";
+    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_2"))
+        ParentBoneName = "LEFT_HAND_MIDDLE_1";
+    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_3"))
+        ParentBoneName = "LEFT_HAND_MIDDLE_2";
+    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_4"))
+        ParentBoneName = "LEFT_HAND_MIDDLE_3";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_2"))
+        ParentBoneName = "LEFT_HAND_RING_1";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_3"))
+        ParentBoneName = "LEFT_HAND_RING_2";
+    else if (BoneName.IsEqual("LEFT_HAND_RING_4"))
+        ParentBoneName = "LEFT_HAND_RING_3";
+    else if (BoneName.IsEqual("LEFT_HAND_PINKY_1"))
+        ParentBoneName = "LEFT_WRIST";
+    else if (BoneName.IsEqual("LEFT_HAND_PINKY_2"))
+        ParentBoneName = "LEFT_HAND_PINKY_1";
+    else if (BoneName.IsEqual("LEFT_HAND_PINKY_3"))
+        ParentBoneName = "LEFT_HAND_PINKY_2";
+    else if (BoneName.IsEqual("LEFT_HAND_PINKY_4"))
+        ParentBoneName = "LEFT_HAND_PINKY_3";
+    else if (BoneName.IsEqual("RIGHT_CLAVICLE"))
+        ParentBoneName = "SPINE_3";
+    else if (BoneName.IsEqual("RIGHT_SHOULDER"))
+        ParentBoneName = "RIGHT_CLAVICLE";
+    else if (BoneName.IsEqual("RIGHT_ELBOW"))
+        ParentBoneName = "RIGHT_SHOULDER";
+    else if (BoneName.IsEqual("RIGHT_WRIST"))
+        ParentBoneName = "RIGHT_ELBOW";
+    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_2"))
+        ParentBoneName = "RIGHT_HAND_THUMB_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_3"))
+        ParentBoneName = "RIGHT_HAND_THUMB_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_4"))
+        ParentBoneName = "RIGHT_HAND_THUMB_3";
+    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_2"))
+        ParentBoneName = "RIGHT_HAND_INDEX_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_3"))
+        ParentBoneName = "RIGHT_HAND_INDEX_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_4"))
+        ParentBoneName = "RIGHT_HAND_INDEX_3";
+    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_2"))
+        ParentBoneName = "RIGHT_HAND_MIDDLE_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_3"))
+        ParentBoneName = "RIGHT_HAND_MIDDLE_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_4"))
+        ParentBoneName = "RIGHT_HAND_MIDDLE_3";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_2"))
+        ParentBoneName = "RIGHT_HAND_RING_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_3"))
+        ParentBoneName = "RIGHT_HAND_RING_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_RING_4"))
+        ParentBoneName = "RIGHT_HAND_RING_3";
+    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_1"))
+        ParentBoneName = "RIGHT_WRIST";
+    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_2"))
+        ParentBoneName = "RIGHT_HAND_PINKY_1";
+    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_3"))
+        ParentBoneName = "RIGHT_HAND_PINKY_2";
+    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_4"))
+        ParentBoneName = "RIGHT_HAND_PINKY_3";
+    else if (BoneName.IsEqual("LEFT_HIP"))
+        ParentBoneName = "PELVIS";
+    else if (BoneName.IsEqual("LEFT_KNEE"))
+        ParentBoneName = "LEFT_HIP";
+    else if (BoneName.IsEqual("LEFT_ANKLE"))
+        ParentBoneName = "LEFT_KNEE";
+    else if (BoneName.IsEqual("LEFT_BIG_TOE"))
+        ParentBoneName = "LEFT_ANKLE";
+    else if (BoneName.IsEqual("LEFT_SMALL_TOE"))
+        ParentBoneName = "LEFT_ANKLE";
+    else if (BoneName.IsEqual("RIGHT_HIP"))
+        ParentBoneName = "PELVIS";
+    else if (BoneName.IsEqual("RIGHT_KNEE"))
+        ParentBoneName = "RIGHT_HIP";
+    else if (BoneName.IsEqual("RIGHT_ANKLE"))
+        ParentBoneName = "RIGHT_KNEE";
+    else if (BoneName.IsEqual("RIGHT_BIG_TOE"))
+        ParentBoneName = "RIGHT_ANKLE";
+    else if (BoneName.IsEqual("RIGHT_SMALL_TOE"))
+        ParentBoneName = "RIGHT_ANKLE";
+    else if (BoneName.IsEqual("NOSE"))
+        ParentBoneName = "NECK";
+    else if (BoneName.IsEqual("LEFT_EYE"))
+        ParentBoneName = "NECK";
+    else if (BoneName.IsEqual("RIGHT_EYE"))
+        ParentBoneName = "NECK";
+    else if (BoneName.IsEqual("LEFT_EAR"))
+        ParentBoneName = "LEFT_EYE";
+    else if (BoneName.IsEqual("RIGHT_EAR"))
+        ParentBoneName = "RIGHT_EYE";
+    else if (BoneName.IsEqual("LEFT_HEEL"))
+        ParentBoneName = "LEFT_ANKLE";
+    else if (BoneName.IsEqual("RIGHT_HEEL"))
+        ParentBoneName = "RIGHT_ANKLE";
+
+    return ParentBoneName;
+}
+
+#endif
+
+static TMap<int, FName> Keypoints38 = TMap<int, FName>{
+    {0, "PELVIS"},
+    {1, "SPINE_1"},
+    {2, "SPINE_2"},
+    {3, "SPINE_3"},
+    {4, "NECK"},
+    {5, "NOSE"},
+    {6, "LEFT_EYE"},
+    {7, "RIGHT_EYE"},
+    {8, "LEFT_EAR"},
+    {9, "RIGHT_EAR"},
+    {10, "LEFT_CLAVICLE"},
+    {11, "RIGHT_CLAVICLE"},
+    {12, "LEFT_SHOULDER"},
+    {13, "RIGHT_SHOULDER"},
+    {14, "LEFT_ELBOW"},
+    {15, "RIGHT_ELBOW"},
+    {16, "LEFT_WRIST"},
+    {17, "RIGHT_WRIST"},
+    {18, "LEFT_HIP"},
+    {19, "RIGHT_HIP"},
+    {20, "LEFT_KNEE"},
+    {21, "RIGHT_KNEE"},
+    {22, "LEFT_ANKLE"},
+    {23, "RIGHT_ANKLE"},
+    {24, "LEFT_BIG_TOE"},
+    {25, "RIGHT_BIG_TOE"},
+    {26, "LEFT_SMALL_TOE"},
+    {27, "RIGHT_SMALL_TOE"},
+    {28, "LEFT_HEEL"},
+    {29, "RIGHT_HEEL"},
+    {30, "LEFT_HAND_THUMB_4"},
+    {31, "RIGHT_HAND_THUMB_4"},
+    {32, "LEFT_HAND_INDEX_1"},
+    {33, "RIGHT_HAND_INDEX_1"},
+    {34, "LEFT_HAND_MIDDLE_4"},
+    {35, "RIGHT_HAND_MIDDLE_4"},
+    {36, "LEFT_HAND_PINKY_1"},
+    {37, "RIGHT_HAND_PINKY_1"},
+};
+
+static TMap<int, FName> Keypoints38Mirrored = TMap<int, FName>{
+     {0, "PELVIS"},
+    {1, "SPINE_1"},
+    {2, "SPINE_2"},
+    {3, "SPINE_3"},
+    {4, "NECK"},
+    {5, "NOSE"},
+    {6, "RIGHT_EYE"},
+    {7, "LEFT_EYE"},
+    {8, "RIGHT_EAR"},
+    {9, "LEFT_EAR"},
+    {10, "RIGHT_CLAVICLE"},
+    {11, "LEFT_CLAVICLE"},
+    {12, "RIGHT_SHOULDER"},
+    {13, "LEFT_SHOULDER"},
+    {14, "RIGHT_ELBOW"},
+    {15, "LEFT_ELBOW"},
+    {16, "RIGHT_WRIST"},
+    {17, "LEFT_WRIST"},
+    {18, "RIGHT_HIP"},
+    {19, "LEFT_HIP"},
+    {20, "RIGHT_KNEE"},
+    {21, "LEFT_KNEE"},
+    {22, "RIGHT_ANKLE"},
+    {23, "LEFT_ANKLE"},
+    {24, "RIGHT_BIG_TOE"},
+    {25, "LEFT_BIG_TOE"},
+    {26, "RIGHT_SMALL_TOE"},
+    {27, "LEFT_SMALL_TOE"},
+    {28, "RIGHT_HEEL"},
+    {29, "LEFT_HEEL"},
+    {30, "RIGHT_HAND_THUMB_4"},
+    {31, "LEFT_HAND_THUMB_4"},
+    {32, "RIGHT_HAND_INDEX_1"},
+    {33, "LEFT_HAND_INDEX_1"},
+    {34, "RIGHT_HAND_MIDDLE_4"},
+    {35, "LEFT_HAND_MIDDLE_4"},
+    {36, "RIGHT_HAND_PINKY_1"},
+    {37, "LEFT_HAND_PINKY_1"},
 };
 
 static FName GetParent34BoneName(FName BoneName)
@@ -742,153 +894,6 @@ static FName GetParent38BoneName(FName BoneName)
     return ParentBoneName;
 }
 
-static FName GetParent70BoneName(FName BoneName)
-{
-    FName ParentBoneName = "None";
-
-    if (BoneName.IsEqual("PELVIS"))
-        ParentBoneName = "None";
-    else if (BoneName.IsEqual("SPINE_1"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("SPINE_2"))
-        ParentBoneName = "SPINE_1";
-    else if (BoneName.IsEqual("SPINE_3"))
-        ParentBoneName = "SPINE_2";
-    else if (BoneName.IsEqual("NECK"))
-        ParentBoneName = "SPINE_3";
-    else if (BoneName.IsEqual("LEFT_CLAVICLE"))
-        ParentBoneName = "SPINE_3";
-    else if (BoneName.IsEqual("LEFT_SHOULDER"))
-        ParentBoneName = "LEFT_CLAVICLE";
-    else if (BoneName.IsEqual("LEFT_ELBOW"))
-        ParentBoneName = "LEFT_SHOULDER";
-    else if (BoneName.IsEqual("LEFT_WRIST"))
-        ParentBoneName = "LEFT_ELBOW";
-    else if (BoneName.IsEqual("LEFT_HAND_THUMB_1"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HAND_THUMB_2"))
-        ParentBoneName = "LEFT_HAND_THUMB_1";
-    else if (BoneName.IsEqual("LEFT_HAND_THUMB_3"))
-        ParentBoneName = "LEFT_HAND_THUMB_2";
-    else if (BoneName.IsEqual("LEFT_HAND_THUMB_4"))
-        ParentBoneName = "LEFT_HAND_THUMB_3";
-    else if (BoneName.IsEqual("LEFT_HAND_INDEX_1"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HAND_INDEX_2"))
-        ParentBoneName = "LEFT_HAND_INDEX_1";
-    else if (BoneName.IsEqual("LEFT_HAND_INDEX_3"))
-        ParentBoneName = "LEFT_HAND_INDEX_2";
-    else if (BoneName.IsEqual("LEFT_HAND_INDEX_4"))
-        ParentBoneName = "LEFT_HAND_INDEX_3";
-    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_1"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_2"))
-        ParentBoneName = "LEFT_HAND_MIDDLE_1";
-    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_3"))
-        ParentBoneName = "LEFT_HAND_MIDDLE_2";
-    else if (BoneName.IsEqual("LEFT_HAND_MIDDLE_4"))
-        ParentBoneName = "LEFT_HAND_MIDDLE_3";
-    else if (BoneName.IsEqual("LEFT_HAND_RING_1"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HAND_RING_2"))
-        ParentBoneName = "LEFT_HAND_RING_1";
-    else if (BoneName.IsEqual("LEFT_HAND_RING_3"))
-        ParentBoneName = "LEFT_HAND_RING_2";
-    else if (BoneName.IsEqual("LEFT_HAND_RING_4"))
-        ParentBoneName = "LEFT_HAND_RING_3";
-    else if (BoneName.IsEqual("LEFT_HAND_PINKY_1"))
-        ParentBoneName = "LEFT_WRIST";
-    else if (BoneName.IsEqual("LEFT_HAND_PINKY_2"))
-        ParentBoneName = "LEFT_HAND_PINKY_1";
-    else if (BoneName.IsEqual("LEFT_HAND_PINKY_3"))
-        ParentBoneName = "LEFT_HAND_PINKY_2";
-    else if (BoneName.IsEqual("LEFT_HAND_PINKY_4"))
-        ParentBoneName = "LEFT_HAND_PINKY_3";
-    else if (BoneName.IsEqual("RIGHT_CLAVICLE"))
-        ParentBoneName = "SPINE_3";
-    else if (BoneName.IsEqual("RIGHT_SHOULDER"))
-        ParentBoneName = "RIGHT_CLAVICLE";
-    else if (BoneName.IsEqual("RIGHT_ELBOW"))
-        ParentBoneName = "RIGHT_SHOULDER";
-    else if (BoneName.IsEqual("RIGHT_WRIST"))
-        ParentBoneName = "RIGHT_ELBOW";
-    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_1"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_2"))
-        ParentBoneName = "RIGHT_HAND_THUMB_1";
-    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_3"))
-        ParentBoneName = "RIGHT_HAND_THUMB_2";
-    else if (BoneName.IsEqual("RIGHT_HAND_THUMB_4"))
-        ParentBoneName = "RIGHT_HAND_THUMB_3";
-    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_1"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_2"))
-        ParentBoneName = "RIGHT_HAND_INDEX_1";
-    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_3"))
-        ParentBoneName = "RIGHT_HAND_INDEX_2";
-    else if (BoneName.IsEqual("RIGHT_HAND_INDEX_4"))
-        ParentBoneName = "RIGHT_HAND_INDEX_3";
-    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_1"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_2"))
-        ParentBoneName = "RIGHT_HAND_MIDDLE_1";
-    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_3"))
-        ParentBoneName = "RIGHT_HAND_MIDDLE_2";
-    else if (BoneName.IsEqual("RIGHT_HAND_MIDDLE_4"))
-        ParentBoneName = "RIGHT_HAND_MIDDLE_3";
-    else if (BoneName.IsEqual("RIGHT_HAND_RING_1"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HAND_RING_2"))
-        ParentBoneName = "RIGHT_HAND_RING_1";
-    else if (BoneName.IsEqual("RIGHT_HAND_RING_3"))
-        ParentBoneName = "RIGHT_HAND_RING_2";
-    else if (BoneName.IsEqual("RIGHT_HAND_RING_4"))
-        ParentBoneName = "RIGHT_HAND_RING_3";
-    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_1"))
-        ParentBoneName = "RIGHT_WRIST";
-    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_2"))
-        ParentBoneName = "RIGHT_HAND_PINKY_1";
-    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_3"))
-        ParentBoneName = "RIGHT_HAND_PINKY_2";
-    else if (BoneName.IsEqual("RIGHT_HAND_PINKY_4"))
-        ParentBoneName = "RIGHT_HAND_PINKY_3";
-    else if (BoneName.IsEqual("LEFT_HIP"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("LEFT_KNEE"))
-        ParentBoneName = "LEFT_HIP";
-    else if (BoneName.IsEqual("LEFT_ANKLE"))
-        ParentBoneName = "LEFT_KNEE";
-    else if (BoneName.IsEqual("LEFT_BIG_TOE"))
-        ParentBoneName = "LEFT_ANKLE";
-    else if (BoneName.IsEqual("LEFT_SMALL_TOE"))
-        ParentBoneName = "LEFT_ANKLE";
-    else if (BoneName.IsEqual("RIGHT_HIP"))
-        ParentBoneName = "PELVIS";
-    else if (BoneName.IsEqual("RIGHT_KNEE"))
-        ParentBoneName = "RIGHT_HIP";
-    else if (BoneName.IsEqual("RIGHT_ANKLE"))
-        ParentBoneName = "RIGHT_KNEE";
-    else if (BoneName.IsEqual("RIGHT_BIG_TOE"))
-        ParentBoneName = "RIGHT_ANKLE";
-    else if (BoneName.IsEqual("RIGHT_SMALL_TOE"))
-        ParentBoneName = "RIGHT_ANKLE";
-    else if (BoneName.IsEqual("NOSE"))
-        ParentBoneName = "NECK";
-    else if (BoneName.IsEqual("LEFT_EYE"))
-        ParentBoneName = "NECK";
-    else if (BoneName.IsEqual("RIGHT_EYE"))
-        ParentBoneName = "NECK";
-    else if (BoneName.IsEqual("LEFT_EAR"))
-        ParentBoneName = "LEFT_EYE";
-    else if (BoneName.IsEqual("RIGHT_EAR"))
-        ParentBoneName = "RIGHT_EYE";
-    else if (BoneName.IsEqual("LEFT_HEEL"))
-        ParentBoneName = "LEFT_ANKLE";
-    else if (BoneName.IsEqual("RIGHT_HEEL"))
-        ParentBoneName = "RIGHT_ANKLE";
-
-    return ParentBoneName;
-}
 
 static FName GetParentBoneName(FName BoneName, int NbKeypoints = 34)
 {
@@ -900,12 +905,12 @@ static FName GetParentBoneName(FName BoneName, int NbKeypoints = 34)
     {
         return GetParent38BoneName(BoneName);
     }
-    else if (NbKeypoints == 70)
+    /*else if (NbKeypoints == 70)
     {
         return GetParent70BoneName(BoneName);
-    }
+    }*/
     else
     {
-        return GetParent34BoneName(BoneName);
+        return GetParent38BoneName(BoneName);
     }
 }
