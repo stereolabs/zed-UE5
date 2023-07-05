@@ -597,7 +597,7 @@ enum class ESlBodyFormat : uint8
 	BF_BODY_18    UMETA(DisplayName = "Body 18"),
 	BF_BODY_34    UMETA(DisplayName = "Body 34"),
 	BF_BODY_38    UMETA(DisplayName = "Body 38"),
-	BF_BODY_70	  UMETA(DisplayName = "Body 70")
+//	BF_BODY_70	  UMETA(DisplayName = "Body 70")
 };
 
 /*
@@ -784,6 +784,7 @@ enum class ESlBody38Parts : uint8 {
 	LAST = 38
 };
 
+#if 0
 /*
 * List of human body parts and order of SlBodyData::keypoint for BODY_FORMAT::BODY_70.
 */
@@ -865,6 +866,7 @@ enum class ESlBody70Parts : uint8 {
 	LAST = 70
 };
 
+#endif
 
 /************************************************************************/
 /*							    Structs				    				*/
@@ -952,6 +954,8 @@ struct STEREOLABS_API FSlBody38Bone
 		ESlBody38Parts SecondEnd;
 };
 
+#if 0
+
 /*
  * Bone descriptor, pair of ESlBodyPartsPose70
  * To be used in the correspondance array in ZEDPlayerController
@@ -978,6 +982,8 @@ struct STEREOLABS_API FSlBody70Bone
 	UPROPERTY(BlueprintReadOnly)
 		ESlBody70Parts SecondEnd;
 };
+
+#endif
 
 /*
  * SDK device properties
@@ -2246,8 +2252,9 @@ struct STEREOLABS_API FSlInitParameters
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
+		bAsyncGrabCameraRecovery(false),
 		VerboseFilePath(""),
-		bAsyncGrabCameraRecovery(false)
+		GrabComputeCappingFPS(0.0f)
 	{
 	}
 
@@ -2420,6 +2427,13 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 		);
 		bLoop = bConfigLoop;
+
+		GConfig->GetFloat(
+			Section,
+			TEXT("GrabComputeCappingFPS"),
+			GrabComputeCappingFPS,
+			*Path
+		);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2577,6 +2591,13 @@ struct STEREOLABS_API FSlInitParameters
 			bLoop,
 			*Path
 		);
+
+		GConfig->SetFloat(
+			Section,
+			TEXT("GrabComputeCappingFPS"),
+			GrabComputeCappingFPS,
+			*Path
+		);
 	}
 
 	/** Input type used in the ZED SDK */
@@ -2694,6 +2715,17 @@ struct STEREOLABS_API FSlInitParameters
 	/** Verbose file path */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString VerboseFilePath;
+
+	/**
+	 Define a computation upper limit to the grab frequency.
+	 This can be useful to get a known constant fixed rate or limit the computation load while keeping a short exposure time by setting a high camera capture framerate.
+	 \n The value should be inferior to the InitParameters::camera_fps and strictly positive. It has no effect when reading an SVO file.
+	 \n This is an upper limit and won't make a difference if the computation is slower than the desired compute capping fps.
+	 \note Internally the grab function always tries to get the latest available image while respecting the desired fps as much as possible.
+	 default is 0.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float GrabComputeCappingFPS;
 };
 
 /*
@@ -3014,12 +3046,12 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 		bEnableTracking(true),
 		bEnableSegmentation(false),
 		DetectionModel(ESlBodyTrackingModel::BTM_HumanBodyMedium),
+		bEnableBodyFitting(true), 
+		BodyFormat(ESlBodyFormat::BF_BODY_38),
+		BodySelection(ESlBodyKeypointsSelection::BKS_FULL),
 		MaxRange(-1.0f),
 		PredictionTimeout_s(0.2f),
-		bAllowReducedPrecisionInference(false),
-		BodySelection(ESlBodyKeypointsSelection::BKS_FULL),
-		BodyFormat(ESlBodyFormat::BF_BODY_38),
-		bEnableBodyFitting(true)
+		bAllowReducedPrecisionInference(false)
 	{}
 };
 

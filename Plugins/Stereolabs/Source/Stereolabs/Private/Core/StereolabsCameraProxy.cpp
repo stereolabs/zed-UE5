@@ -260,6 +260,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.svo_real_time_mode = InitParameters.bRealTime;
 	sl_init_parameters.async_grab_camera_recovery = InitParameters.bAsyncGrabCameraRecovery;
 	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
+	sl_init_parameters.grab_compute_capping_fps = InitParameters.GrabComputeCappingFPS;
 
 	InputType = (SL_INPUT_TYPE)InitParameters.InputType;
 	bool IsCameraCreated = sl_create_camera(CameraID);
@@ -1562,10 +1563,10 @@ int USlCameraProxy::GetNumberOfKeypoints()
 	{
 		return 38;
 	}
-	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 70;
-	}
+	}*/
 	else
 	{
 		return 38;
@@ -1586,10 +1587,10 @@ int USlCameraProxy::GetNumberOfBones()
 	{
 		return 37;
 	}
-	else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
+	/*else if (BodyTrackingParameters.BodyFormat == ESlBodyFormat::BF_BODY_70)
 	{
 		return 69;
-	}
+	}*/
 	else
 	{
 		return 37;
