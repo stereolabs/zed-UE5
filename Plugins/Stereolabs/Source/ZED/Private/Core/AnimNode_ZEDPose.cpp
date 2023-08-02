@@ -372,7 +372,27 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
         PropagateRestPoseRotations(0, OutPose, OutPose.GetRefPose(CPIndexRoot).GetRotation().Inverse(), true);
 }
 
-FAnimNode_ZEDPose::FAnimNode_ZEDPose(): PrevDataInitialized(false)
+FAnimNode_ZEDPose::FAnimNode_ZEDPose()
+	:
+ 	bMirrorOnZAxis( false ),
+	ManualHeightOffset( -1.f ),
+	bStickAvatarOnFloor( false ),
+	bEnableBoneScaling( false ),
+	RotationSlerpIntensity( -1.f ),
+	RootLocationSlerpIntensity( FVector::ZeroVector ),
+	SkeletalMesh( nullptr ),
+	NbKeypoints( -1 ),
+	BoneScaleAlpha( 0.2f ),
+	DurationOffsetErrorThreshold( 3.0f ),
+	DurationOffsetError( 0.f ),
+	PreviousTS_ms( 0 ),
+	DistanceToFloorThreshold( 0.f ),
+	AutomaticHeightOffset( 0.f ),
+	LeftAnkleToHeelOffset( 0.f ),
+	RightAnkleToHeelOffset( 0.f ),
+	PreviousRootPosition( FVector::ZeroVector ),
+	PreviousRootRotation( EForceInit::ForceInit ),
+	PrevDataInitialized( false )
 {
 }
 

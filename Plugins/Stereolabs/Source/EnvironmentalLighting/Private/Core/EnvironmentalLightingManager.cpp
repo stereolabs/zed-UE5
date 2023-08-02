@@ -14,12 +14,12 @@
 //);
 
 AEnvironmentalLightingManager::AEnvironmentalLightingManager()
-	:
-	Batch(nullptr),
-	LeftEyeTexture(nullptr),
-	Light(nullptr),
-	EnvironmentalLightingIntensity(1.0f),
-	bEnableEnvironmentalLighting(true)
+	: 
+	Light( nullptr ),
+	bEnableEnvironmentalLighting( true ),
+	EnvironmentalLightingIntensity( 1.0f ),
+	LeftEyeTexture( nullptr ),
+	Batch( nullptr )
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
