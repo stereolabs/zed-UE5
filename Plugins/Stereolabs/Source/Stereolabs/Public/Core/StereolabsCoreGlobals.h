@@ -2296,6 +2296,19 @@ namespace sl
 		}
 
 		/*
+	 * Convert from FSlPlaneDetectionParameters to sl::PlaneDetectionParameters
+	 */
+		FORCEINLINE SL_PlaneDetectionParameters ToSlType(const FSlPlaneDetectionParameters& UnrealData)
+		{
+			struct SL_PlaneDetectionParameters PlaneDetectionParameters;
+
+			PlaneDetectionParameters.max_distance_threshold = UnrealData.MaxDistanceThreshold;
+			PlaneDetectionParameters.normal_similarity_threshold = UnrealData.NormalSimilarityThreshold;
+
+			return PlaneDetectionParameters;
+		}
+
+		/*
 		* Convert from sl::CameraParameters to FSlCameraParameters
 		*/
 		FORCEINLINE sl::CameraParameters ToSlType(const FSlCameraParameters& UnrealData)

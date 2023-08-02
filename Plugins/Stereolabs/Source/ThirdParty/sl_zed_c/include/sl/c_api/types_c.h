@@ -258,15 +258,16 @@ enum SL_ERROR_CODE {
 /**
 \brief Represents the available resolution defined in the \ref cameraResolution list.
 \note The VGA resolution does not respect the 640*480 standard to better fit the camera sensor (672*376 is used).
+\warning All resolution are not available for every camera. You can find the available resolutions for each camera in <a href="https://www.stereolabs.com/docs/video/camera-controls#selecting-a-resolution">our documentation</a>.
  */
 enum SL_RESOLUTION {
 	SL_RESOLUTION_HD2K, /**< 2208*1242, available framerates: 15 fps.*/
-	SL_RESOLUTION_HD1080, /**< 1920*1080, available framerates: 15, 30 fps.*/
-	SL_RESOLUTION_HD1200, /**< 1920*1200 (x2), available framerates: 30,60 fps. (ZED-X(M) only)*/
+	SL_RESOLUTION_HD1080, /**< 1920*1080, available framerates: 15, 30, 60 fps.*/
+	SL_RESOLUTION_HD1200, /**< 1920*1200, available framerates: 15, 30, 60 fps.*/
 	SL_RESOLUTION_HD720, /**< 1280*720, available framerates: 15, 30, 60 fps.*/
-	SL_RESOLUTION_SVGA, /**< 960*600 (x2), available framerates: 60, 120 fps. (ZED-X(M) only) */
+	SL_RESOLUTION_SVGA, /**< 960*600, available framerates: 15, 30, 60, 120 fps.*/
 	SL_RESOLUTION_VGA, /**< 672*376, available framerates: 15, 30, 60, 100 fps.*/
-	SL_RESOLUTION_AUTO, /**< Select the resolution compatible with camera, on ZEDX HD1200, HD720 otherwise */
+	SL_RESOLUTION_AUTO, /**< Select the resolution compatible with camera, on ZED X HD1200, HD720 otherwise */
 };
 
 /**
@@ -1143,6 +1144,7 @@ struct SL_InitParameters
 	 The default behavior is synchronous, like previous ZED SDK versions
 	 */
 	bool async_grab_camera_recovery;
+
 	/**
 	 Define a computation upper limit to the grab frequency.
 	 This can be useful to get a known constant fixed rate or limit the computation load while keeping a short exposure time by setting a high camera capture framerate.
@@ -1152,7 +1154,6 @@ struct SL_InitParameters
 	 default is 0.
 	 */
 	float grab_compute_capping_fps;
-
 };
 
 /**
@@ -1424,6 +1425,28 @@ d	\warning: This mode requires more resources to run, but greatly improves track
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
 
+};
+
+/**
+	\class PlaneDetectionParameters
+	\brief Sets the plane detection parameters.
+
+	The default constructor sets all parameters to their default settings.
+ */
+
+struct SL_PlaneDetectionParameters {
+
+	/**
+	 \brief controls the spread of plane by checking the position difference.
+	 \n default: 0.15 meters
+	 */
+	float max_distance_threshold;
+
+	/**
+	 \brief controls the spread of plane by checking the angle difference.
+	 \n default: 15 degree
+	 */
+	float normal_similarity_threshold;
 };
 
 /**

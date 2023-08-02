@@ -853,7 +853,7 @@ extern "C" {
     \param thres : Check if area is enough for Unity. If true, removes smaller planes.
     \return Data of the detected plane.
      */
-    INTERFACE_API struct SL_PlaneData* sl_find_plane_at_hit(int camera_id, struct SL_Vector2 pixel, bool thres);
+    INTERFACE_API struct SL_PlaneData* sl_find_plane_at_hit(int camera_id, struct SL_Vector2 pixel, struct SL_PlaneDetectionParameters* params, bool thres);
     /**
     \brief Using data from a detected floor plane, updates supplied vertex and triangles arrays with data needed to make a mesh that represents it.
     \param camera_id : id of the camera instance.

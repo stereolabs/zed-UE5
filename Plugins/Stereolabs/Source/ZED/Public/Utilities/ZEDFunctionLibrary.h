@@ -624,7 +624,7 @@ public:
 	 * @param MeshData         The Mesh data
 	 */
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "CreateMeshFromFloorHit", Keywords = "Find floor plane at hit and convert it to mesh"), Category = "Stereolabs|Zed")
-	static bool CreateMeshFromFloorHit(AZEDPlayerController* PlayerController, const FIntPoint ScreenPosition, FSlMeshData& MeshData);
+	static bool CreateMeshFromFloorHit(AZEDPlayerController* PlayerController, const FIntPoint ScreenPosition, FSlMeshData& MeshData, FSlPlaneDetectionParameters planeDetectionParameters = FSlPlaneDetectionParameters());
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "CreateMeshFromFloorPlane", Keywords = "Find floor plane and convert it to mesh"), Category = "Stereolabs|Zed")
 	static bool CreateMeshFromFloorPlane(FSlMeshData& MeshData);

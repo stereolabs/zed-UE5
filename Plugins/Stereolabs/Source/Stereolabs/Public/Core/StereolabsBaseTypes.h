@@ -1365,6 +1365,39 @@ private:
 	bool bUseChunkOnly = false;
 };
 
+/**
+	\class PlaneDetectionParameters
+	\brief Sets the plane detection parameters.
+
+	The default constructor sets all parameters to their default settings.
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Types")
+struct STEREOLABS_API FSlPlaneDetectionParameters
+{
+	GENERATED_BODY()
+
+		FSlPlaneDetectionParameters()
+		:
+		MaxDistanceThreshold(0.15f),
+		NormalSimilarityThreshold(15.0f)
+	{
+	}
+
+	/**
+	 \brief controls the spread of plane by checking the position difference.
+	 \n default: 0.15 meters
+	 */
+	UPROPERTY(BlueprintReadOnly)
+	float MaxDistanceThreshold;
+
+	/**
+	 \brief controls the spread of plane by checking the angle difference.
+	 \n default: 15 degree
+	 */
+	UPROPERTY(BlueprintReadOnly)
+	float NormalSimilarityThreshold;
+};
+
 /*
  * SDK recording state
  * see sl::RecordingState
