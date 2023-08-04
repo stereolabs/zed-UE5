@@ -1037,7 +1037,8 @@ struct STEREOLABS_API FSlCameraParameters
 		HFocal(0.0f),
 		VFocal(0.0f),
 		OpticalCenterX(0.0f),
-		OpticalCenterY(0.0f)
+		OpticalCenterY(0.0f),
+		FocalLengthMetric(0.0f)
 	{
 	}
 
@@ -1072,6 +1073,10 @@ struct STEREOLABS_API FSlCameraParameters
 	/** Vertical position of the optical center in pixels */
 	UPROPERTY(BlueprintReadOnly)
 	float OpticalCenterY;
+
+	/**  Real focal length in millimeters */
+	UPROPERTY(BlueprintReadOnly)
+	float FocalLengthMetric;
 };
 
 /*

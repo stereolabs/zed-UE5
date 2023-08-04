@@ -116,7 +116,7 @@ extern "C" {
     /**
     \brief Defines a region of interest to focus on for all the SDK, discarding other parts.
     \param camera_id of the camera instance.
-    \param roi_mask: the Mat defining the requested region of interest, all pixel set to 0 will be discard. If empty, set all pixels as valid, otherwise should fit the resolution of the current instance and its type should be U8_C1.
+    \param roi_mask: the Mat defining the requested region of interest, pixels lower than 127 will be discard. If empty, set all pixels as valid, otherwise should fit the resolution of the current instance and its type should be U8_C1/C3/C4.
     \return An ERROR_CODE if something went wrong.
      */
     INTERFACE_API int sl_set_region_of_interest(int camera_id, void* roi_mask);
@@ -1299,7 +1299,7 @@ extern "C" {
      * \param uuid Camera identifier
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_COORDINATE_SYSTEM coordinate_system, enum SL_UNIT unit,
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_UNIT unit,
                                                            struct SL_CameraIdentifier* uuid, enum SL_POSITION_TYPE retrieve_type);
 
     /**
@@ -1319,7 +1319,7 @@ extern "C" {
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data, bool radian);
 
     /**
-     * @brief returns the current GNSS data
+     * \brief returns the current GNSS data
      * \param out [out]: the current GNSS data
      * \param radian [in] : true if the gnss data is set in radian
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
@@ -1327,29 +1327,50 @@ extern "C" {
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data, bool radian);
 
     /**
-     * @brief returns the current GeoPose
+     * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
 
     /**
      * \brief Convert latitude / longitude into position in sl::Fusion coordinate system.
      * \param in: the current GeoPose
      * \param out [out]: the current Pose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
 
     /**
-     * @brief returns the current GeoPose
+     * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
+
+    /**
+     * @brief returns the current timestamp
+     * \return the current timestamp in nanoseconds.
+     */
+    INTERFACE_API unsigned long long sl_fusion_get_current_timestamp();
+
+    /**
+     * \brief Get the current calibration uncertainty defined during calibration process
+     *
+     * @param yaw_std [out] yaw uncertainty
+     * @param x_std [out] position uncertainty
+     * \return sl_GNSS_CALIBRATION_STATE representing current initialisation status
+     */
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_current_gnss_calibration_std(float* yaw_std, struct SL_Vector3* position_std);
+
+    /**
+     * \brief Get the calibration found between VIO and GNSS
+     * \return sl::Transform transform containing calibration found between VIO and GNSS
+     */
+    INTERFACE_API void sl_fusion_get_geo_tracking_calibration(struct SL_Vector3* translation, struct SL_Quaternion* rotation);
 
 	/**
 	\brief Close Multi Camera instance.

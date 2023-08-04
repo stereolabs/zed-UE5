@@ -1589,6 +1589,7 @@ namespace sl
 			CameraParameters.VFocal = SlData.fy;
 			CameraParameters.OpticalCenterX = SlData.cx;
 			CameraParameters.OpticalCenterY = SlData.cy;
+			CameraParameters.FocalLengthMetric = SlData.focal_length_metric;
 
 			std::vector<double> Tmp;
 			Tmp.assign(SlData.disto, SlData.disto + 5);
@@ -1612,6 +1613,7 @@ namespace sl
 			CameraParameters.VFocal = SlData.fy;
 			CameraParameters.OpticalCenterX = SlData.cx;
 			CameraParameters.OpticalCenterY = SlData.cy;
+			CameraParameters.FocalLengthMetric = SlData.focal_length_metric;
 
 			std::vector<double> Tmp;
 			Tmp.assign(SlData.disto, SlData.disto + 5);
@@ -2322,11 +2324,20 @@ namespace sl
 			CameraParameters.cx = UnrealData.OpticalCenterX;
 			CameraParameters.cy = UnrealData.OpticalCenterY;
 
+			CameraParameters.focal_length_metric = UnrealData.FocalLengthMetric;
+
 			CameraParameters.disto[0] = UnrealData.Disto[0];
 			CameraParameters.disto[1] = UnrealData.Disto[1];
 			CameraParameters.disto[2] = UnrealData.Disto[2];
 			CameraParameters.disto[3] = UnrealData.Disto[3];
 			CameraParameters.disto[4] = UnrealData.Disto[4];
+			CameraParameters.disto[5] = UnrealData.Disto[5];
+			CameraParameters.disto[6] = UnrealData.Disto[6];
+			CameraParameters.disto[7] = UnrealData.Disto[7];
+			CameraParameters.disto[8] = UnrealData.Disto[8];
+			CameraParameters.disto[9] = UnrealData.Disto[9];
+			CameraParameters.disto[10] = UnrealData.Disto[10];
+			CameraParameters.disto[11] = UnrealData.Disto[11];
 
 			CameraParameters.image_size = sl::unreal::ToSlType2(UnrealData.Resolution);
 
