@@ -125,9 +125,6 @@ template<> struct TStructOpsTypeTraits<FAnimNode_ZEDPose> : public TStructOpsTyp
 };
 
 
-
-
-
 // Index of joints parent
 static TArray<int> parents34Idx = TArray<int>{
     -1,
@@ -893,7 +890,6 @@ static FName GetParent38BoneName(FName BoneName)
 
     return ParentBoneName;
 }
-
 
 static FName GetParentBoneName(FName BoneName, int NbKeypoints = 34)
 {

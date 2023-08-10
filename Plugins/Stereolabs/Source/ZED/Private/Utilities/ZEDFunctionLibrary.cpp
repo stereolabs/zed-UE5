@@ -852,7 +852,7 @@ bool UZEDFunctionLibrary::GetFloorPlaneAtWorldLocation(AZEDPlayerController* Pla
 }
 
 
-bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerController, const FIntPoint ScreenPosition, FSlMeshData& MeshData) {
+bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerController, const FIntPoint ScreenPosition, FSlMeshData& MeshData, FSlPlaneDetectionParameters planeDetectionParameters) {
 
 	if (!PlayerController->ViewportHelper.IsInViewport(ScreenPosition.X, ScreenPosition.Y))
 	{
@@ -861,8 +861,10 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 	}
 	int CameraID = GSlCameraProxy->GetCameraID();
 
+	SL_PlaneDetectionParameters sdk_params = sl::unreal::ToSlType(planeDetectionParameters);
+
 	FIntPoint ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
-	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), true);
+	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), &sdk_params, true);
 
 	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {

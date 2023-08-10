@@ -579,9 +579,9 @@ enum class ESlAIModels : uint8
 	AIM_HumanBody38FastDetection		UMETA(DisplayName = "Human body 38 fast Detection"),
 	AIM_HumanBody38MediumDetection		UMETA(DisplayName = "Human body 38 medium Detection"),
 	AIM_HumanBody38AccurateDetection	UMETA(DisplayName = "Human body 38 accurate Detection"),
-	AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
-	AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
-	AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
+	//AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
+	//AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
+	//AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
 	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
@@ -1037,7 +1037,8 @@ struct STEREOLABS_API FSlCameraParameters
 		HFocal(0.0f),
 		VFocal(0.0f),
 		OpticalCenterX(0.0f),
-		OpticalCenterY(0.0f)
+		OpticalCenterY(0.0f),
+		FocalLengthMetric(0.0f)
 	{
 	}
 
@@ -1072,6 +1073,10 @@ struct STEREOLABS_API FSlCameraParameters
 	/** Vertical position of the optical center in pixels */
 	UPROPERTY(BlueprintReadOnly)
 	float OpticalCenterY;
+
+	/**  Real focal length in millimeters */
+	UPROPERTY(BlueprintReadOnly)
+	float FocalLengthMetric;
 };
 
 /*
@@ -1363,6 +1368,39 @@ private:
 	 */
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bUseChunkOnly = false;
+};
+
+/**
+	\class PlaneDetectionParameters
+	\brief Sets the plane detection parameters.
+
+	The default constructor sets all parameters to their default settings.
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Types")
+struct STEREOLABS_API FSlPlaneDetectionParameters
+{
+	GENERATED_BODY()
+
+		FSlPlaneDetectionParameters()
+		:
+		MaxDistanceThreshold(0.15f),
+		NormalSimilarityThreshold(15.0f)
+	{
+	}
+
+	/**
+	 \brief controls the spread of plane by checking the position difference.
+	 \n default: 0.15 meters
+	 */
+	UPROPERTY(BlueprintReadOnly)
+	float MaxDistanceThreshold;
+
+	/**
+	 \brief controls the spread of plane by checking the angle difference.
+	 \n default: 15 degree
+	 */
+	UPROPERTY(BlueprintReadOnly)
+	float NormalSimilarityThreshold;
 };
 
 /*

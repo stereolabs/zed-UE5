@@ -116,7 +116,7 @@ extern "C" {
     /**
     \brief Defines a region of interest to focus on for all the SDK, discarding other parts.
     \param camera_id of the camera instance.
-    \param roi_mask: the Mat defining the requested region of interest, all pixel set to 0 will be discard. If empty, set all pixels as valid, otherwise should fit the resolution of the current instance and its type should be U8_C1.
+    \param roi_mask: the Mat defining the requested region of interest, pixels lower than 127 will be discard. If empty, set all pixels as valid, otherwise should fit the resolution of the current instance and its type should be U8_C1/C3/C4.
     \return An ERROR_CODE if something went wrong.
      */
     INTERFACE_API int sl_set_region_of_interest(int camera_id, void* roi_mask);
@@ -853,7 +853,7 @@ extern "C" {
     \param thres : Check if area is enough for Unity. If true, removes smaller planes.
     \return Data of the detected plane.
      */
-    INTERFACE_API struct SL_PlaneData* sl_find_plane_at_hit(int camera_id, struct SL_Vector2 pixel, bool thres);
+    INTERFACE_API struct SL_PlaneData* sl_find_plane_at_hit(int camera_id, struct SL_Vector2 pixel, struct SL_PlaneDetectionParameters* params, bool thres);
     /**
     \brief Using data from a detected floor plane, updates supplied vertex and triangles arrays with data needed to make a mesh that represents it.
     \param camera_id : id of the camera instance.
@@ -1236,14 +1236,21 @@ extern "C" {
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_update_pose(struct SL_CameraIdentifier* uuid, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
     
     /*
-    * \brief update the pose of the camera in the fusion coordinate space
-    * \param [in] uuid : unique ID that is associated with the camera for easy access.
-    * \param [in] pose_translation : new position of the camera
-    * \param [in] pose_rotation : new orientation of the camera
-    * \return SL_FUSION_ERROR_CODE
+    * \brief Returns the state of a connected data sender.
+    * \param [in] uuid : Identifier of the camera.
+    * \return SL_SENDER_ERROR_CODE : State of the sender 
     * */
     INTERFACE_API enum SL_SENDER_ERROR_CODE sl_fusion_get_sender_state(struct SL_CameraIdentifier* uuid);
 
+    /**
+    \brief Read a Configuration JSON file to configure a fusion process.
+    \param json_config_filename : The name of the JSON file containing the configuration
+    \param coord_sys : The COORDINATE_SYSTEM in which you want the World Pose to be in.
+    \param unit : The UNIT in which you want the World Pose to be in.
+
+    \return a vector of \ref SL_FusionConfiguration for all the camera present in the file.
+    \note empty if no data were found for the requested camera.
+     */
     INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
 
     /////////////////////////////////////////////////////////////////////
@@ -1299,7 +1306,7 @@ extern "C" {
      * \param uuid Camera identifier
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_COORDINATE_SYSTEM coordinate_system, enum SL_UNIT unit,
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_UNIT unit,
                                                            struct SL_CameraIdentifier* uuid, enum SL_POSITION_TYPE retrieve_type);
 
     /**
@@ -1319,7 +1326,7 @@ extern "C" {
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_ingest_gnss_data(struct SL_GNSSData* gnss_data, bool radian);
 
     /**
-     * @brief returns the current GNSS data
+     * \brief returns the current GNSS data
      * \param out [out]: the current GNSS data
      * \param radian [in] : true if the gnss data is set in radian
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
@@ -1327,29 +1334,50 @@ extern "C" {
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_current_gnss_data(struct SL_GNSSData* data, bool radian);
 
     /**
-     * @brief returns the current GeoPose
+     * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
 
     /**
      * \brief Convert latitude / longitude into position in sl::Fusion coordinate system.
      * \param in: the current GeoPose
      * \param out [out]: the current Pose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
 
     /**
-     * @brief returns the current GeoPose
+     * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
+     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
+
+    /**
+     * @brief returns the current timestamp
+     * \return the current timestamp in nanoseconds.
+     */
+    INTERFACE_API unsigned long long sl_fusion_get_current_timestamp();
+
+    /**
+     * \brief Get the current calibration uncertainty defined during calibration process
+     *
+     * @param yaw_std [out] yaw uncertainty
+     * @param x_std [out] position uncertainty
+     * \return sl_GNSS_CALIBRATION_STATE representing current initialisation status
+     */
+    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_current_gnss_calibration_std(float* yaw_std, struct SL_Vector3* position_std);
+
+    /**
+     * \brief Get the calibration found between VIO and GNSS
+     * \return sl::Transform transform containing calibration found between VIO and GNSS
+     */
+    INTERFACE_API void sl_fusion_get_geo_tracking_calibration(struct SL_Vector3* translation, struct SL_Quaternion* rotation);
 
 	/**
 	\brief Close Multi Camera instance.
