@@ -1236,14 +1236,21 @@ extern "C" {
     INTERFACE_API enum SL_FUSION_ERROR_CODE sl_fusion_update_pose(struct SL_CameraIdentifier* uuid, struct SL_Vector3* pose_translation, struct SL_Quaternion* pose_rotation);
     
     /*
-    * \brief update the pose of the camera in the fusion coordinate space
-    * \param [in] uuid : unique ID that is associated with the camera for easy access.
-    * \param [in] pose_translation : new position of the camera
-    * \param [in] pose_rotation : new orientation of the camera
-    * \return SL_FUSION_ERROR_CODE
+    * \brief Returns the state of a connected data sender.
+    * \param [in] uuid : Identifier of the camera.
+    * \return SL_SENDER_ERROR_CODE : State of the sender 
     * */
     INTERFACE_API enum SL_SENDER_ERROR_CODE sl_fusion_get_sender_state(struct SL_CameraIdentifier* uuid);
 
+    /**
+    \brief Read a Configuration JSON file to configure a fusion process.
+    \param json_config_filename : The name of the JSON file containing the configuration
+    \param coord_sys : The COORDINATE_SYSTEM in which you want the World Pose to be in.
+    \param unit : The UNIT in which you want the World Pose to be in.
+
+    \return a vector of \ref SL_FusionConfiguration for all the camera present in the file.
+    \note empty if no data were found for the requested camera.
+     */
     INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
 
     /////////////////////////////////////////////////////////////////////
