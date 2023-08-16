@@ -253,7 +253,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.depth_mode = (SL_DEPTH_MODE)InitParameters.DepthMode;
 	sl_init_parameters.enable_right_side_measure = InitParameters.bEnableRightSideMeasure;
 	sl_init_parameters.sdk_gpu_id = FMath::FloorToInt(InitParameters.GPUID);
-	sl_init_parameters.sdk_verbose = InitParameters.bVerbose;
+	sl_init_parameters.sdk_verbose = InitParameters.Verbose;
 	sl_init_parameters.depth_stabilization = InitParameters.DepthStabilization;
 	sl_init_parameters.enable_image_enhancement = InitParameters.bEnableImageEnhancement;
 	sl_init_parameters.sensors_required = InitParameters.bSensorsRequired;

@@ -2280,7 +2280,7 @@ struct STEREOLABS_API FSlInitParameters
 		Unit(ESlUnit::DU_Centimeter),
 		CoordinateSystem(ESlCoordinateSystem::CS_Cartesian),
 		bRealTime(false),
-		bVerbose(false),
+		Verbose(0),
 		bDisableSelfCalibration(false),
 		VerticalFlipImage(ESlFlipMode::FP_AUTO),
 		bEnableRightSideMeasure(false),
@@ -2362,10 +2362,10 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 			);
 
-		GConfig->GetBool(
+		GConfig->GetInt(
 			Section,
-			TEXT("bVerbose"),
-			bVerbose,
+			TEXT("Verbose"),
+			Verbose,
 			*Path
 			);
 
@@ -2553,10 +2553,10 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 			);
 
-		GConfig->SetBool(
+		GConfig->SetInt(
 			Section,
-			TEXT("bVerbose"),
-			bVerbose,
+			TEXT("Verbose"),
+			Verbose,
 			*Path
 			);
 
@@ -2700,7 +2700,7 @@ struct STEREOLABS_API FSlInitParameters
 
 	/** Verbose ZED */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bVerbose;
+	int Verbose;
 
 	/** Disable self calibration */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

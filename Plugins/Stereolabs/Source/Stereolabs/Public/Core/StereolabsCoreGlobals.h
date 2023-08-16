@@ -2126,7 +2126,7 @@ namespace sl
 			InitParameters.depth_mode = sl::unreal::ToSlType(UnrealData.DepthMode);
 			InitParameters.enable_right_side_measure = UnrealData.bEnableRightSideMeasure;
 			InitParameters.sdk_gpu_id = FMath::FloorToInt(UnrealData.GPUID);
-			InitParameters.sdk_verbose = UnrealData.bVerbose;
+			InitParameters.sdk_verbose = UnrealData.Verbose;
 			InitParameters.sdk_verbose_log_file = TCHAR_TO_UTF8(*UnrealData.VerboseFilePath);
 			InitParameters.grab_compute_capping_fps = UnrealData.GrabComputeCappingFPS;
 			if (UnrealData.InputType == ESlInputType::IT_SVO)
