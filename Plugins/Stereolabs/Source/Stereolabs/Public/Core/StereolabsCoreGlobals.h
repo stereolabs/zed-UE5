@@ -1616,7 +1616,7 @@ namespace sl
 			CameraParameters.FocalLengthMetric = SlData.focal_length_metric;
 
 			std::vector<double> Tmp;
-			Tmp.assign(SlData.disto, SlData.disto + 5);
+			Tmp.assign(SlData.disto, SlData.disto + 12);
 			CameraParameters.Disto = sl::unreal::arrays::ToUnrealType<float, double>(Tmp);
 
 			CameraParameters.Resolution = sl::unreal::ToUnrealType(SlData.image_size);
