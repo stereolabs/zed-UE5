@@ -7,12 +7,12 @@
 
 ASpatialMappingManager::ASpatialMappingManager()
 	:
-	MeshFileFormat(ESlMeshFileFormat::MFF_OBJ),
-	bStepFailed(false),
-	SpatialMappingWorker(nullptr),
-	UpdateTime(0.0f),
-	bSpatialMappingPaused(false),
-	bShowMesh(true)
+	MeshFileFormat( ESlMeshFileFormat::MFF_OBJ ),
+	bShowMesh( true ),
+	bStepFailed( false ),
+	SpatialMappingWorker( nullptr ),
+	UpdateTime( 0.0f ),
+	bSpatialMappingPaused( false )
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;

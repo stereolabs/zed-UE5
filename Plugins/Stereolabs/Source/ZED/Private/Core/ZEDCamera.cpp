@@ -33,12 +33,20 @@ AZEDCamera::AZEDCamera()
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
 	LeftEyeRenderTarget(nullptr),
-	Batch(nullptr),
-	CurrentDepthTextureQualityPreset(1),
-	bCurrentDepthEnabled(false),
-	bInit(false),
-	bShowZedImage(true),
-	ImageView(ESlView::V_Left)
+	ImageView( ESlView::V_Left ),
+	CameraRenderPlaneDistance( 0.f ),
+	ZedLeftEyeMaterialInstanceDynamic( nullptr ),
+	bDepthOcclusion( true ),
+	DepthClampThreshold( 0.f ),
+	Batch( nullptr ),
+	ZedSourceMaterial( nullptr ),
+	CurrentDepthTextureQualityPreset( 1 ),
+	bCurrentDepthEnabled( false ),
+	bInit( false ),
+	bShowZedImage( true ),
+	LeftRoot( nullptr ),
+	LeftCamera( nullptr ),
+	LeftPlane( nullptr )
 {
 	// Controller tick the camera to make it the first actor to tick
 	PrimaryActorTick.bCanEverTick = false;

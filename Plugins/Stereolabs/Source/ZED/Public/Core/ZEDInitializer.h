@@ -121,17 +121,17 @@ public:
 
 	/** Load parameters at runtime from config file and override preset */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bLoadParametersFromConfigFile:1;
+	bool bLoadParametersFromConfigFile;
 
 	/** Load camera settings at runtime from config file and override preset  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bLoadCameraSettingsFromConfigFile:1;
+	bool bLoadCameraSettingsFromConfigFile;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bDepthOcclusion : 1;
+	bool bDepthOcclusion;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bShowZedImage : 1;
+	bool bShowZedImage;
 
 	/*
 	* Can be used for Background substaction application.

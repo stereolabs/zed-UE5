@@ -882,13 +882,18 @@ struct STEREOLABS_API FSlBody18Bone
 	GENERATED_BODY()
 
 	FSlBody18Bone()
-	{}
+		: 
+		FSlBody18Bone(ESlBody18Parts::LEFT_ANKLE,
+						 ESlBody18Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody18Bone(ESlBody18Parts first, ESlBody18Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -909,14 +914,19 @@ struct STEREOLABS_API FSlBody34Bone
 {
 	GENERATED_BODY()
 
-		FSlBody34Bone()
-	{}
+	FSlBody34Bone()
+		: 
+		FSlBody34Bone(ESlBody34Parts::LEFT_ANKLE,
+					 ESlBody34Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody34Bone(ESlBody34Parts first, ESlBody34Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -936,14 +946,19 @@ struct STEREOLABS_API FSlBody38Bone
 {
 	GENERATED_BODY()
 
-		FSlBody38Bone()
-	{}
+	FSlBody38Bone()
+		:
+		FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,
+						 ESlBody38Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody38Bone(ESlBody38Parts first, ESlBody38Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -965,13 +980,18 @@ struct STEREOLABS_API FSlBody70Bone
 {
 	GENERATED_BODY()
 
-		FSlBody70Bone()
-	{}
+	FSlBody70Bone()
+		:
+		FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,
+						 ESlBody70Parts::LEFT_KNEE)
+	{
+	}
 
 	FSlBody70Bone(ESlBody70Parts first, ESlBody70Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
 	}
 
 	/** First end of the bone */
@@ -1127,7 +1147,8 @@ struct STEREOLABS_API FSlCameraInformation
 		SerialNumber(0),
 		CameraFirmwareVersion(0),
 		SensorsFirmwareVersion(0),
-		CameraModel(ESlModel::M_Unknown)
+		CameraModel(ESlModel::M_Unknown),
+		Resolution(FInt32Point::NoneValue)
 	{
 	}
 
@@ -2285,12 +2306,12 @@ struct STEREOLABS_API FSlInitParameters
 		VerticalFlipImage(ESlFlipMode::FP_AUTO),
 		bEnableRightSideMeasure(false),
 		DepthStabilization(1),
+		bAsyncGrabCameraRecovery(false),
 		OptionalSettingPath(""),
 		OptionalOpencvCalibrationFile(""),
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		bAsyncGrabCameraRecovery(false),
 		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f)
 	{
@@ -2904,7 +2925,26 @@ struct STEREOLABS_API FSlObjectData
 {
 	GENERATED_BODY()
 
-	const TCHAR* Section = TEXT("ObjectData");
+	FSlObjectData()
+		:
+		Section( TEXT( "ObjectData" ) ),
+		Id( 0 ),
+		UniqueObjectId( "" ),
+		RawLabel( 0 ),
+		Label( ESlObjectClass::OC_ANIMAL ),
+		Sublabel( ESlObjectSubClass::OSC_APPLE ),
+		TrackingState( ESlObjectTrackingState::OTS_Off ),
+		ActionState( ESlObjectActionState::OAS_Idle ),
+		Position( FVector::ZeroVector ),
+		Velocity( FVector::ZeroVector ),
+		Mask(),
+		Confidence( 0.f ),
+		Dimensions( FVector::ZeroVector ),
+		HeadPosition( FVector::ZeroVector )
+	{
+	};
+
+	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -3131,7 +3171,24 @@ struct STEREOLABS_API FSlBodyData
 {
 	GENERATED_BODY()
 
-	const TCHAR* Section = TEXT("BodyData");
+	FSlBodyData()
+		:
+		Section( TEXT( "BodyData" ) ),
+		Id( 0 ),
+		UniqueObjectId( "" ),
+		TrackingState( ESlObjectTrackingState::OTS_Off ),
+		ActionState( ESlObjectActionState::OAS_Idle ),
+		Position( FVector::ZeroVector ),
+		Velocity( FVector::ZeroVector ),
+		Mask(),
+		Confidence( 0.f ),
+		Dimensions( FVector::ZeroVector ),
+		HeadPosition( FVector::ZeroVector ),
+		GlobalRootOrientation( EForceInit::ForceInit )
+	{
+	};
+
+	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

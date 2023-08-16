@@ -27,11 +27,12 @@ bool CheckGConfigAvailable()
 
 AZEDInitializer::AZEDInitializer()
 	:
+	ImageView(ESlView::V_Left),
 	bLoadParametersFromConfigFile(false),
 	bLoadCameraSettingsFromConfigFile(false),
 	bDepthOcclusion(true),
 	bShowZedImage(true),
-	ImageView(ESlView::V_Left)
+	DepthClampThreshold(0.f)
 {
 	if (InitParameters.VerboseFilePath.IsEmpty())
 	{
