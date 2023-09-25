@@ -188,6 +188,19 @@ public:
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed camera settings"), Category = "Zed|Camera")
 	FSlVideoSettings GetCameraSettings();
 
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed camera setting"), Category = "Zed|Camera")
+	bool GetCameraSetting(ESlVideoSettings CameraSetting, int& value);
+
+	UFUNCTION(BlueprintPure, meta = (Keywords = "is camera setting supported"), Category = "Zed|Camera")
+
+	bool IsCameraSettingSupported(ESlVideoSettings CameraSetting);
+
+		/*
+	 * Set a camera setting
+	 * @param NewCameraSettings The camera setting to set
+	 */
+	UFUNCTION(BlueprintPure, meta = (Keywords = "set zed camera setting"), Category = "Zed|Camera")
+	bool SetCameraSetting(ESlVideoSettings NewCameraSettings, int value);
 	/*
 	 * Set the camera settings
 	 * @param NewCameraSettings The camera settings to set
@@ -262,6 +275,17 @@ public:
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed pose"), Category = "Zed|Tracking")
 	ESlTrackingState GetPosition(FSlPose& Pose, ESlReferenceFrame ReferenceFrame);
 
+	UFUNCTION(BlueprintPure, meta = (Keywords = "Set Region Of Interest"), Category = "Zed|Tracking")
+	ESlErrorCode SetRegionOfInterest(FSlMat& Mat);
+
+	UFUNCTION(BlueprintPure, meta = (Keywords = "Get Region Of Interest"), Category = "Zed|Tracking")
+	ESlErrorCode GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution);
+
+	UFUNCTION(BlueprintPure, meta = (Keywords = "start region of interest auto detection"), Category = "Zed|Tracking")
+	ESlErrorCode StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams);
+
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get region of interest auto detection status"), Category = "Zed|Tracking")
+	ESlRegionOfInterestAutoDetectionState GetRegionOfInterestAutoDetectionStatus();
 	/*
 	 * Get the current IMU data
 	 * @param IMUData The current IMU data
