@@ -229,6 +229,10 @@ namespace sl
 		{
 			switch (SlType)
 			{
+				case sl::ERROR_CODE::CORRUPTED_FRAME: /**< The image could be corrupted, Enabled with the parameter InitParameters::enable_image_validity_check.*/
+					return ESlErrorCode::EC_CorruptedFrame;
+				case sl::ERROR_CODE::CAMERA_REBOOTING: /**< The camera is currently rebooting.*/
+					return ESlErrorCode::EC_CameraRebooting;
 				case sl::ERROR_CODE::SUCCESS: /**< Standard code for successful behavior.*/
 					return ESlErrorCode::EC_Success;
 				case sl::ERROR_CODE::FAILURE: /**< Standard code for unsuccessful behavior.*/
@@ -312,7 +316,9 @@ namespace sl
 		{
 			switch (SlType)
 			{
-			case -1:
+			case SL_ERROR_CODE_CORRUPTED_FRAME:
+				return ESlErrorCode::EC_CorruptedFrame;
+			case SL_ERROR_CODE_CAMERA_REBOOTING:
 				return ESlErrorCode::EC_CameraRebooting;
 			case SL_ERROR_CODE_SUCCESS: /**< Standard code for successful behavior.*/
 				return ESlErrorCode::EC_Success;
@@ -2109,38 +2115,6 @@ namespace sl
 			return TrackingParameters;
 		}
 
-		/*
-		 * Covnert from FSlInitParameters to sl::InitParameters
-		 */
-		FORCEINLINE sl::InitParameters ToSlType(const FSlInitParameters& UnrealData)
-		{
-			sl::InitParameters InitParameters;
-
-			InitParameters.camera_disable_self_calib = UnrealData.bDisableSelfCalibration;
-			InitParameters.camera_fps = UnrealData.FPS;
-			InitParameters.camera_image_flip = (int)UnrealData.VerticalFlipImage;
-			InitParameters.camera_resolution = sl::unreal::ToSlType(UnrealData.Resolution);
-			InitParameters.coordinate_system = sl::unreal::ToSlType(UnrealData.CoordinateSystem);
-			InitParameters.coordinate_units = sl::unreal::ToSlType(UnrealData.Unit);
-			InitParameters.depth_minimum_distance = UnrealData.DepthMinimumDistance;
-			InitParameters.depth_mode = sl::unreal::ToSlType(UnrealData.DepthMode);
-			InitParameters.enable_right_side_measure = UnrealData.bEnableRightSideMeasure;
-			InitParameters.sdk_gpu_id = FMath::FloorToInt(UnrealData.GPUID);
-			InitParameters.sdk_verbose = UnrealData.Verbose;
-			InitParameters.sdk_verbose_log_file = TCHAR_TO_UTF8(*UnrealData.VerboseFilePath);
-			InitParameters.grab_compute_capping_fps = UnrealData.GrabComputeCappingFPS;
-			if (UnrealData.InputType == ESlInputType::IT_SVO)
-			{
-				InitParameters.input.setFromSVOFile(TCHAR_TO_UTF8(*UnrealData.SvoPath));
-				InitParameters.svo_real_time_mode = UnrealData.bRealTime;
-			}
-			else if (UnrealData.InputType == ESlInputType::IT_STREAM) {
-				InitParameters.input.setFromStream(TCHAR_TO_UTF8(*UnrealData.StreamIP), UnrealData.StreamPort);
-			}
-			InitParameters.depth_stabilization = UnrealData.DepthStabilization;
-
-			return InitParameters;
-		}
 
 		FORCEINLINE SL_ObjectDetectionParameters ToSlType(const FSlObjectDetectionParameters& UnrealData)
 		{
