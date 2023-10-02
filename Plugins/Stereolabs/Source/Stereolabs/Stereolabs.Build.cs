@@ -103,6 +103,7 @@ public class Stereolabs : ModuleRules
             string DefinesHeaderFilePath = Path.Combine(DirPath, "include\\sl\\Camera.hpp");
             string Major = "4";
             string Minor = "0";
+            string Patch = "7";
 
             // Find SDK major and minor version and compare
             foreach (var line in File.ReadLines(DefinesHeaderFilePath))
@@ -125,6 +126,16 @@ public class Stereolabs : ModuleRules
                         if (!SDKMinor.Equals(Minor))
                         {
                             string Err = string.Format("ZED SDK Minor Version mismatch : found {0} expected {1}", SDKMinor, Minor);
+                            System.Console.WriteLine(Err);
+                            throw new BuildException(Err);
+                        }
+                    }
+                    else if (line.Contains("#define ZED_SDK_PATCH_VERSION"))
+                    {
+                        string SDKPatch = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2];
+                        if (!SDKPatch.Equals(Minor))
+                        {
+                            string Err = string.Format("ZED SDK Minor Version mismatch : found {0} expected {1}", SDKPatch, Patch);
                             System.Console.WriteLine(Err);
                             throw new BuildException(Err);
                         }
