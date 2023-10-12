@@ -133,9 +133,9 @@ public class Stereolabs : ModuleRules
                     else if (line.Contains("#define ZED_SDK_PATCH_VERSION"))
                     {
                         string SDKPatch = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2];
-                        if (!SDKPatch.Equals(Minor))
+                        if (!SDKPatch.Equals(Patch))
                         {
-                            string Err = string.Format("ZED SDK Minor Version mismatch : found {0} expected {1}", SDKPatch, Patch);
+                            string Err = string.Format("ZED SDK Patch Version mismatch : found {0} expected {1}", SDKPatch, Patch);
                             System.Console.WriteLine(Err);
                             throw new BuildException(Err);
                         }
