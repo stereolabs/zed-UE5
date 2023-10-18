@@ -325,6 +325,7 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
+	EC_CorruptedFrame = 254			 UMETA(DisplayName = "Corrupted frame"),
 	EC_CameraRebooting  = 255		 UMETA(DisplayName = "Camera rebooting"),
  	EC_Success		    = 0			 UMETA(DisplayName = "Success"),
 	EC_Failure					     UMETA(DisplayName = "Failure"),
@@ -362,6 +363,38 @@ enum class ESlErrorCode : uint8
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
 	// ERROR_CODE_LAST
 	EC_None					  	   UMETA(DisplayName = "No error")
+};
+
+/**
+\brief Lists available camera settings for the camera (contrast, hue, saturation, gain, ...).
+\warning All \ref VIDEO_SETTINGS are not supported for all camera models. You can find the supported \ref VIDEO_SETTINGS for each ZED camera in our <a href="https://www.stereolabs.com/docs/video/camera-controls#adjusting-camera-settings">documentation</a>.\n\n
+ GAIN and EXPOSURE are linked in auto/default mode (see \ref sl::Camera.setCameraSettings()).
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlVideoSettings: uint8
+{
+	VS_BRIGHTNESS					UMETA(DisplayName = "Brightness"), /**< Brightness control \n Affected value should be between 0 and 8. \note Not available for ZED X/X Mini cameras.*/
+	VS_CONTRAST						UMETA(DisplayName = "Contrast"), /**< Contrast control \n Affected value should be between 0 and 8. \note Not available for ZED X/X Mini cameras.*/
+	VS_HUE							UMETA(DisplayName = "Hue"), /**< Hue control \n Affected value should be between 0 and 11. \note Not available for ZED X/X Mini cameras.*/
+	VS_SATURATION					UMETA(DisplayName = "Saturation"), /**< Saturation control \n Affected value should be between 0 and 8.*/
+	VS_SHARPNESS					UMETA(DisplayName = "Sharpness"), /**< Digital sharpening control \n Affected value should be between 0 and 8.*/
+	VS_GAMMA						UMETA(DisplayName = "Gamma"), /**< ISP gamma control \n Affected value should be between 1 and 9.*/
+	VS_GAIN							UMETA(DisplayName = "Gain"), /**< Gain control \n Affected value should be between 0 and 100 for manual control. \note If EXPOSURE is set to -1 (automatic mode), then GAIN will be automatic as well.*/
+	VS_EXPOSURE						UMETA(DisplayName = "Exposure"), /**< Exposure control \n Affected value should be between 0 and 100 for manual control.\n The exposition is mapped linearly in a percentage of the following max values.\n Special case for <code>EXPOSURE = 0</code> that corresponds to 0.17072ms.\n The conversion to milliseconds depends on the framerate: <ul><li>15fps & <code>EXPOSURE = 100</code> -> 19.97ms</li><li>30fps & <code>EXPOSURE = 100</code> -> 19.97ms</li><li>60fps & <code>EXPOSURE = 100</code> -> 10.84072ms</li><li>100fps & <code>EXPOSURE = 100</code> -> 10.106624ms</li></ul>*/
+	VS_AEC_AGC						UMETA(DisplayName = "AEC AGC"), /**< Defines if the GAIN and EXPOSURE are in automatic mode or not.\n Setting GAIN or EXPOSURE values will automatically set this value to 0.*/
+	VS_AEC_AGC_ROI					UMETA(DisplayName = "AEC AGC Roi"), /**< Defines the region of interest for automatic exposure/gain computation.\n To be used with overloaded \ref Camera.setCameraSettings(VIDEO_SETTINGS,Rect,sl::SIDE,bool) "setCameraSettings()" / \ref Camera.getCameraSettings(VIDEO_SETTINGS,Rect&,sl::SIDE) "getCameraSettings()" methods.*/
+	VS_WHITEBALANCE_TEMPERATURE		UMETA(DisplayName = "White balance"), /**< Color temperature control \n Affected value should be between 2800 and 6500 with a step of 100. \note Setting a value will automatically set WHITEBALANCE_AUTO to 0.*/
+	VS_WHITEBALANCE_AUTO			UMETA(DisplayName = "Auto White balance"), /**< Defines if the white balance is in automatic mode or not.*/
+	VS_LED_STATUS					UMETA(DisplayName = "LED status"), /**< Status of the front LED of the camera.\n Set to 0 to disable the light, 1 to enable the light.\n Default value is on. \note Requires camera firmware 1523 at least.*/
+	VS_EXPOSURE_TIME				UMETA(DisplayName = "Exposure time"), /**< Real exposure time control in microseconds. \note Only available for ZED X/X Mini cameras.\note Replace EXPOSURE setting.*/
+	VS_ANALOG_GAIN					UMETA(DisplayName = "Analog gain"), /**< Real analog gain (sensor) control in mDB.\n The range is defined by Jetson DTS and by default [1000-16000]. \note Only available for ZED X/X Mini cameras.\note Replace GAIN settings.*/
+	VS_DIGITAL_GAIN					UMETA(DisplayName = "Digital gain"), /**< Real digital gain (ISP) as a factor.\n The range is defined by Jetson DTS and by default [1-256]. \note Only available for ZED X/X Mini cameras.\note Replace GAIN settings.*/
+	VS_AUTO_EXPOSURE_TIME_RANGE		UMETA(DisplayName = "Auto exposure time range"), /**< Range of exposure auto control in microseconds.\n Used with \ref Camera.setCameraSettings(VIDEO_SETTINGS,int,int) "setCameraSettings()".\n Min/max range between max range defined in DTS.\n By default: [28000 - <fps_time> or 19000] us. \note Only available for ZED X/X Mini cameras.*/
+	VS_AUTO_ANALOG_GAIN_RANGE		UMETA(DisplayName = "Auto analog gain range"), /**< Range of sensor gain in automatic control.\n Used with \ref Camera.setCameraSettings(VIDEO_SETTINGS,int,int) "setCameraSettings()".\n Min/max range between max range defined in DTS.\n By default: [1000 - 16000] mdB. \note Only available for ZED X/X Mini cameras.*/
+	VS_AUTO_DIGITAL_GAIN_RANGE		UMETA(DisplayName = "Auto digital gain range"), /**< Range of digital ISP gain in automatic control.\n Used with \ref Camera.setCameraSettings(VIDEO_SETTINGS,int,int) "setCameraSettings()".\n Min/max range between max range defined in DTS.\n By default: [1 - 256]. \note Only available for ZED X/X Mini cameras.*/
+	VS_EXPOSURE_COMPENSATION		UMETA(DisplayName = "Exposure compensation"), /**< Exposure-target compensation made after auto exposure.\n Reduces the overall illumination target by factor of F-stops.\n Affected value should be between 0 and 100 (mapped between [-2.0,2.0]).\n Default value is 50, i.e. no compensation applied. \note Only available for ZED X/X Mini cameras.*/
+	VS_DENOISING					UMETA(DisplayName = "Denoising"), /**< Level of denoising applied on both left and right images.\n Affected value should be between 0 and 100.\n Default value is 50. \note Only available for ZED X/X Mini cameras.*/
+	VS_LAST
 };
 
 /*
@@ -509,6 +542,17 @@ enum class ESlPositionalTrackingMode : uint8
 {
 	PTM_Standard		UMETA(DisplayName = "Standard"),
 	PTM_Quality			UMETA(DisplayName = "Quality")
+};
+
+/**
+\brief Lists the different states of region of interest auto detection.
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlRegionOfInterestAutoDetectionState : uint8
+{
+	ROI_RUNNING			UMETA(DisplayName = "Running"), /**< The region of interest auto detection is initializing.*/
+	ROI_READY			UMETA(DisplayName = "Ready"), /**< The region of interest mask is ready, if auto_apply was enabled, the region of interest mask is being used*/
+	ROI_NOT_ENABLED		UMETA(DisplayName = "Not Enabled"), /**< The region of interest auto detection is not enabled*/
 };
 
 /*
@@ -882,13 +926,18 @@ struct STEREOLABS_API FSlBody18Bone
 	GENERATED_BODY()
 
 	FSlBody18Bone()
-	{}
+		: 
+		FSlBody18Bone(ESlBody18Parts::LEFT_ANKLE,
+						 ESlBody18Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody18Bone(ESlBody18Parts first, ESlBody18Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -909,14 +958,19 @@ struct STEREOLABS_API FSlBody34Bone
 {
 	GENERATED_BODY()
 
-		FSlBody34Bone()
-	{}
+	FSlBody34Bone()
+		: 
+		FSlBody34Bone(ESlBody34Parts::LEFT_ANKLE,
+					 ESlBody34Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody34Bone(ESlBody34Parts first, ESlBody34Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -936,14 +990,19 @@ struct STEREOLABS_API FSlBody38Bone
 {
 	GENERATED_BODY()
 
-		FSlBody38Bone()
-	{}
+	FSlBody38Bone()
+		:
+		FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,
+						 ESlBody38Parts::LEFT_KNEE)
+	{
+	};
 
 	FSlBody38Bone(ESlBody38Parts first, ESlBody38Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
-	}
+	};
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
@@ -965,13 +1024,18 @@ struct STEREOLABS_API FSlBody70Bone
 {
 	GENERATED_BODY()
 
-		FSlBody70Bone()
-	{}
+	FSlBody70Bone()
+		:
+		FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,
+						 ESlBody70Parts::LEFT_KNEE)
+	{
+	}
 
 	FSlBody70Bone(ESlBody70Parts first, ESlBody70Parts second)
+		:
+		FirstEnd(first),
+		SecondEnd(second)
 	{
-		FirstEnd = first;
-		SecondEnd = second;
 	}
 
 	/** First end of the bone */
@@ -1127,7 +1191,8 @@ struct STEREOLABS_API FSlCameraInformation
 		SerialNumber(0),
 		CameraFirmwareVersion(0),
 		SensorsFirmwareVersion(0),
-		CameraModel(ESlModel::M_Unknown)
+		CameraModel(ESlModel::M_Unknown),
+		Resolution(FInt32Point::NoneValue)
 	{
 	}
 
@@ -2217,6 +2282,40 @@ struct STEREOLABS_API FSlPose
 	bool bValid;
 };
 
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlRegionOfInterestParameters
+{
+	GENERATED_BODY()
+
+	FSlRegionOfInterestParameters()
+	:
+		depthFarThresholdMeters(2.5f),
+		imageHeightRatioCutoff(0.5f),
+		bAutoApply(false)
+	{}
+
+	/**
+	 \brief Filtering how far object in the ROI should be considered, this is useful for a vehicle for instance
+
+	 Default: 2.5 meters
+	 */
+	float depthFarThresholdMeters = 2.5;
+
+	/**
+	 \brief By default consider only the lower half of the image, can be useful to filter out the sky
+
+	 Default: 0.5, correspond to the lower half of the image
+	 */
+	float imageHeightRatioCutoff = 0.5;
+
+	/**
+	 \brief Once computed the ROI computed will be automatically applied
+
+	 Default: Enabled
+	 */
+	bool bAutoApply = true;
+};
+
 /*
  * SDK IMU data
  * see Sl::IMUData
@@ -2285,14 +2384,15 @@ struct STEREOLABS_API FSlInitParameters
 		VerticalFlipImage(ESlFlipMode::FP_AUTO),
 		bEnableRightSideMeasure(false),
 		DepthStabilization(1),
+		bAsyncGrabCameraRecovery(false),
 		OptionalSettingPath(""),
 		OptionalOpencvCalibrationFile(""),
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		bAsyncGrabCameraRecovery(false),
 		VerboseFilePath(""),
-		GrabComputeCappingFPS(0.0f)
+		GrabComputeCappingFPS(0.0f),
+		bEnableImageValidityCheck(false)
 	{
 	}
 
@@ -2472,6 +2572,13 @@ struct STEREOLABS_API FSlInitParameters
 			GrabComputeCappingFPS,
 			*Path
 		);
+
+		GConfig->GetBool(
+			Section,
+			TEXT("bEnableImageValidityCheck"),
+			bEnableImageValidityCheck,
+			*Path
+		);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2636,6 +2743,13 @@ struct STEREOLABS_API FSlInitParameters
 			GrabComputeCappingFPS,
 			*Path
 		);
+		
+		GConfig->SetBool(
+			Section,
+			TEXT("bEnableImageValidityCheck"),
+			bEnableImageValidityCheck,
+			*Path
+		);
 	}
 
 	/** Input type used in the ZED SDK */
@@ -2764,6 +2878,15 @@ struct STEREOLABS_API FSlInitParameters
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float GrabComputeCappingFPS;
+	/**
+	 Enable or disable the image validity verification.
+	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
+	 If an issue is found, the grab function will output a warning as sl::ERROR_CODE::CORRUPTED_FRAME.
+	 This version doesn't detect frame tearing currently.
+	 \n default: disabled
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableImageValidityCheck;
 };
 
 /*
@@ -2904,7 +3027,26 @@ struct STEREOLABS_API FSlObjectData
 {
 	GENERATED_BODY()
 
-	const TCHAR* Section = TEXT("ObjectData");
+	FSlObjectData()
+		:
+		Section( TEXT( "ObjectData" ) ),
+		Id( 0 ),
+		UniqueObjectId( "" ),
+		RawLabel( 0 ),
+		Label( ESlObjectClass::OC_ANIMAL ),
+		Sublabel( ESlObjectSubClass::OSC_APPLE ),
+		TrackingState( ESlObjectTrackingState::OTS_Off ),
+		ActionState( ESlObjectActionState::OAS_Idle ),
+		Position( FVector::ZeroVector ),
+		Velocity( FVector::ZeroVector ),
+		Mask(),
+		Confidence( 0.f ),
+		Dimensions( FVector::ZeroVector ),
+		HeadPosition( FVector::ZeroVector )
+	{
+	};
+
+	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -3131,7 +3273,24 @@ struct STEREOLABS_API FSlBodyData
 {
 	GENERATED_BODY()
 
-	const TCHAR* Section = TEXT("BodyData");
+	FSlBodyData()
+		:
+		Section( TEXT( "BodyData" ) ),
+		Id( 0 ),
+		UniqueObjectId( "" ),
+		TrackingState( ESlObjectTrackingState::OTS_Off ),
+		ActionState( ESlObjectActionState::OAS_Idle ),
+		Position( FVector::ZeroVector ),
+		Velocity( FVector::ZeroVector ),
+		Mask(),
+		Confidence( 0.f ),
+		Dimensions( FVector::ZeroVector ),
+		HeadPosition( FVector::ZeroVector ),
+		GlobalRootOrientation( EForceInit::ForceInit )
+	{
+	};
+
+	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

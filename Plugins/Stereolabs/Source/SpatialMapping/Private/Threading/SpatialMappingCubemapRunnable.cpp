@@ -88,7 +88,7 @@ void FSpatialMappingCubemapRunnable::GetPixels()
 			break;
 	}
 
-	FTextureRenderTargetCubeResource* CubeResource = (FTextureRenderTargetCubeResource*)static_cast<FTextureRenderTargetResource*>(CubemapProxy->TextureTarget->Resource);
+	FTextureRenderTargetCubeResource* CubeResource = (FTextureRenderTargetCubeResource*)static_cast<FTextureRenderTargetResource*>(CubemapProxy->TextureTarget->GetResource());
 
 	if (CubeResource && TextureFormat != TSF_Invalid)
 	{
@@ -154,18 +154,19 @@ void FSpatialMappingCubemapRunnable::ConverToTextureCube()
 
 			int32 MipSize = CalculateImageBytes(CubemapProxy->TextureTarget->SizeX, CubemapProxy->TextureTarget->SizeX, 0, PixelFormat);
 
-			if (CubemapProxy->Cubemap->PlatformData)
+			if (CubemapProxy->Cubemap->GetPlatformData())
 			{
-				delete CubemapProxy->Cubemap->PlatformData;
+				delete CubemapProxy->Cubemap->GetPlatformData();
+				CubemapProxy->Cubemap->SetPlatformData( nullptr );
 			}
 
-			CubemapProxy->Cubemap->PlatformData = new FTexturePlatformData();
-			CubemapProxy->Cubemap->PlatformData->SizeX = CubemapProxy->TextureTarget->SizeX;
-			CubemapProxy->Cubemap->PlatformData->SizeY = CubemapProxy->TextureTarget->SizeX;
-			CubemapProxy->Cubemap->PlatformData->PixelFormat = PixelFormat;
+			CubemapProxy->Cubemap->SetPlatformData( new FTexturePlatformData() );
+			CubemapProxy->Cubemap->GetPlatformData()->SizeX = CubemapProxy->TextureTarget->SizeX;
+			CubemapProxy->Cubemap->GetPlatformData()->SizeY = CubemapProxy->TextureTarget->SizeX;
+			CubemapProxy->Cubemap->GetPlatformData()->PixelFormat = PixelFormat;
 
 			{
-				FTexture2DMipMap* Mip = new(CubemapProxy->Cubemap->PlatformData->Mips) FTexture2DMipMap();
+				FTexture2DMipMap* Mip = new FTexture2DMipMap(CubemapProxy->Cubemap->GetPlatformData()->Mips[0]);
 				Mip->SizeX = CubemapProxy->TextureTarget->SizeX;
 				Mip->SizeY = CubemapProxy->TextureTarget->SizeX;
 				Mip->BulkData.Lock(LOCK_READ_WRITE);
@@ -173,7 +174,7 @@ void FSpatialMappingCubemapRunnable::ConverToTextureCube()
 				Mip->BulkData.Unlock();
 			}
 
-			FTexture2DMipMap& Mip = CubemapProxy->Cubemap->PlatformData->Mips[0];
+			FTexture2DMipMap& Mip = CubemapProxy->Cubemap->GetPlatformData()->Mips[0];
 			uint8* SliceData = (uint8*)Mip.BulkData.Lock(LOCK_READ_WRITE);
 			
 			switch (TextureFormat)

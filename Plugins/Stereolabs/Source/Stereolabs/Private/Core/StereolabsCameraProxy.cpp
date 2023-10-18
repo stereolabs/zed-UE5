@@ -261,6 +261,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.async_grab_camera_recovery = InitParameters.bAsyncGrabCameraRecovery;
 	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
 	sl_init_parameters.grab_compute_capping_fps = InitParameters.GrabComputeCappingFPS;
+	sl_init_parameters.enable_image_validity_check = InitParameters.bEnableImageValidityCheck;
 
 	InputType = (SL_INPUT_TYPE)InitParameters.InputType;
 	bool IsCameraCreated = sl_create_camera(CameraID);
@@ -569,6 +570,37 @@ ESlTrackingState USlCameraProxy::GetPosition(FSlPose& Pose, ESlReferenceFrame Re
 	SL_SCOPE_UNLOCK
 }
 
+ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat)
+{
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_set_region_of_interest(CameraID, Mat.Mat);
+	return sl::unreal::ToUnrealType(err);
+}
+
+ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution)
+{
+	if (!Mat.Mat) {
+		Mat.Mat = sl_mat_create_new(resolution.X, resolution.Y, SL_MAT_TYPE_U8_C1, SL_MEM_CPU);
+	}
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_get_region_of_interest(CameraID, Mat.Mat, resolution.X, resolution.Y);
+	return sl::unreal::ToUnrealType(err);
+}
+
+ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams)
+{
+	SL_RegionOfInterestParameters params;
+	params.auto_apply = roiParams.bAutoApply;
+	params.depth_far_threshold_meters = roiParams.depthFarThresholdMeters;
+	params.image_height_ratio_cutoff = roiParams.imageHeightRatioCutoff;
+
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_start_region_of_interest_auto_detection(CameraID, &params);
+	return sl::unreal::ToUnrealType(err);
+}
+
+ESlRegionOfInterestAutoDetectionState USlCameraProxy::GetRegionOfInterestAutoDetectionStatus()
+{
+	return (ESlRegionOfInterestAutoDetectionState)sl_get_region_of_interest_auto_detection_status(CameraID);
+}
+
 ESlErrorCode USlCameraProxy::GetIMUData(FSlIMUData& IMUData, ESlTimeReference TimeReference)
 {
 	SL_ERROR_CODE ErrorCode = SL_ERROR_CODE_FAILURE;
@@ -846,6 +878,11 @@ FSlVideoSettings USlCameraProxy::GetCameraSettings()
 	return CameraSettings;
 }
 
+bool USlCameraProxy::GetCameraSetting(ESlVideoSettings CameraSetting, int& value)
+{
+	return (sl_get_camera_settings(CameraID, (SL_VIDEO_SETTINGS)CameraSetting, &value) == SL_ERROR_CODE_SUCCESS);
+}
+
 bool USlCameraProxy::EnableSpatialMapping(const FSlSpatialMappingParameters& SpatialMappingParameters)
 {
 	SL_ERROR_CODE ErrorCode;
@@ -1014,6 +1051,22 @@ bool USlCameraProxy::RetrieveMeasure(void* Mat, ESlMeasure MeasureType, ESlMemor
 	}
 	return (ErrorCode == SL_ERROR_CODE_SUCCESS);
 }
+
+bool USlCameraProxy::IsCameraSettingSupported(ESlVideoSettings CameraSetting)
+{
+	return sl_is_camera_setting_supported(CameraID, (SL_VIDEO_SETTINGS)CameraSetting);
+}
+
+bool USlCameraProxy::SetCameraSetting(ESlVideoSettings NewCameraSettings, int value)
+{
+	if (sl_is_camera_setting_supported(CameraID, (SL_VIDEO_SETTINGS)NewCameraSettings))
+	{
+		sl_set_camera_settings(CameraID, (SL_VIDEO_SETTINGS)NewCameraSettings, value);
+		return true;
+	}
+	return false;
+}
+
 
 void USlCameraProxy::SetCameraSettings(FSlVideoSettings& NewCameraSettings)
 {

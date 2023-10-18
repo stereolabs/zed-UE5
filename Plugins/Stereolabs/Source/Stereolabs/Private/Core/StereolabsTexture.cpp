@@ -13,6 +13,8 @@
 #include "D3D11State.h"
 typedef FD3D11StateCacheBase FD3D11StateCache;
 #include "D3D11Resources.h"
+#include "ID3D11DynamicRHI.h"
+#include "D3D11RHIPrivate.h"
 
 #include "D3D12RHIPrivate.h"
 #include "D3D12Util.h"
@@ -151,7 +153,7 @@ void USlTexture::UpdateTexture()
 
 		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
 
-		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->GetResource();
 		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
 	}
 	else
@@ -185,7 +187,7 @@ void USlTexture::UpdateTexture(const FSlMat& NewMat)
 
 		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
 
-		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->GetResource();
 		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
 	}
 	else
@@ -220,7 +222,7 @@ void USlTexture::UpdateTexture(void* NewMat)
 
 		FUpdateTextureRegion2D region = FUpdateTextureRegion2D(0, 0, 0, 0, Width, Height);
 
-		FTexture2DResource* resource = (FTexture2DResource*)Texture->Resource;
+		FTexture2DResource* resource = (FTexture2DResource*)Texture->GetResource();
 		RHIUpdateTexture2D(resource->GetTexture2DRHI(), 0, region, region.Width * ByteSize, (uint8*)MatPtr);
 	}
 	else
@@ -390,13 +392,19 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 		cudaError_t CudaError = cudaError::cudaSuccess;
 		
 	// This function has changed between 5.0 and 5.1.
-#if ENGINE_MINOR_VERSION < 1
+#if ENGINE_MINOR_VERSION == 0		// 5.0
 		FD3D11TextureBase* D3D11Texture = GetD3D11TextureFromRHITexture(Texture->Resource->TextureRHI);
-#else
+#elif ENGINE_MINOR_VERSION == 1		// 5.1
 		FD3D11Texture* D3D11Texture = GetD3D11TextureFromRHITexture(Texture->Resource->TextureRHI);
+#else								// 5.2
+		ID3D11Resource* D3D11NativeTexture = GetID3D11DynamicRHI()->RHIGetResource(Texture->GetResource()->TextureRHI);
 #endif
 
+#if ENGINE_MINOR_VERSION == 2
+		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11NativeTexture, cudaGraphicsMapFlagsNone);
+#else
 		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11Texture->GetResource(), cudaGraphicsMapFlagsNone);
+#endif
 
 		GSlCameraProxy->PopCudaContext();
 
@@ -409,7 +417,7 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 	{
 		if (ID3D12Device* D3D12DevicePtr = static_cast<ID3D12Device*>(GDynamicRHI->RHIGetNativeDevice()))
 		{
-			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->Resource->TextureRHI->GetNativeResource()))
+			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->GetResource()->TextureRHI->GetNativeResource()))
 			{
 				SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
 				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);

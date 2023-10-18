@@ -8,19 +8,34 @@
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
-AZEDPawn::AZEDPawn() :
+AZEDPawn::AZEDPawn()
+	:
+	SpringArm(nullptr),
+	Camera(nullptr),
 	EnableLerp(true),
-	LerpIntensity(10.0),
-	IsFrozen(false),
+	LerpIntensity(10.0f),
+	LerpTransform(),
 	ToggleFreeze(false),
 	UseRotationOffset(true),
+	IsFrozen(false),
 	StartOffsetLocation(FVector::ZeroVector),
 	SetFloorAsOriginCorrected(false),
 	PreviousLocation(FVector::ZeroVector),
 	PreviousToCurrentLocation(FVector::ZeroVector),
 	TranslationMultiplier(FVector::OneVector),
 	VirtualLocation(FVector::ZeroVector),
-	PrevVirtualLocation(FVector::ZeroVector)
+	PrevVirtualLocation(FVector::ZeroVector),
+	ZedLoadingWidget(nullptr),
+	ZedErrorWidget(nullptr),
+	RemapSourceMaterial(nullptr),
+	RemapMaterialInstanceDynamic(nullptr),
+	RemapMx(nullptr),
+	RemapMy(nullptr),
+	ZedLoadingSourceWidget(nullptr),
+	ZedErrorSourceWidget(nullptr),
+	ZedWidgetSourceMaterial(nullptr),
+	TransformOffset(),
+	RealCameraTransform()
 {
 	TransformOffset = FTransform();
 	ToggleFreeze = false;

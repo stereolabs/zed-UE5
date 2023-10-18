@@ -302,7 +302,7 @@ public:
 	
 	/** When enabled, the real world can occlude (cover up) virtual objects that are behind it. Otherwise, virtual objects will appear in front. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	uint8 bDepthOcclusion : 1;
+	bool bDepthOcclusion;
 
 	/** Max depth distance. Can be modified at runtime */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
@@ -337,12 +337,12 @@ private:
 	int32 CurrentDepthTextureQualityPreset;
 
 	/** True if depth enabled */
-	uint8 bCurrentDepthEnabled:1;
+	bool bCurrentDepthEnabled;
 
 	/** True if initialized */
-	uint8 bInit:1;
+	bool bInit;
 
-	uint8 bShowZedImage:1;
+	bool bShowZedImage;
 
 	/************************ Section from old blueprint **********************/
 
