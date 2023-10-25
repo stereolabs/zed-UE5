@@ -400,7 +400,7 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 		ID3D11Resource* D3D11NativeTexture = GetID3D11DynamicRHI()->RHIGetResource(Texture->GetResource()->TextureRHI);
 #endif
 
-#if ENGINE_MINOR_VERSION == 2
+#if ENGINE_MINOR_VERSION >= 2
 		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11NativeTexture, cudaGraphicsMapFlagsNone);
 #else
 		CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11Texture->GetResource(), cudaGraphicsMapFlagsNone);

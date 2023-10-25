@@ -1,9 +1,9 @@
 <h1 align="center">
-ZED UE5.2 Plugin
+ZED UE5.3 Plugin
   <br>
 </h1>
 
-This plugin requires using **UE5.2**.
+This plugin requires using **UE5.3**.
 
 <p align="center">
 
@@ -30,17 +30,21 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 ## Getting started
 
-This version of the plugin is compatible with Unreal Engine **5.2**, and requires the [**ZED SDK 4.0**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
+This version of the plugin is compatible with Unreal Engine **5.3**, and requires the [**ZED SDK 4.0**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
 
 - To see our implementation of Live Link with the ZED, go here : [ZED Live Link Plugin](https://github.com/stereolabs/zed-LiveLink-plugin)
 
 ### Installation
 
-- Download this repository..
+- Download or clone this repository.
 - Right click on the *ZEDSamples.uproject*, select *switch Unreal Engine version* and choose our ue5 you previously installed in the list.
 - Build the solution by pressing **Ctrl + F5**. Once the build is done, it will start the project in the UE5 Editor. 
 
 You can now start the project with a double click on *ZEDSamples.uproject*.
+
+> Troubleshooting and known issues:
+> - **GPU Crashed or D3D Device Removed.** when playing a level: This is a DirectX 12 issue. Please change the RHI of your project to DirectX 11.
+> - **Error when trying to package to Shipping build**: There is currently a bug preventing from building to "Shipping" build. Please use a "Development" build instead.
 
 ### Documentation
 
