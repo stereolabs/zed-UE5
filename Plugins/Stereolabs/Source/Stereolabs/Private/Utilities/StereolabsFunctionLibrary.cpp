@@ -2,7 +2,6 @@
 
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 #include "StereolabsPrivatePCH.h"
-#include "IXRTrackingSystem.h"
 
 #include <sl_mr_core/latency.hpp>
 #include <sl_mr_core/Rendering.hpp>
