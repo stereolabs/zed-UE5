@@ -570,25 +570,47 @@ ESlTrackingState USlCameraProxy::GetPosition(FSlPose& Pose, ESlReferenceFrame Re
 	SL_SCOPE_UNLOCK
 }
 
-ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat)
+ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat, TSet<ESlModule> module)
 {
-	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_set_region_of_interest(CameraID, Mat.Mat);
+	TArray<bool> modules_array;
+	modules_array.Init(false, SL_MODULE_LAST);
+
+	for (int i = 0; i < SL_MODULE_ALL; i++)
+	{
+		if (module.Contains((ESlModule)i))
+		{
+			modules_array[i] = true;
+		}
+	}
+
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_set_region_of_interest(CameraID, Mat.Mat, modules_array.GetData());
 	return sl::unreal::ToUnrealType(err);
 }
 
-ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution)
+ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution, ESlModule module)
 {
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(resolution.X, resolution.Y, SL_MAT_TYPE_U8_C1, SL_MEM_CPU);
 	}
-	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_get_region_of_interest(CameraID, Mat.Mat, resolution.X, resolution.Y);
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_get_region_of_interest(CameraID, Mat.Mat, resolution.X, resolution.Y, (SL_MODULE)module);
 	return sl::unreal::ToUnrealType(err);
 }
 
 ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams)
 {
 	SL_RegionOfInterestParameters params;
-	params.auto_apply = roiParams.bAutoApply;
+
+	TArray<bool> modules_array;
+	modules_array.Init(false, SL_MODULE_LAST);
+
+	for (int i = 0; i < SL_MODULE_ALL; i++)
+	{
+		if (roiParams.autoApplyModule.Contains((ESlModule)i))
+		{
+			params.auto_apply_module[i] = true;
+		}
+	}
+
 	params.depth_far_threshold_meters = roiParams.depthFarThresholdMeters;
 	params.image_height_ratio_cutoff = roiParams.imageHeightRatioCutoff;
 

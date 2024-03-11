@@ -544,6 +544,20 @@ enum class ESlPositionalTrackingMode : uint8
 	PTM_Quality			UMETA(DisplayName = "Quality")
 };
 
+/*
+* Lists available modules.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlModule : uint8
+{
+	M_All					UMETA(DisplayName = "All"),
+	M_Depth					UMETA(DisplayName = "Depth"),
+	M_PositionalTracking	UMETA(DisplayName = "Positional Tracking"),
+	M_ObjectDetection		UMETA(DisplayName = "Object Detection"),
+	M_BodyTracking			UMETA(DisplayName = "Body Tracking"),
+	M_SpatialMapping		UMETA(DisplayName = "Spatial Mapping")
+};
+
 /**
 \brief Lists the different states of region of interest auto detection.
  */
@@ -2291,7 +2305,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 	:
 		depthFarThresholdMeters(2.5f),
 		imageHeightRatioCutoff(0.5f),
-		bAutoApply(false)
+		autoApplyModule({ESlModule::M_All })
 	{}
 
 	/**
@@ -2313,7 +2327,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: Enabled
 	 */
-	bool bAutoApply = true;
+	TSet<ESlModule> autoApplyModule;
 };
 
 /*

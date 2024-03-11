@@ -276,13 +276,13 @@ public:
 	ESlTrackingState GetPosition(FSlPose& Pose, ESlReferenceFrame ReferenceFrame);
 
 	UFUNCTION(BlueprintPure, meta = (Keywords = "Set Region Of Interest"), Category = "Zed|Tracking")
-	ESlErrorCode SetRegionOfInterest(FSlMat& Mat);
+	ESlErrorCode SetRegionOfInterest(FSlMat& Mat, TSet<ESlModule> Module);
 
 	UFUNCTION(BlueprintPure, meta = (Keywords = "Get Region Of Interest"), Category = "Zed|Tracking")
-	ESlErrorCode GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution);
+	ESlErrorCode GetRegionOfInterest(FSlMat& Mat, FIntPoint& Resolution, ESlModule Module);
 
 	UFUNCTION(BlueprintPure, meta = (Keywords = "start region of interest auto detection"), Category = "Zed|Tracking")
-	ESlErrorCode StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams);
+	ESlErrorCode StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& RoiParams);
 
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get region of interest auto detection status"), Category = "Zed|Tracking")
 	ESlRegionOfInterestAutoDetectionState GetRegionOfInterestAutoDetectionStatus();
