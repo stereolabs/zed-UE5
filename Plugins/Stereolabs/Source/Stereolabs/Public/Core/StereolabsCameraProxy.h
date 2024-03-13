@@ -601,6 +601,31 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "disable svo recording"), Category = "Zed|SVO")
 	void DisableSVORecording();
 
+	/// <summary>
+	/// Ingests SVOData in a SVO file.
+	/// </summary>
+	/// <param name="svoData">Data to ingest in the SVO file.</param>
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "ingest svo data"), Category = "Zed|SVO")
+	int IngestDataIntoSVO(const FSlSVOData& svoData);
+
+	/// <summary>
+	/// Retrieves SVOData from an SVO file.
+	/// </summary>
+	/// <param name="key">The key of the SVOData that is going to be retrieved.</param>
+	/// <param name="resSVOData">The array to be filled with FSlSVOData objects.</param>
+	/// <param name="ts_nano_begin">The beginning of the range.</param>
+	/// <param name="ts_nano_end">The end of the range.</param>
+	/// <returns>sl_ERROR_CODE_SUCCESS in case of success, sl_ERROR_CODE_FAILURE otherwise.</returns>
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "retrieve svo data"), Category = "Zed|SVO")
+	int RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resSVOData, FString ts_nano_begin, FString ts_nano_end);
+
+	/// <summary>
+	/// Gets the external channels that can be retrieved from the SVO file.
+	/// </summary>
+	/// <returns>List of available keys in the SVO.</returns>
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "get svo data keys"), Category = "Zed|SVO")
+	TArray<FString> GetSVODataKeys();
+
 	/*
 	 * Set the SVO playback position
 	 * @param Position The new position
@@ -757,6 +782,12 @@ public:
 	* Easy access to sl::Pose
 	*/
 	SL_POSITIONAL_TRACKING_STATE GetCameraPosition(SL_PoseData* pose, SL_REFERENCE_FRAME rframe);
+
+	/// <summary>
+	/// Returns the current status of positional tracking module. 
+	/// </summary>
+	/// <returns>The SL_PositionalTrackingStatus of the camera.</returns>
+	SL_PositionalTrackingStatus* GetCameraPositionalTrackingStatus();
 
 	/*
 	* Easy access to IMU pose

@@ -2417,5 +2417,35 @@ namespace sl
 			}
 			return m_out;
 		}
+
+		/*
+		* Convert from FSlSVOData to SL_SVOData
+		*/
+		FORCEINLINE SL_SVOData ToSlType(const FSlSVOData& UnrealData)
+		{
+			auto sld = SL_SVOData();
+			strcpy(sld.key, TCHAR_TO_ANSI(*UnrealData.Key));
+			strcpy(sld.content, TCHAR_TO_ANSI(*UnrealData.Content));
+			sld.content_size = UnrealData.Content.Len();
+			sld.timestamp_ns = FCString::Strtoui64(*UnrealData.TimestampNano, NULL, 10);
+
+			return sld;
+		}
+
+		/*
+		* Convert from SL_SVOData to FSlSVOData
+		*/
+		FORCEINLINE FSlSVOData ToUnrealType(const SL_SVOData& slData)
+		{
+			auto sld = FSlSVOData();
+			sld.Content = FString(slData.content);
+			sld.Key = FString(slData.key);
+
+			char temp[21];
+			sprintf(temp, "%llu", slData.timestamp_ns);
+			sld.TimestampNano = temp;
+			return sld;
+		}
+
 	}
 }

@@ -3438,6 +3438,40 @@ struct STEREOLABS_API FSlBodies
 	{}
 };
 
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlSVOData
+{
+	GENERATED_BODY()
+
+	/// <summary>
+	/// Key used to retrieve the data stored into SVOData's content.
+	/// WARNING: Length must not exceed 128.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Key = "";
+
+	/// <summary>
+	/// Timestamp of the data, in nanoseconds, as a string.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString TimestampNano = "0";
+
+	/// <summary>
+	/// Content stored as SVOData.
+	/// Allow any type of content, including raw data like compressed images or JSON.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Content = "";
+
+	FSlSVOData()
+		:
+		Key(""),
+		TimestampNano(""),
+		Content("")
+	{}
+};
+
+
 /*
  * Rendering parameters
  */

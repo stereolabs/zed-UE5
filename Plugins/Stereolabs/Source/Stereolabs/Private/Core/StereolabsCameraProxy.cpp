@@ -748,6 +748,11 @@ SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose
 		return SL_POSITIONAL_TRACKING_STATE_OFF;
 }
 
+SL_PositionalTrackingStatus* USlCameraProxy::GetCameraPositionalTrackingStatus()
+{
+	return sl_get_positional_tracking_status(CameraID);
+}
+
 SL_ERROR_CODE USlCameraProxy::GetCameraIMURotationAtImage(sl::Rotation& pose)
 {
 	if (sl_is_opened(CameraID)) {
@@ -1781,6 +1786,61 @@ void USlCameraProxy::DisableSVORecording()
 		SL_SCOPE_UNLOCK
 	SL_SCOPE_UNLOCK
 }
+
+int USlCameraProxy::IngestDataIntoSVO(const FSlSVOData& svoData)
+{
+	SL_ERROR_CODE err;
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		auto SvoData = sl::unreal::ToSlType(svoData);
+		err = sl_ingest_data_into_svo(CameraID, &SvoData);
+	SL_SCOPE_UNLOCK
+
+	if (err != SL_ERROR_CODE::SL_ERROR_CODE_SUCCESS) {
+		SL_CAMERA_PROXY_LOG_E("IngestDataIntoSVO: Error:\"%s\"", *EnumToString(sl::unreal::ToUnrealType(err)));
+	}
+
+	return (int)err;
+}
+
+int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resSVOData, FString ts_nano_begin, FString ts_nano_end)
+{
+	SL_ERROR_CODE err;
+	uint64 tsb = FCString::Strtoui64(*ts_nano_begin, NULL, 10);
+	uint64 tse = FCString::Strtoui64(*ts_nano_end, NULL, 10);
+	auto ckey = std::make_unique<char[]>(128);
+
+	strcpy(ckey.get(), TCHAR_TO_ANSI(*key));
+
+	resSVOData.Empty();
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		int nb_data = sl_get_svo_data_size(CameraID, ckey.get(), tsb, tse);
+		auto cdata = std::make_unique<SL_SVOData[]>(nb_data);
+		err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata.get(), tsb, tse);
+		for (int i = 0; i < nb_data; ++i) {
+			resSVOData.Add(sl::unreal::ToUnrealType(cdata[i]));
+		}
+	SL_SCOPE_UNLOCK
+
+	return (int)err;
+}
+
+TArray<FString> USlCameraProxy::GetSVODataKeys()
+{
+	TArray<FString> res;
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		int nbkeys = sl_get_svo_data_keys_size(CameraID);
+		auto cdata = std::make_unique<char*[]>(nbkeys);
+		sl_get_svo_data_keys(CameraID, nbkeys, cdata.get());
+		for (int i = 0; i < nbkeys; ++i) {
+			res.Add(FString(cdata[i]));
+		}
+	SL_SCOPE_UNLOCK
+
+	return res;
+}
+
 
 void USlCameraProxy::SetSVOPlaybackPosition(int Position)
 {
