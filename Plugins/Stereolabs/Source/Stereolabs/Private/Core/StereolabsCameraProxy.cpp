@@ -1804,7 +1804,7 @@ int USlCameraProxy::IngestDataIntoSVO(const FSlSVOData& svoData)
 
 int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resSVOData, FString ts_nano_begin, FString ts_nano_end)
 {
-	SL_ERROR_CODE err;
+	SL_ERROR_CODE err = SL_ERROR_CODE_FAILURE;
 	uint64 tsb = FCString::Strtoui64(*ts_nano_begin, NULL, 10);
 	uint64 tse = FCString::Strtoui64(*ts_nano_end, NULL, 10);
 	auto ckey = std::make_unique<char[]>(128);
@@ -1815,10 +1815,12 @@ int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resS
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		int nb_data = sl_get_svo_data_size(CameraID, ckey.get(), tsb, tse);
-		auto cdata = std::make_unique<SL_SVOData[]>(nb_data);
-		err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata.get(), tsb, tse);
-		for (int i = 0; i < nb_data; ++i) {
-			resSVOData.Add(sl::unreal::ToUnrealType(cdata[i]));
+		if (nb_data > 0) {
+			auto cdata = std::make_unique<SL_SVOData[]>(nb_data);
+			err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata.get(), tsb, tse);
+			for (int i = 0; i < nb_data; ++i) {
+				resSVOData.Add(sl::unreal::ToUnrealType(cdata[i]));
+			}
 		}
 	SL_SCOPE_UNLOCK
 
