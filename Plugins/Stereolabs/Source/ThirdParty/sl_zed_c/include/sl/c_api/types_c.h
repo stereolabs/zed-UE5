@@ -717,9 +717,9 @@ enum SL_MAP_TRACKING_STATUS {
 \brief Report the status of the IMU fusion.
  */
 enum SL_IMU_FUSION_STATUS {
-	SL_IMU_FUSION_STATUS_VISUAL_ONLY = 0,       /**< Only vision is used for tracking. */
-	SL_IMU_FUSION_STATUS_VISUAL_INERTIAL = 1,   /**< Both visual and inertial data are fused for tracking. */
-	SL_IMU_FUSION_STATUS_INERTIAL_ONLY = 2      /**< Only inertial data is used for tracking. */
+	SL_IMU_FUSION_STATUS_OK = 0,       /**< The IMU fusion is calibrated and working successfully */
+	SL_IMU_FUSION_STATUS_NOT_OK = 1,   /**< The IMU fusion module is not enabled. */
+	SL_IMU_FUSION_STATUS_CALIBRATION_IN_PROGRESS = 2      /**< Calibration of the visual-inertial fusion module is in progress. */
 };
 
 
@@ -1954,7 +1954,7 @@ struct SL_RegionOfInterestParameters
 	float image_height_ratio_cutoff;
 
 	/**
-	\brief List on modules on which the ROI will be used.
+	\brief List of modules on which the ROI will be used.
 
 	Default: All modules
 	 */
@@ -2083,7 +2083,7 @@ struct SL_SVOData
 	unsigned long long timestamp_ns;
 	/**
 	\brief content stored as SVOData.
-	* Allow any type of content, including raw data like compressed images of json.
+	* Allow any type of content, including raw data like compressed images or JSON.
 	 */
 	char* content;
 	/**

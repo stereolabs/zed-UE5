@@ -259,14 +259,6 @@ extern "C" {
     INTERFACE_API void sl_pause_recording(int camera_id, bool status);
 
     /**
-    \brief Pauses or resumes the recording.
-    \param camera_id : Id of the camera instance.
-    \param status : If true, the recording is paused. If false, the recording is resumed.
-     */
-    INTERFACE_API void sl_pause_recording(int camera_id, bool status);
-
-
-    /**
     \brief Ingests SL_SVOData in a SVO file.
     \param camera_id : Id of the camera instance.
     \param data : Data to ingest in the SVO file.
@@ -285,12 +277,12 @@ extern "C" {
     \param ts_end : The end of the range.
     \return The number of data available for this key.
 
-    \note The method works only if the camera is in SVO mode.
+    \note The method will always return -1 if not in SVO mode.
      */
     INTERFACE_API int sl_get_svo_data_size(int camera_id, char key[128], unsigned long long ts_begin, unsigned long long ts_end);
 
     /**
-    \brief Retrieves SVOData a SVO file.
+    \brief Retrieves SVOData from an SVO file.
     The user is reponsible for correctly allocating the size of the data array using sl_get_svo_data_size.
     \param camera_id : Id of the camera instance.
     \param nb_data : Size of the array of data.
@@ -298,8 +290,8 @@ extern "C" {
     \param ts_begin : The beginning of the range.
     \param ts_end : The end of the range.
     \return sl_ERROR_CODE_SUCCESS in case of success, sl_ERROR_CODE_FAILURE otherwise.
-
-    \note The method works only if the camera is in SVO mode.
+    \note The method will return sl_ERROR_CODE_FAILURE if not in SVO mode.
+    \warning You need to call sl_get_svo_data_size for the key before calling this method to correctly retrieve the data.
      */
     INTERFACE_API enum SL_ERROR_CODE sl_retrieve_svo_data(int camera_id, char key[128], int nb_data, struct SL_SVOData* data, unsigned long long ts_begin, unsigned long long ts_end);
 
@@ -307,7 +299,7 @@ extern "C" {
     \brief Gets the number of external channels that can be retrieved from the SVO file.
     \param camera_id : Id of the camera instance.
     \return the number of keys available.
-    \note The method works only if the camera is in SVO mode.
+    \note The method will return 0 if not in SVO mode.
      */
     INTERFACE_API int sl_get_svo_data_keys_size(int camera_id);
 
@@ -318,7 +310,7 @@ extern "C" {
     \param nb_keys : number of keys.
     \param [Out] keys : List of available keys.
 
-    \note The method works only if the camera is in SVO mode.
+    \note The method will not fill the keys array if not in SVO mode.
      */
     INTERFACE_API void sl_get_svo_data_keys(int camera_id, int nb_keys, char* keys[128]);
 
@@ -418,7 +410,7 @@ extern "C" {
     /**
     \brief Gets the current confidence threshold value for the disparity map (and by extension the depth map).
     \param camera_id : id of the camera instance.
-    \return The confidence threshold.
+    \return The confidence threshold. -1 if failure.
      */
     INTERFACE_API int sl_get_confidence_threshold(int camera_id);
 
@@ -610,14 +602,14 @@ extern "C" {
     /**
     \brief Gets the depth min value from InitParameters (see \ref SL_InitParameters::depth_minimum_distance).
     \param camera_id : id of the camera instance.
-    \return The min depth value available.
+    \return The min depth value available. -1 if failure.
      */
     INTERFACE_API float sl_get_depth_min_range_value(int camera_id);
 
     /**
     \brief Gets the depth max value from InitParameters (see \ref SL_InitParameters::depth_maximum_distance).
     \param camera_id : id of the camera instance.
-    \return The max depth value available.
+    \return The max depth value available. -1 if failure.
      */
     INTERFACE_API float sl_get_depth_max_range_value(int camera_id);
 
