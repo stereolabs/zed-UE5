@@ -1278,19 +1278,7 @@ extern "C" {
      */
     INTERFACE_API struct SL_ObjectDetectionParameters* sl_get_object_detection_parameters(int camera_id);
 
-    /**
-    \brief Pauses or resumes the object detection processes.
 
-    If the object detection has been enabled with  \ref SL_ObjectDetectionParameters::image_sync set to false (running asynchronously), this function will pause processing.
-
-    While in pause, calling this function with <i>status = false</i> will resume the object detection.
-    The \ref retrieveObjects function will keep on returning the last objects detected while in pause.
-
-    \param camera_id : Id of the camera instance.
-    \param status : If true, object detection is paused. If false, object detection is resumed.
-    \param instance_id : Id of the instance to pause/resume. Used when multiple instances of the object detection module are enabled at the same time.
-     */
-    INTERFACE_API void sl_pause_object_detection(int camera_id, bool status, unsigned int instance_id);
     /**
     \brief Disables the Object Detection process.
 
@@ -1334,19 +1322,6 @@ extern "C" {
      */
     INTERFACE_API struct SL_BodyTrackingParameters* sl_get_body_tracking_parameters(int camera_id);
 
-    /**
-    \brief Pauses or resumes the body tracking processes.
-
-    If the body tracking has been enabled with  \ref SL_BodyTrackingParameters::image_sync set to false (running asynchronously), this function will pause processing.
-
-    While in pause, calling this function with <i>status = false</i> will resume the body tracking.
-    \note The \ref sl_retrieve_bodies function will keep on returning the last bodies detected while in pause.
-
-    \param camera_id : Id of the camera instance.
-    \param status : If true, body tracking is paused. If false, body tracking is resumed.
-    \param instance_id : Id of the instance to pause/resume. Used when multiple instances of the body tracking module are enabled at the same time.
-     */
-    INTERFACE_API void sl_pause_body_tracking(int camera_id, bool status, unsigned int instance_id);
     /**
     \brief Disables the body tracking process.
 

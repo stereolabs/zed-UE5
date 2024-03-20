@@ -787,7 +787,7 @@ public:
 	/// Returns the current status of positional tracking module. 
 	/// </summary>
 	/// <returns>The SL_PositionalTrackingStatus of the camera.</returns>
-	SL_PositionalTrackingStatus* GetCameraPositionalTrackingStatus();
+	SL_PositionalTrackingStatus* GetPositionalTrackingStatus();
 
 	/*
 	* Easy access to IMU pose

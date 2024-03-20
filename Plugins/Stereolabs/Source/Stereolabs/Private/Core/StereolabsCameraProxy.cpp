@@ -245,7 +245,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.camera_disable_self_calib = InitParameters.bDisableSelfCalibration;
 	sl_init_parameters.camera_fps = InitParameters.FPS;
 	sl_init_parameters.camera_image_flip = (SL_FLIP_MODE)InitParameters.VerticalFlipImage;
-	sl_init_parameters.resolution = (SL_RESOLUTION)InitParameters.Resolution;
+	sl_init_parameters.resolution = sl::unreal::ToSlType2(InitParameters.Resolution);
 	sl_init_parameters.coordinate_system = SL_COORDINATE_SYSTEM_LEFT_HANDED_Z_UP;
 	sl_init_parameters.coordinate_unit = SL_UNIT_CENTIMETER;
 	sl_init_parameters.depth_minimum_distance = InitParameters.DepthMinimumDistance;
@@ -748,7 +748,7 @@ SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose
 		return SL_POSITIONAL_TRACKING_STATE_OFF;
 }
 
-SL_PositionalTrackingStatus* USlCameraProxy::GetCameraPositionalTrackingStatus()
+SL_PositionalTrackingStatus* USlCameraProxy::GetPositionalTrackingStatus()
 {
 	return sl_get_positional_tracking_status(CameraID);
 }

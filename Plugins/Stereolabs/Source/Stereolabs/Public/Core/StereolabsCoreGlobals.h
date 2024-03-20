@@ -737,6 +737,36 @@ namespace sl
 		}
 
 		/*
+		 * Convert from ESlResolution to SL_RESOLUTION
+		 */
+		FORCEINLINE SL_RESOLUTION ToSlType2(ESlResolution UnrealType)
+		{
+			switch (UnrealType)
+			{
+			case ESlResolution::R_HD2K:
+				return SL_RESOLUTION_HD2K;
+			case ESlResolution::R_HD1200:
+				return SL_RESOLUTION_HD1200;
+			case ESlResolution::R_HD1080:
+				return SL_RESOLUTION_HD1080;
+			case ESlResolution::R_HD720:
+				return SL_RESOLUTION_HD720;
+			case ESlResolution::R_VGA:
+				return SL_RESOLUTION_VGA;
+			case ESlResolution::R_SVGA:
+				return SL_RESOLUTION_SVGA;
+			case ESlResolution::R_AUTO:
+				return SL_RESOLUTION_AUTO;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlResolution entry %u"), (uint32)UnrealType);
+
+				return SL_RESOLUTION_AUTO;
+			}
+			}
+		}
+
+		/*
 		 * Convert from ESlDepthMode to sl::DEPTH_MODE
 		 */
 		FORCEINLINE sl::DEPTH_MODE ToSlType(ESlDepthMode UnrealType)
@@ -751,6 +781,8 @@ namespace sl
 					return sl::DEPTH_MODE::ULTRA;
 				case ESlDepthMode::DM_Neural:
 					return sl::DEPTH_MODE::NEURAL;
+				case ESlDepthMode::DM_NeuralPlus:
+					return sl::DEPTH_MODE::NEURAL_PLUS;
 				default:
 				{
 					ensureMsgf(false, TEXT("Unhandled ESlDepthMode entry %u"), (uint32)UnrealType);
@@ -2121,9 +2153,7 @@ namespace sl
 			struct SL_ObjectDetectionParameters ODParameters;
 
 			ODParameters.instance_module_id = 0;
-
 			ODParameters.enable_tracking = UnrealData.bEnableTracking;
-			ODParameters.image_sync = UnrealData.bImageSync;
 			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
 			ODParameters.detection_model = (SL_OBJECT_DETECTION_MODEL)UnrealData.DetectionModel;
@@ -2164,7 +2194,6 @@ namespace sl
 			struct SL_BodyTrackingParameters BTParameters;
 
 			BTParameters.enable_tracking = UnrealData.bEnableTracking;
-			BTParameters.image_sync = UnrealData.bImageSync;
 			BTParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			BTParameters.max_range = UnrealData.MaxRange;
 			BTParameters.allow_reduced_precision_inference = UnrealData.bAllowReducedPrecisionInference;

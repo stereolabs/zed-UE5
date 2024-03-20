@@ -464,6 +464,7 @@ enum SL_ERROR_CODE {
 \warning You can find the available resolutions for each camera in <a href="https://www.stereolabs.com/docs/video/camera-controls#selecting-a-resolution">our documentation</a>.
  */
 enum SL_RESOLUTION {
+	SL_RESOLUTION_HD4K, /**< 3856x2180 for imx678 mono*/
 	SL_RESOLUTION_HD2K, /**< 2208*1242 (x2) \n Available FPS: 15*/
 	SL_RESOLUTION_HD1080, /**< 1920*1080 (x2) \n Available FPS: 15, 30*/
 	SL_RESOLUTION_HD1200, /**< 1920*1200 (x2) \n Available FPS: 15, 30, 60*/
@@ -515,7 +516,10 @@ enum SL_MODEL {
 	SL_MODEL_ZED2, /**< ZED 2 camera model */
 	SL_MODEL_ZED2i, /**< ZED 2i camera model */
 	SL_MODEL_ZED_X, /**< ZED X camera model */
-	SL_MODEL_ZED_XM /**< ZED X Mini (ZED XM) camera model */
+	SL_MODEL_ZED_XM, /**< ZED X Mini (ZED XM) camera model */
+	SL_MODEL_VIRTUAL_ZED_X = 10, /**< Virtual ZED-X generated from 2 ZED-XOne */
+	SL_MODEL_ZED_XONE_GS = 30, /**< ZED XOne with global shutter AR0234 sensor */
+	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED XOne with 4K rolling shutter IMX678 sensor */
 };
 
 /**
@@ -698,38 +702,42 @@ enum SL_POSITIONAL_TRACKING_STATE {
 /**
 \brief Report the status of current odom tracking.
  */
-enum SL_VISUAL_ODOMETRY_TRACKING_STATUS
+enum SL_ODOMETRY_STATUS
 {
-	SL_VISUAL_ODOMETRY_TRACKING_STATUS_OK,		/**< The positional tracking module successfully tracked from the previous frame to the current frame. */
-	SL_VISUAL_ODOMETRY_TRACKING_STATUS_NOT_OK	/**< The positional tracking module failed to track from the previous frame to the current frame. */
+	SL_ODOMETRY_STATUS_OK,			/**< The positional tracking module successfully tracked from the previous frame to the current frame. */
+	SL_ODOMETRY_STATUS_UNAVAILABLE	/**< The positional tracking module failed to track from the previous frame to the current frame. */
 };
 
 /**
 \brief Report the status of current map tracking.
  */
-enum SL_MAP_TRACKING_STATUS {
+enum SL_SPATIAL_MEMORY_STATUS {
 	SL_MAP_TRACKING_STATUS_OK = 0,              /**< The positional tracking module is operating normally. */
 	SL_MAP_TRACKING_STATUS_LOOP_CLOSED = 1,     /**< The positional tracking module detected a loop and corrected its position. */
-	SL_MAP_TRACKING_STATUS_SEARCHING = 2        /**< The positional tracking module is searching for recognizable areas in the global map to relocate. */
+	SL_MAP_TRACKING_STATUS_SEARCHING = 2,       /**< The positional tracking module is searching for recognizable areas in the global map to relocate. */
+	SL_MAP_TRACKING_STATUS_OFF = 3				/**< Spatial memory is disabled */
 };
-
-/**
-\brief Report the status of the IMU fusion.
- */
-enum SL_IMU_FUSION_STATUS {
-	SL_IMU_FUSION_STATUS_OK = 0,       /**< The IMU fusion is calibrated and working successfully */
-	SL_IMU_FUSION_STATUS_NOT_OK = 1,   /**< The IMU fusion module is not enabled. */
-	SL_IMU_FUSION_STATUS_CALIBRATION_IN_PROGRESS = 2      /**< Calibration of the visual-inertial fusion module is in progress. */
-};
-
-
 
 /**
 \brief Lists the mode of positional tracking that can be used.
 */
 enum SL_POSITIONAL_TRACKING_MODE {
 	SL_POSITIONAL_TRACKING_MODE_GEN_1, /**< Default mode. Best compromise in performance and accuracy. */
-	SL_POSITIONAL_TRACKING_MODE_GEN_2, /**< Improve accuracy in more challenging scenes such as outdoor repetitive patterns like extensive fields.\n Currently works best with \ref SL_DEPTH_MODE_ULTRA and requires more compute power. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_2, /**< Next generation of positional tracking, allow better accuracy. */
+};
+
+/**
+\brief Report the status of the positional tracking fusion.
+ */
+enum SL_POSITIONAL_TRACKING_FUSION_STATUS {
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL = 0,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL = 1,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_INERTIAL = 2,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_GNSS = 3,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL_GNSS = 4,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_GNSS = 5,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_INTERTIAL_GNSS = 6,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_UNAVAILABLE = 7
 };
 
 /**
@@ -740,15 +748,15 @@ struct SL_PositionalTrackingStatus
 	/**
 	@brief  Represents the current state of Visual-Inertial Odometry (VIO) tracking between the previous frame and the current frame.
 	*/
-	enum SL_VISUAL_ODOMETRY_TRACKING_STATUS visual_odometry_tracking_status;
+	enum SL_ODOMETRY_STATUS odometry_status;
 	/**
 	@brief  Represents the current state of camera tracking in the global map.
 	*/
-	enum SL_MAP_TRACKING_STATUS map_tracking_status;
+	enum SL_SPATIAL_MEMORY_STATUS spatial_memory_status;
 	/**
-	@brief  Represents the current state of IMU fusion.
+	@brief  Represents the current state of positional tracking fusion.
 	*/
-	enum SL_IMU_FUSION_STATUS imu_fusion_status;
+	enum SL_POSITIONAL_TRACKING_FUSION_STATUS tracking_fusion_status;
 };
 
 /**
@@ -1555,7 +1563,7 @@ struct SL_RuntimeParameters
 
 	Each depth pixel has a corresponding confidence (\ref SL_MEASURE_CONFIDENCE) in the range [1, 100].
 	\n Decreasing this value will remove depth data from both objects edges and low textured areas, to keep only confident depth estimation data.
-	\n Default: 100 (no depth pixel will be rejected)
+	\n Default: 95
 	\note Pixels with a value close to 100 are not to be trusted. Accurate depth pixels tends to be closer to lower values.
 	\note It can be seen as a probability of error, scaled to 100.
 	 */
@@ -2339,14 +2347,7 @@ struct SL_ObjectDetectionParameters
 	This is used to identify which object detection module instance is used.
 	 */
 	unsigned int instance_module_id;
-	/**
-	\brief Whether the object detection is synchronized to the image or runs in a separate thread.
 
-	If set to true, the detection is run on every \ref sl_grab().
-	\n Otherwise, the thread runs at its own speed, which can lead to new detection once in a while.
-	\n Default: true
-	*/
-	bool image_sync; // data synchronized
 	/**
 	\brief Whether the object detection system includes object tracking capabilities across a sequence of images.
 
@@ -2473,15 +2474,6 @@ struct SL_BodyTrackingParameters {
 	This is used to identify which body tracking module instance is used.
 	 */
 	unsigned int instance_module_id;
-
-	/**
-	\brief Whether the body tracking is synchronized to the image or runs in a separate thread.
-
-	If set to true, the detection is run on every \ref sl_grab().
-	\n Otherwise, the thread runs at its own speed, which can lead to new detection once in a while.
-	\n Default: true
-	*/
-	bool image_sync;
 
 	/**
 	\brief Whether the body tracking system includes body/person tracking capabilities across a sequence of images.
@@ -3266,13 +3258,19 @@ enum SL_COMM_TYPE
 enum SL_GNSS_STATUS
 {
 	SL_GNSS_STATUS_UNKNOWN,     /**< No GNSS fix data is available. */
-	SL_GNSS_STATUS_NO_FIX,		/**< No GNSS fix is available. */
-	SL_GNSS_STATUS_FIX_2D,		/**< No GNSS fix is available. */
-	SL_GNSS_STATUS_FIX_3D,		/**< 3D GNSS fix, providing latitude, longitude, and altitude coordinates. */
-	SL_GNSS_STATUS_DGNSS,		/**< 3D DGNSS fix, providing latitude, longitude, and altitude coordinates, using correctional data for higher precision. */
-	SL_GNSS_STATUS_RTK_FLOAT,	/**< Real-Time Kinematic (RTK) GNSS fix in float mode. */
+	SL_GNSS_STATUS_SINGLE,		/**< Single Point Positioning */
+	SL_GNSS_STATUS_DGNSS,		/**< Differential GNSS */
 	SL_GNSS_STATUS_RTK_FIX,		/**< Real-Time Kinematic (RTK) GNSS fix in fixed mode. */
-	SL_GNSS_STATUS_TIME_ONLY	/**< GNSS fix providing only time information, without spatial coordinates. */
+	SL_GNSS_STATUS_RTK_FLOAT,	/**< Real-Time Kinematic (RTK) GNSS fix in float mode. */
+	SL_GNSS_STATUS_PPS			/**< Precise Positioning Service */
+};
+
+enum SL_GNSS_MODE
+{
+	SL_GNSS_MODE_UNKNOWN,  /**< No GNSS fix data is available. */
+	SL_GNSS_MODE_NO_FIX,   /**< No GNSS fix is available. */
+	SL_GNSS_MODE_FIX_2D,   /**< 2D GNSS fix, providing latitude and longitude coordinates but without altitude information. */
+	SL_GNSS_MODE_FIX_3D	   /**< 3D GNSS fix, providing latitude, longitude, and altitude coordinates. */
 };
 
 /**
@@ -3293,23 +3291,27 @@ struct SL_FusedPositionalTrackingStatus
 	/**
 	@brief  Represents the current state of Visual-Inertial Odometry (VIO) tracking between the previous frame and the current frame.
 	*/
-	enum SL_VISUAL_ODOMETRY_TRACKING_STATUS visual_odometry_tracking_status;
+	enum SL_ODOMETRY_STATUS odometry_status;
 	/**
 	@brief  Represents the current state of camera tracking in the global map.
 	*/
-	enum SL_MAP_TRACKING_STATUS map_tracking_status;
-	/**
-	@brief  Represents the current state of IMU fusion.
-	*/
-	enum SL_IMU_FUSION_STATUS imu_fusion_status;
+	enum SL_SPATIAL_MEMORY_STATUS spatial_memory_status;
 	/**
 	@brief  Represents the current state of GNSS.
 	*/
 	enum SL_GNSS_STATUS gnss_status;
 	/**
+	@brief  Represents the current mode of GNSS.
+	 */
+	enum SL_GNSS_MODE gnss_mode;
+	/**
 	@brief  Represents the current state of GNSS fusion for global localization.
 	*/
 	enum SL_GNSS_FUSION_STATUS gnss_fusion_status;
+	/**
+	@brief  Represents the current state of positional tracking fusion.
+	 */
+	enum SL_POSITIONAL_TRACKING_FUSION_STATUS tracking_fusion_status;
 };
 
 struct  SL_CommunicationParameters
