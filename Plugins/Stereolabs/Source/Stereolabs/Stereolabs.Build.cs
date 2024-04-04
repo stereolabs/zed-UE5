@@ -102,8 +102,8 @@ public class Stereolabs : ModuleRules
             // Check SDK version
             string DefinesHeaderFilePath = Path.Combine(DirPath, "include\\sl\\Camera.hpp");
             string Major = "4";
-            string Minor = "0";
-            string Patch = "8";
+            string Minor = "1";
+            //string Patch = "0";
 
             // Find SDK major and minor version and compare
             foreach (var line in File.ReadLines(DefinesHeaderFilePath))
@@ -130,7 +130,7 @@ public class Stereolabs : ModuleRules
                             throw new BuildException(Err);
                         }
                     }
-                    else if (line.Contains("#define ZED_SDK_PATCH_VERSION"))
+                    /*else if (line.Contains("#define ZED_SDK_PATCH_VERSION"))
                     {
                         string SDKPatch = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2];
                         if (!SDKPatch.Equals(Patch))
@@ -141,7 +141,7 @@ public class Stereolabs : ModuleRules
                         }
 
                         break;
-                    }
+                    }*/
                 }
             }
 

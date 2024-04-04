@@ -245,7 +245,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.camera_disable_self_calib = InitParameters.bDisableSelfCalibration;
 	sl_init_parameters.camera_fps = InitParameters.FPS;
 	sl_init_parameters.camera_image_flip = (SL_FLIP_MODE)InitParameters.VerticalFlipImage;
-	sl_init_parameters.resolution = (SL_RESOLUTION)InitParameters.Resolution;
+	sl_init_parameters.resolution = sl::unreal::ToSlType2(InitParameters.Resolution);
 	sl_init_parameters.coordinate_system = SL_COORDINATE_SYSTEM_LEFT_HANDED_Z_UP;
 	sl_init_parameters.coordinate_unit = SL_UNIT_CENTIMETER;
 	sl_init_parameters.depth_minimum_distance = InitParameters.DepthMinimumDistance;
@@ -570,25 +570,47 @@ ESlTrackingState USlCameraProxy::GetPosition(FSlPose& Pose, ESlReferenceFrame Re
 	SL_SCOPE_UNLOCK
 }
 
-ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat)
+ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat, TSet<ESlModule> module)
 {
-	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_set_region_of_interest(CameraID, Mat.Mat);
+	TArray<bool> modules_array;
+	modules_array.Init(false, SL_MODULE_LAST);
+
+	for (int i = 0; i < SL_MODULE_ALL; i++)
+	{
+		if (module.Contains((ESlModule)i))
+		{
+			modules_array[i] = true;
+		}
+	}
+
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_set_region_of_interest(CameraID, Mat.Mat, modules_array.GetData());
 	return sl::unreal::ToUnrealType(err);
 }
 
-ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution)
+ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolution, ESlModule module)
 {
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(resolution.X, resolution.Y, SL_MAT_TYPE_U8_C1, SL_MEM_CPU);
 	}
-	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_get_region_of_interest(CameraID, Mat.Mat, resolution.X, resolution.Y);
+	SL_ERROR_CODE err = (SL_ERROR_CODE)sl_get_region_of_interest(CameraID, Mat.Mat, resolution.X, resolution.Y, (SL_MODULE)module);
 	return sl::unreal::ToUnrealType(err);
 }
 
 ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams)
 {
 	SL_RegionOfInterestParameters params;
-	params.auto_apply = roiParams.bAutoApply;
+
+	TArray<bool> modules_array;
+	modules_array.Init(false, SL_MODULE_LAST);
+
+	for (int i = 0; i < SL_MODULE_ALL; i++)
+	{
+		if (roiParams.autoApplyModule.Contains((ESlModule)i))
+		{
+			params.auto_apply_module[i] = true;
+		}
+	}
+
 	params.depth_far_threshold_meters = roiParams.depthFarThresholdMeters;
 	params.image_height_ratio_cutoff = roiParams.imageHeightRatioCutoff;
 
@@ -724,6 +746,11 @@ SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose
 	}
 	else
 		return SL_POSITIONAL_TRACKING_STATE_OFF;
+}
+
+SL_PositionalTrackingStatus* USlCameraProxy::GetPositionalTrackingStatus()
+{
+	return sl_get_positional_tracking_status(CameraID);
 }
 
 SL_ERROR_CODE USlCameraProxy::GetCameraIMURotationAtImage(sl::Rotation& pose)
@@ -1759,6 +1786,63 @@ void USlCameraProxy::DisableSVORecording()
 		SL_SCOPE_UNLOCK
 	SL_SCOPE_UNLOCK
 }
+
+int USlCameraProxy::IngestDataIntoSVO(const FSlSVOData& svoData)
+{
+	SL_ERROR_CODE err;
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		auto SvoData = sl::unreal::ToSlType(svoData);
+		err = sl_ingest_data_into_svo(CameraID, &SvoData);
+	SL_SCOPE_UNLOCK
+
+	if (err != SL_ERROR_CODE::SL_ERROR_CODE_SUCCESS) {
+		SL_CAMERA_PROXY_LOG_E("IngestDataIntoSVO: Error:\"%s\"", *EnumToString(sl::unreal::ToUnrealType(err)));
+	}
+
+	return (int)err;
+}
+
+int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resSVOData, FString ts_nano_begin, FString ts_nano_end)
+{
+	SL_ERROR_CODE err = SL_ERROR_CODE_FAILURE;
+	uint64 tsb = FCString::Strtoui64(*ts_nano_begin, NULL, 10);
+	uint64 tse = FCString::Strtoui64(*ts_nano_end, NULL, 10);
+	auto ckey = std::make_unique<char[]>(128);
+
+	strcpy(ckey.get(), TCHAR_TO_ANSI(*key));
+
+	resSVOData.Empty();
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		int nb_data = sl_get_svo_data_size(CameraID, ckey.get(), tsb, tse);
+		if (nb_data > 0) {
+			auto cdata = std::make_unique<SL_SVOData[]>(nb_data);
+			err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata.get(), tsb, tse);
+			for (int i = 0; i < nb_data; ++i) {
+				resSVOData.Add(sl::unreal::ToUnrealType(cdata[i]));
+			}
+		}
+	SL_SCOPE_UNLOCK
+
+	return (int)err;
+}
+
+TArray<FString> USlCameraProxy::GetSVODataKeys()
+{
+	TArray<FString> res;
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		int nbkeys = sl_get_svo_data_keys_size(CameraID);
+		auto cdata = std::make_unique<char*[]>(nbkeys);
+		sl_get_svo_data_keys(CameraID, nbkeys, cdata.get());
+		for (int i = 0; i < nbkeys; ++i) {
+			res.Add(FString(cdata[i]));
+		}
+	SL_SCOPE_UNLOCK
+
+	return res;
+}
+
 
 void USlCameraProxy::SetSVOPlaybackPosition(int Position)
 {

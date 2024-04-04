@@ -454,6 +454,7 @@ enum SL_ERROR_CODE {
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA, /**< The module you try to use is not compatible with your camera \ref SL_MODEL. \note \ref SL_MODEL_ZED does not has an IMU and does not support the AI modules.*/
 	SL_ERROR_CODE_MOTION_SENSORS_REQUIRED, /**< The module needs the sensors to be enabled (see SL_InitParameters.sensors_required). */
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION, /**< The module needs a newer version of CUDA. */
+	SL_ERROR_CODE_SENSORS_DATA_REQUIRED /**< The input data does not contains the high frequency sensors data, this is usually because it requires newer SVO/Streaming. In order to work this modules needs inertial data present in it input.*/
 };
 
 /**
@@ -463,6 +464,7 @@ enum SL_ERROR_CODE {
 \warning You can find the available resolutions for each camera in <a href="https://www.stereolabs.com/docs/video/camera-controls#selecting-a-resolution">our documentation</a>.
  */
 enum SL_RESOLUTION {
+	SL_RESOLUTION_HD4K, /**< 3856x2180 for imx678 mono*/
 	SL_RESOLUTION_HD2K, /**< 2208*1242 (x2) \n Available FPS: 15*/
 	SL_RESOLUTION_HD1080, /**< 1920*1080 (x2) \n Available FPS: 15, 30*/
 	SL_RESOLUTION_HD1200, /**< 1920*1200 (x2) \n Available FPS: 15, 30, 60*/
@@ -486,7 +488,7 @@ enum SL_UNIT {
 /**
 \brief Lists available coordinates systems for positional tracking and 3D measures.
 
-\image html CoordinateSystem.png
+\image html CoordinateSystem.webp
  */
 enum SL_COORDINATE_SYSTEM {
 	SL_COORDINATE_SYSTEM_IMAGE, /**< Standard coordinates system in computer vision.\n Used in OpenCV: see <a href="http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html">here</a>. */
@@ -514,7 +516,10 @@ enum SL_MODEL {
 	SL_MODEL_ZED2, /**< ZED 2 camera model */
 	SL_MODEL_ZED2i, /**< ZED 2i camera model */
 	SL_MODEL_ZED_X, /**< ZED X camera model */
-	SL_MODEL_ZED_XM /**< ZED X Mini (ZED XM) camera model */
+	SL_MODEL_ZED_XM, /**< ZED X Mini (ZED XM) camera model */
+	SL_MODEL_VIRTUAL_ZED_X = 10, /**< Virtual ZED-X generated from 2 ZED-XOne */
+	SL_MODEL_ZED_XONE_GS = 30, /**< ZED XOne with global shutter AR0234 sensor */
+	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED XOne with 4K rolling shutter IMX678 sensor */
 };
 
 /**
@@ -686,19 +691,72 @@ enum SL_OBJECT_TRACKING_STATE
 \brief Lists the different states of positional tracking.
  */
 enum SL_POSITIONAL_TRACKING_STATE {
-	SL_POSITIONAL_TRACKING_STATE_SEARCHING, /**< The camera is searching for a previously known position to locate itself.*/
+	SL_POSITIONAL_TRACKING_STATE_SEARCHING, /**< \warn DEPRECATED: This state is no longer in use.*/
 	SL_POSITIONAL_TRACKING_STATE_OK, /**< The positional tracking is working normally.*/
 	SL_POSITIONAL_TRACKING_STATE_OFF, /**< The positional tracking is not enabled.*/
 	SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW, /**< The effective FPS is too low to give proper results for motion tracking.\n Consider using performance parameters (\ref SL_DEPTH_MODE_PERFORMANCE, low camera resolution (\ref SL_RESOLUTION_VGA / \ref SL_RESOLUTION_SVGA or \ref SL_RESOLUTION_HD720).*/
 	SL_POSITIONAL_TRACKING_STATE_SEARCHING_FLOOR_PLANE, /**< The camera is searching for the floor plane to locate itself with respect to it.\n The \ref SL_REFERENCE_FRAME_WORLD will be set afterward.*/
+	SL_POSITIONAL_TRACKING_STATE_NOT_OK, /**< The tracking module was unable to perform tracking from the previous frame to the current frame. */
+};
+
+/**
+\brief Report the status of current odom tracking.
+ */
+enum SL_ODOMETRY_STATUS
+{
+	SL_ODOMETRY_STATUS_OK,			/**< The positional tracking module successfully tracked from the previous frame to the current frame. */
+	SL_ODOMETRY_STATUS_UNAVAILABLE	/**< The positional tracking module failed to track from the previous frame to the current frame. */
+};
+
+/**
+\brief Report the status of current map tracking.
+ */
+enum SL_SPATIAL_MEMORY_STATUS {
+	SL_MAP_TRACKING_STATUS_OK = 0,              /**< The positional tracking module is operating normally. */
+	SL_MAP_TRACKING_STATUS_LOOP_CLOSED = 1,     /**< The positional tracking module detected a loop and corrected its position. */
+	SL_MAP_TRACKING_STATUS_SEARCHING = 2,       /**< The positional tracking module is searching for recognizable areas in the global map to relocate. */
+	SL_MAP_TRACKING_STATUS_OFF = 3				/**< Spatial memory is disabled */
 };
 
 /**
 \brief Lists the mode of positional tracking that can be used.
 */
 enum SL_POSITIONAL_TRACKING_MODE {
-	SL_POSITIONAL_TRACKING_MODE_STANDARD, /**< Default mode. Best compromise in performance and accuracy. */
-	SL_POSITIONAL_TRACKING_MODE_QUALITY, /**< Improve accuracy in more challenging scenes such as outdoor repetitive patterns like extensive fields.\n Currently works best with \ref SL_DEPTH_MODE_ULTRA and requires more compute power. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_1, /**< Default mode. Best compromise in performance and accuracy. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_2, /**< Next generation of positional tracking, allow better accuracy. */
+};
+
+/**
+\brief Report the status of the positional tracking fusion.
+ */
+enum SL_POSITIONAL_TRACKING_FUSION_STATUS {
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL = 0,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL = 1,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_INERTIAL = 2,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_GNSS = 3,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL_GNSS = 4,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_GNSS = 5,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_INTERTIAL_GNSS = 6,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_UNAVAILABLE = 7
+};
+
+/**
+\brief Lists the different status of positional tracking.
+ */
+struct SL_PositionalTrackingStatus
+{
+	/**
+	@brief  Represents the current state of Visual-Inertial Odometry (VIO) tracking between the previous frame and the current frame.
+	*/
+	enum SL_ODOMETRY_STATUS odometry_status;
+	/**
+	@brief  Represents the current state of camera tracking in the global map.
+	*/
+	enum SL_SPATIAL_MEMORY_STATUS spatial_memory_status;
+	/**
+	@brief  Represents the current state of positional tracking fusion.
+	*/
+	enum SL_POSITIONAL_TRACKING_FUSION_STATUS tracking_fusion_status;
 };
 
 /**
@@ -769,9 +827,9 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NONE, /** No depth map computation.\n Only rectified stereo images will be available.*/
 	SL_DEPTH_MODE_PERFORMANCE, /** Computation mode optimized for speed.*/
 	SL_DEPTH_MODE_QUALITY, /**< Computation mode designed for challenging areas with untextured surfaces.*/
-	//SL_DEPTH_MODE_NEURAL_FAST, /**< End to End Neural disparity estimation, requires AI module */
 	SL_DEPTH_MODE_ULTRA, /**< Computation mode that favors edges and sharpness.\n Requires more GPU memory and computation power.*/
-	SL_DEPTH_MODE_NEURAL /**< End to End Neural disparity estimation.\n Requires AI module. */
+	SL_DEPTH_MODE_NEURAL, /**< End to End Neural disparity estimation.\n Requires AI module. */
+	SL_DEPTH_MODE_NEURAL_PLUS /**< More accurate Neural disparity estimation.\n Requires AI module. */
 };
 
 /**
@@ -910,6 +968,7 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION, /**< Related to \ref SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE*/
 	SL_AI_MODELS_REID_ASSOCIATION, /**< Related to \ref SL_BatchParameters.enable*/
 	SL_AI_MODELS_NEURAL_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL*/
+	SL_AI_MODELS_NEURAL_PLUS_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_PLUS*/
 	SL_AI_MODELS_LAST
 };
 
@@ -1173,6 +1232,16 @@ enum SL_BODY_70_PARTS
 };
 #endif
 
+enum SL_MODULE {
+	SL_MODULE_ALL = 0, /**< All modules*/
+	SL_MODULE_DEPTH = 1,
+	SL_MODULE_POSITIONAL_TRACKING = 2,
+	SL_MODULE_OBJECT_DETECTION = 3,
+	SL_MODULE_BODY_TRACKING = 4,
+	SL_MODULE_SPATIAL_MAPPING = 5,
+	SL_MODULE_LAST = 6
+};
+
 /**
 * \brief Lists the types of possible position outputs.
 */
@@ -1267,7 +1336,7 @@ struct SL_InitParameters
 	enum  SL_FLIP_MODE camera_image_flip;
 
 	/**
-	\brief Defines if a flip of the images is needed.
+	\brief Disables the self-calibration process at camera opening.
 	
 	At initialization, sl_open_camera() runs a self-calibration process that corrects small offsets from the device's factory calibration.
 	\n A drawback is that calibration parameters will slightly change from one (live) run to another, which can be an issue for repeatability.
@@ -1494,7 +1563,7 @@ struct SL_RuntimeParameters
 
 	Each depth pixel has a corresponding confidence (\ref SL_MEASURE_CONFIDENCE) in the range [1, 100].
 	\n Decreasing this value will remove depth data from both objects edges and low textured areas, to keep only confident depth estimation data.
-	\n Default: 100 (no depth pixel will be rejected)
+	\n Default: 95
 	\note Pixels with a value close to 100 are not to be trusted. Accurate depth pixels tends to be closer to lower values.
 	\note It can be seen as a probability of error, scaled to 100.
 	 */
@@ -1539,6 +1608,10 @@ struct SL_DeviceProperties {
 	 */
 	int id;
 
+	/**
+	\brief System path of the camera
+	 */
+	unsigned char path[512];
 	/**
 	\brief Model of the camera.
 	 */
@@ -1862,7 +1935,7 @@ struct SL_PositionalTrackingParameters
 	\brief Positional tracking mode used.
 	
 	Can be used to improve accuracy in some types of scene at the cost of longer runtime.
-	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_STANDARD
+	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_1
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
 
@@ -1889,11 +1962,11 @@ struct SL_RegionOfInterestParameters
 	float image_height_ratio_cutoff;
 
 	/**
-	 \brief Once computed the ROI computed will be automatically applied
+	\brief List of modules on which the ROI will be used.
 
-	 Default: Enabled
+	Default: All modules
 	 */
-	bool auto_apply;
+	bool auto_apply_module[SL_MODULE_LAST];
 };
 
 /**
@@ -2000,6 +2073,31 @@ struct SL_RecordingParameters {
 	\note \ref compression_mode, \ref target_framerate and \ref bitrate will be ignored in this mode.
 	 */
 	bool transcode_streaming_input;
+};
+
+/**
+\brief  Structure containing data that can be stored in and retrieved from SVOs.
+*		That information will be ingested with sl_ingest_data_into_svo and retrieved with sl_retrieve_svo_data
+ */
+struct SL_SVOData
+{
+	/**
+	\brief Key used to retrieve the data stored into SVOData's content.
+	 */
+	char key[128];
+	/**
+	\brief Timestamp of the data.
+	 */
+	unsigned long long timestamp_ns;
+	/**
+	\brief content stored as SVOData.
+	* Allow any type of content, including raw data like compressed images or JSON.
+	 */
+	char* content;
+	/**
+	\brief Size of the content.
+	 */
+	int content_size;
 };
 
 /**
@@ -2249,14 +2347,7 @@ struct SL_ObjectDetectionParameters
 	This is used to identify which object detection module instance is used.
 	 */
 	unsigned int instance_module_id;
-	/**
-	\brief Whether the object detection is synchronized to the image or runs in a separate thread.
 
-	If set to true, the detection is run on every \ref sl_grab().
-	\n Otherwise, the thread runs at its own speed, which can lead to new detection once in a while.
-	\n Default: true
-	*/
-	bool image_sync; // data synchronized
 	/**
 	\brief Whether the object detection system includes object tracking capabilities across a sequence of images.
 
@@ -2383,15 +2474,6 @@ struct SL_BodyTrackingParameters {
 	This is used to identify which body tracking module instance is used.
 	 */
 	unsigned int instance_module_id;
-
-	/**
-	\brief Whether the body tracking is synchronized to the image or runs in a separate thread.
-
-	If set to true, the detection is run on every \ref sl_grab().
-	\n Otherwise, the thread runs at its own speed, which can lead to new detection once in a while.
-	\n Default: true
-	*/
-	bool image_sync;
 
 	/**
 	\brief Whether the body tracking system includes body/person tracking capabilities across a sequence of images.
@@ -3133,15 +3215,15 @@ struct SL_InputType
 \brief Lists the types of error that can be raised by the Fusion.
 */
 enum SL_FUSION_ERROR_CODE {
-	SL_FUSION_ERROR_CODE_WRONG_BODY_FORMAT = -7, /**< The senders are using different body formats.\n Consider changing them. */
-	SL_FUSION_ERROR_CODE_NOT_ENABLE = -6, /**< The following module was not enabled. */
-	SL_FUSION_ERROR_CODE_INPUT_FEED_MISMATCH = -5, /**< Some sources are provided by SVO and others by LIVE stream. */
+	SL_FUSION_ERROR_CODE_BODY_FORMAT_MISMATCH = -7, /**< The senders are using different body formats.\n Consider changing them. */
+	SL_FUSION_ERROR_CODE_MODULE_NOT_ENABLED = -6, /**< The following module was not enabled. */
+	SL_FUSION_ERROR_CODE_SOURCE_MISMATCH = -5, /**< Some sources are provided by SVO and others by LIVE stream. */
 	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -4, /**< Connection timed out. Unable to reach the sender.\n Verify the sender's IP/port. */
 	SL_FUSION_ERROR_CODE_MEMORY_ALREADY_USED = -3, /**< Intra-process shared memory allocation issue.\n Multiple connections to the same data. */
-	SL_FUSION_ERROR_CODE_BAD_IP_ADDRESS = -2, /**< The provided IP address format is incorrect.\n Please provide the IP in the format 'a.b.c.d', where (a, b, c, d) are numbers between 0 and 255. */
+	SL_FUSION_ERROR_CODE_INVALID_IP_ADDRESS = -2, /**< The provided IP address format is incorrect.\n Please provide the IP in the format 'a.b.c.d', where (a, b, c, d) are numbers between 0 and 255. */
 	SL_FUSION_ERROR_CODE_FAILURE = -1, /**< Standard code for unsuccessful behavior. */
 	SL_FUSION_ERROR_CODE_SUCCESS = 0, /**< Standard code for successful behavior. */
-	SL_FUSION_ERROR_CODE_FUSION_ERRATIC_FPS = 1, /**< Significant differences observed between sender's FPS. */
+	SL_FUSION_ERROR_CODE_FUSION_INCONSISTENT_FPS = 1, /**< Significant differences observed between sender's FPS. */
 	SL_FUSION_ERROR_CODE_FUSION_FPS_TOO_LOW = 2, /**< At least one sender has an FPS lower than 10 FPS. */
 	SL_FUSION_ERROR_CODE_INVALID_TIMESTAMP = 3, /**< Problem detected with the ingested timestamp.\n Sample data will be ignored. */
 	SL_FUSION_ERROR_CODE_INVALID_COVARIANCE = 4, /**< Problem detected with the ingested covariance.\n Sample data will be ignored. */
@@ -3156,7 +3238,7 @@ enum SL_SENDER_ERROR_CODE {
 	SL_SENDER_ERROR_CODE_DISCONNECTED = -1, /**< The sender has been disconnected.*/
 	SL_SENDER_ERROR_CODE_SUCCESS = 0, /**< Standard code for successful behavior.*/
 	SL_SENDER_ERROR_CODE_GRAB_ERROR = 1, /**< The sender encountered a grab error.*/
-	SL_SENDER_ERROR_CODE_ERRATIC_FPS = 2, /**< The sender does not run with a constant frame rate.*/
+	SL_SENDER_ERROR_CODE_INCONSISTENT_FPS = 2, /**< The sender does not run with a constant frame rate.*/
 	SL_SENDER_ERROR_CODE_FPS_TOO_LOW = 3 /**< The frame rate of the sender is lower than 10 FPS.*/
 };
 
@@ -3168,6 +3250,68 @@ enum SL_COMM_TYPE
 {
 	SL_COMM_TYPE_LOCAL_NETWORK, /**< The sender and receiver are on the same local network and communicate by RTP.\n The communication can be affected by the local network load.*/
 	SL_COMM_TYPE_INTRA_PROCESS /**< Both sender and receiver are declared by the same process and can be in different threads.\n This type of communication is optimized.*/
+};
+
+/**
+ \brief Class representing the fix quality of GNSS signal.
+ */
+enum SL_GNSS_STATUS
+{
+	SL_GNSS_STATUS_UNKNOWN,     /**< No GNSS fix data is available. */
+	SL_GNSS_STATUS_SINGLE,		/**< Single Point Positioning */
+	SL_GNSS_STATUS_DGNSS,		/**< Differential GNSS */
+	SL_GNSS_STATUS_RTK_FIX,		/**< Real-Time Kinematic (RTK) GNSS fix in fixed mode. */
+	SL_GNSS_STATUS_RTK_FLOAT,	/**< Real-Time Kinematic (RTK) GNSS fix in float mode. */
+	SL_GNSS_STATUS_PPS			/**< Precise Positioning Service */
+};
+
+enum SL_GNSS_MODE
+{
+	SL_GNSS_MODE_UNKNOWN,  /**< No GNSS fix data is available. */
+	SL_GNSS_MODE_NO_FIX,   /**< No GNSS fix is available. */
+	SL_GNSS_MODE_FIX_2D,   /**< 2D GNSS fix, providing latitude and longitude coordinates but without altitude information. */
+	SL_GNSS_MODE_FIX_3D	   /**< 3D GNSS fix, providing latitude, longitude, and altitude coordinates. */
+};
+
+/**
+ \brief Class containing the current GNSS fusion status.
+ */
+enum SL_GNSS_FUSION_STATUS {
+	SL_GNSS_FUSION_STATUS_OK = 0,							/**< The GNSS fusion module is calibrated and working successfully. */
+	SL_GNSS_FUSION_STATUS_OFF = 1,							/**< The GNSS fusion module is not enabled. */
+	SL_GNSS_FUSION_STATUS_CALIBRATION_IN_PROGRESS = 2,		/**< Calibration of the GNSS/VIO fusion module is in progress. */
+	SL_GNSS_FUSION_STATUS_RECALIBRATION_IN_PROGRESS = 3		/**< Re-alignment of GNSS/VIO data is in progress, leading to potentially inaccurate global position. */
+};
+
+/**
+ \brief Class containing the overall position fusion status
+ */
+struct SL_FusedPositionalTrackingStatus
+{        
+	/**
+	@brief  Represents the current state of Visual-Inertial Odometry (VIO) tracking between the previous frame and the current frame.
+	*/
+	enum SL_ODOMETRY_STATUS odometry_status;
+	/**
+	@brief  Represents the current state of camera tracking in the global map.
+	*/
+	enum SL_SPATIAL_MEMORY_STATUS spatial_memory_status;
+	/**
+	@brief  Represents the current state of GNSS.
+	*/
+	enum SL_GNSS_STATUS gnss_status;
+	/**
+	@brief  Represents the current mode of GNSS.
+	 */
+	enum SL_GNSS_MODE gnss_mode;
+	/**
+	@brief  Represents the current state of GNSS fusion for global localization.
+	*/
+	enum SL_GNSS_FUSION_STATUS gnss_fusion_status;
+	/**
+	@brief  Represents the current state of positional tracking fusion.
+	 */
+	enum SL_POSITIONAL_TRACKING_FUSION_STATUS tracking_fusion_status;
 };
 
 struct  SL_CommunicationParameters
@@ -3319,31 +3463,32 @@ struct SL_CameraMetrics
 
 	/**
 	 * \brief Latency (in seconds) of the received data.
-	 * 
+	 * Timestamp difference between the time when the data are sent and the time they are received (mostly introduced when using the local network workflow).
 	 */
 	float received_latency;
 
 	/**
 	 * \brief Latency (in seconds) after Fusion synchronization.
-	 * 
+	 * Difference between the timestamp of the data received and the timestamp at the end of the Fusion synchronization.
 	 */
 	float synced_latency;
 
 	/**
-	 * \brief If no data present is set to false.
+	 * \brief Is set to false if no data in this batch of metrics.
 	 * 
 	 */
 	bool is_present;
 
 	/**
-	 * \brief Gives the percent of detection par image during the last second in %, a low value means few detections occurs lately.
-	 * 
+	 * \brief Skeleton detection percent during the last second.
+	 * Number of frames with at least one detection / number of frames, over the last second.
+	 * A low value means few detections occured lately for this sender.
 	 */
 	float ratio_detection;
 
 	/**
-	 * \brief Average time difference for the current fused data.
-	 * 
+	 * \brief Average data acquisition timestamp difference.
+	 * Average standard deviation of sender's period since the start.
 	 */
 	float delta_ts;
 };
@@ -3375,16 +3520,6 @@ struct SL_FusionMetrics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// GNSS API //////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/**
-\brief Lists the different states of the GNSS calibration.
-*/
-enum SL_GNSS_CALIBRATION_STATE {
-	SL_GNSS_CALIBRATION_STATE_NOT_CALIBRATED = 0, /**< The GNSS/VIO calibration has not been completed yet.\n Please continue moving the robot while ingesting GNSS data to perform the calibration.*/
-	SL_GNSS_CALIBRATION_STATE_CALIBRATED = 1, /**< The GNSS/VIO calibration is completed.*/
-	SL_GNSS_CALIBRATION_STATE_RE_CALIBRATION_IN_PROGRESS = 2 /**< A GNSS/VIO re-calibration is in progress in the background.\n Current geo-tracking services may not be accurate.*/
-};
-
 
 /**
 \brief Structure containing GNSS data to be used for positional tracking as prior.
@@ -3594,6 +3729,11 @@ struct SL_GNSSCalibrationParameters {
 	 * Default: true
 	 */
 	bool enable_rolling_calibration;
+	/**
+	 \ brief Define a transform between the GNSS antenna and the camera system for the VIO / GNSS calibration.
+	 * Default value is [0,0,0], this position can be refined by the calibration if enabled
+	 */
+	struct SL_Vector3 gnss_antenna_position;
 };
 
 /**

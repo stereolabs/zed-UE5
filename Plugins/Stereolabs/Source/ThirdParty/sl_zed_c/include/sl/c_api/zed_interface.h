@@ -141,19 +141,21 @@ extern "C" {
     \brief Defines a region of interest to focus on for all the SDK, discarding other parts.
     \param camera_id : Id of the camera instance.
     \param roi_mask : The matrix defining the requested region of interest, pixels lower than 127 will be discarded from all modules: depth, positional tracking, etc. If empty, set all pixels as valid. The mask can be either at lower or higher resolution than the current images.
+    \param module: Apply the ROI to a list of SDK module, all by default.
     \return An \ref SL_ERROR_CODE if something went wrong.
     \note The function support \ref SL_MAT_TYPE "SL_MAT_TYPE_U8_C1" / \ref SL_MAT_TYPE "SL_MAT_TYPE_UU8_C3" / \ref SL_MAT_TYPE "SL_MAT_TYPE_UU8_C4" images type.
      */
-    INTERFACE_API int sl_set_region_of_interest(int camera_id, void* roi_mask);
+    INTERFACE_API int sl_set_region_of_interest(int camera_id, void* roi_mask, bool module[SL_MODULE_LAST]);
 
     /**
-    \brief Get the previously set or computed region of interest
+    \brief Get the previously set or computed region of interest.
     \param camera_id : Id of the camera instance.
-    \param roi_mask: The \ref Mat returned
-    \param image_size: The optional size of the returned mask
+    \param roi_mask: The \ref Mat returned.
+    \param image_size: The optional size of the returned mask.
+    \param module: Specify which module to get the ROI.
     \return An \ref SL_ERROR_CODE if something went wrong.
      */
-    INTERFACE_API int sl_get_region_of_interest(int camera_id, void* roi_mask, int width, int height);
+    INTERFACE_API int sl_get_region_of_interest(int camera_id, void* roi_mask, int width, int height, enum SL_MODULE module);
     /**
     \brief Start the auto detection of a region of interest to focus on for all the SDK, discarding other parts.
     This detection is based on the general motion of the camera combined with the motion in the scene.
@@ -257,6 +259,62 @@ extern "C" {
     INTERFACE_API void sl_pause_recording(int camera_id, bool status);
 
     /**
+    \brief Ingests SL_SVOData in a SVO file.
+    \param camera_id : Id of the camera instance.
+    \param data : Data to ingest in the SVO file.
+    \return sl_ERROR_CODE_SUCCESS in case of success, sl_ERROR_CODE_FAILURE otherwise.
+
+    \note The method works only if the camera is recording.
+     */
+    INTERFACE_API enum SL_ERROR_CODE sl_ingest_data_into_svo(int camera_id, struct SL_SVOData* data);
+
+    /**
+    \brief Gets the size of data available for a given key.
+    Must be called before sl_retrieve_svo_data to initialize the array at the correct size.
+    \param camera_id : Id of the camera instance.
+    \param key : The key of the SVOData that is going to be retrieved.
+    \param ts_begin : The beginning of the range.
+    \param ts_end : The end of the range.
+    \return The number of data available for this key.
+
+    \note The method will always return -1 if not in SVO mode.
+     */
+    INTERFACE_API int sl_get_svo_data_size(int camera_id, char key[128], unsigned long long ts_begin, unsigned long long ts_end);
+
+    /**
+    \brief Retrieves SVOData from an SVO file.
+    The user is reponsible for correctly allocating the size of the data array using sl_get_svo_data_size.
+    \param camera_id : Id of the camera instance.
+    \param nb_data : Size of the array of data.
+    \param data : The map to be filled with SVOData objects, with timestamps as keys.
+    \param ts_begin : The beginning of the range.
+    \param ts_end : The end of the range.
+    \return sl_ERROR_CODE_SUCCESS in case of success, sl_ERROR_CODE_FAILURE otherwise.
+    \note The method will return sl_ERROR_CODE_FAILURE if not in SVO mode.
+    \warning You need to call sl_get_svo_data_size for the key before calling this method to correctly retrieve the data.
+     */
+    INTERFACE_API enum SL_ERROR_CODE sl_retrieve_svo_data(int camera_id, char key[128], int nb_data, struct SL_SVOData* data, unsigned long long ts_begin, unsigned long long ts_end);
+
+    /**
+    \brief Gets the number of external channels that can be retrieved from the SVO file.
+    \param camera_id : Id of the camera instance.
+    \return the number of keys available.
+    \note The method will return 0 if not in SVO mode.
+     */
+    INTERFACE_API int sl_get_svo_data_keys_size(int camera_id);
+
+    /**
+    \brief Gets the external channels that can be retrieved from the SVO file.
+    The user is reponsible for correctly allocating the size of the keys array using sl_get_svo_data_keys_size.
+    \param camera_id : Id of the camera instance.
+    \param nb_keys : number of keys.
+    \param [Out] keys : List of available keys.
+
+    \note The method will not fill the keys array if not in SVO mode.
+     */
+    INTERFACE_API void sl_get_svo_data_keys(int camera_id, int nb_keys, char* keys[128]);
+
+    /**
     \brief Initializes and starts the positional tracking processes.
 
     This function allows you to enable the position estimation of the SDK.
@@ -352,7 +410,7 @@ extern "C" {
     /**
     \brief Gets the current confidence threshold value for the disparity map (and by extension the depth map).
     \param camera_id : id of the camera instance.
-    \return The confidence threshold.
+    \return The confidence threshold. -1 if failure.
      */
     INTERFACE_API int sl_get_confidence_threshold(int camera_id);
 
@@ -544,14 +602,14 @@ extern "C" {
     /**
     \brief Gets the depth min value from InitParameters (see \ref SL_InitParameters::depth_minimum_distance).
     \param camera_id : id of the camera instance.
-    \return The min depth value available.
+    \return The min depth value available. -1 if failure.
      */
     INTERFACE_API float sl_get_depth_min_range_value(int camera_id);
 
     /**
     \brief Gets the depth max value from InitParameters (see \ref SL_InitParameters::depth_maximum_distance).
     \param camera_id : id of the camera instance.
-    \return The max depth value available.
+    \return The max depth value available. -1 if failure.
      */
     INTERFACE_API float sl_get_depth_max_range_value(int camera_id);
 
@@ -663,6 +721,12 @@ extern "C" {
     \return The Positional tracking state.
      */
     INTERFACE_API int sl_get_position_array(int camera_id, float* pose, enum SL_REFERENCE_FRAME reference_frame);
+
+    /**
+     \brief Return the current status of positional tracking module.
+     \return SL_POSITIONAL_TRACKING_STATUS current status of positional tracking module.
+     */
+    INTERFACE_API struct SL_PositionalTrackingStatus* sl_get_positional_tracking_status(int camera_id);
 
     /**
     \brief Resets the tracking, and re-initializes the position with the given pose.
@@ -1214,19 +1278,7 @@ extern "C" {
      */
     INTERFACE_API struct SL_ObjectDetectionParameters* sl_get_object_detection_parameters(int camera_id);
 
-    /**
-    \brief Pauses or resumes the object detection processes.
 
-    If the object detection has been enabled with  \ref SL_ObjectDetectionParameters::image_sync set to false (running asynchronously), this function will pause processing.
-
-    While in pause, calling this function with <i>status = false</i> will resume the object detection.
-    The \ref retrieveObjects function will keep on returning the last objects detected while in pause.
-
-    \param camera_id : Id of the camera instance.
-    \param status : If true, object detection is paused. If false, object detection is resumed.
-    \param instance_id : Id of the instance to pause/resume. Used when multiple instances of the object detection module are enabled at the same time.
-     */
-    INTERFACE_API void sl_pause_object_detection(int camera_id, bool status, unsigned int instance_id);
     /**
     \brief Disables the Object Detection process.
 
@@ -1270,19 +1322,6 @@ extern "C" {
      */
     INTERFACE_API struct SL_BodyTrackingParameters* sl_get_body_tracking_parameters(int camera_id);
 
-    /**
-    \brief Pauses or resumes the body tracking processes.
-
-    If the body tracking has been enabled with  \ref SL_BodyTrackingParameters::image_sync set to false (running asynchronously), this function will pause processing.
-
-    While in pause, calling this function with <i>status = false</i> will resume the body tracking.
-    \note The \ref sl_retrieve_bodies function will keep on returning the last bodies detected while in pause.
-
-    \param camera_id : Id of the camera instance.
-    \param status : If true, body tracking is paused. If false, body tracking is resumed.
-    \param instance_id : Id of the instance to pause/resume. Used when multiple instances of the body tracking module are enabled at the same time.
-     */
-    INTERFACE_API void sl_pause_body_tracking(int camera_id, bool status, unsigned int instance_id);
     /**
     \brief Disables the body tracking process.
 
@@ -1523,6 +1562,13 @@ extern "C" {
     INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_UNIT unit,
                                                            struct SL_CameraIdentifier* uuid, enum SL_POSITION_TYPE retrieve_type);
 
+
+    /**
+     * @brief Get the current status of fused position.
+     * \return SL_FusedPositionalTrackingStatus is the current status of the tracking process.
+     */
+    INTERFACE_API struct SL_FusedPositionalTrackingStatus* sl_fusion_get_fused_positional_tracking_status();
+
     /**
      * \brief disable the positional tracking
      */
@@ -1551,26 +1597,26 @@ extern "C" {
      * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
+     * \return SL_GNSS_FUSION_STATUS is the current state of the tracking process
      */
-    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
+    INTERFACE_API enum SL_GNSS_FUSION_STATUS sl_fusion_get_geo_pose(struct SL_GeoPose* pose, bool radian);
 
     /**
      * \brief Convert latitude / longitude into position in sl::Fusion coordinate system.
      * \param in: the current GeoPose
      * \param out [out]: the current Pose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
+     * \return SL_GNSS_FUSION_STATUS is the current state of the tracking process
      */
-    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
+    INTERFACE_API enum SL_GNSS_FUSION_STATUS sl_fusion_geo_to_camera(struct SL_LatLng* in, struct SL_PoseData* out, bool radian);
 
     /**
      * \brief returns the current GeoPose
      * \param pose [out]: the current GeoPose
      * \param radian [in] : true if the geopose is set in radian.
-     * \return GNSS_CALIBRATION_STATE is the current state of the tracking process
+     * \return SL_GNSS_FUSION_STATUS is the current state of the tracking process
      */
-    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
+    INTERFACE_API enum SL_GNSS_FUSION_STATUS sl_fusion_camera_to_geo(struct SL_PoseData* in, struct SL_GeoPose* out, bool radian);
 
     /**
      * @brief returns the current timestamp
@@ -1583,9 +1629,9 @@ extern "C" {
      *
      * @param yaw_std [out] yaw uncertainty
      * @param x_std [out] position uncertainty
-     * \return sl_GNSS_CALIBRATION_STATE representing current initialisation status
+     * \return SL_GNSS_FUSION_STATUS representing current initialisation status
      */
-    INTERFACE_API enum SL_GNSS_CALIBRATION_STATE sl_fusion_get_current_gnss_calibration_std(float* yaw_std, struct SL_Vector3* position_std);
+    INTERFACE_API enum SL_GNSS_FUSION_STATUS sl_fusion_get_current_gnss_calibration_std(float* yaw_std, struct SL_Vector3* position_std);
 
     /**
      * \brief Get the calibration found between VIO and GNSS

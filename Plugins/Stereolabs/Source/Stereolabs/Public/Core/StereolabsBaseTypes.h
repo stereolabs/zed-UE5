@@ -163,9 +163,9 @@ enum class ESlDepthMode : uint8
 	DM_None				     UMETA(DisplayName = "None"),
 	DM_Performance			 UMETA(DisplayName = "Performance"),
 	DM_Quality		     	 UMETA(DisplayName = "Quality"),
-	//DM_NeuralFast			 UMETA(DisplayName = "NeuralFast"),
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
-	DM_Neural				 UMETA(DisplayName = "Neural")
+	DM_Neural				 UMETA(DisplayName = "Neural"),
+	DM_NeuralPlus			 UMETA(DisplayName = "Neural+")
 };
 
 /*
@@ -544,6 +544,20 @@ enum class ESlPositionalTrackingMode : uint8
 	PTM_Quality			UMETA(DisplayName = "Quality")
 };
 
+/*
+* Lists available modules.
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlModule : uint8
+{
+	M_All					UMETA(DisplayName = "All"),
+	M_Depth					UMETA(DisplayName = "Depth"),
+	M_PositionalTracking	UMETA(DisplayName = "Positional Tracking"),
+	M_ObjectDetection		UMETA(DisplayName = "Object Detection"),
+	M_BodyTracking			UMETA(DisplayName = "Body Tracking"),
+	M_SpatialMapping		UMETA(DisplayName = "Spatial Mapping")
+};
+
 /**
 \brief Lists the different states of region of interest auto detection.
  */
@@ -623,13 +637,11 @@ enum class ESlAIModels : uint8
 	AIM_HumanBody38FastDetection		UMETA(DisplayName = "Human body 38 fast Detection"),
 	AIM_HumanBody38MediumDetection		UMETA(DisplayName = "Human body 38 medium Detection"),
 	AIM_HumanBody38AccurateDetection	UMETA(DisplayName = "Human body 38 accurate Detection"),
-	//AIM_HumanBody70FastDetection		UMETA(DisplayName = "Human body 70 fast Detection"),
-	//AIM_HumanBody70MediumDetection		UMETA(DisplayName = "Human body 70 medium Detection"),
-	//AIM_HumanBody70AccurateDetection	UMETA(DisplayName = "Human body 70 accurate Detection"),
 	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
+	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth")
 };
 
 /*
@@ -640,8 +652,7 @@ enum class ESlBodyFormat : uint8
 {
 	BF_BODY_18    UMETA(DisplayName = "Body 18"),
 	BF_BODY_34    UMETA(DisplayName = "Body 34"),
-	BF_BODY_38    UMETA(DisplayName = "Body 38"),
-//	BF_BODY_70	  UMETA(DisplayName = "Body 70")
+	BF_BODY_38    UMETA(DisplayName = "Body 38")
 };
 
 /*
@@ -651,8 +662,7 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlBodyKeypointsSelection : uint8
 {
 	BKS_FULL          UMETA(DisplayName = "Full"),
-	BKS_UPPER_BODY	  UMETA(DisplayName = "Upper body"),
-	//BKS_HAND	      UMETA(DisplayName = "Hand"),
+	BKS_UPPER_BODY	  UMETA(DisplayName = "Upper body")
 };
 
 /*
@@ -1775,7 +1785,7 @@ struct STEREOLABS_API FSlRuntimeParameters
 		:
 		bEnableDepth(true),
 		bEnableFillMode(false),
-		ConfidenceThreshold(100),
+		ConfidenceThreshold(95),
 		TextureConfidenceThreshold(100),
 		ReferenceFrame(ESlReferenceFrame::RF_World),
 		bRemoveSaturatedAreas(true)
@@ -2291,7 +2301,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 	:
 		depthFarThresholdMeters(2.5f),
 		imageHeightRatioCutoff(0.5f),
-		bAutoApply(false)
+		autoApplyModule({ESlModule::M_All })
 	{}
 
 	/**
@@ -2313,7 +2323,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: Enabled
 	 */
-	bool bAutoApply = true;
+	TSet<ESlModule> autoApplyModule;
 };
 
 /*
@@ -2927,11 +2937,6 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	GENERATED_BODY()
 
 	const TCHAR* Section = TEXT("ObjectDetection");
-
-	/* Defines if the object detection is synchronized to the image or runs in a separate thread.	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bImageSync;
-
 	/* Defines if the object detection will track objects across images flow.	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnableTracking;
@@ -2974,7 +2979,6 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	bool bAllowReducedPrecisionInference;
 
 	FSlObjectDetectionParameters() :
-		bImageSync(true),
 		bEnableTracking(true),
 		bEnableSegmentation(false),
 		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxFast),
@@ -3172,11 +3176,6 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 	GENERATED_BODY()
 
 	const TCHAR* Section = TEXT("BodyTracking");
-
-	/* Defines if the object detection is synchronized to the image or runs in a separate thread.	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bImageSync;
-
 	/* Defines if the object detection will track objects across images flow.	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnableTracking;
@@ -3222,7 +3221,6 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 	bool bAllowReducedPrecisionInference;
 
 	FSlBodyTrackingParameters() :
-		bImageSync(true),
 		bEnableTracking(true),
 		bEnableSegmentation(false),
 		DetectionModel(ESlBodyTrackingModel::BTM_HumanBodyMedium),
@@ -3423,6 +3421,40 @@ struct STEREOLABS_API FSlBodies
 		bIsTracked(false)
 	{}
 };
+
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlSVOData
+{
+	GENERATED_BODY()
+
+	/// <summary>
+	/// Key used to retrieve the data stored into SVOData's content.
+	/// WARNING: Length must not exceed 128.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Key = "";
+
+	/// <summary>
+	/// Timestamp of the data, in nanoseconds, as a string.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString TimestampNano = "0";
+
+	/// <summary>
+	/// Content stored as SVOData.
+	/// Allow any type of content, including raw data like compressed images or JSON.
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Content = "";
+
+	FSlSVOData()
+		:
+		Key(""),
+		TimestampNano(""),
+		Content("")
+	{}
+};
+
 
 /*
  * Rendering parameters
