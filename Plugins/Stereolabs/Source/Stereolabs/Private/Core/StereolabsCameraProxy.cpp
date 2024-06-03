@@ -205,7 +205,11 @@ void USlCameraProxy::BeginDestroy()
 		BodyTrackingWorker = nullptr;
 	}
 
-	CloseCamera();
+	if (GSlCameraProxy && GSlCameraProxy->IsCameraOpened())
+	{
+		CloseCamera();
+	}
+	
 	Super::BeginDestroy();
 }
 
