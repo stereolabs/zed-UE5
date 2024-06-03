@@ -540,8 +540,8 @@ enum class ESlSelfCalibrationState : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlPositionalTrackingMode : uint8
 {
-	PTM_Standard		UMETA(DisplayName = "Standard"),
-	PTM_Quality			UMETA(DisplayName = "Quality")
+	PTM_Gen_1		UMETA(DisplayName = "GEN 1"),
+	PTM_Gen_2			UMETA(DisplayName = "GEN 2")
 };
 
 /*
@@ -2088,7 +2088,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bSetAsStatic(false),
 		DepthMinRange(-1),
 		bSetGravityAsOrigin(true),
-		Mode(ESlPositionalTrackingMode::PTM_Standard)
+		Mode(ESlPositionalTrackingMode::PTM_Gen_1)
 	{
 	}
 
