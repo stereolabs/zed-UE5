@@ -100,7 +100,7 @@ private:
     float DurationOffsetError = 0.0f;
     long long PreviousTS_ms = 0;
 
-    float DistanceToFloorThreshold = 0.f;
+    float DistanceToFloorThreshold = 1.0f;
 
 	float AutomaticHeightOffset = 0;
 
