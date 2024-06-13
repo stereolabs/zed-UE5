@@ -148,7 +148,7 @@ void AZEDPointCloudRenderer::UpdateTextures(ESlErrorCode ErrorCode, FSlTimestamp
 	sl_mat_update_cpu_from_gpu(SignedColors);
 
 
-	AsyncTask(ENamedThreads::ActualRenderingThread, [=]() {
+	AsyncTask(ENamedThreads::ActualRenderingThread, [this]() {
 		if (VerticeTexture) VerticeTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(Vertices, SL_MEM_CPU), sl_mat_get_pixel_bytes(Vertices), (uint8*)sl_mat_get_ptr(Vertices, SL_MEM_CPU));
 		if (ColorTexture) ColorTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(SignedColors, SL_MEM_CPU), sl_mat_get_pixel_bytes(SignedColors), (uint8*)sl_mat_get_ptr(SignedColors, SL_MEM_CPU));
 	});
