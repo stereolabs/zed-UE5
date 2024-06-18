@@ -6,6 +6,7 @@
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 
 #include "RenderUtils.h"
+#include "Core/StereolabsCameraProxy.h"
 
 DEFINE_STAT(STAT_UpdateMesh)
 DEFINE_LOG_CATEGORY(SpatialMappingThread);

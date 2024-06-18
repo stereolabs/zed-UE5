@@ -1,5 +1,8 @@
 #include "ZED/Public/Core/ZEDPointCloudRenderer.h"
 
+#include "Async/Async.h"
+#include "Core/StereolabsCameraProxy.h"
+
 // Sets default values
 AZEDPointCloudRenderer::AZEDPointCloudRenderer()
 {

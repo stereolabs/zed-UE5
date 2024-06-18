@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "GameFramework/Actor.h"
 #include "Stereolabs/Public/Core/StereolabsBaseTypes.h"
 #include "ZED/Public/Core/ZEDBaseTypes.h"
 

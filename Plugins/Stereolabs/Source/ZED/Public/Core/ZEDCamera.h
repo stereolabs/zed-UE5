@@ -7,6 +7,9 @@
 #include "../../../Stereolabs/Public/Core/StereolabsTexture.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTextureBatch.h"
 #include "../../../ThirdParty/MixedReality/include/sl_mr_core/defines.hpp"
+#include "ImageUtils.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Components/SceneCaptureComponent2D.h"
 
 #include "ZEDCamera.generated.h"
 
