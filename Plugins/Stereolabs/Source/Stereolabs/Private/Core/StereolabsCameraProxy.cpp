@@ -224,7 +224,7 @@ void USlCameraProxy::OpenCamera(const FSlInitParameters& InitParameters)
 	{
 		return;
 	}
-	else if (sl_is_opened(CameraID))
+	if (sl_is_opened(CameraID))
 	{
 		AsyncTask(ENamedThreads::GameThread, [this] ()
 		{
