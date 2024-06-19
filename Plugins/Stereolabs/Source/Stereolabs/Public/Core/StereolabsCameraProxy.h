@@ -2,7 +2,9 @@
 
 #pragma once
 
+#include "Async/AsyncWork.h"
 #include "Engine/GameInstance.h"
+#include "HAL/ThreadSafeBool.h"
 
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Public/Utilities/StereolabsViewportHelper.h"

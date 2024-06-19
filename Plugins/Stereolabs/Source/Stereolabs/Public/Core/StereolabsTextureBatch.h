@@ -5,6 +5,7 @@
 #include "StereolabsCoreGlobals.h"
 #include "StereolabsTexture.h"
 #include "RHI.h"
+#include "HAL/ThreadSafeBool.h"
 
 #include "StereolabsTextureBatch.generated.h"
 

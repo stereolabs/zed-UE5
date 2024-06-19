@@ -19,6 +19,8 @@ public class MixedReality : ModuleRules
     public MixedReality(ReadOnlyTargetRules Target) : base(Target)
     {
         Type = ModuleType.External;
+        
+        PublicDependencyModuleNames.AddRange(new string[] { "Eigen" });
 
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
