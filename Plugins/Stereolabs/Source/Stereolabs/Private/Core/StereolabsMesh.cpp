@@ -2,6 +2,7 @@
 
 #include "Stereolabs/Public/Core/StereolabsMesh.h"
 #include "StereolabsPrivatePCH.h"
+#include "Core/StereolabsCameraProxy.h"
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 
 USlMesh::USlMesh()
