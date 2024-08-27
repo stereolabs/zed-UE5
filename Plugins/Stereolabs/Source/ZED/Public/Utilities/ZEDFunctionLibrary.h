@@ -13,6 +13,7 @@
 #include "ProceduralMeshComponent.h"
 #include "ProceduralMeshConversion.h"
 #include "StaticMeshDescription.h"
+#include "PhysicsEngine/BodySetup.h"
 
 #include "ZEDFunctionLibrary.generated.h"
 

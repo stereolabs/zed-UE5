@@ -3,7 +3,7 @@
 #pragma once
 
 #include "AnimGraphNode_Base.h"
-#include "AnimNode_ZEDPose.h"
+#include "Core/AnimNode_ZEDPose.h"
 #include "AnimGraphDefinitions.h"
 #include "Kismet2/BlueprintEditorUtils.h" 
 

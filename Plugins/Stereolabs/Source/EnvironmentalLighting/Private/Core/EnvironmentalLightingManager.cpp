@@ -1,6 +1,6 @@
 //======= Copyright (c) Stereolabs Corporation, All rights reserved. ===============
 
-#include "EnvironmentalLightingManager.h"
+#include "Core/EnvironmentalLightingManager.h"
 #include "EnvironmentalLightingPrivatePCH.h"
 
 #include <sl_mr_core/EnvironmentalLighting.hpp>

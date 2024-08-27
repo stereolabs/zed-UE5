@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "GameFramework/Actor.h"
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "SpatialMapping/Public/Core/SpatialMappingBaseTypes.h"
 #include "SpatialMapping/Private/Threading/SpatialMappingRunnable.h"
