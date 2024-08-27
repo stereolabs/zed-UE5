@@ -40,7 +40,7 @@ AZEDCamera::AZEDCamera()
 	DepthClampThreshold( 0.f ),
 	Batch( nullptr ),
 	ZedSourceMaterial( nullptr ),
-	CurrentDepthTextureQualityPreset( 1 ),
+	CurrentDepthTextureQualityPreset( 2 ),
 	bCurrentDepthEnabled( false ),
 	bInit( false ),
 	bShowZedImage( true ),
