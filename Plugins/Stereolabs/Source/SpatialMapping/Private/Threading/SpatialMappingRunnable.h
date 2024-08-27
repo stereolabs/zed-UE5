@@ -6,6 +6,8 @@
 #include "Stereolabs/Public/Threading/StereolabsRunnable.h"
 #include "Stereolabs/Public/Core/StereolabsMesh.h"
 
+enum class ESpatialMappingTexturingMode : uint8;
+enum class ESpatialMappingStep : uint8;
 DECLARE_LOG_CATEGORY_EXTERN(SpatialMappingThread, Log, All);
 
 class FSpatialMappingRunnable : public FSlRunnable

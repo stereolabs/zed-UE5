@@ -7,6 +7,7 @@
 #include "ZED/Public/Core/ZEDBaseTypes.h"
 
 #include "CineCameraComponent.h"
+#include "GameFramework/Pawn.h"
 
 #include "ZEDPawn.generated.h"
 
