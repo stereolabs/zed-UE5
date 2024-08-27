@@ -43,8 +43,6 @@ void AZEDPointCloudRenderer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 		GSlCameraProxy->OnCameraOpened.RemoveDynamic(this, &AZEDPointCloudRenderer::Init);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("FPS PC %f"), Fps);
-
 }
 
 /**
@@ -119,6 +117,7 @@ void AZEDPointCloudRenderer::Init()
 	RendererInstance->SetVariableInt("User.TextureHeight", Resolution.Y);
 	RendererInstance->SetVariableInt("User.PointCount", PointCount);
 
+	RendererInstance->SetVariableMatrix("User.TransformPosition", PointCloudOffset.ToMatrixWithScale());
 	Runtime = 0;
 }
 
