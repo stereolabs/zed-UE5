@@ -46,8 +46,6 @@ void AZEDPointCloudRenderer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 		GSlCameraProxy->OnCameraOpened.RemoveDynamic(this, &AZEDPointCloudRenderer::Init);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("FPS PC %f"), Fps);
-
 }
 
 /**
@@ -122,6 +120,7 @@ void AZEDPointCloudRenderer::Init()
 	RendererInstance->SetVariableInt("User.TextureHeight", Resolution.Y);
 	RendererInstance->SetVariableInt("User.PointCount", PointCount);
 
+	RendererInstance->SetVariableMatrix("User.TransformPosition", PointCloudOffset.ToMatrixWithScale());
 	Runtime = 0;
 }
 
@@ -150,6 +149,7 @@ void AZEDPointCloudRenderer::UpdateTextures(ESlErrorCode ErrorCode, FSlTimestamp
 	sl_convert_image(Colors, SignedColors, 0);
 	sl_mat_update_cpu_from_gpu(SignedColors);
 
+	RendererInstance->SetVariableMatrix("User.TransformPosition", PointCloudOffset.ToMatrixWithScale());
 
 	AsyncTask(ENamedThreads::ActualRenderingThread, [this]() {
 		if (VerticeTexture) VerticeTexture->UpdateTextureRegions(0, 1, &Region, sl_mat_get_step_bytes(Vertices, SL_MEM_CPU), sl_mat_get_pixel_bytes(Vertices), (uint8*)sl_mat_get_ptr(Vertices, SL_MEM_CPU));

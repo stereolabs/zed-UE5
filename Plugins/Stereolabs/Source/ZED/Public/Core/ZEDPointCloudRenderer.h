@@ -29,6 +29,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
 	UNiagaraSystem* PointCloudRenderer;
 
+	// Transform applied to the point cloud data before rendering. Can be used to adjust the point cloud position and orientation in space.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FX")
+	FTransform PointCloudOffset;
+
 private:
 	// The instance of the niagara system:
 	UNiagaraComponent* RendererInstance;
