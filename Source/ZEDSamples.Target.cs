@@ -8,10 +8,12 @@ public class ZEDSamplesTarget : TargetRules
 	public ZEDSamplesTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Game;
+        bOverrideBuildEnvironment = true;
+        ExtraModuleNames.AddRange( new string[] { "ZEDSamples" } );
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
 
-		ExtraModuleNames.AddRange( new string[] { "ZEDSamples" } );
-
-		if (bBuildEditor)
+        if (bBuildEditor)
 		{
 			ExtraModuleNames.AddRange(new string[] { "ZEDSamplesEditor" });
 		}

@@ -1,9 +1,9 @@
 <h1 align="center">
-ZED UE5.3 Plugin
+ZED UE5.4 Plugin
   <br>
 </h1>
 
-This plugin requires using **UE5.3**.
+This plugin requires using **UE5.4**.
 
 <p align="center">
 
@@ -30,7 +30,7 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 ## Getting started
 
-This version of the plugin is compatible with Unreal Engine **5.3**, and requires the [**ZED SDK 4.1**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
+This version of the plugin is compatible with Unreal Engine **5.4**, and requires the [**ZED SDK 4.1**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
 
 - To see our implementation of Live Link with the ZED, go here : [ZED Live Link Plugin](https://github.com/stereolabs/zed-LiveLink-plugin)
 

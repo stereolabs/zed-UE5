@@ -1342,12 +1342,24 @@ extern "C" {
     /**
     \brief Feed the 3D Object tracking function with your own 2D bounding boxes from your own detection algorithm.
     \param camera_id : Id of the camera instance.
-    \param objects_in : 2D detections from custom detection algorithm.
     \param nb_objects : Number of custom objects (size of the object_in array).
+    \param objects_in : 2D detections from custom detection algorithm.
+    \param instance_id : Id of the Object detection instance. Used when multiple instances of the BT module are enabled at the same time.
     \note The detection should be done on the current grabbed left image as the internal process will use all current available data to extract 3D informations and perform object tracking.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine, \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" otherwise.
    */
-    INTERFACE_API int sl_ingest_custom_box_objects(int camera_id, int nb_objects, struct SL_CustomBoxObjectData* objects_in);
+    INTERFACE_API int sl_ingest_custom_box_objects(int camera_id, int nb_objects, struct SL_CustomBoxObjectData* objects_in, unsigned int instance_id);
+
+    /**
+    \brief Feed the 3D Object tracking function with your own 2D bounding boxes with masks from your own detection algorithm.
+    \param camera_id : Id of the camera instance.
+    \param nb_objects : Number of custom objects (size of the object_in array).
+    \param objects_in : 2D detections from custom detection algorithm.
+    \param instance_id : Id of the Object detection instance. Used when multiple instances of the BT module are enabled at the same time.
+    \note The detection should be done on the current grabbed left image as the internal process will use all current available data to extract 3D informations and perform object tracking.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine, \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" otherwise.
+   */
+    INTERFACE_API int sl_ingest_custom_mask_objects(int camera_id, int nb_objects, struct SL_CustomMaskObjectData* objects_in, unsigned int instance_id);
 
     /**
     \brief Retrieve objects detected by the object detection module.
@@ -1360,15 +1372,24 @@ extern "C" {
     INTERFACE_API int sl_retrieve_objects(int camera_id, struct SL_ObjectDetectionRuntimeParameters* object_detection_runtime_parameters, struct SL_Objects* objects, unsigned int instance_id);
 
     /**
+    \brief Retrieve objects detected by the custom object detection module.
+    \param camera_id : Id of the camera instance.
+    \param object_detection_runtime_parameters : Custom object detection runtime settings, can be changed at each detection. In async mode, the parameters update is applied on the next iteration.
+    \param objects : The detected objects will be saved into this object. If the object already contains data from a previous detection, it will be updated, keeping a unique ID for the same person.
+    \param instance_id : Id of the object detection instance. Used when multiple instances of the object detection module are enabled at the same time.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine, \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" otherwise.
+     */
+    INTERFACE_API int sl_retrieve_custom_objects(int camera_id, struct SL_CustomObjectDetectionRuntimeParameters* object_detection_runtime_parameters, struct SL_Objects* objects, unsigned int instance_id);
+
+    /**
     \brief Retrieve bodies detected by the body tracking module.
     \param camera_id : id of the camera instance.
-    \param bodies : The detected bodies will be saved into this object. If the object already contains data from a previous detection, it will be updated, keeping a unique ID for the same person.
     \param body_tracking_runtime_parameters : Body Tracking runtime settings, can be changed at each detection. In async mode, the parameters update is applied on the next iteration.
+    \param bodies : The detected bodies will be saved into this object. If the object already contains data from a previous detection, it will be updated, keeping a unique ID for the same person.
     \param instance_id : Id of the object detection instance. Used when multiple instances of the object detection module are enabled at the same time.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine, \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" otherwise.
      */
     INTERFACE_API int sl_retrieve_bodies(int camera_id, struct SL_BodyTrackingRuntimeParameters* body_tracking_runtime_parameters, struct SL_Bodies* bodies, unsigned int instance_id);
-
 
     /**
     \brief Updates the internal batch of detected objects.
@@ -1504,7 +1525,19 @@ extern "C" {
     \return a vector of \ref SL_FusionConfiguration for all the camera present in the file.
     \note empty if no data were found for the requested camera.
      */
-    INTERFACE_API void sl_fusion_read_configuration_file(char json_config_filename[256], enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration* configs, int* nb_cameras);
+    INTERFACE_API void sl_fusion_read_configuration_file(const char* json_config_filename, enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration configs[MAX_FUSED_CAMERAS], int* nb_cameras);
+
+
+    /**
+    \brief Read a Configuration JSON string to configure a fusion process.
+    \param fusion_configuration : The string containing the configuration (it will be parsed like a json).
+    \param coord_sys : The COORDINATE_SYSTEM in which you want the World Pose to be in.
+    \param unit : The UNIT in which you want the World Pose to be in.
+
+    \return A vector of \ref FusionConfiguration for all the camera present in the file.
+    \note Empty if no data were found for the requested camera.
+     */
+    INTERFACE_API void sl_fusion_read_configuration(const char* fusion_configuration, enum SL_COORDINATE_SYSTEM coord_system, enum SL_UNIT unit, struct SL_FusionConfiguration configs[MAX_FUSED_CAMERAS], int* nb_cameras);
 
     /////////////////////////////////////////////////////////////////////
     ///////////////////// Object Detection Fusion ///////////////////////
@@ -1559,7 +1592,7 @@ extern "C" {
      * \param uuid Camera identifier
      * \return POSITIONAL_TRACKING_STATE is the current state of the tracking process
      */
-    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame, enum SL_UNIT unit,
+    INTERFACE_API enum SL_POSITIONAL_TRACKING_STATE sl_fusion_get_position(struct SL_PoseData* pose, enum SL_REFERENCE_FRAME reference_frame,
                                                            struct SL_CameraIdentifier* uuid, enum SL_POSITION_TYPE retrieve_type);
 
 
