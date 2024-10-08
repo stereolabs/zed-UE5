@@ -71,7 +71,6 @@ public class Stereolabs : ModuleRules
         AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAPI");
         AddEngineThirdPartyPrivateStaticDependencies(Target, "AMD_AGS");
         AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAftermath");
-        AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelMetricsDiscovery");
         AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelExtensionsFramework");
 
         PrivateDependencyModuleNames.AddRange(new string[] {

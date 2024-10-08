@@ -9,6 +9,9 @@ public class ZEDSamplesEditorTarget : TargetRules
 	{
 		bUseAdaptiveUnityBuild = false;
 
+        bOverrideBuildEnvironment = true;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
         Type = TargetType.Editor;
 		ExtraModuleNames.AddRange( new string[] { "ZEDSamples" } );
 	}

@@ -473,7 +473,7 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 	{
 		// Does not exist anymore
 		// Make sure RHI resources get flushed if we're not using a renderer
-		ENQUEUE_UNIQUE_RENDER_COMMAND(UGameViewportClient_FlushRHIResources,
+		ENQUEUE_RENDER_COMMAND(UGameViewportClient_FlushRHIResources)([this](FRHICommandListImmediate& RHICmdList)
 		{
 			FRHICommandListExecutor::GetImmediateCommandList().ImmediateFlush(EImmediateFlushType::FlushRHIThreadFlushResources);
 		});
