@@ -2157,6 +2157,13 @@ namespace sl
 			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
 			ODParameters.detection_model = (SL_OBJECT_DETECTION_MODEL)UnrealData.DetectionModel;
+			ODParameters.custom_onnx_file = TCHAR_TO_UTF8(*UnrealData.CustomOnnxFile);
+			ODParameters.fused_objects_group_name = TCHAR_TO_UTF8(*UnrealData.FusionObjectsGroupName);
+
+			struct SL_Resolution res;
+			res.width = UnrealData.CustomOnnxDynamicInputShape.X;
+			res.height = UnrealData.CustomOnnxDynamicInputShape.Y;
+			ODParameters.custom_onnx_dynamic_input_shape = res;
 
 			SL_BatchParameters batchParameters;
 			batchParameters.enable = UnrealData.BatchParameters.bEnable;
