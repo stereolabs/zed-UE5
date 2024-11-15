@@ -2949,6 +2949,18 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectDetectionModel DetectionModel;
 
+	/* In a multi camera setup, specify which group this model belongs to. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString FusionObjectsGroupName;
+
+	/*  Path to the YOLO-like onnx file for custom object detection ran in the ZED SDK. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString CustomOnnxFile;
+
+	/*  Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only. 
+	The batch and channel dimensions are automatically handled, it assumes it's color images like default YOLO models. */
+	FIntPoint CustomOnnxDynamicInputShape;
+
 	/* Defines a upper depth range for detections. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxRange;
@@ -2982,6 +2994,9 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 		bEnableTracking(true),
 		bEnableSegmentation(false),
 		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxFast),
+		FusionObjectsGroupName(""),
+		CustomOnnxFile(""),
+		CustomOnnxDynamicInputShape(FIntPoint(512, 512)),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
 		FilteringMode(ESlObjectFilteringMode::OFM_NMS3D),

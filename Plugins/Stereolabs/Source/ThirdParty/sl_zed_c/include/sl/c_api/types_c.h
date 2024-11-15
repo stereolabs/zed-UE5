@@ -84,6 +84,21 @@ struct SL_Vector4 {
 };
 
 /**
+\brief Structure representing a transformation (translation and rotation)
+*/
+struct SL_Transform
+{
+	/**
+	\brief Translation part of the transform.
+	*/
+	struct SL_Vector3 translation;
+	/**
+	\brief Rotation part of the transform.
+	*/
+	struct SL_Quaternion rotation;
+};
+
+/**
 * \brief Structure representing an unsigned char 2-dimensional vector.
 */
 struct SL_Uchar2 {
@@ -418,6 +433,9 @@ struct USB_product {
 \brief Lists error codes in the ZED SDK.
  */
 enum SL_ERROR_CODE {
+
+	SL_ERROR_CODE_CONFIGURATION_FALLBACK = -4,/**< The operation could not proceed with the target configuration but did success with a fallback.*/
+	SL_ERROR_CODE_SENSORS_DATA_REQUIRED = -3,/**< The input data does not contains the high frequency sensors data, this is usually because it requires newer SVO/Streaming. In order to work this modules needs inertial data present in it input.*/
 	SL_ERROR_CODE_CORRUPTED_FRAME = -2,/**< The image could be corrupted, Enabled with the parameter InitParameters::enable_image_validity_check.*/
 	SL_ERROR_CODE_CAMERA_REBOOTING = -1, /**< The camera is currently rebooting.*/
 	SL_ERROR_CODE_SUCCESS, /**< Standard code for successful behavior.*/
@@ -453,8 +471,7 @@ enum SL_ERROR_CODE {
 	SL_ERROR_CODE_PLANE_NOT_FOUND, /**< Plane not found. Either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given.*/
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA, /**< The module you try to use is not compatible with your camera \ref SL_MODEL. \note \ref SL_MODEL_ZED does not has an IMU and does not support the AI modules.*/
 	SL_ERROR_CODE_MOTION_SENSORS_REQUIRED, /**< The module needs the sensors to be enabled (see SL_InitParameters.sensors_required). */
-	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION, /**< The module needs a newer version of CUDA. */
-	SL_ERROR_CODE_SENSORS_DATA_REQUIRED /**< The input data does not contains the high frequency sensors data, this is usually because it requires newer SVO/Streaming. In order to work this modules needs inertial data present in it input.*/
+	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION /**< The module needs a newer version of CUDA. */
 };
 
 /**
@@ -465,6 +482,7 @@ enum SL_ERROR_CODE {
  */
 enum SL_RESOLUTION {
 	SL_RESOLUTION_HD4K, /**< 3856x2180 for imx678 mono*/
+	SL_RESOLUTION_QHDPLUS, /**< 3800x1800 */
 	SL_RESOLUTION_HD2K, /**< 2208*1242 (x2) \n Available FPS: 15*/
 	SL_RESOLUTION_HD1080, /**< 1920*1080 (x2) \n Available FPS: 15, 30*/
 	SL_RESOLUTION_HD1200, /**< 1920*1200 (x2) \n Available FPS: 15, 30, 60*/
@@ -696,7 +714,7 @@ enum SL_POSITIONAL_TRACKING_STATE {
 	SL_POSITIONAL_TRACKING_STATE_OFF, /**< The positional tracking is not enabled.*/
 	SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW, /**< The effective FPS is too low to give proper results for motion tracking.\n Consider using performance parameters (\ref SL_DEPTH_MODE_PERFORMANCE, low camera resolution (\ref SL_RESOLUTION_VGA / \ref SL_RESOLUTION_SVGA or \ref SL_RESOLUTION_HD720).*/
 	SL_POSITIONAL_TRACKING_STATE_SEARCHING_FLOOR_PLANE, /**< The camera is searching for the floor plane to locate itself with respect to it.\n The \ref SL_REFERENCE_FRAME_WORLD will be set afterward.*/
-	SL_POSITIONAL_TRACKING_STATE_NOT_OK, /**< The tracking module was unable to perform tracking from the previous frame to the current frame. */
+	SL_POSITIONAL_TRACKING_STATE_UNAVAILABLE, /**< The tracking module was unable to perform tracking from the previous frame to the current frame. */
 };
 
 /**
@@ -736,7 +754,7 @@ enum SL_POSITIONAL_TRACKING_FUSION_STATUS {
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_GNSS = 3,
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL_GNSS = 4,
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_GNSS = 5,
-	SL_POSITIONAL_TRACKING_FUSION_STATUS_INTERTIAL_GNSS = 6,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_INERTIAL_GNSS = 6,
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_UNAVAILABLE = 7
 };
 
@@ -937,7 +955,9 @@ enum SL_OBJECT_DETECTION_MODEL {
 	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST, /**< Bounding box detector specialized in person heads particularly well suited for crowded environments. The person localization is also improved. */
 	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE, /**< Bounding box detector specialized in person heads, particularly well suited for crowded environments. The person localization is also improved, more accurate but slower than the base model.*/
 	SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS, /**< For external inference, using your own custom model and/or frameworks. This mode disables the internal inference engine, the 2D bounding box detection must be provided. */
+	SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS /**< For internal inference using your own custom YOLO-like model. This mode requires a onnx file to be passed in the ObjectDetectionParameters. This model will be used for inference. */
 };
+
 /**
 \brief Lists available models for the body tracking module.
 */
@@ -979,6 +999,15 @@ enum SL_OBJECT_FILTERING_MODE {
 	SL_OBJECT_FILTERING_MODE_NONE, /**< The ZED SDK will not apply any preprocessing to the detected objects. */
 	SL_OBJECT_FILTERING_MODE_NMS_3D, /**< The ZED SDK will remove objects that are in the same 3D position as an already tracked object (independent of class id). */
 	SL_OBJECT_FILTERING_MODE_NMS_3D_PER_CLASS, /**< The ZED SDK will remove objects that are in the same 3D position as an already tracked object of the same class id. */
+};
+
+/**
+  * \brief Report the actual inference precision used
+  */
+enum SL_INFERENCE_PRECISION {
+	SL_INFERENCE_PRECISION_FP32 = 0,
+	SL_INFERENCE_PRECISION_FP16 = 1,
+	SL_INFERENCE_PRECISION_INT8 = 2
 };
 
 
@@ -1329,7 +1358,7 @@ struct SL_InitParameters
 	
 	If you are using the camera upside down, setting this parameter to \ref SL_FLIP_MODE_ON will cancel its rotation.
 	\n The images will be horizontally flipped.
-	\n Default: \ref SL_FLIP_MODE_AUTO
+	\n Default: \ref SL_FLIP_MODE_OFF
 	\note From ZED SDK 3.2 a new \ref SL_FLIP_MODE enum was introduced to add the automatic flip mode detection based on the IMU gravity detection.
 	\note This does not work on \ref SL_MODEL_ZED cameras since they do not have the necessary sensors.
 	*/
@@ -1522,7 +1551,7 @@ struct SL_InitParameters
 	 This version doesn't detect frame tearing currently.
 	 \n default: disabled
 	 */
-	bool enable_image_validity_check;
+	int enable_image_validity_check;
 };
 
 /**
@@ -2366,6 +2395,43 @@ struct SL_ObjectDetectionParameters
 	Default: \ref SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_FAST
 	 */
 	enum  SL_OBJECT_DETECTION_MODEL detection_model;
+
+	/**
+	\brief In a multi camera setup, specify which group this model belongs to.
+
+	In a multi camera setup, multiple cameras can be used to detect objects and multiple detector having similar output layout can see the same object.
+	Therefore, Fusion will fuse together the outputs received by multiple detectors only if they are part of the same \ref fused_objects_group_name.
+
+	\note This parameter is not used when not using a multi-camera setup and must be set in a multi camera setup.
+	*/
+	char* fused_objects_group_name;
+
+	/**
+	\brief Path to the YOLO-like onnx file for custom object detection ran in the ZED SDK.
+
+	When `detection_model` is \ref OBJECT_DETECTION_MODEL::CUSTOM_YOLOLIKE_BOX_OBJECTS, a onnx model must be passed so that the ZED SDK can optimize it for your GPU and run inference on it.
+
+	The resulting optimized model will be saved for re-use in the future.
+
+	\attention - The model must be a YOLO-like model.
+	\attention - The caching uses the `custom_onnx_file` string along with your GPU specs to decide whether to use the cached optmized model or to optimize the passed onnx model.
+		If you want to use a different model (i.e. an onnx with different weights), you must use a different `custom_onnx_file` string or delete the cached optimized model in
+		<ZED Installation path>/resources.
+
+	\note This parameter is useless when detection_model is not \ref OBJECT_DETECTION_MODEL::CUSTOM_YOLOLIKE_BOX_OBJECTS.
+	*/
+	char* custom_onnx_file;
+
+	/**
+	\brief Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only. The batch and channel dimensions are automatically handled, it assumes it's color images like default YOLO models.
+
+	\note This parameter is only used when detection_model is \ref OBJECT_DETECTION_MODEL::CUSTOM_YOLOLIKE_BOX_OBJECTS and the provided ONNX file is using dynamic shapes.
+	\attention - Multiple model only support squared images
+		
+	\default Squared images 512x512 (input tensor will be 1x3x512x512)
+		*/
+	struct SL_Resolution custom_onnx_dynamic_input_shape;
+
 	/**
 	\brief Upper depth range for detections.
 	
@@ -2459,6 +2525,124 @@ struct SL_ObjectDetectionRuntimeParameters
     \note SL_ObjectDetectionRuntimeParameters.detection_confidence_threshold will be taken as fallback/default value.
 	 */
 	int object_confidence_threshold[(int)SL_OBJECT_CLASS_LAST];
+};
+
+/**
+\brief Structure containing a set of runtime properties of a certain class ID for the object detection module using a custom model.
+
+The default constructor sets all parameters to their default settings.
+\note Parameters can be adjusted by the user.
+*/
+struct SL_CustomObjectDetectionProperties {
+	/**
+	\brief Index of the class represented by this set of properties.
+	*/
+	int class_id;
+
+	/**
+	\brief Whether the object object is kept or not.
+	*/
+	bool enabled;
+
+	/**
+	\brief Confidence threshold.
+
+	From 1 to 100, with 1 meaning a low threshold, more uncertain objects and 99 very few but very precise objects.
+	\n Default: 20.f
+	\note If the scene contains a lot of objects, increasing the confidence can slightly speed up the process, since every object instance is tracked.
+	*/
+	float detection_confidence_threshold;
+
+	/**
+	\brief Provide hypothesis about the object movements (degrees of freedom or DoF) to improve the object tracking.
+	- true: 2 DoF projected alongside the floor plane. Case for object standing on the ground such as person, vehicle, etc. 
+	\n The projection implies that the objects cannot be superposed on multiple horizontal levels. 
+	- false: 6 DoF (full 3D movements are allowed).
+
+	\note This parameter cannot be changed for a given object tracking id.
+	\note It is advised to set it by labels to avoid issues.
+	*/
+	bool is_grounded;
+
+	/**
+	\brief Provide hypothesis about the object staticity to improve the object tracking.
+		- true: the object will be assumed to never move nor being moved.
+		- false: the object will be assumed to be able to move or being moved.
+	*/
+	bool is_static;
+
+	/**
+	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
+
+	By default, let the tracker decide internally based on the internal sub class of the tracked object.
+	Only valid for static object.
+	*/
+	float tracking_timeout;
+
+	/**
+	\brief Maximum tracking distance threshold (in meters) before dropping the tracked object when unseen for this amount of meters.
+
+	By default, do not discard tracked object based on distance.
+	Only valid for static object.
+	*/
+	float tracking_max_dist;
+
+	/**
+	\brief Maximum allowed width normalized to the image size.
+
+	Any prediction bigger than that will be filtered out.
+	Default: -1 (no filtering)
+	*/
+	float max_box_width_normalized;
+
+	/**
+	\brief Minimum allowed width normalized to the image size.
+
+	Any prediction smaller than that will be filtered out.
+	Default: -1 (no filtering)
+	*/
+	float min_box_width_normalized;
+
+	/**
+	\brief Maximum allowed height normalized to the image size.
+
+	Any prediction bigger than that will be filtered out.
+	Default: -1 (no filtering)
+	*/
+	float max_box_height_normalized;
+
+	/**
+	\brief Minimum allowed height normalized to the image size.
+
+	Any prediction smaller than that will be filtered out.
+	Default: -1 (no filtering)
+	*/
+	float min_box_height_normalized;
+};
+
+/**
+\brief Structure containing a set of runtime parameters for the object detection module using your own model ran by the SDK.
+
+The default constructor sets all parameters to their default settings.
+\note Parameters can be adjusted by the user.
+*/
+struct SL_CustomObjectDetectionRuntimeParameters {
+	/**
+	\brief Global object detection properties.
+	*/
+	struct SL_CustomObjectDetectionProperties object_detection_properties;
+
+	/**
+	@brief Per class object detection properties.
+
+	\note \ref object_detection_properties is used as a fallback when SL_CustomObjectDetectionRuntimeParameters.object_class_detection_properties is partially set.
+	*/
+	struct SL_CustomObjectDetectionProperties* object_class_detection_properties;
+
+	/**
+	@brief Size of the \ref object_class_detection_properties array.
+	*/
+	unsigned int number_custom_detection_properties;
 };
 
 /**
@@ -2725,7 +2909,7 @@ struct SL_CustomBoxObjectData {
 	/**
 	\brief Unique id to help identify and track AI detections.
 
-    It can be either generated externally, or by using \ref sl_generate_unique_id() or left empty.
+	It can be either generated externally, or by using \ref sl_generate_unique_id() or left empty.
 	*/
 	char unique_object_id[37];
 	/**
@@ -2763,6 +2947,97 @@ struct SL_CustomBoxObjectData {
 	\note It is advised to set it by labels to avoid issues.
 	*/
 	bool is_grounded;
+
+	/**
+	\brief Provide hypothesis about the object staticity to improve the object tracking.
+	- true: the object will be assumed to never move nor being moved.
+	- false: the object will be assumed to be able to move or being moved.
+		*/
+	bool is_static;
+
+	/**
+	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
+	By default, let the tracker decide internally based on the internal sub class of the tracked object.
+	Only valid for static object.
+		*/
+	float tracking_timeout;
+
+	/**
+	\brief Maximum tracking distance threshold (in meters) before dropping the tracked object when unseen for this amount of meters.
+	By default, do not discard tracked object based on distance.
+	Only valid for static object.
+		*/
+	float tracking_max_dist;
+};
+
+struct SL_CustomMaskObjectData {
+	/**
+	\brief Unique id to help identify and track AI detections.
+
+	It can be either generated externally, or by using \ref sl_generate_unique_id() or left empty.
+	*/
+	char unique_object_id[37];
+	/**
+	\brief 2D bounding box of the object represented as four 2D points starting at the top left corner and rotation clockwise.
+	\note Expressed in pixels on the original image resolution, ```[0, 0]``` is the top left corner.
+	\code
+	A ------ B
+	| Object |
+	D ------ C
+	\endcode
+	*/
+	struct SL_Vector2 bounding_box_2d[4];
+
+	/**
+	\brief Object label.
+
+	This information is passed-through and can be used to improve object tracking.
+	\note It should define an object class. This means that any similar object (in classification) should share the same label number.
+	*/
+	int label;
+
+	/**
+	\brief Detection confidence value of the object.
+	\note The value should be in ```[0-1]```.
+	\note It can be used to improve the object tracking.
+	*/
+	float probability;
+	/**
+	\brief Provide hypothesis about the object movements (degrees of freedom or DoF) to improve the object tracking.
+	- true: 2 DoF projected alongside the floor plane. Case for object standing on the ground such as person, vehicle, etc. 
+	\n The projection implies that the objects cannot be superposed on multiple horizontal levels. 
+	- false: 6 DoF (full 3D movements are allowed).
+
+	\note This parameter cannot be changed for a given object tracking id.
+	\note It is advised to set it by labels to avoid issues.
+	*/
+	bool is_grounded;
+
+	/**
+	\brief Provide hypothesis about the object staticity to improve the object tracking.
+	- true: the object will be assumed to never move nor being moved.
+	- false: the object will be assumed to be able to move or being moved.
+		*/
+	bool is_static;
+
+	/**
+	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
+	By default, let the tracker decide internally based on the internal sub class of the tracked object.
+	Only valid for static object.
+		*/
+	float tracking_timeout;
+
+	/**
+	\brief Maximum tracking distance threshold (in meters) before dropping the tracked object when unseen for this amount of meters.
+	By default, do not discard tracked object based on distance.
+	Only valid for static object.
+		*/
+	float tracking_max_dist;
+	
+	/**
+	\brief 2D mask of the object inside its bounding box.
+	 */
+	unsigned char* box_mask;
 };
 
 /**
@@ -2984,6 +3259,15 @@ struct SL_Bodies
 	\brief Whether both the body tracking and the world orientation has been setup.
 	 */
 	int is_tracked;
+	/**
+	\brief Status of the actual inference precision mode used to detect the bodies/persons.
+	\note It depends on the GPU hardware support, the sl::BodyTrackingParameters.allow_reduced_precision_inference input parameter and the model support.
+	 */
+	enum SL_INFERENCE_PRECISION inference_precision_mode;
+	/**
+	\brief Body format used in sl::BodyTrackingParameters.body_format parameter.
+	 */
+	enum SL_BODY_FORMAT body_format;
 	/**
 	\brief Array of bodies/persons.
 	\note Since the data is transmitted from C++ to C, the size of the structure must be constant.
@@ -3215,6 +3499,7 @@ struct SL_InputType
 \brief Lists the types of error that can be raised by the Fusion.
 */
 enum SL_FUSION_ERROR_CODE {
+	SL_FUSION_ERROR_CODE_GNSS_DATA_COVARIANCE_MUST_VARY= -8, /**< Ingested covariance data must vary between ingest */
 	SL_FUSION_ERROR_CODE_BODY_FORMAT_MISMATCH = -7, /**< The senders are using different body formats.\n Consider changing them. */
 	SL_FUSION_ERROR_CODE_MODULE_NOT_ENABLED = -6, /**< The following module was not enabled. */
 	SL_FUSION_ERROR_CODE_SOURCE_MISMATCH = -5, /**< Some sources are provided by SVO and others by LIVE stream. */
@@ -3353,6 +3638,58 @@ struct SL_FusionConfiguration {
 
 
 /**
+ * @brief Configuration parameters for data synchronization.
+ *
+ * The SynchronizationParameter struct represents the configuration parameters used by the synchronizer. It allows customization
+ * of the synchronization process based on specific requirements.
+ */
+struct SL_SynchronizationParameter {
+	/**
+	 * @brief Size of synchronization windows in milliseconds.
+	 *
+	 * The synchronization window is used by the synchronizer to return all data present inside the current
+	 * synchronization window. For efficient fusion, the synchronization window size is expected to be equal
+	 * to the mean `grab()` duration of the camera at the lowest FPS. If not provided, the fusion SDK will compute it from the
+	 * data's sources.
+	 * 
+	 * Default value: 0
+	 */
+	double windows_size;
+
+	/**
+	 * @brief Duration in milliseconds before considering a camera as inactive if no more data is present (for example camera disconnection).
+	 *
+	 * The data_source_timeout parameter specifies the duration to wait before considering a camera as inactive
+	 * if no new data is received within the specified time frame.
+	 * 
+	 * Default value: 50
+	 */
+	double data_source_timeout;
+
+	/**
+	 * @brief Determines whether to include the last data returned by a source in the final synchronized data.
+	 *
+	 * If the keep_last_data parameter is set to true and no data is present in the current synchronization window,
+	 * the last data returned by the source will be included in the final synchronized data. This ensures continuity
+	 * even in the absence of fresh data.
+	 * 
+	 * Default value: false
+	 */
+	bool keep_last_data;
+
+	/**
+	 * @brief Maximum duration in milliseconds allowed for data to be considered as the last data.
+	 *
+	 * The maximum_lateness parameter sets the maximum duration within which data can be considered as the last
+	 * available data. If the duration between the last received data and the current synchronization window exceeds
+	 * this value, the data will not be included as the last data in the final synchronized output.
+	 * 
+	 * Default value: 50
+	 */
+	double maximum_lateness;
+};
+
+/**
 \brief Holds the options used to initialize the \ref Fusion object.
  */
 struct SL_InitFusionParameters
@@ -3386,11 +3723,17 @@ struct SL_InitFusionParameters
 	bool verbose;
 
 	/**
-	 * @brief If specified change the number of period necessary for a source to go in timeout without data. For example, if you set this to 5
-	 * then, if any source do not receive data during 5 period, these sources will go to timeout and will be ignored.
-	 * 
+	 * @brief If specified change the number of period necessary for a source to go in timeout without data. For example, if you set this to 5 then, if any source do not receive data during 5 period, these sources will go to timeout and will be ignored.
+	 * @note This parameter is deprecated. Use `data_source_timeout` present in `synchronization_parameters` instead.
 	 */
-	unsigned int timeout_period_number;
+	unsigned timeout_period_number;
+
+	/**
+	 * @brief Specifies the parameters used for data synchronization during fusion.
+	 *
+	 * The SynchronizationParameter struct encapsulates the synchronization parameters that control the data fusion process.
+	 */
+	struct SL_SynchronizationParameter synchronization_parameters; 
 };
 
 /**
@@ -3623,7 +3966,7 @@ struct SL_GeoPose
 	 */
 	struct SL_LatLng latlng_coordinates;
 	/**
-	 * The heading.
+	 * The heading (orientation) of the pose in radians. It indicates the direction in which the object or observer is facing, with 0 degrees corresponding to North and increasing in a counter-clockwise direction.
 	 */
 	double heading;
 	/**
@@ -3747,11 +4090,37 @@ struct SL_PositionalTrackingFusionParameters {
 	 * Default: false
 	 */
 	bool enable_GNSS_fusion;
+
 	/**
 	 * \brief Control the VIO / GNSS calibration process.
-	 * 
 	 */
 	struct SL_GNSSCalibrationParameters gnss_calibration_parameters;
+
+	/**
+	 * \brief Position of the base footprint with respect to the user world.
+	 */
+	struct SL_Vector3 base_footprint_to_world_translation;
+
+	/**
+	 * \brief Orientation of the base footprint with respect to the user world.
+	 */
+	struct SL_Quaternion base_footprint_to_world_rotation;
+
+	/**
+	 * \brief Position of the base footprint with respect to the baselink
+	 */
+	struct SL_Vector3 base_footprint_to_baselink_translation;
+
+	/**
+	 * \brief Orientation of the base footprint with respect to the baselink
+	 */
+	struct SL_Quaternion base_footprint_to_baselink_rotation;
+
+	/**
+	 * \brief Whether to override 2 of the 3 rotations from \ref base_footprint_to_world_transform using the IMU gravity.
+	 */
+	bool set_gravity_as_origin;
+
 };
 
 #if 0
