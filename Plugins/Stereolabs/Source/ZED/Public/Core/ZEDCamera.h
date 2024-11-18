@@ -229,10 +229,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
 	USlTexture* LeftEyeDepth;
 
-	/** Render target left eye */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
-	UTextureRenderTarget2D* LeftEyeRenderTarget;
-
 	/** Type of view displayed on the scene.
 	* Default is ESlView::LEFT.
 	*/
@@ -354,10 +350,6 @@ private:
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
 		USceneComponent * LeftRoot;
 
-		/** Left intermediate camera (virtual equivalent of physical left zed camera) */
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
-		USceneCaptureComponent2D* LeftCamera;
-
 		/** Intermediate left plane on which Zed left image is displayed */
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
 		UStaticMeshComponent* LeftPlane;
@@ -368,8 +360,6 @@ private:
 		void SetupComponents();
 		void SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance);
 		void SetPlaneSize(UStaticMeshComponent* plane, float planeDistance);
-
-		void AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight);
 
 		void DisableRenderingCpp();
 		void InitializeRenderingCpp();

@@ -32,7 +32,6 @@ AZEDCamera::AZEDCamera()
 	:
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
-	LeftEyeRenderTarget(nullptr),
 	ImageView( ESlView::V_Left ),
 	CameraRenderPlaneDistance( 0.f ),
 	ZedLeftEyeMaterialInstanceDynamic( nullptr ),
@@ -45,7 +44,6 @@ AZEDCamera::AZEDCamera()
 	bInit( false ),
 	bShowZedImage( true ),
 	LeftRoot( nullptr ),
-	LeftCamera( nullptr ),
 	LeftPlane( nullptr )
 {
 	// Controller tick the camera to make it the first actor to tick
@@ -57,16 +55,10 @@ AZEDCamera::AZEDCamera()
 	// components creation
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	LeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LeftRoot"));
-	LeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LeftCamera"));
 	LeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftPlane"));
 
 	LeftRoot->SetupAttachment(RootComponent);
 	LeftPlane->SetupAttachment(LeftRoot);
-
-	// Initial camera setup
-	LeftCamera->bCaptureEveryFrame = true;
-	LeftCamera->bCaptureOnMovement = false;
-	LeftCamera->SetAutoActivate(false);
 
 	// Add static mesh to planes
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> PlaneMesh(TEXT("StaticMesh'/Stereolabs/ZED/Shapes/SM_Plane_100x100.SM_Plane_100x100'"));
@@ -85,16 +77,6 @@ AZEDCamera::AZEDCamera()
 	LeftPlane->SetRenderCustomDepth(true);
 	LeftPlane->CustomDepthStencilValue = 1;
 
-	LeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-	LeftCamera->PostProcessSettings.bOverride_VignetteIntensity = true;
-	LeftCamera->PostProcessSettings.VignetteIntensity = 0;
-	LeftCamera->PostProcessSettings.bOverride_ToneCurveAmount = true;
-	LeftCamera->PostProcessSettings.ToneCurveAmount = 0;
-
-	LeftCamera->PostProcessSettings.bOverride_AutoExposureBias = true;
-	LeftCamera->PostProcessSettings.AutoExposureBias = 0;
-	LeftCamera->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
-	LeftCamera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
 	// Set light channels
 	LeftPlane->LightingChannels.bChannel0 = false;
 }
@@ -590,32 +572,19 @@ void AZEDCamera::SetSVOPlaybackLooping(bool bLooping)
 void AZEDCamera::ToggleComponents(bool enable)
 {
 	LeftPlane->SetVisibility(enable);
-	LeftCamera->SetActive(enable);
 }
 
 void AZEDCamera::SetupComponents()
 {
 	// Rectified camera param used for the setup (left = right in rectified)
 	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-
-	// Setup final plane material and render targets
-	LeftEyeRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), cameraParam.Resolution.X, cameraParam.Resolution.Y, ETextureRenderTargetFormat::RTF_RGBA8);
-	LeftCamera->TextureTarget = LeftEyeRenderTarget;
-	LeftCamera->CaptureSource = ESceneCaptureSource::SCS_FinalColorHDR;
-
-	// Set camera FOV
-	LeftCamera->FOVAngle = cameraParam.HFOV;
-	
+		
 	LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
 	// Set plane size
 	SetPlaneSize(LeftPlane, CameraRenderPlaneDistance);
 
 	// Set inter planes materials
 	LeftPlane->SetMaterial(0, ZedLeftEyeMaterialInstanceDynamic);
-
-	// Set camera projection matrix
-	LeftCamera->bUseCustomProjectionMatrix = true;
-	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(LeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
 }
 
 void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
@@ -632,11 +601,6 @@ void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)
 
 	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSize(cameraParam.Resolution, cameraParam.VFOV, planeDistance/100.0f); // because plane is already of side 100
 	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
-}
-
-void AZEDCamera::AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight)
-{
-	LeftCamera->AddOrUpdateBlendable(NewPostProcess, NewWeight);
 }
 
 void AZEDCamera::DisableRenderingCpp()
