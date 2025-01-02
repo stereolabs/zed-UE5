@@ -3,7 +3,8 @@
 #pragma once
 
 #include "Stereolabs/Public/Utilities/StereolabsTimer.h"
-
+#include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
+#include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "HAL/ThreadingBase.h"
 
 /* 

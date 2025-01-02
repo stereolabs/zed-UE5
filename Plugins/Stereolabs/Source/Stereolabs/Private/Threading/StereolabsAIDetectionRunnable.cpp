@@ -2,9 +2,6 @@
 
 #include "StereolabsAIDetectionRunnable.h"
 #include "StereolabsPrivatePCH.h"
-#include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
-#include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
-
 
 DEFINE_LOG_CATEGORY(SlAIThread);
 

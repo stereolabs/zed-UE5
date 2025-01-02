@@ -2,8 +2,6 @@
 
 #include "Stereolabs/Private/Threading/StereolabsMeasureRunnable.h"
 #include "StereolabsPrivatePCH.h"
-#include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
-#include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 
 DECLARE_CYCLE_STAT_EXTERN(TEXT("AsyncMeasureRetrieve"), STAT_AsyncMeasureRetrieve, STATGROUP_ZED, STEREOLABS_API);
 DECLARE_CYCLE_STAT_EXTERN(TEXT("AsyncMeasureGPUtoCPU"), STAT_AsyncMeasureGPUtoCPU, STATGROUP_ZED, STEREOLABS_API);
