@@ -143,6 +143,8 @@ void USlTexture::BP_UpdateTextureWithMat(const FSlMat& NewMat)
 
 void USlTexture::UpdateTexture()
 {
+	if (!Mat.Mat) return;
+
 	if (!bCudaInteropEnabled)
 	{
 		sl_mat_update_cpu_from_gpu(Mat.Mat);
@@ -177,6 +179,8 @@ void USlTexture::UpdateTexture()
 
 void USlTexture::UpdateTexture(const FSlMat& NewMat)
 {
+	if (!NewMat.Mat) return;
+
 	if (!bCudaInteropEnabled)
 	{
 		sl_mat_update_cpu_from_gpu(NewMat.Mat);
@@ -211,6 +215,8 @@ void USlTexture::UpdateTexture(const FSlMat& NewMat)
 
 void USlTexture::UpdateTexture(void* NewMat)
 {
+	if (!NewMat) return;
+
 	if (!bCudaInteropEnabled)
 	{
 		sl_mat_update_cpu_from_gpu(NewMat);
