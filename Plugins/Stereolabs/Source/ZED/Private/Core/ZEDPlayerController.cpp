@@ -514,7 +514,6 @@ void AZEDPlayerController::ZedCameraActorInitialized()
 	// Set HMD camera offset
 	ZedPawn->SpringArm->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 
-	ZedCamera->AddOrUpdatePostProcessCpp(PostProcessZedMaterialInstanceDynamic,  1.0f);
 	//PreZedEdit
 	/*ZedPawn->Camera->PostProcessSettings.bDeferredAA = false;
 	ZedPawn->Camera->PostProcessSettings.bPostProcessing = false;
