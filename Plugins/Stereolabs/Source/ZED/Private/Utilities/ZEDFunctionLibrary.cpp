@@ -624,7 +624,6 @@ TArray<ESlRetrieveResult> UZEDFunctionLibrary::GetPixelsLocationAndNormalAtWorld
 
 bool UZEDFunctionLibrary::HitTestReal(AZEDPlayerController* PlayerController, const FVector& Location, float HitThreshold, bool bGetNormal, bool bHitIfBehind, FZEDHitResult& HitResult)
 {
-	FVector PixelWorldLocation;
 	ESlRetrieveResult RetrieveResult;
 
 	if (bGetNormal)
