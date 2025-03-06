@@ -188,7 +188,7 @@ void FSlMeasureRunnable::GrabCallback(ESlErrorCode ErrorCode)
 			FreeBuffer->Mats[0] = sl_mat_create_new(GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y, SL_MAT_TYPE_F32_C1, SL_MEM_GPU);
 		}
 
-		SL_ERROR_CODE Err = (SL_ERROR_CODE)sl_retrieve_measure(GSlCameraProxy->GetCameraID(), FreeBuffer->Mats[0], SL_MEASURE_DEPTH, SL_MEM_GPU, GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y);
+		SL_ERROR_CODE Err = (SL_ERROR_CODE)sl_retrieve_measure(GSlCameraProxy->GetCameraID(), FreeBuffer->Mats[0], SL_MEASURE_DEPTH, SL_MEM_GPU, GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y, 0);
 	}
 	if(FreeBuffer->bNormalsEnabled)
 	{
@@ -196,7 +196,7 @@ void FSlMeasureRunnable::GrabCallback(ESlErrorCode ErrorCode)
 			FreeBuffer->Mats[1] = sl_mat_create_new(GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y, SL_MAT_TYPE_F32_C4, SL_MEM_GPU);
 		}
 
-		SL_ERROR_CODE Err = (SL_ERROR_CODE)sl_retrieve_measure(GSlCameraProxy->GetCameraID(), FreeBuffer->Mats[1], SL_MEASURE_NORMALS, SL_MEM_GPU, GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y);
+		SL_ERROR_CODE Err = (SL_ERROR_CODE)sl_retrieve_measure(GSlCameraProxy->GetCameraID(), FreeBuffer->Mats[1], SL_MEASURE_NORMALS, SL_MEM_GPU, GSlCameraProxy->RetrieveMatSize.X, GSlCameraProxy->RetrieveMatSize.Y, 0);
 	}
 
 	SL_SCOPE_LOCK(Lock, UpdateSection)

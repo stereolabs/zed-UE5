@@ -132,14 +132,14 @@ void AZEDPointCloudRenderer::UpdateTextures(ESlErrorCode ErrorCode, FSlTimestamp
 		return;
 	}
 
-	if (sl_mat_is_init(Vertices)) sl_retrieve_measure(GSlCameraProxy->GetCameraID(), Vertices, SL_MEASURE_XYZ, SL_MEM_CPU, Resolution.X, Resolution.Y);
+	if (sl_mat_is_init(Vertices)) sl_retrieve_measure(GSlCameraProxy->GetCameraID(), Vertices, SL_MEASURE_XYZ, SL_MEM_CPU, Resolution.X, Resolution.Y, 0);
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Vertices is not init"));
 		return;
 	}
 
-	if (sl_mat_is_init(Colors)) sl_retrieve_image(GSlCameraProxy->GetCameraID(), Colors, SL_VIEW_LEFT, SL_MEM_GPU, Resolution.X, Resolution.Y);
+	if (sl_mat_is_init(Colors)) sl_retrieve_image(GSlCameraProxy->GetCameraID(), Colors, SL_VIEW_LEFT, SL_MEM_GPU, Resolution.X, Resolution.Y, 0);
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Colors is not init"));

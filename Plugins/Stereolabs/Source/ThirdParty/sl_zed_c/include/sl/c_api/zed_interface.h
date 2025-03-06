@@ -188,6 +188,18 @@ extern "C" {
     INTERFACE_API int sl_grab(int camera_id, struct SL_RuntimeParameters* runtime);
 
     /**
+    \brief Read the latest images and IMU from the camera and rectify the images.
+
+    This method is meant to be called frequently in the main loop of your application.
+
+    \note If no new frames is available until timeout is reached, read() will return \ref ERROR_CODE "SL_ERROR_CODE_CAMERA_NOT_DETECTED" since the camera has probably been disconnected.
+    \note Returned errors can be displayed using toString().
+
+    \return \ref ERROR_CODE "SL_ERROR_CODE_SUCCESS" means that no problem was encountered.
+     */
+    INTERFACE_API int sl_read(int camera_id);
+
+    /**
     \brief Lists all the connected devices with their associated information.
 
     This method lists all the cameras available and provides their serial number, models and other information.
@@ -293,7 +305,7 @@ extern "C" {
     \note The method will return sl_ERROR_CODE_FAILURE if not in SVO mode.
     \warning You need to call sl_get_svo_data_size for the key before calling this method to correctly retrieve the data.
      */
-    INTERFACE_API enum SL_ERROR_CODE sl_retrieve_svo_data(int camera_id, char key[128], int nb_data, struct SL_SVOData* data, unsigned long long ts_begin, unsigned long long ts_end);
+    INTERFACE_API enum SL_ERROR_CODE sl_retrieve_svo_data(int camera_id, char* key, int nb_data, struct SL_SVOData** data, unsigned long long ts_begin, unsigned long long ts_end);
 
     /**
     \brief Gets the number of external channels that can be retrieved from the SVO file.
@@ -312,7 +324,7 @@ extern "C" {
 
     \note The method will not fill the keys array if not in SVO mode.
      */
-    INTERFACE_API void sl_get_svo_data_keys(int camera_id, int nb_keys, char* keys[128]);
+    INTERFACE_API void sl_get_svo_data_keys(int camera_id, int nb_keys, char** keys);
 
     /**
     \brief Initializes and starts the positional tracking processes.
@@ -675,6 +687,16 @@ extern "C" {
     INTERFACE_API unsigned int sl_get_frame_dropped_count(int camera_id);
 
 
+    /**
+	* \brief Gets the current status of the camera.
+	* \param camera_id : Id of the camera instance.
+	* \return HealthStatus Structure containing the self diagnostic results of the image/depth/sensors
+    */
+	INTERFACE_API struct SL_HealthStatus* sl_get_health_status(int camera_id);
+
+    INTERFACE_API struct SL_Resolution* sl_get_retrieve_image_resolution(int camera_id, struct SL_Resolution* res);
+
+    INTERFACE_API struct SL_Resolution* sl_get_retrieve_measure_resolution(int camera_id, struct SL_Resolution* res);
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Motion tracking ///////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -722,6 +744,25 @@ extern "C" {
      */
     INTERFACE_API int sl_get_position_array(int camera_id, float* pose, enum SL_REFERENCE_FRAME reference_frame);
 
+    /**
+    \brief Get the current positional tracking landmarks.
+    \Note the landmarks array has to be freed by the user.
+    \param camera_id : id of the camera instance.
+    \param landmarks Array of presents landmarks.
+	\param count number of landmarks (size of the landmarks array).
+    \return ERROR_CODE that indicate if the function succeed or not.
+     */
+	INTERFACE_API int sl_get_positional_tracking_landmarks(int camera_id, struct SL_Landmark** landmarks, uint32_t* count);
+
+    /**
+    \brief Get the current positional tracking 2d landmarks.
+    \Note the landmarks array has to be freed by the user.
+    \param camera_id : id of the camera instance.
+    \param landmarks 2d Array of landmarks.
+    \param count number of landmarks (size of the landmarks array).
+    \return ERROR_CODE that indicate if the function succeed or not.
+     */
+    INTERFACE_API int sl_get_positional_tracking_landmarks_2d(int camera_id, struct SL_Landmark2D** landmarks2d, uint32_t* count);
     /**
      \brief Return the current status of positional tracking module.
      \return SL_POSITIONAL_TRACKING_STATUS current status of positional tracking module.
@@ -1120,7 +1161,7 @@ extern "C" {
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_RESOLUTION" if the resolution is higher than one provided by getCameraInformation().camera_configuration.resolution.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if another error occurred.
      */
-    INTERFACE_API int sl_retrieve_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, int width, int height);
+    INTERFACE_API int sl_retrieve_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, int width, int height, cudaStream_t custream);
     /**
     \brief Retrieves an image texture from the ZED SDK in a human-viewable format.
     
@@ -1134,7 +1175,7 @@ extern "C" {
     \param height : Height of the texture in pixel.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the retrieve succeeded.
      */
-    INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height);
+    INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height, cudaStream_t custream);
 
     /**
     \brief Convert Image format from Unsigned char to Signed char, designed for Unreal Engine pipeline, works on GPU memory.
@@ -1556,8 +1597,8 @@ extern "C" {
 
     /**
     * \brief retrieves a list of bodies (in SL_Bodies class type) seen by all cameras and merged as if it was seen by a single super-camera.
-    *\note Internal calls retrieveObjects() for all listed cameras, then merged into a single SL_Bodies
-    * \param [out] bodies: list of objects seen by all available cameras
+    *\note Internal calls retrieveBodies() for all listed cameras, then merged into a single SL_Bodies
+    * \param [out] bodies: list of bodies seen by all available cameras
     * \note Only the 3d informations is available in the returned object.
     * \return SL_FUSION_ERROR_CODE
     */
@@ -2098,6 +2139,53 @@ extern "C" {
     \param ptr2 : Pointer of the second matrix to swap.
     */
     INTERFACE_API void sl_mat_swap(void* ptr_1, void* ptr_2);
+
+    /**
+    \brief Convert the color channels of the Mat (RGB<->BGR or RGBA<->BGRA)
+     * This methods works only on 8U_C4 or 8U_C3
+     */
+    INTERFACE_API int sl_mat_convert_color(void* ptr, enum SL_MEM memory, bool swap_RB_channels, cudaStream_t stream);
+
+    /**
+    \brief Convert the color channels of the Mat into another Mat
+     * This methods works only on 8U_C4 if remove_alpha_channels is enabled, or 8U_C4 and 8U_C3 if swap_RB_channels is enabled
+     * The inplace method sl::Mat::convertColor can be used for only swapping the Red and Blue channel efficiently
+     */
+    INTERFACE_API int sl_convert_color(void* mat1, void* mat2, bool swap_RB_channels, bool remove_alpha_channels, enum SL_MEM memory, cudaStream_t stream);
+
+    /**
+    \brief Convert an image into a GPU Tensor in planar channel configuration (NCHW), ready to use for deep learning model
+    \param image_in : input image to convert
+    \param tensor_out : output GPU tensor
+    \param resolution_out : resolution of the output image, generally square, although not mandatory
+    \param scalefactor : Scale factor applied to each pixel value, typically to convert the char value into [0-1] float
+    \param mean : mean, statistic to normalized the pixel values, applied AFTER the scale. For instance for imagenet statistics the mean would be sl::float3(0.485, 0.456, 0.406)
+    \param stddev : standard deviation, statistic to normalized the pixel values, applied AFTER the scale. For instance for imagenet statistics the standard deviation would be sl::float3(0.229, 0.224, 0.225)
+    \param keep_aspect_ratio : indicates if the original width and height ratio should be kept using padding (sometimes refer to as letterboxing) or if the image should be stretched
+    \param swap_RB_channels : indicates if the Red and Blue channels should be swapped (RGB<->BGR or RGBA<->BGRA)
+    \param stream : a cuda stream to put the compute
+     */
+    INTERFACE_API int sl_blob_from_image(void* image_in, void* tensor_out, struct SL_Resolution resolution_out,
+        float scalefactor, struct SL_Vector3 mean, struct SL_Vector3 stddev, bool keep_aspect_ratio, bool swap_RB_channels,
+        cudaStream_t stream);
+
+    /**
+    \brief Convert a list of images into a GPU Tensor in planar channel configuration (NCHW), ready to use for deep learning model
+    \param image_in : input images to convert
+    \param nb_images : number of images to convert
+    \param tensor_out : output GPU tensor batched
+    \param resolution_out : resolution of the output image, generally square, although not mandatory
+    \param scalefactor : Scale factor applied to each pixel value, typically to convert the char value into [0-1] float
+    \param mean : mean, statistic to normalized the pixel values, applied AFTER the scale. For instance for imagenet statistics the mean would be sl::float3(0.485, 0.456, 0.406)
+    \param stddev : standard deviation, statistic to normalized the pixel values, applied AFTER the scale. For instance for imagenet statistics the standard deviation would be sl::float3(0.229, 0.224, 0.225)
+    \param keep_aspect_ratio : indicates if the original width and height ratio should be kept using padding (sometimes refer to as letterboxing) or if the image should be stretched
+    \param swap_RB_channels : indicates if the Red and Blue channels should be swapped (RGB<->BGR or RGBA<->BGRA)
+    \param stream : a cuda stream to put the compute
+     */
+
+	INTERFACE_API int sl_blob_from_images(void** image_in, int nb_images, void* tensor_out, struct SL_Resolution resolution_out,
+		float scalefactor, struct SL_Vector3 mean, struct SL_Vector3 stddev, bool keep_aspect_ratio, bool swap_RB_channels,
+		cudaStream_t stream);
 
 #ifdef __cplusplus
 }

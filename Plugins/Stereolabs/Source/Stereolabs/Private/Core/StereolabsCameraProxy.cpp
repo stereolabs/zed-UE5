@@ -266,6 +266,8 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.open_timeout_sec = InitParameters.OpenTimeoutSec;
 	sl_init_parameters.grab_compute_capping_fps = InitParameters.GrabComputeCappingFPS;
 	sl_init_parameters.enable_image_validity_check = InitParameters.bEnableImageValidityCheck;
+	sl_init_parameters.maximum_working_resolution.width = InitParameters.MaximumWorkingResolution.X;
+	sl_init_parameters.maximum_working_resolution.height = InitParameters.MaximumWorkingResolution.Y;
 
 	InputType = (SL_INPUT_TYPE)InitParameters.InputType;
 	bool IsCameraCreated = sl_create_camera(CameraID);
@@ -440,7 +442,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 
 	sl_positional_tracking_parameters.enable_area_memory = NewTrackingParameters.bEnableAreaMemory;
 	sl_positional_tracking_parameters.enable_imu_fusion = NewTrackingParameters.bEnableImuFusion;
-	sl_positional_tracking_parameters.enable_pose_smothing = NewTrackingParameters.bEnablePoseSmoothing;
+	sl_positional_tracking_parameters.enable_pose_smoothing = NewTrackingParameters.bEnablePoseSmoothing;
 	sl_positional_tracking_parameters.initial_world_position = sl::unreal::ToSlType2(NewTrackingParameters.Location);
 	sl_positional_tracking_parameters.initial_world_rotation = sl::unreal::ToSlType(NewTrackingParameters.Rotation.Quaternion());
 	sl_positional_tracking_parameters.set_as_static = NewTrackingParameters.bSetAsStatic;
@@ -1037,7 +1039,7 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 
 	if (UnsignedLeftImage == nullptr) UnsignedLeftImage = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, sl::unreal::ToSlType(ViewType), SL_MEM_GPU, Resolution.X, Resolution.Y);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, sl::unreal::ToSlType(ViewType), SL_MEM_GPU, Resolution.X, Resolution.Y, 0);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
@@ -1074,7 +1076,7 @@ bool USlCameraProxy::RetrieveMeasure(void* Mat, ESlMeasure MeasureType, ESlMemor
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveMeasure);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_measure(CameraID, Mat, (SL_MEASURE)MeasureType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_measure(CameraID, Mat, (SL_MEASURE)MeasureType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y, 0);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{
@@ -1487,17 +1489,11 @@ void USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 {
 	ObjectDetectionParameters = ODParameters;
 
-	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects)
+	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects && ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomYoloLikeBoxObjects)
 	{
-		SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ODParameters.DetectionModel);
-
-		SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
-
-		if (!ai_model_status->optimized)
+		if (!GSlCameraProxy->CheckAIModelOptimization((ESlAIModels)sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ODParameters.DetectionModel)))
 		{
-			OptimizeAIModel((ESlAIModels)ai_model, ESlAIType::AIT_ObjectDetection);
-
-			SL_CAMERA_PROXY_LOG_W("Optimizing AI model : %i The process can take few minutes", (int)ai_model);
+			SL_CAMERA_PROXY_LOG_W("Optimizing AI model : %i The process can take few minutes", (int)ODParameters.DetectionModel);
 		}
 		else
 		{
@@ -1541,7 +1537,7 @@ void USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 	{
 		OptimizeAIModel((ESlAIModels)ai_model, ESlAIType::AIT_BodyTracking);
 
-		SL_CAMERA_PROXY_LOG_W("Optimizing AI model. The process can take few minutes ...");
+		SL_CAMERA_PROXY_LOG_W("Optimizing BT AI model. The process can take few minutes ...");
 	}
 	else
 	{
@@ -1820,8 +1816,8 @@ int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resS
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		int nb_data = sl_get_svo_data_size(CameraID, ckey.get(), tsb, tse);
 		if (nb_data > 0) {
-			auto cdata = std::make_unique<SL_SVOData[]>(nb_data);
-			err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata.get(), tsb, tse);
+			SL_SVOData** cdata = new SL_SVOData * [nb_data];
+			err = sl_retrieve_svo_data(CameraID, ckey.get(), nb_data, cdata, tsb, tse);
 			for (int i = 0; i < nb_data; ++i) {
 				resSVOData.Add(sl::unreal::ToUnrealType(cdata[i]));
 			}
