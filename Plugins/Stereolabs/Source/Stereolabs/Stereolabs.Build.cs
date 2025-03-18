@@ -100,8 +100,8 @@ public class Stereolabs : ModuleRules
 
             // Check SDK version
             string DefinesHeaderFilePath = Path.Combine(DirPath, "include\\sl\\Camera.hpp");
-            string Major = "4";
-            string Minor = "2";
+            string Major = "5";
+            string Minor = "0";
             //string Patch = "0";
 
             // Find SDK major and minor version and compare
