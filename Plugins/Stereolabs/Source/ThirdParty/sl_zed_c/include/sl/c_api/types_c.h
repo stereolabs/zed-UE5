@@ -16,7 +16,7 @@
 #define MAX_SUBMESH 1000
 
 #include <stdbool.h>
-
+#include <stdint.h>
 #include "cuda.h"
 
 /**
@@ -41,6 +41,20 @@ struct SL_Vector2 {
 	\brief Second component of the vector.
 	*/
 	float y;
+};
+
+/**
+* \brief Structure representing a generic 2-dimensional unsigned integer vector.
+*/
+struct SL_Uint2 {
+	/**
+	\brief Fist component of the vector.
+	*/
+	unsigned int x;
+	/**
+	\brief Second component of the vector.
+	*/
+	unsigned int y;
 };
 
 /**
@@ -188,7 +202,7 @@ struct SL_PoseData {
 	
 	This timestamp should be compared with the camera timestamp for synchronization.
 	*/
-	unsigned long long timestamp;
+	uint64_t timestamp;
 	struct SL_Quaternion rotation; /**< \brief Quaternion/orientation component of the \ref SL_PoseData.*/
 	struct SL_Vector3 translation; /**< \brief Translation component of the \ref SL_PoseData.*/
 	/**
@@ -261,7 +275,7 @@ struct SL_IMUData {
 	/**
 	\brief Data acquisition timestamp in nanoseconds.
 	*/
-	unsigned long long timestamp_ns;
+	uint64_t timestamp_ns;
 	/**
 	\brief Gets the angular velocity vector of the gyroscope in deg/s.
 
@@ -315,7 +329,7 @@ struct SL_IMUData {
 */
 struct SL_BarometerData {
 	bool is_available; /**< \brief Whether the barometer sensor is available in your camera.*/
-	unsigned long long timestamp_ns; /**< \brief Data acquisition timestamp in nanoseconds.*/
+	uint64_t timestamp_ns; /**< \brief Data acquisition timestamp in nanoseconds.*/
 	float pressure; /**< \brief Ambient air pressure in hectopascal (hPa).*/
 	float relative_altitude; /**< \brief Relative altitude from first camera position (at \ref sl_open_camera() time).*/
 };
@@ -343,7 +357,7 @@ struct SL_MagnetometerData {
 	/**
 	\brief Data acquisition timestamp in nanoseconds.
 	*/
-	unsigned long long  timestamp_ns;
+	uint64_t  timestamp_ns;
 	/**
 	\brief Magnetic field local vector in microtesla (μT).
 	\note To calibrate the magnetometer sensor, please use \b ZED \b Sensor \b Viewer tool after placing the camera in the final operating environment.
@@ -484,6 +498,7 @@ enum SL_RESOLUTION {
 	SL_RESOLUTION_HD4K, /**< 3856x2180 for imx678 mono*/
 	SL_RESOLUTION_QHDPLUS, /**< 3800x1800 */
 	SL_RESOLUTION_HD2K, /**< 2208*1242 (x2) \n Available FPS: 15*/
+	SL_RESOLUTION_HD1536, /**< 1920*1536 (x2) \n Available FPS: 15, 30*/
 	SL_RESOLUTION_HD1080, /**< 1920*1080 (x2) \n Available FPS: 15, 30*/
 	SL_RESOLUTION_HD1200, /**< 1920*1200 (x2) \n Available FPS: 15, 30, 60*/
 	SL_RESOLUTION_HD720, /**< 1280*720 (x2) \n Available FPS: 15, 30, 60*/
@@ -535,9 +550,13 @@ enum SL_MODEL {
 	SL_MODEL_ZED2i, /**< ZED 2i camera model */
 	SL_MODEL_ZED_X, /**< ZED X camera model */
 	SL_MODEL_ZED_XM, /**< ZED X Mini (ZED XM) camera model */
-	SL_MODEL_VIRTUAL_ZED_X = 10, /**< Virtual ZED-X generated from 2 ZED-XOne */
-	SL_MODEL_ZED_XONE_GS = 30, /**< ZED XOne with global shutter AR0234 sensor */
-	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED XOne with 4K rolling shutter IMX678 sensor */
+	SL_MODEL_ZED_X_HDR, /**< ZED X HDR camera model */
+	SL_MODEL_ZED_X_HDR_MINI, /**< ZED X HDR Mini camera model */
+	SL_MODEL_ZED_X_HDR_MAX, /**< ZED X HDR Wide camera model */
+	SL_MODEL_VIRTUAL_ZED_X = 11, /**< Virtual ZED X generated from 2 ZED X One */
+	SL_MODEL_ZED_XONE_GS = 30, /**< ZED X One with global shutter AR0234 sensor */
+	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED X One with 4K rolling shutter IMX678 sensor */
+	SL_MODEL_ZED_XONE_HDR = 32, /**< ZED XOne HDR */
 };
 
 /**
@@ -546,7 +565,8 @@ enum SL_MODEL {
 enum SL_MEM
 {
 	SL_MEM_CPU, /**< Data will be stored on the CPU (processor side).*/
-	SL_MEM_GPU  /**< Data will be stored on the GPU (graphic card side).*/
+	SL_MEM_GPU,  /**< Data will be stored on the GPU (graphic card side).*/
+	SL_MEM_BOTH /**< Data will be stored on both the CPU and GPU. */
 };
 
 /**
@@ -644,6 +664,7 @@ enum SL_VIDEO_SETTINGS
 	SL_VIDEO_SETTINGS_AUTO_DIGITAL_GAIN_RANGE, /**< Range of digital ISP gain in automatic control.\n Used with sl_get_camera_settings_min_max().\n Min/max range between max range defined in DTS.\n By default: [1 - 256]. \note Only available for ZED X/X Mini cameras. */
 	SL_VIDEO_SETTINGS_EXPOSURE_COMPENSATION, /**< Exposure-target compensation made after auto exposure.\n Reduces the overall illumination target by factor of F-stops.\n Affected value should be between 0 and 100 (mapped between [-2.0,2.0]).\n Default value is 50, i.e. no compensation applied. \note Only available for ZED X/X Mini cameras.*/
 	SL_VIDEO_SETTINGS_DENOISING, /**< Level of denoising applied on both left and right images.\n Affected value should be between 0 and 100.\n Default value is 50. \note Only available for ZED X/X Mini cameras.*/
+	SL_VIDEO_SETTINGS_SCENE_ILLUMINANCE, /** Level of illuminance of the scene. \n Can be used to determine the level of light in the scene and adjust settings accordingly. \note Read-only control. \n Available for ZED-X/Xmini cameras. \n Value provided in [0.1x]Lux for ZED-X / ZED-X Mini / ZED-XOne GS and ZED-XOne UHD cameras.*/
 	SL_VIDEO_SETTINGS_LAST
 };
 
@@ -846,6 +867,7 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_PERFORMANCE, /** Computation mode optimized for speed.*/
 	SL_DEPTH_MODE_QUALITY, /**< Computation mode designed for challenging areas with untextured surfaces.*/
 	SL_DEPTH_MODE_ULTRA, /**< Computation mode that favors edges and sharpness.\n Requires more GPU memory and computation power.*/
+	SL_DEPTH_MODE_NEURAL_LIGHT,  /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL, /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL_PLUS /**< More accurate Neural disparity estimation.\n Requires AI module. */
 };
@@ -909,30 +931,30 @@ Given as hint, when using object tracking an object can change of \ref SL_OBJECT
 */
 enum SL_OBJECT_SUBCLASS
 {
-	SL_OBJECT_SUBCLASS_PERSON,       /**< \ref SL_OBJECT_CLASS_PERSON */
-	SL_OBJECT_SUBCLASS_BICYCLE,      /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_CAR,          /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_MOTORBIKE,    /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_BUS,          /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_TRUCK,        /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_BOAT,         /**< \ref SL_OBJECT_CLASS_VEHICLE */
-	SL_OBJECT_SUBCLASS_BACKPACK,     /**< \ref SL_OBJECT_CLASS_BAG */
-	SL_OBJECT_SUBCLASS_HANDBAG,      /**< \ref SL_OBJECT_CLASS_BAG */
-	SL_OBJECT_SUBCLASS_SUITCASE,     /**< \ref SL_OBJECT_CLASS_BAG */
-	SL_OBJECT_SUBCLASS_BIRD,        /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_CAT,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_DOG,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_HORSE,       /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_SHEEP,       /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_COW,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
-	SL_OBJECT_SUBCLASS_CELLPHONE,   /**< \ref SL_OBJECT_CLASS_ELECTRONICS */
-	SL_OBJECT_SUBCLASS_LAPTOP,      /**< \ref SL_OBJECT_CLASS_ELECTRONICS */
-	SL_OBJECT_SUBCLASS_BANANA,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
-	SL_OBJECT_SUBCLASS_APPLE,       /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
-	SL_OBJECT_SUBCLASS_ORANGE,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
-	SL_OBJECT_SUBCLASS_CARROT,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
-	SL_OBJECT_SUBCLASS_PERSON_HEAD, /**< \ref SL_OBJECT_CLASS_PERSON */
-	SL_OBJEC_SUBCLASS_SPORTSBALL 	/**< \ref SL_OBJECT_CLASS_SPORT*/
+	SL_OBJECT_SUBCLASS_PERSON = 0,       /**< \ref SL_OBJECT_CLASS_PERSON */
+	SL_OBJECT_SUBCLASS_BICYCLE = 1,      /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_CAR = 2,          /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_MOTORBIKE = 3,    /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_BUS = 4,          /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_TRUCK = 5,        /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_BOAT = 6,         /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_BACKPACK = 7,     /**< \ref SL_OBJECT_CLASS_BAG */
+	SL_OBJECT_SUBCLASS_HANDBAG = 8,      /**< \ref SL_OBJECT_CLASS_BAG */
+	SL_OBJECT_SUBCLASS_SUITCASE = 9,     /**< \ref SL_OBJECT_CLASS_BAG */
+	SL_OBJECT_SUBCLASS_BIRD = 10,        /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_CAT = 11,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_DOG = 12,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_HORSE = 13,       /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_SHEEP = 14,       /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_COW = 15,         /**< \ref SL_OBJECT_CLASS_ANIMAL */
+	SL_OBJECT_SUBCLASS_CELLPHONE = 16,   /**< \ref SL_OBJECT_CLASS_ELECTRONICS */
+	SL_OBJECT_SUBCLASS_LAPTOP = 17,      /**< \ref SL_OBJECT_CLASS_ELECTRONICS */
+	SL_OBJECT_SUBCLASS_BANANA = 18,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
+	SL_OBJECT_SUBCLASS_APPLE = 19,       /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
+	SL_OBJECT_SUBCLASS_ORANGE = 20,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
+	SL_OBJECT_SUBCLASS_CARROT = 21,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
+	SL_OBJECT_SUBCLASS_PERSON_HEAD = 22, /**< \ref SL_OBJECT_CLASS_PERSON */
+	SL_OBJECT_SUBCLASS_SPORTSBALL = 23    /**< \ref SL_OBJECT_CLASS_SPORT*/
 
 };
 
@@ -981,12 +1003,10 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_HUMAN_BODY_38_FAST_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST*/
 	SL_AI_MODELS_HUMAN_BODY_38_MEDIUM_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST*/
 	SL_AI_MODELS_HUMAN_BODY_38_ACCURATE_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST*/
-	//SL_AI_MODELS_HUMAN_BODY_70_FAST_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST*/
-	//SL_AI_MODELS_HUMAN_BODY_70_MEDIUM_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM*/
-	//SL_AI_MODELS_HUMAN_BODY_70_ACCURATE_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE*/
 	SL_AI_MODELS_PERSON_HEAD_DETECTION, /**< Related to \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST*/
 	SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION, /**< Related to \ref SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE*/
 	SL_AI_MODELS_REID_ASSOCIATION, /**< Related to \ref SL_BatchParameters.enable*/
+	SL_AI_MODELS_NEURAL_LIGHT_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_LIGHT*/
 	SL_AI_MODELS_NEURAL_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL*/
 	SL_AI_MODELS_NEURAL_PLUS_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_PLUS*/
 	SL_AI_MODELS_LAST
@@ -999,6 +1019,16 @@ enum SL_OBJECT_FILTERING_MODE {
 	SL_OBJECT_FILTERING_MODE_NONE, /**< The ZED SDK will not apply any preprocessing to the detected objects. */
 	SL_OBJECT_FILTERING_MODE_NMS_3D, /**< The ZED SDK will remove objects that are in the same 3D position as an already tracked object (independent of class id). */
 	SL_OBJECT_FILTERING_MODE_NMS_3D_PER_CLASS, /**< The ZED SDK will remove objects that are in the same 3D position as an already tracked object of the same class id. */
+};
+
+/**
+\brief Lists supported bounding box preprocessing.
+ */
+enum SL_OBJECT_ACCELERATION_PRESET {
+	SL_OBJECT_ACCELERATION_PRESET_DEFAULT = 0, /**< The ZED SDK will automatically determine the appropriate maximum acceleration. */
+	SL_OBJECT_ACCELERATION_PRESET_LOW = 1, /**< Suitable for objects with relatively low maximum acceleration (e.g., a person walking). */
+	SL_OBJECT_ACCELERATION_PRESET_MEDIUM = 2, /**< Suitable for objects with moderate maximum acceleration (e.g., a person running). */
+	SL_OBJECT_ACCELERATION_PRESET_HIGH = 3 /**< Suitable for objects with high maximum acceleration (e.g., a car accelerating, a kicked sports ball). */
 };
 
 /**
@@ -1276,10 +1306,7 @@ enum SL_MODULE {
 */
 enum SL_POSITION_TYPE {
 	SL_POSITION_TYPE_RAW,/**< The output position will be the raw position data. */
-	SL_POSITION_TYPE_FUSION,/**< The output position will be the fused position projected into the requested camera repository. */
-	///@cond SHOWHIDDEN 
-	SL_POSITION_TYPE_LAST
-	///@endcond
+	SL_POSITION_TYPE_FUSION/**< The output position will be the fused position projected into the requested camera repository. */
 };
 
 /**
@@ -1289,11 +1316,11 @@ struct SL_Resolution {
 	/**
 	\brief Width of the image in pixels.
 	*/
-	long long width;
+	int width;
 	/**
 	\brief Height of the image in pixels.
 	*/
-	long long height;
+	int height;
 };
 
 /**
@@ -1362,7 +1389,7 @@ struct SL_InitParameters
 	\note From ZED SDK 3.2 a new \ref SL_FLIP_MODE enum was introduced to add the automatic flip mode detection based on the IMU gravity detection.
 	\note This does not work on \ref SL_MODEL_ZED cameras since they do not have the necessary sensors.
 	*/
-	enum  SL_FLIP_MODE camera_image_flip;
+	enum SL_FLIP_MODE camera_image_flip;
 
 	/**
 	\brief Disables the self-calibration process at camera opening.
@@ -1402,7 +1429,7 @@ struct SL_InitParameters
 	
 	The ZED SDK offers several \ref SL_DEPTH_MODE, offering various levels of performance and accuracy.
 	\n This parameter allows you to set the \ref SL_DEPTH_MODE that best matches your needs.
-	\n Default: \ref SL_DEPTH_MODE_PERFORMANCE
+	\n Default: \ref SL_DEPTH_MODE_NEURAL
 	\note Available depth mode are listed here: \ref SL_DEPTH_MODE.
 	*/
 	enum SL_DEPTH_MODE depth_mode;
@@ -1547,11 +1574,25 @@ struct SL_InitParameters
 	/**
 	 Enable or disable the image validity verification.
 	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
-	 If an issue is found, the grab function will output a warning as sl::ERROR_CODE::CORRUPTED_FRAME.
+	 If an issue is found, the grab function will output a warning as sl_ERROR_CODE_CORRUPTED_FRAME.
 	 This version doesn't detect frame tearing currently.
 	 \n default: disabled
 	 */
 	int enable_image_validity_check;
+
+	/**
+	\brief Set a maximum size for all SDK output, like retrieveImage and retrieveMeasure functions.
+	 *
+	 * This will override the default (0,0) and instead of outputting native image size sl::Mat, the ZED SDK will take this size as default.
+	 * A custom lower size can also be used at runtime, but not bigger. This is used for internal optimization of compute and memory allocations
+	 *
+	 * The default is similar to previous version with (0,0), meaning native image size
+	 *
+	 * \note: if maximum_working_resolution field are lower than 64, it will be interpreted as dividing scale factor;
+	 * - maximum_working_resolution = sl::Resolution(1280, 2) -> 1280 x (image_height/2) = 1280 x (half height)
+	 * - maximum_working_resolution = sl::Resolution(4, 4) -> (image_width/4) x (image_height/4) = quarter size
+	 */
+	struct SL_Resolution maximum_working_resolution;
 };
 
 /**
@@ -1642,6 +1683,10 @@ struct SL_DeviceProperties {
 	 */
 	unsigned char path[512];
 	/**
+	\brief i2c port of the camera.
+	 */
+	int i2c_port;
+	/**
 	\brief Model of the camera.
 	 */
 	enum  SL_MODEL camera_model;
@@ -1655,9 +1700,31 @@ struct SL_DeviceProperties {
 
 	unsigned int sn;
 	/**
+	\brief [Cam model, eeprom version, white balance param]
+	 */
+	unsigned char identifier[3];
+	/**
+	\brief badge name (zedx_ar0234)
+	 */
+	char* camera_badge;
+
+	/**
+	\brief Name of sensor (zedx)
+	 */
+	char* camera_sensor_model;
+	/**
+	\brief Name of Camera in DT (ZED_CAM1)
+	 */
+	char* camera_name;
+	/**
 	\brief Input type of the camera.
 	 */
 	enum SL_INPUT_TYPE input_type;
+	/**
+	\brief sensor_address when available (ZED-X HDR/XOne HDR only)
+	 */
+	unsigned char sensor_address_left;
+	unsigned char sensor_address_right;
 };
 
 /**
@@ -1914,7 +1981,7 @@ struct SL_PositionalTrackingParameters
 
     Default: false
 	*/
-	bool enable_pose_smothing;
+	bool enable_pose_smoothing;
 	/**
 	\brief Initializes the tracking to be aligned with the floor plane to better position the camera in space.
 
@@ -1967,7 +2034,42 @@ struct SL_PositionalTrackingParameters
 	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_1
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
+	/**
+	\brief Should enable light computation mode	
+	If enabled the tracking will just run the part needed by Fusion and nothing more. This parameter will degrade accuracy if
+	positional tracking module is used alone without Fusion. This parameter works only with GEN_2 module.
+	*/
+	bool enable_light_computation_mode;
+};
 
+/**
+\brief Represents a 3d landmark.
+ */
+struct SL_Landmark
+{
+	/**
+	 \brief Unique identifier for the landmark.
+	 */
+	uint64_t id;
+	/**
+	 \brief World position of the landmark.
+	 */
+	struct SL_Vector3 position;
+};
+
+/**
+\brief Represents a 2d landmark.
+ */
+struct SL_Landmark2D
+{
+	/**
+	 \brief Unique identifier for the landmark.
+	 */
+	uint64_t id;
+	/**
+	 \brief  Projection of the landmark in the image.
+	 */
+	struct SL_Uint2 image_position;
 };
 
 /**
@@ -2113,11 +2215,11 @@ struct SL_SVOData
 	/**
 	\brief Key used to retrieve the data stored into SVOData's content.
 	 */
-	char key[128];
+	char* key;
 	/**
-	\brief Timestamp of the data.
+	\brief Size of the key
 	 */
-	unsigned long long timestamp_ns;
+	int key_size;
 	/**
 	\brief content stored as SVOData.
 	* Allow any type of content, including raw data like compressed images or JSON.
@@ -2127,6 +2229,10 @@ struct SL_SVOData
 	\brief Size of the content.
 	 */
 	int content_size;
+	/**
+	\brief Timestamp of the data.
+	 */
+	uint64_t timestamp_ns;
 };
 
 /**
@@ -2312,6 +2418,24 @@ struct SL_SpatialMappingParameters {
 	\n Default: 0 (this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter)
 	*/
 	int stability_counter;
+	/**
+	\brief Control the disparity noise (standard deviation) in px. set a very small value (<0.1) if the depth map of the scene is accurate.
+	set a big value (>0.5) if the depth map is noisy.
+	 */
+	float disparity_std;
+
+	/**
+	\brief Adjust the weighting factor for the current depth during the integration process.
+	 By default, the value is set to 1, which results in the complete integration and fusion of the current depth with the previously integrated depth.
+	 Setting it to 0 discards all previous data and solely integrates the current depth.
+	 */
+	float decay;
+
+	/**
+	 \brief This parameter enables the forgetting of the previous map to limit memory and drift issues. It enables a local spatial mapping that only keeps
+	 a mapped scene around the current camera position. The distance threshold is set to be equal to 1.5 x the range of the spatial mapping.
+	 */
+	bool enable_forget_past;
 };
 
 
@@ -2456,6 +2580,7 @@ struct SL_ObjectDetectionParameters
 	\note In this case, you might need to add your own NMS filter before ingesting the boxes into the object detection module.
 	*/
 	enum SL_OBJECT_FILTERING_MODE filtering_mode;
+
 	/**
 	\brief Prediction duration of the ZED SDK when an object is not detected anymore before switching its state to \ref SL_OBJECT_TRACKING_STATE_SEARCHING.
 	
@@ -2575,7 +2700,6 @@ struct SL_CustomObjectDetectionProperties {
 	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
 
 	By default, let the tracker decide internally based on the internal sub class of the tracked object.
-	Only valid for static object.
 	*/
 	float tracking_timeout;
 
@@ -2618,6 +2742,64 @@ struct SL_CustomObjectDetectionProperties {
 	Default: -1 (no filtering)
 	*/
 	float min_box_height_normalized;
+
+	/**
+	\brief Maximum allowed 3D width.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_width_meters;
+
+	/**
+	\brief Minimum allowed 3D width.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_width_meters;
+
+	/**
+	\brief Maximum allowed 3D height.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_height_meters;
+
+	/**
+	\brief Minimum allowed 3D height.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_height_meters;
+
+	/**
+	\brief For increased accuracy, the native \ref sl::OBJECT_SUBCLASS mapping, if any.
+
+	Native objects have refined internal parameters for better 3D projection and tracking accuracy.
+	If one of the custom objects can be mapped to one the native \ref sl::OBJECT_SUBCLASS, this can help to boost the tracking accuracy.
+
+	Default: no mapping
+	 */
+	enum SL_OBJECT_SUBCLASS native_mapped_class;
+
+	/**
+	\brief Preset defining the expected maximum acceleration of the tracked object.
+
+	Determines how the ZED SDK interprets object acceleration, affecting tracking behavior and predictions.
+	 */
+	enum SL_OBJECT_ACCELERATION_PRESET object_acceleration_preset;
+
+	/**
+	\brief Manually override the acceleration preset.
+
+	If set, this value takes precedence over the selected preset, allowing for a custom maximum acceleration.
+	Unit is m/s^2.
+	Defaults: NaN
+	*/
+	float max_allowed_acceleration;
 };
 
 /**
@@ -2708,15 +2890,6 @@ struct SL_BodyTrackingParameters {
 	\note The value cannot be greater than SL_InitParameters.depth_maximum_distance and its unit is defined in SL_InitParameters.coordinate_unit.
 	 */
 	float max_range;
-
-#if 0
-	/**
-	 \brief Batching system parameters.
-	 Batching system (introduced in 3.5) performs short-term re-identification with deep learning and trajectories filtering.
-	 * \n BatchParameters::enable must to be true to use this feature (by default disabled)
-	 */
-	struct SL_BatchParameters batch_parameters;
-#endif
 	/**
 	\brief Prediction duration of the ZED SDK when an object is not detected anymore before switching its state to \ref SL_OBJECT_TRACKING_STATE_SEARCHING.
 	
@@ -2958,7 +3131,6 @@ struct SL_CustomBoxObjectData {
 	/**
 	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
 	By default, let the tracker decide internally based on the internal sub class of the tracked object.
-	Only valid for static object.
 		*/
 	float tracking_timeout;
 
@@ -2968,6 +3140,47 @@ struct SL_CustomBoxObjectData {
 	Only valid for static object.
 		*/
 	float tracking_max_dist;
+
+	/**
+	\brief Maximum allowed 3D width.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_width_meters;
+
+	/**
+	\brief Minimum allowed 3D width.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_width_meters;
+
+	/**
+	\brief Maximum allowed 3D height.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_height_meters;
+
+	/**
+	\brief Minimum allowed 3D height.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_height_meters;
+
+	/**
+	\brief Manually override the acceleration preset.
+	If set, this value takes precedence over the selected preset, allowing for a custom maximum acceleration.
+	Takes precedence over the runtime parameter, if also set.
+	Unit is m/s^2.
+	Defaults: NaN
+		*/
+	float max_allowed_acceleration;
 };
 
 struct SL_CustomMaskObjectData {
@@ -3023,7 +3236,6 @@ struct SL_CustomMaskObjectData {
 	/**
 	\brief Maximum tracking time threshold (in seconds) before dropping the tracked object when unseen for this amount of time.
 	By default, let the tracker decide internally based on the internal sub class of the tracked object.
-	Only valid for static object.
 		*/
 	float tracking_timeout;
 
@@ -3036,8 +3248,49 @@ struct SL_CustomMaskObjectData {
 	
 	/**
 	\brief 2D mask of the object inside its bounding box.
-	 */
+		*/
 	unsigned char* box_mask;
+
+	/**
+	\brief Maximum allowed 3D width.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_width_meters;
+
+	/**
+	\brief Minimum allowed 3D width.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_width_meters;
+
+	/**
+	\brief Maximum allowed 3D height.
+
+	Any prediction bigger than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float max_box_height_meters;
+
+	/**
+	\brief Minimum allowed 3D height.
+
+	Any prediction smaller than that will be either discarded (if object is tracked and in SEARCHING state) or clamped.
+	Default: -1 (no filtering)
+	 */
+	float min_box_height_meters;
+
+	/**
+	\brief Manually override the acceleration preset.
+	If set, this value takes precedence over the selected preset, allowing for a custom maximum acceleration.
+	Takes precedence over the runtime parameter, if also set.
+	Unit is m/s^2.
+	Defaults: NaN
+		*/
+	float max_allowed_acceleration;
 };
 
 /**
@@ -3059,7 +3312,7 @@ struct SL_Objects
 
     This value is especially useful for the async mode to synchronize the data.
 	 */
-	unsigned long long timestamp;
+	uint64_t timestamp;
 	/**
 	\brief Whether \ref object_list has already been retrieved or not.
 	 */
@@ -3250,7 +3503,7 @@ struct SL_Bodies
 
     This value is especially useful for the async mode to synchronize the data.
 	 */
-	unsigned long long timestamp;
+	uint64_t timestamp;
 	/**
 	\brief Whether \ref body_list has already been retrieved or not.
 	 */
@@ -3296,7 +3549,7 @@ struct SL_ObjectsBatch {
 	struct SL_Vector3 positions[MAX_TRAJECTORY_SIZE]; /**< \brief Array of positions for each object.*/
 	float position_covariances[MAX_TRAJECTORY_SIZE][6]; /**< \brief Array of positions' covariances for each object. */
 	struct SL_Vector3 velocities[MAX_TRAJECTORY_SIZE]; /**< \brief Array of 3D velocities for each object.*/
-	unsigned long long timestamps[MAX_TRAJECTORY_SIZE]; /**< \brief Array of timestamps for each object.*/
+	uint64_t timestamps[MAX_TRAJECTORY_SIZE]; /**< \brief Array of timestamps for each object.*/
 	
 	/**
 	\brief Array of 2D bounding boxes for each object.
@@ -3360,7 +3613,7 @@ struct SL_BodiesBatch {
 	struct SL_Vector3 positions[MAX_TRAJECTORY_SIZE]; /**< \brief Array of positions for each body/person.*/
 	float position_covariances[MAX_TRAJECTORY_SIZE][6]; /**< \brief Array of positions' covariances for each body/person. */
 	struct SL_Vector3 velocities[MAX_TRAJECTORY_SIZE]; /**< \brief Array of 3D velocities for each body/person.*/
-	unsigned long long timestamps[MAX_TRAJECTORY_SIZE]; /**< \brief Array of timestamps for each body/person.*/
+	uint64_t timestamps[MAX_TRAJECTORY_SIZE]; /**< \brief Array of timestamps for each body/person.*/
 	
 	/**
 	\brief Array of 2D bounding boxes for each body/person.
@@ -3490,6 +3743,53 @@ struct SL_InputType
 };
 
 
+/*
+\brief Structure containing the self diagnostic results of the image/depth
+
+That information can be retrieved by get_health_status(), and enabled by sl::InitParameters::enable_image_validity_check
+ */
+struct SL_HealthStatus {
+	/**
+	 \brief Indicates if the Health check is enabled
+	 */
+	bool enabled;
+
+	/**
+	\brief This status indicates poor image quality
+	 * It can indicates camera issue, like incorrect manual video settings, damaged hardware, corrupted video stream from the camera,
+	 * dirt or other partial or total occlusion, stuck ISP (black/white/green/purple images, incorrect exposure, etc), blurry images
+	 * It also includes widely different left and right images which leads to unavailable depth information
+	 * In case of very low light this will be reported by this status and the dedicated \ref HealthStatus::low_lighting
+	 *
+	 * \note: Frame tearing is currently not detected. Advanced blur detection requires heavier processing and is enabled only when setting \ref Initparameters::enable_image_validity_check to 3 and above
+	 */
+	bool low_image_quality;
+
+	/**
+	\brief This status indicates low light scene.
+	 * As the camera are passive sensors working in the visible range, they requires some external light to operate.
+	 * This status warns if the lighting condition become suboptimal and worst.
+	 * This is based on the scene illuminance in LUX for the ZED X cameras series (available with \ref VIDEO_SETTINGS::SCENE_ILLUMINANCE)
+	 * For other camera models or when using SVO files, this is based on computer vision processing from the image characteristics.
+	 */
+	bool low_lighting;
+
+	/**
+	\brief This status indicates low depth map reliability
+	 * If the image are unreliable or if the scene condition are very challenging this status report a warning.
+	 * This is using the depth confidence and general depth distribution. Typically due to obstructed eye (included very close object,
+	 * strong occlusions) or degraded condition like heavy fog/water on the optics
+	 */
+	bool low_depth_reliability;
+
+	/**
+	\brief This status indicates motion sensors data reliability issue.
+	 * This indicates the IMU is providing low quality data. Possible underlying can be regarding the data stream like corrupted data,
+	 * timestamp inconsistency, resonance frequencies, saturated sensors / very high acceleration or rotation, shocks
+	 */
+	bool low_motion_sensors_reliability;
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// FUSION API /////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3499,20 +3799,75 @@ struct SL_InputType
 \brief Lists the types of error that can be raised by the Fusion.
 */
 enum SL_FUSION_ERROR_CODE {
-	SL_FUSION_ERROR_CODE_GNSS_DATA_COVARIANCE_MUST_VARY= -8, /**< Ingested covariance data must vary between ingest */
-	SL_FUSION_ERROR_CODE_BODY_FORMAT_MISMATCH = -7, /**< The senders are using different body formats.\n Consider changing them. */
-	SL_FUSION_ERROR_CODE_MODULE_NOT_ENABLED = -6, /**< The following module was not enabled. */
-	SL_FUSION_ERROR_CODE_SOURCE_MISMATCH = -5, /**< Some sources are provided by SVO and others by LIVE stream. */
-	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = -4, /**< Connection timed out. Unable to reach the sender.\n Verify the sender's IP/port. */
-	SL_FUSION_ERROR_CODE_MEMORY_ALREADY_USED = -3, /**< Intra-process shared memory allocation issue.\n Multiple connections to the same data. */
-	SL_FUSION_ERROR_CODE_INVALID_IP_ADDRESS = -2, /**< The provided IP address format is incorrect.\n Please provide the IP in the format 'a.b.c.d', where (a, b, c, d) are numbers between 0 and 255. */
-	SL_FUSION_ERROR_CODE_FAILURE = -1, /**< Standard code for unsuccessful behavior. */
-	SL_FUSION_ERROR_CODE_SUCCESS = 0, /**< Standard code for successful behavior. */
-	SL_FUSION_ERROR_CODE_FUSION_INCONSISTENT_FPS = 1, /**< Significant differences observed between sender's FPS. */
-	SL_FUSION_ERROR_CODE_FUSION_FPS_TOO_LOW = 2, /**< At least one sender has an FPS lower than 10 FPS. */
-	SL_FUSION_ERROR_CODE_INVALID_TIMESTAMP = 3, /**< Problem detected with the ingested timestamp.\n Sample data will be ignored. */
-	SL_FUSION_ERROR_CODE_INVALID_COVARIANCE = 4, /**< Problem detected with the ingested covariance.\n Sample data will be ignored. */
-	SL_FUSION_ERROR_CODE_NO_NEW_DATA_AVAILABLE = 5 /**< All data from all sources has been consumed.\n No new data is available for processing. */
+	/**
+	@brief Significant differences observed between sender's FPS. Fusion quality will be affected.
+	*/
+	SL_FUSION_ERROR_CODE_FUSION_INCONSISTENT_FPS = -5,
+	/**
+	@brief Fusion FPS is too low because at least one sender has an FPS lower than 10 FPS. Fusion quality will be affected.
+	 */
+	SL_FUSION_ERROR_CODE_FUSION_FPS_TOO_LOW = -4,
+	/**
+	@brief You have attempted to ingest GNSSData into the Fusion system with an invalid timestamp. It is essential to ensure that the
+	timestamp of your GNSSData is set correctly. This issue may arise from a unit error in the ingested timestamp, such as providing
+	the timestamp in microseconds instead of nanoseconds.
+	 */
+	SL_FUSION_ERROR_CODE_INVALID_TIMESTAMP = -3,
+	/**
+	@brief This is a warning message notifying you about an issue encountered while ingesting GNSSData into the Fusion system. The
+	problem lies in the very low covariance value provided. To ensure stability and prevent potential issues, the system will
+	automatically clamp this covariance value.
+	 */
+	SL_FUSION_ERROR_CODE_INVALID_COVARIANCE = -2,
+	/**
+	@brief All data from all sources has been consumed. No new data is available for processing.
+	 */
+	SL_FUSION_ERROR_CODE_NO_NEW_DATA_AVAILABLE = -1,
+	/**
+	@brief Standard code indicating successful behavior.
+	 */
+	SL_FUSION_ERROR_CODE_SUCCESS = 0,
+	/**
+	@brief  This is a warning message indicating an issue with the ingestGNSSData function call. The problem lies in the gnss_status field of
+	the GNSSData parameter, which is currently set to UNKNOWN. To enhance the accuracy of the VPS (Visual Positioning System), it is essential
+	to provide an appropriate value for this field. To rectify this issue, please consider setting the gnss_status field to a valid value that
+	reflects the status of your GNSS sensor. If your GNSS sensor is unable to output a status, it is recommended to set the gnss_status field
+	to sl::GNSS_STATUS::SINGLE.
+	 */
+	SL_FUSION_ERROR_CODE_GNSS_DATA_NEED_FIX = 1,
+	/**
+	@brief  It appears that you have made multiple calls to the ingestGNSSData function using the same GNSSData covariance. This warning is
+	intended to prevent users from repeatedly ingesting a fixed or manually crafted covariance.
+	 */
+	SL_FUSION_ERROR_CODE_GNSS_DATA_COVARIANCE_MUST_VARY = 2,
+	/**
+	@brief  Senders are using different body formats. Please use the same body format.
+	 */
+	SL_FUSION_ERROR_CODE_BODY_FORMAT_MISMATCH = 3,
+	/**
+	@brief The following module is not enabled. Please enable it to proceed.
+	 */
+	SL_FUSION_ERROR_CODE_MODULE_NOT_ENABLED = 4,
+	/**
+	@brief Some sources are provided by SVO and others by LIVE stream.
+	 */
+	SL_FUSION_ERROR_CODE_SOURCE_MISMATCH = 5,
+	/**
+	@brief Connection timed out. Unable to reach the sender. Verify the sender's IP address and port.
+	 */
+	SL_FUSION_ERROR_CODE_CONNECTION_TIMED_OUT = 6,
+	/**
+	@brief Intra-process shared memory allocation issue. Multiple connections to the same data. Check memory usage.
+	 */
+	SL_FUSION_ERROR_CODE_MEMORY_ALREADY_USED = 7,
+	/**
+	@brief The provided IP address format is incorrect. Please provide a valid IP address in the format 'a.b.c.d'.
+	 */
+	SL_FUSION_ERROR_CODE_INVALID_IP_ADDRESS = 8,
+	/**
+	@brief Standard code indicating unsuccessful behavior.
+	 */
+	SL_FUSION_ERROR_CODE_FAILURE = 9
 };
 
 /**
@@ -3520,11 +3875,11 @@ enum SL_FUSION_ERROR_CODE {
 \brief Lists the types of error that can be raised during the Fusion by senders.
 */
 enum SL_SENDER_ERROR_CODE {
-	SL_SENDER_ERROR_CODE_DISCONNECTED = -1, /**< The sender has been disconnected.*/
-	SL_SENDER_ERROR_CODE_SUCCESS = 0, /**< Standard code for successful behavior.*/
-	SL_SENDER_ERROR_CODE_GRAB_ERROR = 1, /**< The sender encountered a grab error.*/
-	SL_SENDER_ERROR_CODE_INCONSISTENT_FPS = 2, /**< The sender does not run with a constant frame rate.*/
-	SL_SENDER_ERROR_CODE_FPS_TOO_LOW = 3 /**< The frame rate of the sender is lower than 10 FPS.*/
+	SL_SENDER_ERROR_CODE_GRAB_ERROR = -3, /*< The sender encountered a grab error. Check sender's hardware and connection. */
+	SL_SENDER_ERROR_CODE_INCONSISTENT_FPS = -2, /*< The sender does not run with a constant frame rate. */
+	SL_SENDER_ERROR_CODE_FPS_TOO_LOW = -1, /**< The frame rate of the sender is lower than 10 FPS. Check sender's settings and performance. */
+	SL_SENDER_ERROR_CODE_SUCCESS = 0, /*< Standard code indicating successful behavior. */
+	SL_SENDER_ERROR_CODE_DISCONNECTED = 1 /*< The sender has been disconnected. */
 };
 
 /**
@@ -3542,30 +3897,72 @@ enum SL_COMM_TYPE
  */
 enum SL_GNSS_STATUS
 {
-	SL_GNSS_STATUS_UNKNOWN,     /**< No GNSS fix data is available. */
-	SL_GNSS_STATUS_SINGLE,		/**< Single Point Positioning */
-	SL_GNSS_STATUS_DGNSS,		/**< Differential GNSS */
-	SL_GNSS_STATUS_RTK_FIX,		/**< Real-Time Kinematic (RTK) GNSS fix in fixed mode. */
-	SL_GNSS_STATUS_RTK_FLOAT,	/**< Real-Time Kinematic (RTK) GNSS fix in float mode. */
-	SL_GNSS_STATUS_PPS			/**< Precise Positioning Service */
+	/**
+	@brief  No GNSS fix data is available.
+	 */
+	SL_GNSS_STATUS_UNKNOWN = 0,
+	/**
+	@brief Single Point Positioning
+	 */
+	SL_GNSS_STATUS_SINGLE = 1,
+	/**
+	@brief Differential GNSS
+	 */
+	SL_GNSS_STATUS_DGNSS = 2,
+	/**
+	@brief Real Time Kinematic Fixed
+	*/
+	SL_GNSS_STATUS_RTK_FIX = 3,
+	/**
+	@brief Precise Positioning Service
+	 */
+	SL_GNSS_STATUS_PPS = 5,
+	/**
+	@brief Real Time Kinematic Float
+	 */
+	SL_GNSS_STATUS_RTK_FLOAT = 4
 };
 
 enum SL_GNSS_MODE
 {
-	SL_GNSS_MODE_UNKNOWN,  /**< No GNSS fix data is available. */
-	SL_GNSS_MODE_NO_FIX,   /**< No GNSS fix is available. */
-	SL_GNSS_MODE_FIX_2D,   /**< 2D GNSS fix, providing latitude and longitude coordinates but without altitude information. */
-	SL_GNSS_MODE_FIX_3D	   /**< 3D GNSS fix, providing latitude, longitude, and altitude coordinates. */
+	/**
+	 * @brief No GNSS fix data is available.
+	 */
+	SL_GNSS_MODE_UNKNOWN,
+	/**
+	 * @brief No GNSS fix is available.
+	 */
+	SL_GNSS_MODE_NO_FIX,
+	/**
+	 * @brief 2D GNSS fix, providing latitude and longitude coordinates but without altitude information.
+	 */
+	SL_GNSS_MODE_FIX_2D,
+	/**
+	 * @brief 3D GNSS fix, providing latitude, longitude, and altitude coordinates.
+	 */
+	SL_GNSS_MODE_FIX_3D	 
 };
 
 /**
  \brief Class containing the current GNSS fusion status.
  */
 enum SL_GNSS_FUSION_STATUS {
-	SL_GNSS_FUSION_STATUS_OK = 0,							/**< The GNSS fusion module is calibrated and working successfully. */
-	SL_GNSS_FUSION_STATUS_OFF = 1,							/**< The GNSS fusion module is not enabled. */
-	SL_GNSS_FUSION_STATUS_CALIBRATION_IN_PROGRESS = 2,		/**< Calibration of the GNSS/VIO fusion module is in progress. */
-	SL_GNSS_FUSION_STATUS_RECALIBRATION_IN_PROGRESS = 3		/**< Re-alignment of GNSS/VIO data is in progress, leading to potentially inaccurate global position. */
+	/**
+	 * @brief The GNSS fusion module is calibrated and working successfully.
+	 */
+	SL_GNSS_FUSION_STATUS_OK = 0,
+	/**
+	 * @brief The GNSS fusion module is not enabled.
+	 */
+	SL_GNSS_FUSION_STATUS_OFF = 1,							
+	/**
+	 * @brief Calibration of the GNSS/VIO fusion module is in progress.
+	 */
+	SL_GNSS_FUSION_STATUS_CALIBRATION_IN_PROGRESS = 2,
+	/**
+	 * @brief Re-alignment of GNSS/VIO data is in progress, leading to potentially inaccurate global position.
+	 */
+	SL_GNSS_FUSION_STATUS_RECALIBRATION_IN_PROGRESS = 3	
 };
 
 /**
@@ -3729,6 +4126,29 @@ struct SL_InitFusionParameters
 	unsigned timeout_period_number;
 
 	/**
+	\brief NVIDIA graphics card id to use.
+	
+	By default the SDK will use the most powerful NVIDIA graphics card found.
+	\n However, when running several applications, or using several cameras at the same time, splitting the load over available GPUs can be useful.
+	\n This parameter allows you to select the GPU used by the sl::Camera using an ID from 0 to n-1 GPUs in your PC.
+	\n Default: -1
+	\note A non-positive value will search for all CUDA capable devices and select the most powerful.
+	 */
+	int sdk_gpu_id;
+	/**
+	\brief CUcontext to be used.
+
+	If your application uses another CUDA-capable library, giving its CUDA context to the ZED SDK can be useful when sharing GPU memories.
+	\n This parameter allows you to set the CUDA context to be used by the ZED SDK.
+	\n Leaving this parameter empty asks the SDK to create its own context.
+	\n Default: (empty)
+
+	\note When creating you own CUDA context, you have to define the device you will use. Do not forget to also specify it on \ref sdk_gpu_id.
+	\note <b>On Jetson</b>, you have to set the flag CU_CTX_SCHED_YIELD, during CUDA context creation.
+	\note You can also let the SDK create its own context, and use sl::Camera::getCUDAContext() to use it.
+	 */
+	CUcontext sdk_cuda_ctx;
+	/**
 	 * @brief Specifies the parameters used for data synchronization during fusion.
 	 *
 	 * The SynchronizationParameter struct encapsulates the synchronization parameters that control the data fusion process.
@@ -3788,7 +4208,7 @@ struct SL_BodyTrackingFusionRuntimeParameters
 \brief Used to identify a specific camera in the Fusion API
  */
 struct SL_CameraIdentifier {
-	unsigned long long int sn;
+	uint64_t sn;
 };
 
 /**
@@ -3888,7 +4308,7 @@ struct SL_GNSSData
 	 * \brief Timestamp of the GNSS position in nanoseconds (must be aligned with the camera time reference).
 	 * 
 	 */
-	unsigned long long ts;
+	uint64_t ts;
 	/**
 	 * \brief Covariance of the position in meter (must be expressed in the ENU coordinate system).
 	 * 
@@ -3973,7 +4393,7 @@ struct SL_GeoPose
 	 * \brief The timestamp of SL_GeoPose.
 	 *
 	 */
-	unsigned long long timestamp;
+	uint64_t timestamp;
 };
 
 /**

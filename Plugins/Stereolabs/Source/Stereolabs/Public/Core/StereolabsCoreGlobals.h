@@ -594,9 +594,9 @@ namespace sl
 			{
 				return ESlMemoryType::MT_GPU;
 			}
-			else if (SlType == (sl::MEM::CPU | sl::MEM::GPU))
+			else if (SlType == sl::MEM::BOTH)
 			{
-				return (ESlMemoryType::MT_CPU | ESlMemoryType::MT_GPU);
+				return (ESlMemoryType::MT_BOTH);
 			}
 
 			ensureMsgf(false, TEXT("Unhandled sl::MEM entry %u"), (uint32)SlType);
@@ -1264,9 +1264,9 @@ namespace sl
 			{
 				return sl::MEM::GPU;
 			}
-			else if (UnrealType == (ESlMemoryType::MT_CPU | ESlMemoryType::MT_GPU))
+			else if (UnrealType == (ESlMemoryType::MT_BOTH))
 			{
-				return (sl::MEM::CPU | sl::MEM::GPU);
+				return (sl::MEM::BOTH);
 			}
 
 			ensureMsgf(false, TEXT("Unhandled ESlMemoryType entry %u"), (uint32)UnrealType);
@@ -1283,6 +1283,10 @@ namespace sl
 			else if (UnrealType == ESlMemoryType::MT_GPU)
 			{
 				return SL_MEM_GPU;
+			}
+			else if (UnrealType == ESlMemoryType::MT_BOTH)
+			{
+				return SL_MEM_BOTH;
 			}
 
 			return (SL_MEM)0;
@@ -2471,14 +2475,14 @@ namespace sl
 		/*
 		* Convert from SL_SVOData to FSlSVOData
 		*/
-		FORCEINLINE FSlSVOData ToUnrealType(const SL_SVOData& slData)
+		FORCEINLINE FSlSVOData ToUnrealType(SL_SVOData* slData)
 		{
 			auto sld = FSlSVOData();
-			sld.Content = FString(slData.content);
-			sld.Key = FString(slData.key);
+			sld.Content = FString(slData->content);
+			sld.Key = FString(slData->key);
 
 			char temp[21];
-			sprintf(temp, "%llu", slData.timestamp_ns);
+			sprintf(temp, "%llu", slData->timestamp_ns);
 			sld.TimestampNano = temp;
 			return sld;
 		}

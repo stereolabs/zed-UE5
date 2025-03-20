@@ -134,6 +134,7 @@ enum class ESlMemoryType : uint8
 {
 	MT_CPU			UMETA(DisplayName = "CPU"),
 	MT_GPU			UMETA(DisplayName = "GPU"),
+	MT_BOTH			UMETA(DisplayName = "Both")
 };
 ENUM_CLASS_FLAGS(ESlMemoryType)
 
@@ -144,7 +145,10 @@ ENUM_CLASS_FLAGS(ESlMemoryType)
 	UENUM(BlueprintType, Category = "Stereolabs|Enum")
 	enum class ESlResolution : uint8
 {
+	R_HD4K			   		 UMETA(DisplayName = "HD 4K"),
+	R_QHDPLUS		   		 UMETA(DisplayName = "QHD+"),
 	R_HD2K			   		 UMETA(DisplayName = "HD 2K"),
+	R_HD1536		   		 UMETA(DisplayName = "HD 1536p"),
 	R_HD1080		   		 UMETA(DisplayName = "HD 1080p"),
 	R_HD1200			     UMETA(DisplayName = "HD 1200p (ZED X only)"),
 	R_HD720		   			 UMETA(DisplayName = "HD 720p"),
@@ -164,6 +168,7 @@ enum class ESlDepthMode : uint8
 	DM_Performance			 UMETA(DisplayName = "Performance"),
 	DM_Quality		     	 UMETA(DisplayName = "Quality"),
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
+	DM_NeuralLight			 UMETA(DisplayName = "Neural Light"),
 	DM_Neural				 UMETA(DisplayName = "Neural"),
 	DM_NeuralPlus			 UMETA(DisplayName = "Neural+")
 };
@@ -325,6 +330,8 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
+	EC_ConfigurationFallback = 254	 UMETA(DisplayName = "Configuration fallback"),
+	EC_SensorsDataRequired = 253	 UMETA(DisplayName = "Sensors data required"),
 	EC_CorruptedFrame = 254			 UMETA(DisplayName = "Corrupted frame"),
 	EC_CameraRebooting  = 255		 UMETA(DisplayName = "Camera rebooting"),
  	EC_Success		    = 0			 UMETA(DisplayName = "Success"),
@@ -394,6 +401,7 @@ enum class ESlVideoSettings: uint8
 	VS_AUTO_DIGITAL_GAIN_RANGE		UMETA(DisplayName = "Auto digital gain range"), /**< Range of digital ISP gain in automatic control.\n Used with \ref Camera.setCameraSettings(VIDEO_SETTINGS,int,int) "setCameraSettings()".\n Min/max range between max range defined in DTS.\n By default: [1 - 256]. \note Only available for ZED X/X Mini cameras.*/
 	VS_EXPOSURE_COMPENSATION		UMETA(DisplayName = "Exposure compensation"), /**< Exposure-target compensation made after auto exposure.\n Reduces the overall illumination target by factor of F-stops.\n Affected value should be between 0 and 100 (mapped between [-2.0,2.0]).\n Default value is 50, i.e. no compensation applied. \note Only available for ZED X/X Mini cameras.*/
 	VS_DENOISING					UMETA(DisplayName = "Denoising"), /**< Level of denoising applied on both left and right images.\n Affected value should be between 0 and 100.\n Default value is 50. \note Only available for ZED X/X Mini cameras.*/
+	VS_SCENE_ILLUMINANCE			UMETA(DisplayName = "Scene illuminance"), /**< Level of illuminance of the scene. \n Can be used to determine the level of light in the scene and adjust settings accordingly. \note Read-only control. \n Available for ZED-X/Xmini cameras. \n Value provided in [0.1x]Lux for ZED-X / ZED-X Mini / ZED-XOne GS and ZED-XOne UHD cameras \note Only available for ZED X/X Mini cameras.*/
 	VS_LAST
 };
 
@@ -462,6 +470,12 @@ enum class ESlModel : uint8
 	M_Zed2i          		UMETA(DisplayName = "ZED 2i"),
 	M_ZedX					UMETA(DisplayName = "ZED X"),
 	M_ZedXM					UMETA(DisplayName = "ZED X Mini"),
+	M_ZedXHDR				UMETA(DisplayName = "ZED X HDR"),
+	M_ZedXMiniHDR			UMETA(DisplayName = "ZED X Mini HDR"),
+	M_VirtualZedX = 11		UMETA(DisplayName = "Virtual ZED X"),
+	M_ZedXOneGS	  = 30		UMETA(DisplayName = "ZED X One GS"),
+	M_ZedXOneUHD  = 31		UMETA(DisplayName = "ZED X One UHD"),
+	M_ZedXOneHDR  = 32		UMETA(DisplayName = "ZED X One HDR"),
 	M_Unknown				UMETA(DisplayName = "Unknown")
 };
 
@@ -603,6 +617,7 @@ enum class ESlObjectDetectionModel : uint8
 	ODM_PersonHeadBoxFast			UMETA(DisplayName = "Person head box fast"),
 	ODM_PersonHeadAccurateBox		UMETA(DisplayName = "Person head accurate box"),
 	ODM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
+	ODM_CustomYoloLikeBoxObjects	UMETA(DisplayName = "Custom Yolo like box objects")
 };
 
 /*
@@ -640,6 +655,7 @@ enum class ESlAIModels : uint8
 	AIM_PersonHeadFastDetection			UMETA(DisplayName = "Person head fast Detection"),
 	AIM_PersonHeadAccurateDetection		UMETA(DisplayName = "Person head accurate Detection"),
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
+	AIM_NeuralLightDepth				UMETA(DisplayName = "Neural Light Depth"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth")
 };
@@ -2380,9 +2396,9 @@ struct STEREOLABS_API FSlInitParameters
 		bLoop(false),
 		StreamIP(""),
 		StreamPort(30000),
-		Resolution(ESlResolution::R_HD1080),
-		FPS(30),
-		DepthMode(ESlDepthMode::DM_Ultra),
+		Resolution(ESlResolution::R_AUTO),
+		FPS(-1),
+		DepthMode(ESlDepthMode::DM_Neural),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
 		GPUID(-1.0f),
@@ -2402,7 +2418,8 @@ struct STEREOLABS_API FSlInitParameters
 		OpenTimeoutSec(5.0f),
 		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
-		bEnableImageValidityCheck(false)
+		bEnableImageValidityCheck(false),
+		MaximumWorkingResolution(FIntPoint(0,0))
 	{
 	}
 
@@ -2897,6 +2914,20 @@ struct STEREOLABS_API FSlInitParameters
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnableImageValidityCheck;
+	/**
+	\brief Set a maximum size for all SDK output, like retrieveImage and retrieveMeasure functions.
+	 *
+	 * This will override the default (0,0) and instead of outputting native image size sl::Mat, the ZED SDK will take this size as default.
+	 * A custom lower size can also be used at runtime, but not bigger. This is used for internal optimization of compute and memory allocations
+	 *
+	 * The default is similar to previous version with (0,0), meaning native image size
+	 *
+	 * \note: if maximum_working_resolution field are lower than 64, it will be interpreted as dividing scale factor;
+	 * - maximum_working_resolution = sl::Resolution(1280, 2) -> 1280 x (image_height/2) = 1280 x (half height)
+	 * - maximum_working_resolution = sl::Resolution(4, 4) -> (image_width/4) x (image_height/4) = quarter size
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FIntPoint MaximumWorkingResolution;
 };
 
 /*
@@ -2993,7 +3024,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	FSlObjectDetectionParameters() :
 		bEnableTracking(true),
 		bEnableSegmentation(false),
-		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxFast),
+		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxAccurate),
 		FusionObjectsGroupName(""),
 		CustomOnnxFile(""),
 		CustomOnnxDynamicInputShape(FIntPoint(512, 512)),

@@ -49,7 +49,6 @@ AZEDPawn::AZEDPawn()
 	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("MainCamera"));
 	Camera->SetupAttachment(SpringArm);
 	Camera->SetFieldOfView(80);
-
 	Camera->bConstrainAspectRatio = true;
 	Camera->PostProcessSettings.VignetteIntensity = 0.0f;
 	Camera->PostProcessSettings.bOverride_VignetteIntensity = true;
