@@ -18,7 +18,7 @@ DECLARE_LOG_CATEGORY_EXTERN(ZEDCamera, Log, All);
 /*
  * Notify that the tracking data have been updated
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FZEDTrackingDataUpdatedDelegate, const FZEDTrackingData&, NewTrackingData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FZEDTrackingDataUpdatedDelegate, const FZEDTrackingData&, NewTrackingData, const float&, DeltaSeconds);
 
 /*
  * Notify that the actor is initialized

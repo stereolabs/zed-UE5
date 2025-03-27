@@ -31,10 +31,7 @@ private:
 	 * @param NewTrackingData The new tracking data
 	 */
 	UFUNCTION()
-	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData);
-
-	UFUNCTION()
-	virtual void Tick(float DeltaSeconds) override;
+	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData, const float & DeltaSeconds);
 
 	/*
 	* Initialisation

@@ -12,7 +12,7 @@ AZEDPawn::AZEDPawn()
 	:
 	SpringArm(nullptr),
 	Camera(nullptr),
-	EnableLerp(true),
+	EnableLerp(false),
 	LerpIntensity(10.0f),
 	LerpTransform(),
 	ToggleFreeze(false),
@@ -101,7 +101,7 @@ AZEDPawn::AZEDPawn()
 	RemapSourceMaterial = RemapMaterial.Object;
 }
 
-void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
+void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData, const float& DeltaSeconds)
 {
 	PreviousLocation = RealCameraTransform.GetLocation();
 	RealCameraTransform = NewTrackingData.OffsetZedWorldTransform;
@@ -127,17 +127,7 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData)
 		IsFrozen = !IsFrozen;
 		ToggleFreeze = false;
 	}
-}
 
-void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset)
-{
-	StartOffsetLocation = locOffset;
-	PrevVirtualLocation = locOffset;
-	VirtualLocation = locOffset;
-}
-
-void AZEDPawn::Tick(float DeltaSeconds)
-{
 	if (!IsFrozen) {
 		if (EnableLerp)
 		{
@@ -167,6 +157,13 @@ void AZEDPawn::Tick(float DeltaSeconds)
 			LerpTransform = RealCameraTransform;
 		}
 	}
+}
+
+void AZEDPawn::SetStartOffsetLocation(const FVector& locOffset)
+{
+	StartOffsetLocation = locOffset;
+	PrevVirtualLocation = locOffset;
+	VirtualLocation = locOffset;
 }
 
 /** The realTranslation should be previousToCurrentLocation*/

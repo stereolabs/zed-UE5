@@ -253,7 +253,7 @@ void AZEDCamera::Tick(float DeltaSeconds)
 		GZedViewPointLocation = TrackingData.OffsetZedWorldTransform.GetLocation();
 		GZedViewPointRotation = TrackingData.OffsetZedWorldTransform.Rotator();
 
-		OnTrackingDataUpdated.Broadcast(TrackingData);
+		OnTrackingDataUpdated.Broadcast(TrackingData, DeltaSeconds);
 	}
 
 	// Depth texture quality, normals will have the same size for performance purpose
