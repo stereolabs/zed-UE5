@@ -277,13 +277,13 @@ public:
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed pose"), Category = "Zed|Tracking")
 	ESlTrackingState GetPosition(FSlPose& Pose, ESlReferenceFrame ReferenceFrame);
 
-	UFUNCTION(BlueprintPure, meta = (Keywords = "Set Region Of Interest"), Category = "Zed|Tracking")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Set Region Of Interest"), Category = "Zed|Tracking")
 	ESlErrorCode SetRegionOfInterest(const FSlMat& Mat, TSet<ESlModule> Module);
 
-	UFUNCTION(BlueprintPure, meta = (Keywords = "Get Region Of Interest"), Category = "Zed|Tracking")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "Get Region Of Interest"), Category = "Zed|Tracking")
 	ESlErrorCode GetRegionOfInterest(FSlMat& Mat, FIntPoint& Resolution, ESlModule Module);
 
-	UFUNCTION(BlueprintPure, meta = (Keywords = "start region of interest auto detection"), Category = "Zed|Tracking")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "start region of interest auto detection"), Category = "Zed|Tracking")
 	ESlErrorCode StartRegionOfInterestAutoDetection(const FSlRegionOfInterestParameters& RoiParams);
 
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get region of interest auto detection status"), Category = "Zed|Tracking")
