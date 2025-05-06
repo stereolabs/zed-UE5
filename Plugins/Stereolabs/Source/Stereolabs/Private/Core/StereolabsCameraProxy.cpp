@@ -576,7 +576,7 @@ ESlTrackingState USlCameraProxy::GetPosition(FSlPose& Pose, ESlReferenceFrame Re
 	SL_SCOPE_UNLOCK
 }
 
-ESlErrorCode USlCameraProxy::SetRegionOfInterest(FSlMat& Mat, TSet<ESlModule> module)
+ESlErrorCode USlCameraProxy::SetRegionOfInterest(const FSlMat& Mat, TSet<ESlModule> module)
 {
 	TArray<bool> modules_array;
 	modules_array.Init(false, SL_MODULE_LAST);
@@ -602,7 +602,7 @@ ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolut
 	return sl::unreal::ToUnrealType(err);
 }
 
-ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(FSlRegionOfInterestParameters& roiParams)
+ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(const FSlRegionOfInterestParameters& roiParams)
 {
 	SL_RegionOfInterestParameters params;
 

@@ -7,10 +7,10 @@
 
 #define LOCTEXT_NAMESPACE "FStereolabs"
 
-#define SL_HANDLE_DEFINE(Name) void* ##Name##Handle = nullptr;
-#define SL_IMPORT(Name, Lib) { ##Name##Handle = FPlatformProcess::GetDllHandle(TEXT(Lib)); }
-#define SL_IMPORT_STRING(Name, Lib) { ##Name##Handle = FPlatformProcess::GetDllHandle(Lib); }
-#define SL_FREE(Name) FPlatformProcess::FreeDllHandle(##Name##Handle);
+#define SL_HANDLE_DEFINE(Name) void* Name##Handle = nullptr;
+#define SL_IMPORT(Name, Lib) { Name##Handle = FPlatformProcess::GetDllHandle(TEXT(Lib)); }
+#define SL_IMPORT_STRING(Name, Lib) { Name##Handle = FPlatformProcess::GetDllHandle(Lib); }
+#define SL_FREE(Name) FPlatformProcess::FreeDllHandle(Name##Handle);
 
 SL_HANDLE_DEFINE(Core)
 SL_HANDLE_DEFINE(Zed)
