@@ -138,7 +138,6 @@ public:
 		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path))));
 	}
 
-	//TODO
 	/*
 	 * Fills the Mat with the given value.
 	 * This function overwrite all the matrix.
@@ -146,10 +145,10 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFloat(UPARAM(ref) FSlMat& Mat, float Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return (ESlErrorCode)sl_mat_set_to(Value, sl::unreal::ToSlType(MemoryType)));
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_float(Mat.Mat, Value, sl::unreal::ToSlType(MemoryType)));
 	}
 
 	/*
@@ -159,11 +158,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFVector2D(UPARAM(ref) FSlMat& Mat, const FVector2D& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_float2(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -172,11 +171,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFVector(UPARAM(ref) FSlMat& Mat, const FVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_float3(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -185,11 +184,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFVector4(UPARAM(ref) FSlMat& Mat, const FVector4& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_float4(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -199,11 +198,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToInt32(UPARAM(ref) FSlMat& Mat, int32 Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(static_cast<sl::uchar1>(FMath::Clamp(Value, 0, 255)), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_uchar(Mat.Mat, FMath::Clamp(Value, 0, 255), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -213,12 +212,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFIntPoint(UPARAM(ref) FSlMat& Mat, const FIntPoint& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		sl::uchar2 SlValue(FMath::Clamp(Value.X, 0, 255), FMath::Clamp(Value.Y, 0, 255));
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(SlValue, sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_uchar2(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -228,11 +226,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFIntVector(UPARAM(ref) FSlMat& Mat, const FIntVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_uchar3(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Fills the Mat with the given value.
@@ -242,11 +240,11 @@ public:
 	 * @param MemoryType Defines which buffer to fill, CPU and/or GPU
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
-	/*UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
 	static ESlErrorCode SetToFColor(UPARAM(ref) FSlMat& Mat, const FColor& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
-		return sl::unreal::ToUnrealType(Mat.Mat.setTo(sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	}*/
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_uchar4(Mat.Mat, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -257,11 +255,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFloat(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, float Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, Value, sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFloat(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, float Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_float(Mat.Mat, Coordinates.X, Coordinates.Y, Value, sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -272,11 +270,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFVector2D(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector2D& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFVector2D(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector2D& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_float2(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -287,11 +285,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFVector(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFVector(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_float3(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -302,11 +300,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFVector4(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector4& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFVector4(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FVector4& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_float4(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -318,11 +316,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueInt32(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, int32 Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, static_cast<sl::uchar1>(FMath::Clamp(Value, 0, 255)), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueInt32(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, int32 Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_uchar(Mat.Mat, Coordinates.X, Coordinates.Y, FMath::Clamp(Value, 0, 255), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -334,12 +332,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFIntPoint(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FIntPoint& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::uchar2 SLValue(FMath::Clamp(Value.X, 0, 255), FMath::Clamp(Value.Y, 0, 255));
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, SLValue, sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFIntPoint(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FIntPoint& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_uchar2(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -351,11 +348,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFIntVector(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FIntVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFIntVector(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FIntVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_uchar3(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Sets a value to a specific point in the matrix.
@@ -367,11 +364,11 @@ public:
 	 *
 	 * @warning Not efficient for MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	//static ESlErrorCode SetValueFColor(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FColor& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.setValue(Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	static ESlErrorCode SetValueFColor(UPARAM(ref) FSlMat& Mat, const FIntPoint& Coordinates, const FColor& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_uchar4(Mat.Mat, Coordinates.X, Coordinates.Y, sl::unreal::ToSlType(Value), sl::unreal::ToSlType(MemoryType)));
+	}
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -381,11 +378,12 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFloat(const FSlMat& Mat, const FIntPoint& Coordinates, float& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	return sl::unreal::ToUnrealType(Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &Value, sl::unreal::ToSlType(MemoryType)));
-	//}
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFloat(const FSlMat& Mat, const FIntPoint& Coordinates, float& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_value_float(Mat.Mat, Coordinates.X, Coordinates.Y, Value, sl::unreal::ToSlType(MemoryType)));
+	}
+
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -395,35 +393,15 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFVector2D(const FSlMat& Mat, const FIntPoint& Coordinates, FVector2D& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::float2 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFVector2D(const FSlMat& Mat, const FIntPoint& Coordinates, FVector2D& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Vector2 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_float2(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
 
-	//	Value = sl::unreal::ToUnrealType(SlValue);
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
-
-	/*
-	 * Returns the value of a specific point in the matrix.
-	 * @param Coordinates The coordinate to read from
-	 * @param MemoryType  Defines which memory should be read.
-	 * @return EC_Success if everything went well, EC_Failure otherwise.
-	 *
-	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
-	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFVector(const FSlMat& Mat, const FIntPoint& Coordinates, FVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::float3 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
-
-	//	Value = sl::unreal::ToUnrealType(SlValue);
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
+		return ErrorCode;
+	}
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -433,35 +411,15 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFVector4(const FSlMat& Mat, const FIntPoint& Coordinates, FVector4& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::float4 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFVector(const FSlMat& Mat, const FIntPoint& Coordinates, FVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Vector3 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_float3(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
 
-	//	Value = sl::unreal::ToUnrealType(SlValue);
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
-
-	/*
-	 * Returns the value of a specific point in the matrix.
-	 * @param Coordinates The coordinate to read from
-	 * @param MemoryType  Defines which memory should be read.
-	 * @return EC_Success if everything went well, EC_Failure otherwise.
-	 *
-	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
-	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueInt32(const FSlMat& Mat, const FIntPoint& Coordinates, int32& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::uchar1 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
-
-	//	Value = (int32)SlValue;
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
+		return ErrorCode;
+	}
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -471,16 +429,51 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFIntPoint(const FSlMat& Mat, const FIntPoint& Coordinates, FIntPoint& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::uchar2 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFVector4(const FSlMat& Mat, const FIntPoint& Coordinates, FVector4& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Vector4 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_float4(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
 
-	//	Value = sl::unreal::ToUnrealType(SlValue);
+		return ErrorCode;
+	}
 
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
+	/*
+	 * Returns the value of a specific point in the matrix.
+	 * @param Coordinates The coordinate to read from
+	 * @param MemoryType  Defines which memory should be read.
+	 * @return EC_Success if everything went well, EC_Failure otherwise.
+	 *
+	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueInt32(const FSlMat& Mat, const FIntPoint& Coordinates, int32& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		unsigned char SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_uchar(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = SlValue;
+
+		return ErrorCode;
+	}
+
+	/*
+	 * Returns the value of a specific point in the matrix.
+	 * @param Coordinates The coordinate to read from
+	 * @param MemoryType  Defines which memory should be read.
+	 * @return EC_Success if everything went well, EC_Failure otherwise.
+	 *
+	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFIntPoint(const FSlMat& Mat, const FIntPoint& Coordinates, FIntPoint& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Uchar2 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_uchar2(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
+
+		return ErrorCode;
+	}
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -490,16 +483,15 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	// */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFIntVector(const FSlMat& Mat, const FIntPoint& Coordinates, FIntVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::uchar3 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFIntVector(const FSlMat& Mat, const FIntPoint& Coordinates, FIntVector& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Uchar3 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_uchar3(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
 
-	//	Value = sl::unreal::ToUnrealType(SlValue);
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
+		return ErrorCode;
+	}
 
 	/*
 	 * Returns the value of a specific point in the matrix.
@@ -509,16 +501,15 @@ public:
 	 *
 	 * @warning Not efficient for  MEM_GPU, use it on sparse data.
 	 */
-	//UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
-	//static ESlErrorCode GetValueFColor(const FSlMat& Mat, const FIntPoint& Coordinates, FColor& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
-	//{
-	//	sl::uchar4 SlValue;
-	//	sl::ERROR_CODE ErrorCode = Mat.Mat.getValue(static_cast<size_t>(Coordinates.X), static_cast<size_t>(Coordinates.Y), &SlValue, sl::unreal::ToSlType(MemoryType));
+	UFUNCTION(BlueprintPure, Category = "Stereolabs|Mat")
+	static ESlErrorCode GetValueFColor(const FSlMat& Mat, const FIntPoint& Coordinates, FColor& Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	{
+		SL_Uchar4 SlValue;
+		ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_get_value_uchar4(Mat.Mat, Coordinates.X, Coordinates.Y, &SlValue, sl::unreal::ToSlType(MemoryType)));
+		Value = sl::unreal::ToUnrealType(SlValue);
 
-	//	Value = sl::unreal::ToUnrealType(SlValue);
-
-	//	return sl::unreal::ToUnrealType(ErrorCode);
-	//}
+		return ErrorCode;
+	}
 
 	/*
 	 * Returns the width of the matrix

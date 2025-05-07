@@ -1253,30 +1253,7 @@ namespace sl
 			}
 		}
 
-		/*
-		 * Convert from ESlMemoryType to sl::MEM
-		 */
-		FORCEINLINE sl::MEM ToSlType(ESlMemoryType UnrealType)
-		{
-			if (UnrealType == ESlMemoryType::MT_CPU)
-			{
-				return sl::MEM::CPU;
-			}
-			else if(UnrealType == ESlMemoryType::MT_GPU)
-			{
-				return sl::MEM::GPU;
-			}
-			else if (UnrealType == (ESlMemoryType::MT_BOTH))
-			{
-				return (sl::MEM::BOTH);
-			}
-
-			ensureMsgf(false, TEXT("Unhandled ESlMemoryType entry %u"), (uint32)UnrealType);
-
-			return (sl::MEM)0;
-		}
-
-		FORCEINLINE SL_MEM ToSlType2(ESlMemoryType UnrealType)
+		FORCEINLINE SL_MEM ToSlType(ESlMemoryType UnrealType)
 		{
 			if (UnrealType == ESlMemoryType::MT_CPU)
 			{
@@ -1391,6 +1368,30 @@ namespace sl
 		}
 
 		/*
+	 * Convert from sl_uchar2 to FIntPoint
+	 */
+		FORCEINLINE FIntPoint ToUnrealType(const SL_Uchar2& SlVector)
+		{
+			return FIntPoint(SlVector.x, SlVector.y);
+		}
+
+		/*
+		 * Convert from sl_uchar3 to FIntVector
+		 */
+		FORCEINLINE FIntVector ToUnrealType(const SL_Uchar3& SlVector)
+		{
+			return FIntVector(SlVector.x, SlVector.y, SlVector.z);
+		}
+
+		/*
+		 * Convert from sl_uchar4 to FColor
+		 */
+		FORCEINLINE FColor ToUnrealType(const SL_Uchar4& SlColor)
+		{
+			return FColor(SlColor.x, SlColor.y, SlColor.z, SlColor.w);
+		}
+
+		/*
 	 	 * Convert from sl::float2 to FVector2D
 		 */
 		FORCEINLINE FVector2D ToUnrealType(const sl::float2& SlVector)
@@ -1428,6 +1429,14 @@ namespace sl
 		FORCEINLINE FVector ToUnrealType(const SL_Vector3& SlVector)
 		{
 			return FVector(SlVector.x, SlVector.y, SlVector.z);
+		}
+
+		/*
+		 * Convert from SL_Vector3 to FVector4
+		*/
+		FORCEINLINE FVector ToUnrealType(const SL_Vector4& SlVector)
+		{
+			return FVector4(SlVector.x, SlVector.y, SlVector.z, SlVector.w);
 		}
 
 		/*
@@ -2015,13 +2024,13 @@ namespace sl
 		}
 
 		/*
-		 * Convert from FIntPoint to SL_Vector2
+		 * Convert from FIntPoint to SL_Uchar2
 		 */
-		FORCEINLINE SL_Vector2 ToSlType(const FIntPoint& UnrealVector)
+		FORCEINLINE SL_Uchar2 ToSlType(const FIntPoint& UnrealVector)
 		{
-			SL_Vector2 output;
-			output.x = UnrealVector.X;
-			output.y = UnrealVector.Y;
+			SL_Uchar2 output;
+			output.x = FMath::Clamp(UnrealVector.X, 0, 255);
+			output.y = FMath::Clamp(UnrealVector.Y, 0, 255);
 			return output;
 		}
 
@@ -2036,9 +2045,9 @@ namespace sl
 		/*
 		 * Convert from FVector to sl::uchar3
 		 */
-		FORCEINLINE sl::uchar3 ToSlType(const FIntVector& UnrealVector)
+		FORCEINLINE SL_Uchar3 ToSlType(const FIntVector& UnrealVector)
 		{
-			return sl::uchar3(FMath::Clamp(UnrealVector.X, 0, 255), FMath::Clamp(UnrealVector.Y, 0, 255), FMath::Clamp(UnrealVector.Z, 0, 255));
+			return SL_Uchar3(FMath::Clamp(UnrealVector.X, 0, 255), FMath::Clamp(UnrealVector.Y, 0, 255), FMath::Clamp(UnrealVector.Z, 0, 255));
 		}
 
 		/*
@@ -2052,9 +2061,9 @@ namespace sl
 		/*
 		 * Convert from FColor to sl::uchar4
 		 */
-		FORCEINLINE sl::uchar4 ToSlType(const FColor& UnrealColor)
+		FORCEINLINE SL_Uchar4 ToSlType(const FColor& UnrealColor)
 		{
-			return sl::uchar4(UnrealColor.R, UnrealColor.G, UnrealColor.B, UnrealColor.A);
+			return SL_Uchar4(UnrealColor.R, UnrealColor.G, UnrealColor.B, UnrealColor.A);
 		}
 
 		/*
@@ -2068,9 +2077,9 @@ namespace sl
 		/*
 		 * Convert from FVector2D to sl::float2
 		 */
-		FORCEINLINE sl::float2 ToSlType(const FVector2D& UnrealVector)
+		FORCEINLINE SL_Vector2 ToSlType(const FVector2D& UnrealVector)
 		{
-			return sl::float2(UnrealVector.X, UnrealVector.Y);
+			return SL_Vector2(UnrealVector.X, UnrealVector.Y);
 		}
 
 		/*
@@ -2084,22 +2093,11 @@ namespace sl
 		/*
 		 * Convert from FVector to sl::float3
 		 */
-		FORCEINLINE sl::float3 ToSlType(const FVector& UnrealVector)
+		FORCEINLINE SL_Vector3 ToSlType(const FVector& UnrealVector)
 		{
-			return sl::float3(UnrealVector.X, UnrealVector.Y, UnrealVector.Z);
+			return SL_Vector3(UnrealVector.X, UnrealVector.Y, UnrealVector.Z);
 		}
 
-		/*
-		 * Convert from FVector to SL_Vector3
-		 */
-		FORCEINLINE SL_Vector3 ToSlType2(const FVector& UnrealVector)
-		{
-			SL_Vector3 out;
-			out.x = UnrealVector.X;
-			out.y = UnrealVector.Y;
-			out.z = UnrealVector.Z;
-			return out;
-		}
 
 		/*
 		 * Convert from FVector to sl::mr::float3
@@ -2112,9 +2110,9 @@ namespace sl
 		/*
 		 * Convert from FVector4 to sl::float4
 		 */
-		FORCEINLINE sl::float4 ToSlType(const FVector4& UnrealVector)
+		FORCEINLINE SL_Vector4 ToSlType(const FVector4& UnrealVector)
 		{
-			return sl::float4(UnrealVector.X, UnrealVector.Y, UnrealVector.Z, UnrealVector.W);
+			return SL_Vector4(UnrealVector.X, UnrealVector.Y, UnrealVector.Z, UnrealVector.W);
 		}
 
 		/*
@@ -2375,38 +2373,6 @@ namespace sl
 			return intrinsicParams;
 		}
 
-		/*
-		* Convert from sl::CalibrationParameters to FSlCalibrationParameters
-		*/
-		FORCEINLINE sl::CalibrationParameters ToSlType(const FSlCalibrationParameters& UnrealData)
-		{
-			sl::CalibrationParameters CalibrationParameters;
-
-			CalibrationParameters.left_cam = sl::unreal::ToSlType(UnrealData.LeftCameraParameters);
-			CalibrationParameters.left_cam = sl::unreal::ToSlType(UnrealData.RightCameraParameters);
-			CalibrationParameters.stereo_transform.setRotationVector(sl::unreal::ToSlType(UnrealData.Rotation));
-			CalibrationParameters.stereo_transform.setTranslation(sl::unreal::ToSlType(UnrealData.Translation));
-
-			return CalibrationParameters;
-		}
-
-
-		/*
-		* Convert from sl::CameraInformation to FSlCameraInformation
-		*/
-		FORCEINLINE sl::CameraInformation ToSlType(const FSlCameraInformation& UnrealData)
-		{
-			sl::CameraInformation CameraInformation;
-
-			CameraInformation.camera_configuration.calibration_parameters = sl::unreal::ToSlType(UnrealData.CalibrationParameters);
-			CameraInformation.camera_configuration.calibration_parameters_raw = sl::unreal::ToSlType(UnrealData.CalibrationParametersRaw);
-			CameraInformation.camera_model = sl::unreal::ToSlType(UnrealData.CameraModel);
-			CameraInformation.camera_configuration.firmware_version = UnrealData.CameraFirmwareVersion;
-			CameraInformation.camera_configuration.firmware_version = UnrealData.SensorsFirmwareVersion;
-			CameraInformation.serial_number = UnrealData.SerialNumber;
-
-			return CameraInformation;
-		}
 
 		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_OBJECT_DETECTION_MODEL& m_in) {
 			SL_AI_MODELS m_out = SL_AI_MODELS_LAST;

@@ -443,7 +443,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	sl_positional_tracking_parameters.enable_area_memory = NewTrackingParameters.bEnableAreaMemory;
 	sl_positional_tracking_parameters.enable_imu_fusion = NewTrackingParameters.bEnableImuFusion;
 	sl_positional_tracking_parameters.enable_pose_smoothing = NewTrackingParameters.bEnablePoseSmoothing;
-	sl_positional_tracking_parameters.initial_world_position = sl::unreal::ToSlType2(NewTrackingParameters.Location);
+	sl_positional_tracking_parameters.initial_world_position = sl::unreal::ToSlType(NewTrackingParameters.Location);
 	sl_positional_tracking_parameters.initial_world_rotation = sl::unreal::ToSlType(NewTrackingParameters.Rotation.Quaternion());
 	sl_positional_tracking_parameters.set_as_static = NewTrackingParameters.bSetAsStatic;
 	sl_positional_tracking_parameters.set_floor_as_origin = NewTrackingParameters.bSetFloorAsOrigin;
@@ -525,7 +525,7 @@ void USlCameraProxy::ResetTracking(const FRotator& Rotation, const FVector& Loca
 	SL_ERROR_CODE ErrorCode;
 	SL_ERROR_CODE IMUDataErrorCode;
 	SL_SCOPE_LOCK(Lock, GrabSection)
-	ErrorCode = (SL_ERROR_CODE)sl_reset_positional_tracking(CameraID, sl::unreal::ToSlType(Rotation.Quaternion()), sl::unreal::ToSlType2(Location));
+	ErrorCode = (SL_ERROR_CODE)sl_reset_positional_tracking(CameraID, sl::unreal::ToSlType(Rotation.Quaternion()), sl::unreal::ToSlType(Location));
 	IMUDataErrorCode = (SL_ERROR_CODE)sl_get_sensors_data(CameraID, &CurrentSensorsData, SL_TIME_REFERENCE_CURRENT);
 	SL_SCOPE_UNLOCK
 
@@ -1018,7 +1018,7 @@ bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType 
 {
 	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(ViewType));
 	if (!Mat.Mat) {
-		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(MemoryType));
+		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(MemoryType));
 	}
 
 	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution, ViewFormat);
@@ -1028,7 +1028,7 @@ bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMem
 {
 	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(MeasureType));
 	if (!Mat.Mat) {
-		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(MemoryType));
+		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(MemoryType));
 	}
 	return RetrieveMeasure(Mat.Mat, MeasureType, MemoryType, Resolution);
 }
@@ -1076,7 +1076,7 @@ bool USlCameraProxy::RetrieveMeasure(void* Mat, ESlMeasure MeasureType, ESlMemor
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveMeasure);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_measure(CameraID, Mat, (SL_MEASURE)MeasureType, sl::unreal::ToSlType2(MemoryType), Resolution.X, Resolution.Y, 0);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_measure(CameraID, Mat, (SL_MEASURE)MeasureType, sl::unreal::ToSlType(MemoryType), Resolution.X, Resolution.Y, 0);
 
 	if (ErrorCode != SL_ERROR_CODE_SUCCESS)
 	{

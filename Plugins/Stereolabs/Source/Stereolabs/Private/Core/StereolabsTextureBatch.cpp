@@ -127,7 +127,7 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 			{
 				SL_MAT_TYPE MeasureType = sl::unreal::MeasureToMatType((SL_MEASURE)(static_cast<USlMeasureTexture*>(Texture)->MeasureType));
 				if (!Buffers[0]->Mats[TextureIt.GetIndex()]) {
-					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MeasureType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
+					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MeasureType, sl::unreal::ToSlType(Texture->GetMemoryType()));
 				}
 
 				bSuccess = GSlCameraProxy->RetrieveMeasure(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), Resolution);
@@ -136,7 +136,7 @@ void USlTextureBatch::RetrieveCurrentFrame(const FSlTimestamp& ImageTimestamp)
 			{
 				SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(static_cast<USlViewTexture*>(Texture)->ViewType));
 				if (!Buffers[0]->Mats[TextureIt.GetIndex()]) {
-					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType2(Texture->GetMemoryType()));
+					Buffers[0]->Mats[TextureIt.GetIndex()] = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(Texture->GetMemoryType()));
 				}
 
 				bSuccess = GSlCameraProxy->RetrieveImage(Buffers[0]->Mats[TextureIt.GetIndex()], static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), Resolution, static_cast<USlViewTexture*>(Texture)->ViewFormat);

@@ -862,7 +862,7 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 
 	SL_PlaneDetectionParameters sdk_params = sl::unreal::ToSlType(planeDetectionParameters);
 
-	FIntPoint ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
+	FVector2D ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
 	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), &sdk_params, true);
 
 	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
