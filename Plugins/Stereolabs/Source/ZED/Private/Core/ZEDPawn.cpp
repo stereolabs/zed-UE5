@@ -27,10 +27,6 @@ AZEDPawn::AZEDPawn()
 	PrevVirtualLocation(FVector::ZeroVector),
 	ZedLoadingWidget(nullptr),
 	ZedErrorWidget(nullptr),
-	RemapSourceMaterial(nullptr),
-	RemapMaterialInstanceDynamic(nullptr),
-	RemapMx(nullptr),
-	RemapMy(nullptr),
 	ZedLoadingSourceWidget(nullptr),
 	ZedErrorSourceWidget(nullptr),
 	ZedWidgetSourceMaterial(nullptr),
@@ -96,9 +92,6 @@ AZEDPawn::AZEDPawn()
 	ZedErrorWidget->SetVisibility(false);
 
 	AutoPossessPlayer = EAutoReceiveInput::Disabled;
-
-	static ConstructorHelpers::FObjectFinder<UMaterial> RemapMaterial(TEXT("Material'/Stereolabs/Stereolabs/Materials/M_SL_RPP.M_SL_RPP'"));
-	RemapSourceMaterial = RemapMaterial.Object;
 }
 
 void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData, const float& DeltaSeconds)
@@ -180,32 +173,3 @@ FVector AZEDPawn::RealTranslationToVirtualTranslation(const FVector& realTransla
 	return ret;
 }
 
-void AZEDPawn::InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp)
-{
-	/*
-	FSlCameraInformation camInfo = GSlCameraProxy->GetCameraInformation(FIntPoint(0, 0));
-	FVector2D hmdFoc = USlFunctionLibrary::GetHmdFocale();
-	int RemapRez = 2501;
-	int RemapPrecision = 100;
-	sl::Mat* Mx;
-	sl::Mat* My;
-	// Warning: b, Ipd and dp have to be in mm
-	//TODO
-	//sl::mr::computeSRemap(sl::unreal::ToSlType(HMDname), camRes, camInfo.HalfBaseline*20, camInfo.HalfBaseline*20, (hmdFoc.X + hmdFoc.Y)/2.0, camInfo.CalibrationParameters.LeftCameraParameters.HFocal, dp*10 + 100.0, -120.0, 100.0, sl::Resolution(RemapRez, RemapRez), RemapPrecision, Mx, My);
-	RemapMx = USlFunctionLibrary::GenerateTextureFromSlMat(Mx);
-	RemapMy = USlFunctionLibrary::GenerateTextureFromSlMat(My);
-
-	RemapMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(RemapSourceMaterial, nullptr);
-	RemapMaterialInstanceDynamic->SetTextureParameterValue(FName("Mx"), RemapMx);
-	RemapMaterialInstanceDynamic->SetTextureParameterValue(FName("My"), RemapMy);
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("Mwidth"), RemapMx->GetSizeX());
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("Mheight"), RemapMx->GetSizeY());
-	FMatrix ProjectionMatrixLeft = GEngine->StereoRenderingDevice->GetStereoProjectionMatrix(EStereoscopicPass::eSSP_LEFT_EYE);
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("OCxLeft"), ProjectionMatrixLeft.M[2][0] /2 + 0.5);
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("OCyLeft"), -ProjectionMatrixLeft.M[2][1] /2 + 0.5);
-	FMatrix ProjectionMatrixRight = GEngine->StereoRenderingDevice->GetStereoProjectionMatrix(EStereoscopicPass::eSSP_RIGHT_EYE);
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("OCxRight"), ProjectionMatrixRight.M[2][0] /2 + 0.5);
-	RemapMaterialInstanceDynamic->SetScalarParameterValue(FName("OCyRight"), -ProjectionMatrixRight.M[2][1] /2 + 0.5);
-	Camera->AddOrUpdateBlendable(RemapMaterialInstanceDynamic, 1.0f);
-	*/
-}

@@ -943,6 +943,44 @@ enum class ESlBody70Parts : uint8 {
 /************************************************************************/
 
 /*
+ * SDK mat
+ * Only holding the mat
+ * see sl::Mat
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlMat
+{
+	GENERATED_BODY()
+
+	FSlMat()
+		:
+		Mat(nullptr)
+	{
+	}
+
+	FSlMat(const FIntPoint& Resolution, ESlMatType MatType, ESlMemoryType MemType)
+	{
+		Mat = sl_mat_create_new(Resolution.X, Resolution.Y, (SL_MAT_TYPE)MatType, (SL_MEM)MemType);
+	}
+
+	FSlMat(void* NewMat)
+		:
+		Mat(NewMat)
+	{
+	}
+
+	FSlMat& operator=(void* NewMat)
+	{
+		Mat = NewMat;
+		return *this;
+	}
+
+
+	/** The underlying sl::Mat */
+	void* Mat;
+};
+
+/*
  * Bone descriptor, pair of ESlBodyParts
  * To be used in the correspondance array in ZEDPlayerController
  */
@@ -1253,37 +1291,6 @@ struct STEREOLABS_API FSlCameraInformation
 	/* Resolution of the camera */
 	UPROPERTY(BlueprintReadOnly)
 	FIntPoint Resolution;
-};
-
-/*
- * SDK mat
- * Only holding the mat
- * see sl::Mat
- */
-USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlMat
-{
-	GENERATED_BODY()
-
-	FSlMat()
-	{
-	}
-
-	FSlMat(void* NewMat)
-		:
-		Mat(NewMat)
-	{
-	}
-
-	FSlMat& operator=(void* NewMat)
-	{
-		Mat = NewMat;
-		return *this;
-	}
-
-
-	/** The underlying sl::Mat */
-	void* Mat;
 };
 
 /*

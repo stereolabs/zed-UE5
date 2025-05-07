@@ -27,7 +27,7 @@ public:
 	 * @param MemoryType Defines where the buffer will be stored (sl::MEM_CPU and/or sl::MEM_GPU)
 	 * @warning			 It erases previously allocated memory
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat allocate"), Category = "Stereolabs|Mat")
 	static void Allocate(UPARAM(ref) FSlMat& Mat, const FIntPoint& Resolution, ESlMatType Type, UPARAM(DisplayName = "MemoryType", meta = (Bitmask, BitmaskEnum = ESlMemoryType)) ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
 		checkf(GSlCameraProxy && GSlCameraProxy->IsCameraOpened(), TEXT("Camera must be opened before allocating a Mat"));
@@ -36,10 +36,25 @@ public:
 	}
 
 	/*
+	 * Create a slMat
+	 * @param Resolution The size of the matrix in pixels
+	 * @param Type		 The type of the matrix (ESlMatType::MT_32F_C1, ESlMatType::MT__8U_C4)
+	 * @param MemoryType Defines where the buffer will be stored (sl::MEM_CPU and/or sl::MEM_GPU)
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat create"), Category = "Stereolabs|Mat")
+	static FSlMat Create(const FIntPoint& Resolution, ESlMatType MatType, ESlMemoryType MemType)
+	{
+		FSlMat Mat;
+		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, (SL_MAT_TYPE)MatType, (SL_MEM)MemType);
+
+		return Mat;
+	}
+
+	/*
 	 * Free the owned memory
 	 * @param MemoryType Specify whether you want to free the  MEM_CPU and/or  MEM_GPU memory
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat free"), Category = "Stereolabs|Mat")
 	static void Free(UPARAM(ref) FSlMat& Mat, UPARAM(DisplayName = "MemoryType", meta = (Bitmask, BitmaskEnum = ESlMemoryType)) ESlMemoryType MemoryType)
 	{
 		sl_mat_free(Mat.Mat, (SL_MEM)MemoryType);
@@ -104,7 +119,7 @@ public:
 	 * @return     EC_Success if everything went well,  EC_Failure otherwise
 	 * @note Supported ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat read"), Category = "Stereolabs|Mat")
 	static ESlErrorCode Read(UPARAM(ref) FSlMat& Mat, const FString& Path)
 	{
 		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_read(Mat.Mat, (TCHAR_TO_UTF8(*Path))));
@@ -117,7 +132,7 @@ public:
 	 * @return	   EC_Success if everything went well,  EC_Failure otherwise
 	 * @note Supported  ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat write"), Category = "Stereolabs|Mat")
 	static ESlErrorCode Write(UPARAM(ref) FSlMat& Mat, const FString& Path)
 	{
 		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path))));

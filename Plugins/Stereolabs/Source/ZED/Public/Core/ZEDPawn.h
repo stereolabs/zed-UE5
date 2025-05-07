@@ -105,22 +105,6 @@ public:
 	UPROPERTY()
 	UZEDWidget* ZedErrorWidget;
 
-	/** Remap material resource */
-	UPROPERTY()
-	UMaterial* RemapSourceMaterial;
-
-	/** Remap material*/
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
-	UMaterialInstanceDynamic* RemapMaterialInstanceDynamic;
-
-	/** Remap Mx */
-	UPROPERTY()
-	UTexture2D* RemapMx;
-
-	/** Remap My */
-	UPROPERTY()
-	UTexture2D* RemapMy;
-
 private:
 	/** Zed loading source widget */
 	UPROPERTY()
