@@ -199,7 +199,7 @@ public:
 	 * @return		     EC_Success if everything went well, EC_Failure otherwise.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Mat")
-	static ESlErrorCode SetToInt32(UPARAM(ref) FSlMat& Mat, int32 Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
+	static ESlErrorCode SetToInt(UPARAM(ref) FSlMat& Mat, int32 Value, ESlMemoryType MemoryType = ESlMemoryType::MT_CPU)
 	{
 		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_set_to_uchar(Mat.Mat, FMath::Clamp(Value, 0, 255), sl::unreal::ToSlType(MemoryType)));
 	}

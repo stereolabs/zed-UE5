@@ -581,7 +581,7 @@ ESlErrorCode USlCameraProxy::SetRegionOfInterest(const FSlMat& Mat, TSet<ESlModu
 	TArray<bool> modules_array;
 	modules_array.Init(false, SL_MODULE_LAST);
 
-	for (int i = 0; i < SL_MODULE_ALL; i++)
+	for (int i = 0; i < SL_MODULE_LAST; i++)
 	{
 		if (module.Contains((ESlModule)i))
 		{
