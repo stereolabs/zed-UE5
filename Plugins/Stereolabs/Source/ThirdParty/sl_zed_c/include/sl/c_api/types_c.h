@@ -432,17 +432,6 @@ struct SL_SensorsData {
 	int image_sync_trigger;
 };
 
-enum USB_DEVICE {
-	USB_DEVICE_OCULUS,
-	USB_DEVICE_HTC,
-	USB_DEVICE_STEREOLABS
-};
-
-struct USB_product {
-	int id_vendor;
-	int id_product;
-};
-
 /**
 \brief Lists error codes in the ZED SDK.
  */
@@ -1443,7 +1432,7 @@ struct SL_InitParameters
 	\n In the range [0-100]: <ul>
 	<li>0 disable the depth stabilization (raw depth will be return)</li>
 	<li>stabilization smoothness is linear from 1 to 100</li></ul>
-	Default: 1
+	Default: 30
 	
 	\note The stabilization uses the positional tracking to increase its accuracy, 
 	so the positional tracking module will be enabled automatically when set to a value different from 0.
@@ -1578,7 +1567,7 @@ struct SL_InitParameters
 	 This version doesn't detect frame tearing currently.
 	 \n default: disabled
 	 */
-	int enable_image_validity_check;
+	bool enable_image_validity_check;
 
 	/**
 	\brief Set a maximum size for all SDK output, like retrieveImage and retrieveMeasure functions.
@@ -2034,12 +2023,6 @@ struct SL_PositionalTrackingParameters
 	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_1
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
-	/**
-	\brief Should enable light computation mode	
-	If enabled the tracking will just run the part needed by Fusion and nothing more. This parameter will degrade accuracy if
-	positional tracking module is used alone without Fusion. This parameter works only with GEN_2 module.
-	*/
-	bool enable_light_computation_mode;
 };
 
 /**
@@ -3966,6 +3949,14 @@ enum SL_GNSS_FUSION_STATUS {
 };
 
 /**
+ * \brief Enum to define the reference frame of the fusion SDK.
+ */
+enum SL_FUSION_REFERENCE_FRAME {
+	SL_FUSION_REFERENCE_FRAME_WORLD = 0, /**< The world frame is the reference frame of the world according to the fused positional Tracking*/
+	SL_FUSION_REFERENCE_FRAME_BASELINK = 1, /**< The base link frame is the reference frame where camera calibration is given*/
+};
+
+/**
  \brief Class containing the overall position fusion status
  */
 struct SL_FusedPositionalTrackingStatus
@@ -4154,6 +4145,18 @@ struct SL_InitFusionParameters
 	 * The SynchronizationParameter struct encapsulates the synchronization parameters that control the data fusion process.
 	 */
 	struct SL_SynchronizationParameter synchronization_parameters; 
+
+	/**
+	* \brief Sets the maximum resolution for all Fusion outputs, such as images and measures.
+	*
+	* The default value is (-1, -1), which allows the Fusion to automatically select the optimal resolution for the best quality/runtime ratio.
+	*
+	* - For images, the output resolution can be up to the native resolution of the camera.
+	* - For measures involving depth, the output resolution can be up to the maximum working resolution.
+	*
+	* Setting this parameter to (-1, -1) will ensure the best balance between quality and performance for depth measures.
+	*/
+	struct SL_Resolution maximum_working_resolution;
 };
 
 /**
@@ -4448,6 +4451,29 @@ struct SL_UTM
 };
 
 /**
+ * \brief Represents a world position in ENU format.
+ *
+ */
+struct SL_ENU
+{
+	/**
+	 * @brief East coordinate.
+	 *
+	 */
+	double east;
+	/**
+	 * @brief North coordinate.
+	 *
+	 */
+	double north;
+	/**
+	 * @brief Up coordinate.
+	 *
+	 */
+	double up;
+};
+
+/**
  * \brief Holds the options used for calibrating GNSS / VIO.
 */
 struct SL_GNSSCalibrationParameters {
@@ -4540,7 +4566,11 @@ struct SL_PositionalTrackingFusionParameters {
 	 * \brief Whether to override 2 of the 3 rotations from \ref base_footprint_to_world_transform using the IMU gravity.
 	 */
 	bool set_gravity_as_origin;
-
+	/**
+	 * \brief ID of the camera used for positional tracking. If not specified, will use the first camera called with the subscribe() method.
+	 *
+	 */
+	struct SL_CameraIdentifier tracking_camera_id;
 };
 
 #if 0
