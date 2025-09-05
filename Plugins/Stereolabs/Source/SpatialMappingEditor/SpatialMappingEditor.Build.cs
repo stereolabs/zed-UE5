@@ -12,7 +12,7 @@ namespace UnrealBuildTool.Rules
 
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
             PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
-            bEnableUndefinedIdentifierWarnings = false;
+            UndefinedIdentifierWarningLevel = WarningLevel.Error;
 
             PrivateDependencyModuleNames.AddRange(new string[]
                 {"Slate",

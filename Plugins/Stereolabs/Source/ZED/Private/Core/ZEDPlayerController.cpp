@@ -272,8 +272,8 @@ UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
 	if (ActorsToFind.Num() > 0) 
 	{
 		ZedPawn = Cast<AZEDPawn>(ActorsToFind[0]);
-		World->SetNewWorldOrigin(FIntVector(ZedPawn->GetActorTransform().GetLocation().X, ZedPawn->GetActorTransform().GetLocation().Y, 0.0f) + World->OriginLocation);
-		ZedPawn->SetStartOffsetLocation(ZedPawn->GetActorTransform().GetLocation());
+		//World->SetNewWorldOrigin(FIntVector(ZedPawn->GetActorTransform().GetLocation().X, ZedPawn->GetActorTransform().GetLocation().Y, 0.0f) + World->OriginLocation);
+		//ZedPawn->SetStartOffsetLocation(ZedPawn->GetActorTransform().GetLocation());
 	}
 	else 
 	{

@@ -125,29 +125,35 @@ void AZEDPawn::ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData,
 		if (EnableLerp)
 		{
 			// Apply rotational offset on transform as global rotation
-
-			float lerpAlpha = DeltaSeconds * LerpIntensity;
-			LerpTransform = UKismetMathLibrary::TLerp(
-				LerpTransform,
-				FTransform(
-					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
-					VirtualLocation,
-					RealCameraTransform.GetScale3D()
-				),
-				FMath::Clamp(lerpAlpha, 0.0f, 1.0f));
-			SetActorTransform(LerpTransform);
+			if (RealCameraTransform.IsValid())
+			{
+				float lerpAlpha = DeltaSeconds * LerpIntensity;
+				LerpTransform = UKismetMathLibrary::TLerp(
+					LerpTransform,
+					FTransform(
+						TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+						VirtualLocation,
+						RealCameraTransform.GetScale3D()
+					),
+					FMath::Clamp(lerpAlpha, 0.0f, 1.0f));
+				SetActorTransform(LerpTransform);
+			}
 		}
 		else
 		{
-			SetActorTransform(
-				FTransform(
-					TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
-					VirtualLocation,
-					RealCameraTransform.GetScale3D()
-				)
-			);
+			if (RealCameraTransform.IsValid())
+			{
+				SetActorTransform(
+					FTransform(
+						TransformOffset.GetRotation() * RealCameraTransform.GetRotation(),
+						VirtualLocation,
+						RealCameraTransform.GetScale3D()
+					)
+				);
 
-			LerpTransform = RealCameraTransform;
+				LerpTransform = RealCameraTransform;
+			}
+
 		}
 	}
 }
