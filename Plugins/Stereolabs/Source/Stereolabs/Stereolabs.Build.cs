@@ -56,26 +56,6 @@ public class Stereolabs : ModuleRules
             }
             );
 
-        //// Paths for low-level directx and opengl access
-        //string engine_path = Path.GetFullPath(Target.RelativeEnginePath);
-
-        //PrivateIncludePaths.AddRange(
-        //  new string[]
-        //  {
-        //        engine_path + "Source/Runtime/Windows/D3D11RHI/Private/",
-        //        engine_path + "Source/Runtime/Windows/D3D11RHI/Private/Windows",
-        //        engine_path + "Source/Runtime/D3D12RHI/Private/Windows",
-        //        engine_path + "Source/Runtime/D3D12RHI/Private/"
-        //      // ... add other private include paths required here ...
-        //  }
-        //  );
-
-        //// required by D3D11RHI
-        //AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAPI");
-        //AddEngineThirdPartyPrivateStaticDependencies(Target, "AMD_AGS");
-        //AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAftermath");
-        //AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelExtensionsFramework");
-
         PrivateDependencyModuleNames.AddRange(new string[] {
                         "D3D11RHI",
                         "D3D12RHI",
