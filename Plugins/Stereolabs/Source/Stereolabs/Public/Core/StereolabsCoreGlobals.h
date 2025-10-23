@@ -50,14 +50,14 @@ FORCEINLINE FIntPoint GetSlTextureSizeFromPreset(int32 TextureQualityPreset)
 
 	switch (static_cast<ESlTextureQuality>(TextureQualityPreset))
 	{
-		case ESlTextureQuality::TQ_High:
-			return FIntPoint(1280, 720);
-		case ESlTextureQuality::TQ_Medium:
-			return FIntPoint(640, 360);
-		case ESlTextureQuality::TQ_Low:
-			return FIntPoint(384, 192);
-		default:
-			return FIntPoint(1280, 720);
+	case ESlTextureQuality::TQ_High:
+		return FIntPoint(1280, 720);
+	case ESlTextureQuality::TQ_Medium:
+		return FIntPoint(640, 360);
+	case ESlTextureQuality::TQ_Low:
+		return FIntPoint(384, 192);
+	default:
+		return FIntPoint(1280, 720);
 	}
 }
 
@@ -70,17 +70,17 @@ FORCEINLINE EPixelFormat GetPixelFormatFromSlTextureFormat(ESlTextureFormat Text
 {
 	switch (TextureFormat)
 	{
-		case ESlTextureFormat::TF_R32_FLOAT:
-			return EPixelFormat::PF_R32_FLOAT;
-		case ESlTextureFormat::TF_R8G8B8A8_SNORM:
-			//return EPixelFormat::PF_B8G8R8A8_UNORM; // PreZedEdit
-			return EPixelFormat::PF_R8G8B8A8_SNORM;
-		case ESlTextureFormat::TF_R8G8B8A8_UINT:
-			return EPixelFormat::PF_R8G8B8A8_UINT;
-		case ESlTextureFormat::TF_A32B32G32R32F:
-			return EPixelFormat::PF_A32B32G32R32F;
-		case ESlTextureFormat::TF_R8_UNORM:
-			return EPixelFormat::PF_G8;
+	case ESlTextureFormat::TF_R32_FLOAT:
+		return EPixelFormat::PF_R32_FLOAT;
+	case ESlTextureFormat::TF_R8G8B8A8_SNORM:
+		//return EPixelFormat::PF_B8G8R8A8_UNORM; // PreZedEdit
+		return EPixelFormat::PF_R8G8B8A8_SNORM;
+	case ESlTextureFormat::TF_R8G8B8A8_UINT:
+		return EPixelFormat::PF_R8G8B8A8_UINT;
+	case ESlTextureFormat::TF_A32B32G32R32F:
+		return EPixelFormat::PF_A32B32G32R32F;
+	case ESlTextureFormat::TF_R8_UNORM:
+		return EPixelFormat::PF_G8;
 	}
 
 	ensureMsgf(false, TEXT("Unhandled ESlTextureFormat entry %u"), (uint32)TextureFormat);
@@ -135,7 +135,7 @@ namespace sl
 			}
 		}
 
- 
+
 		/*
 		 * Convert from sl::TIME_REFERENCE to ESlTimeReference
 		 */
@@ -143,16 +143,16 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::TIME_REFERENCE::IMAGE:
-					return ESlTimeReference::TR_Image;
-				case sl::TIME_REFERENCE::CURRENT:
-					return ESlTimeReference::TR_Current;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::TIME_REFERENCE entry %u"), (uint32)SlType);
+			case sl::TIME_REFERENCE::IMAGE:
+				return ESlTimeReference::TR_Image;
+			case sl::TIME_REFERENCE::CURRENT:
+				return ESlTimeReference::TR_Current;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::TIME_REFERENCE entry %u"), (uint32)SlType);
 
-					return (ESlTimeReference)0;
-				}
+				return (ESlTimeReference)0;
+			}
 			}
 		};
 
@@ -163,16 +163,16 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::REFERENCE_FRAME::CAMERA:
-					return ESlReferenceFrame::RF_Camera;
-				case sl::REFERENCE_FRAME::WORLD:
-					return ESlReferenceFrame::RF_World;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::REFERENCE_FRAME entry %u"), (uint32)SlType);
+			case sl::REFERENCE_FRAME::CAMERA:
+				return ESlReferenceFrame::RF_Camera;
+			case sl::REFERENCE_FRAME::WORLD:
+				return ESlReferenceFrame::RF_World;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::REFERENCE_FRAME entry %u"), (uint32)SlType);
 
-					return (ESlReferenceFrame)0;
-				}
+				return (ESlReferenceFrame)0;
+			}
 			}
 		};
 
@@ -183,20 +183,20 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::POSITIONAL_TRACKING_STATE::SEARCHING:
-					return ESlTrackingState::TS_TrackingSearch;
-				case sl::POSITIONAL_TRACKING_STATE::OK:
-					return ESlTrackingState::TS_TrackingOk;
-				case sl::POSITIONAL_TRACKING_STATE::OFF:
-					return ESlTrackingState::TS_TrackingOff;
-				case sl::POSITIONAL_TRACKING_STATE::FPS_TOO_LOW:
-					return ESlTrackingState::TS_FpsTooLow;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::TRACKING_STATE entry %u"), (uint32)SlType);
+			case sl::POSITIONAL_TRACKING_STATE::SEARCHING:
+				return ESlTrackingState::TS_TrackingSearch;
+			case sl::POSITIONAL_TRACKING_STATE::OK:
+				return ESlTrackingState::TS_TrackingOk;
+			case sl::POSITIONAL_TRACKING_STATE::OFF:
+				return ESlTrackingState::TS_TrackingOff;
+			case sl::POSITIONAL_TRACKING_STATE::FPS_TOO_LOW:
+				return ESlTrackingState::TS_FpsTooLow;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::TRACKING_STATE entry %u"), (uint32)SlType);
 
-					return (ESlTrackingState)0;
-				}
+				return (ESlTrackingState)0;
+			}
 			}
 		};
 
@@ -207,110 +207,20 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::RESOLUTION::HD2K:
-					return ESlResolution::R_HD2K;
-				case sl::RESOLUTION::HD1080:
-					return ESlResolution::R_HD1080;
-				case sl::RESOLUTION::HD720:
-					return ESlResolution::R_HD720;
-				case sl::RESOLUTION::VGA:
-					return ESlResolution::R_VGA;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::RESOLUTION entry %u"), (uint32)SlType);
-
-					return (ESlResolution)0;
-				}		
-			}
-		}
-
-		/*
-		 * Convert from sl::ERROR_CODE to ESlErrorCode
-		 */
-		FORCEINLINE ESlErrorCode ToUnrealType(sl::ERROR_CODE SlType)
-		{
-			switch (SlType)
+			case sl::RESOLUTION::HD2K:
+				return ESlResolution::R_HD2K;
+			case sl::RESOLUTION::HD1080:
+				return ESlResolution::R_HD1080;
+			case sl::RESOLUTION::HD720:
+				return ESlResolution::R_HD720;
+			case sl::RESOLUTION::VGA:
+				return ESlResolution::R_VGA;
+			default:
 			{
-				case sl::ERROR_CODE::CORRUPTED_FRAME: /**< The image could be corrupted, Enabled with the parameter InitParameters::enable_image_validity_check.*/
-					return ESlErrorCode::EC_CorruptedFrame;
-				case sl::ERROR_CODE::CAMERA_REBOOTING: /**< The camera is currently rebooting.*/
-					return ESlErrorCode::EC_CameraRebooting;
-				case sl::ERROR_CODE::SUCCESS: /**< Standard code for successful behavior.*/
-					return ESlErrorCode::EC_Success;
-				case sl::ERROR_CODE::FAILURE: /**< Standard code for unsuccessful behavior.*/
-					return ESlErrorCode::EC_Failure;
-				case sl::ERROR_CODE::NO_GPU_COMPATIBLE: /**< No GPU found or CUDA capability of the device is not supported.*/
-					return ESlErrorCode::EC_NoGpuCompatible;
-				case sl::ERROR_CODE::NOT_ENOUGH_GPU_MEMORY: /**< Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
-					return ESlErrorCode::EC_NotEnoughGPUMemory;
-				case sl::ERROR_CODE::CAMERA_NOT_DETECTED: /**< The ZED camera is not plugged or detected.*/
-					return ESlErrorCode::EC_CameraNotDetected;
-				case sl::ERROR_CODE::SENSORS_NOT_INITIALIZED: /**< The Object detection module is only compatible with the ZED 2*/
-					return ESlErrorCode::EC_SensorNotInitialized;
-				case sl::ERROR_CODE::SENSORS_NOT_AVAILABLE: /**< The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
-					return ESlErrorCode::EC_SensorNotAvailable;
-				case sl::ERROR_CODE::INVALID_RESOLUTION: /**< In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
-					return ESlErrorCode::EC_InvalidResolution;
-				case sl::ERROR_CODE::LOW_USB_BANDWIDTH: /**< This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
-					return ESlErrorCode::EC_LowUSBBandwidth;
-				case sl::ERROR_CODE::CALIBRATION_FILE_NOT_AVAILABLE: /**< ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
-					return ESlErrorCode::EC_CalibrationFileNotAvailable;
-				case sl::ERROR_CODE::INVALID_CALIBRATION_FILE: /**< ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
-					return ESlErrorCode::EC_InvalidCalibrationFile;
-				case sl::ERROR_CODE::INVALID_SVO_FILE: /**< The provided SVO file is not valid.*/
-					return ESlErrorCode::EC_InvalidSVOFile;
-				case sl::ERROR_CODE::SVO_RECORDING_ERROR: /**< An recorder related error occurred (not enough free storage, invalid file).*/
-					return ESlErrorCode::EC_SVORecordingError;
-				case sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
-					return ESlErrorCode::EC_SVOUnsupportedCompression;
-				case sl::ERROR_CODE::END_OF_SVOFILE_REACHED: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-					return ESlErrorCode::EC_EndOfSVOFile;
-				case sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM: /**< The requested coordinate system is not available.*/
-					return ESlErrorCode::EC_InvalidCoordinateSystem;
-				case sl::ERROR_CODE::INVALID_FIRMWARE: /**< The firmware of the ZED is out of date. Update to the latest version.*/
-					return ESlErrorCode::EC_InvalidFirmware;
-				case sl::ERROR_CODE::INVALID_FUNCTION_PARAMETERS: /**< An invalid parameter has been set for the function. */
-					return ESlErrorCode::EC_InvalidFunctionParameters;
-				case sl::ERROR_CODE::CUDA_ERROR: /**< In grab() only, a CUDA error has been detected in the process. Activate verbose in sl::Camera::open for more info.*/
-					return ESlErrorCode::EC_CUDAError;
-				case sl::ERROR_CODE::CAMERA_NOT_INITIALIZED: /**< In grab() only, ZED SDK is not initialized. Probably a missing call to sl::Camera::open.*/
-					return ESlErrorCode::EC_CameraNotInitialized;
-				case sl::ERROR_CODE::NVIDIA_DRIVER_OUT_OF_DATE: /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
-					return ESlErrorCode::EC_NVIDIADriverOutOfDate;
-				case sl::ERROR_CODE::INVALID_FUNCTION_CALL: /**< The call of the function is not valid in the current context. Could be a missing call of sl::Camera::open. */
-					return ESlErrorCode::EC_InvalidFunctionCall;
-				case sl::ERROR_CODE::CORRUPTED_SDK_INSTALLATION: /**< The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
-					return ESlErrorCode::EC_CorruptedSDKInstallation;
-				case sl::ERROR_CODE::INCOMPATIBLE_SDK_VERSION: /**< The installed SDK is incompatible SDK used to compile the program. */
-					return ESlErrorCode::EC_IncompatibleSDKVersion;
-				case sl::ERROR_CODE::INVALID_AREA_FILE: /**< The given area file does not exist, check the path. */
-					return ESlErrorCode::EC_InvalidAreaFile;
-				case sl::ERROR_CODE::INCOMPATIBLE_AREA_FILE: /**< The area file does not contain enought data to be used or the sl::DEPTH_MODE used during the creation of the area file is different from the one currently set. */
-					return ESlErrorCode::EC_IncompatibleAreaFile;
-				case sl::ERROR_CODE::CAMERA_FAILED_TO_SETUP: /**< Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
-					return ESlErrorCode::EC_CameraFailedToSetup;
-				case sl::ERROR_CODE::CAMERA_DETECTION_ISSUE: /**< Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
-					return ESlErrorCode::EC_CameraDetectionIssue;
-				case sl::ERROR_CODE::CANNOT_START_CAMERA_STREAM: /**< Cannot start camera stream. Make sure your camera is not already used by another process or blocked by firewall or antivirus.*/
-					return ESlErrorCode::EC_CameraStreamFailedToStart;
-				case sl::ERROR_CODE::NO_GPU_DETECTED: /**< No GPU found, CUDA is unable to list it. Can be a driver/reboot issue.*/
-					return ESlErrorCode::EC_NoGpuDetected;
-				case sl::ERROR_CODE::PLANE_NOT_FOUND: /**< Plane not found, either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given*/
-					return ESlErrorCode::EC_NoplaneFound;
-				case sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CAMERA: /**< The Object detection module is not compatible with this camera model*/
-					return ESlErrorCode::EC_ModuleNotCompatibleWithCamera;
-				case sl::ERROR_CODE::MOTION_SENSORS_REQUIRED: /**< The module needs the sensors to be enabled (see InitParameters::disable_sensors) */
-					return ESlErrorCode::EC_MotionSensorsRequired;
-				case sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
-					return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
-				case sl::ERROR_CODE::LAST:
-					return ESlErrorCode::EC_None;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
+				ensureMsgf(false, TEXT("Unhandled sl::RESOLUTION entry %u"), (uint32)SlType);
 
-					return (ESlErrorCode)0;
-				}
+				return (ESlResolution)0;
+			}
 			}
 		}
 
@@ -318,6 +228,13 @@ namespace sl
 		{
 			switch (SlType)
 			{
+
+			case SL_ERROR_CODE_POTENTIAL_CALIBRATION_ISSUE:
+				return ESlErrorCode::EC_PotentialCalibrationIssue;
+			case SL_ERROR_CODE_CONFIGURATION_FALLBACK:
+				return ESlErrorCode::EC_ConfigurationFallback;
+			case SL_ERROR_CODE_SENSORS_DATA_REQUIRED:
+				return ESlErrorCode::EC_SensorsDataRequired;
 			case SL_ERROR_CODE_CORRUPTED_FRAME:
 				return ESlErrorCode::EC_CorruptedFrame;
 			case SL_ERROR_CODE_CAMERA_REBOOTING:
@@ -505,24 +422,24 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::AREA_EXPORTING_STATE::SUCCESS:
-					return ESlSpatialMemoryExportingState::SMES_Success;
-				case sl::AREA_EXPORTING_STATE::RUNNING:
-					return ESlSpatialMemoryExportingState::SMES_Running;
-				case sl::AREA_EXPORTING_STATE::NOT_STARTED:
-					return ESlSpatialMemoryExportingState::SMES_NotStarted;
-				case sl::AREA_EXPORTING_STATE::FILE_EMPTY:
-					return ESlSpatialMemoryExportingState::SMES_FileEmpty;
-				case sl::AREA_EXPORTING_STATE::FILE_ERROR:
-					return ESlSpatialMemoryExportingState::SMES_FileError;
-				case sl::AREA_EXPORTING_STATE::SPATIAL_MEMORY_DISABLED:
-					return ESlSpatialMemoryExportingState::SMES_SpatialMemoryDisabled;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::AREA_EXPORT_STATE entry %u"), (uint32)SlType);
+			case sl::AREA_EXPORTING_STATE::SUCCESS:
+				return ESlSpatialMemoryExportingState::SMES_Success;
+			case sl::AREA_EXPORTING_STATE::RUNNING:
+				return ESlSpatialMemoryExportingState::SMES_Running;
+			case sl::AREA_EXPORTING_STATE::NOT_STARTED:
+				return ESlSpatialMemoryExportingState::SMES_NotStarted;
+			case sl::AREA_EXPORTING_STATE::FILE_EMPTY:
+				return ESlSpatialMemoryExportingState::SMES_FileEmpty;
+			case sl::AREA_EXPORTING_STATE::FILE_ERROR:
+				return ESlSpatialMemoryExportingState::SMES_FileError;
+			case sl::AREA_EXPORTING_STATE::SPATIAL_MEMORY_DISABLED:
+				return ESlSpatialMemoryExportingState::SMES_SpatialMemoryDisabled;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::AREA_EXPORT_STATE entry %u"), (uint32)SlType);
 
-					return (ESlSpatialMemoryExportingState)0;
-				}
+				return (ESlSpatialMemoryExportingState)0;
+			}
 			}
 		}
 
@@ -533,31 +450,31 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::MAT_TYPE::F32_C1:
-					return ESlMatType::MT_32F_C1;
-				case sl::MAT_TYPE::F32_C2:
-					return ESlMatType::MT_32F_C2;
-				case sl::MAT_TYPE::F32_C3:
-					return ESlMatType::MT_32F_C3;
-				case sl::MAT_TYPE::F32_C4:
-					return ESlMatType::MT_32F_C4;
-				case sl::MAT_TYPE::U8_C1:
-					return ESlMatType::MT_8U_C1;
-				case sl::MAT_TYPE::U8_C2:
-					return ESlMatType::MT_8U_C2;
-				case sl::MAT_TYPE::U8_C3:
-					return ESlMatType::MT_8U_C3;
-				case sl::MAT_TYPE::U8_C4:
-					return ESlMatType::MT_8U_C4;
-				case sl::MAT_TYPE::S8_C4:
-					return ESlMatType::MT_8S_C4;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::MAT_TYPE entry %u"), (uint32)SlType);
+			case sl::MAT_TYPE::F32_C1:
+				return ESlMatType::MT_32F_C1;
+			case sl::MAT_TYPE::F32_C2:
+				return ESlMatType::MT_32F_C2;
+			case sl::MAT_TYPE::F32_C3:
+				return ESlMatType::MT_32F_C3;
+			case sl::MAT_TYPE::F32_C4:
+				return ESlMatType::MT_32F_C4;
+			case sl::MAT_TYPE::U8_C1:
+				return ESlMatType::MT_8U_C1;
+			case sl::MAT_TYPE::U8_C2:
+				return ESlMatType::MT_8U_C2;
+			case sl::MAT_TYPE::U8_C3:
+				return ESlMatType::MT_8U_C3;
+			case sl::MAT_TYPE::U8_C4:
+				return ESlMatType::MT_8U_C4;
+			case sl::MAT_TYPE::S8_C4:
+				return ESlMatType::MT_8S_C4;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::MAT_TYPE entry %u"), (uint32)SlType);
 
-					return (ESlMatType)0;
-				}
-						
+				return (ESlMatType)0;
+			}
+
 			}
 		}
 
@@ -613,20 +530,20 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::MODEL::ZED:
-					return ESlModel::M_Zed;
-				case sl::MODEL::ZED_M:
-					return ESlModel::M_ZedM;
-				case sl::MODEL::ZED2:
-					return ESlModel::M_Zed2;
-				case sl::MODEL::ZED2i:
-					return ESlModel::M_Zed2i;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::MODEL entry %u"), (uint32)SlType);
+			case sl::MODEL::ZED:
+				return ESlModel::M_Zed;
+			case sl::MODEL::ZED_M:
+				return ESlModel::M_ZedM;
+			case sl::MODEL::ZED2:
+				return ESlModel::M_Zed2;
+			case sl::MODEL::ZED2i:
+				return ESlModel::M_Zed2i;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::MODEL entry %u"), (uint32)SlType);
 
-					return (ESlModel)0;
-				}
+				return (ESlModel)0;
+			}
 			}
 		}
 
@@ -637,16 +554,16 @@ namespace sl
 		{
 			switch (SlType)
 			{
-				case sl::CAMERA_STATE::AVAILABLE:
-					return ESlCameraState::CS_Available;
-				case sl::CAMERA_STATE::NOT_AVAILABLE:
-					return ESlCameraState::CS_NotAvailable;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled sl::CAMERA_STATE entry %u"), (uint32)SlType);
+			case sl::CAMERA_STATE::AVAILABLE:
+				return ESlCameraState::CS_Available;
+			case sl::CAMERA_STATE::NOT_AVAILABLE:
+				return ESlCameraState::CS_NotAvailable;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled sl::CAMERA_STATE entry %u"), (uint32)SlType);
 
-					return (ESlCameraState)0;
-				}
+				return (ESlCameraState)0;
+			}
 			}
 		}
 
@@ -657,16 +574,16 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlTimeReference::TR_Image:
-					return sl::TIME_REFERENCE::IMAGE;
-				case ESlTimeReference::TR_Current:
-					return sl::TIME_REFERENCE::CURRENT;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlTimeReference entry %u"), (uint32)UnrealType);
+			case ESlTimeReference::TR_Image:
+				return sl::TIME_REFERENCE::IMAGE;
+			case ESlTimeReference::TR_Current:
+				return sl::TIME_REFERENCE::CURRENT;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlTimeReference entry %u"), (uint32)UnrealType);
 
-					return (sl::TIME_REFERENCE)0;
-				}
+				return (sl::TIME_REFERENCE)0;
+			}
 			}
 		};
 
@@ -677,16 +594,16 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlReferenceFrame::RF_Camera:
-					return sl::REFERENCE_FRAME::CAMERA;
-				case ESlReferenceFrame::RF_World:
-					return sl::REFERENCE_FRAME::WORLD;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlReferenceFrame entry %u"), (uint32)UnrealType);
+			case ESlReferenceFrame::RF_Camera:
+				return sl::REFERENCE_FRAME::CAMERA;
+			case ESlReferenceFrame::RF_World:
+				return sl::REFERENCE_FRAME::WORLD;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlReferenceFrame entry %u"), (uint32)UnrealType);
 
-					return (sl::REFERENCE_FRAME)0;
-				}
+				return (sl::REFERENCE_FRAME)0;
+			}
 			}
 		};
 
@@ -697,20 +614,20 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlTrackingState::TS_TrackingSearch:
-					return sl::POSITIONAL_TRACKING_STATE::SEARCHING;
-				case ESlTrackingState::TS_TrackingOk:
-					return sl::POSITIONAL_TRACKING_STATE::OK;
-				case ESlTrackingState::TS_TrackingOff:
-					return sl::POSITIONAL_TRACKING_STATE::OFF;
-				case ESlTrackingState::TS_FpsTooLow:
-					return sl::POSITIONAL_TRACKING_STATE::FPS_TOO_LOW;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlTrackingState entry %u"), (uint32)UnrealType);
+			case ESlTrackingState::TS_TrackingSearch:
+				return sl::POSITIONAL_TRACKING_STATE::SEARCHING;
+			case ESlTrackingState::TS_TrackingOk:
+				return sl::POSITIONAL_TRACKING_STATE::OK;
+			case ESlTrackingState::TS_TrackingOff:
+				return sl::POSITIONAL_TRACKING_STATE::OFF;
+			case ESlTrackingState::TS_FpsTooLow:
+				return sl::POSITIONAL_TRACKING_STATE::FPS_TOO_LOW;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlTrackingState entry %u"), (uint32)UnrealType);
 
-					return (sl::POSITIONAL_TRACKING_STATE)0;
-				}
+				return (sl::POSITIONAL_TRACKING_STATE)0;
+			}
 			}
 		}
 
@@ -721,20 +638,20 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlResolution::R_HD2K:
-					return sl::RESOLUTION::HD2K;
-				case ESlResolution::R_HD1080:
-					return sl::RESOLUTION::HD1080;
-				case ESlResolution::R_HD720:
-					return sl::RESOLUTION::HD720;
-				case ESlResolution::R_VGA:
-					return sl::RESOLUTION::VGA;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlResolution entry %u"), (uint32)UnrealType);
+			case ESlResolution::R_HD2K:
+				return sl::RESOLUTION::HD2K;
+			case ESlResolution::R_HD1080:
+				return sl::RESOLUTION::HD1080;
+			case ESlResolution::R_HD720:
+				return sl::RESOLUTION::HD720;
+			case ESlResolution::R_VGA:
+				return sl::RESOLUTION::VGA;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlResolution entry %u"), (uint32)UnrealType);
 
-					return (sl::RESOLUTION)0;
-				}		
+				return (sl::RESOLUTION)0;
+			}
 			}
 		}
 
@@ -775,22 +692,22 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlDepthMode::DM_None:
-					return sl::DEPTH_MODE::NONE;
-				case ESlDepthMode::DM_Performance:
-					return sl::DEPTH_MODE::PERFORMANCE;
-				case ESlDepthMode::DM_Ultra:
-					return sl::DEPTH_MODE::ULTRA;
-				case ESlDepthMode::DM_Neural:
-					return sl::DEPTH_MODE::NEURAL;
-				case ESlDepthMode::DM_NeuralPlus:
-					return sl::DEPTH_MODE::NEURAL_PLUS;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlDepthMode entry %u"), (uint32)UnrealType);
+			case ESlDepthMode::DM_None:
+				return sl::DEPTH_MODE::NONE;
+			case ESlDepthMode::DM_Performance:
+				return sl::DEPTH_MODE::PERFORMANCE;
+			case ESlDepthMode::DM_Ultra:
+				return sl::DEPTH_MODE::ULTRA;
+			case ESlDepthMode::DM_Neural:
+				return sl::DEPTH_MODE::NEURAL;
+			case ESlDepthMode::DM_NeuralPlus:
+				return sl::DEPTH_MODE::NEURAL_PLUS;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlDepthMode entry %u"), (uint32)UnrealType);
 
-					return (sl::DEPTH_MODE)0;
-				}		
+				return (sl::DEPTH_MODE)0;
+			}
 			}
 		}
 
@@ -801,50 +718,50 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlMeasure::M_Depth:
-					return sl::MEASURE::DEPTH;
-				case ESlMeasure::M_DepthRight:
-					return sl::MEASURE::DEPTH_RIGHT;
-				case ESlMeasure::M_Disparity:
-					return sl::MEASURE::DISPARITY;
-				case ESlMeasure::M_DisparityRight:
-					return sl::MEASURE::DISPARITY_RIGHT;
-				case ESlMeasure::M_Normals:
-					return sl::MEASURE::NORMALS;
-				case ESlMeasure::M_NormalsRight:
-					return sl::MEASURE::NORMALS_RIGHT;
-				case ESlMeasure::M_XYZ:
-					return sl::MEASURE::XYZ;
-				case ESlMeasure::M_XYZ_Right:
-					return sl::MEASURE::XYZ_RIGHT;
-				case ESlMeasure::M_XYZ_RGBA:
-					return sl::MEASURE::XYZRGBA;
-				case ESlMeasure::M_XYZ_RGBA_Right:
-					return sl::MEASURE::XYZRGBA_RIGHT;
-				case ESlMeasure::M_XYZ_BGRA:
-					return sl::MEASURE::XYZBGRA;
-				case ESlMeasure::M_XYZ_BGRA_Right:
-					return sl::MEASURE::XYZBGRA_RIGHT;
-				case ESlMeasure::M_XYZ_ARGB:
-					return sl::MEASURE::XYZARGB;
-				case ESlMeasure::M_XYZ_ARGB_Right:
-					return sl::MEASURE::XYZARGB_RIGHT;
-				case ESlMeasure::M_XYZ_ABGR:
-					return sl::MEASURE::XYZABGR;
-				case ESlMeasure::M_XYZ_ABGR_Right:
-					return sl::MEASURE::XYZABGR_RIGHT;
-				case ESlMeasure::M_Confidence:
-					return sl::MEASURE::CONFIDENCE;
-				case ESlMeasure::M_DEPTH_U16_MM:
-					return sl::MEASURE::DEPTH_U16_MM;
-				case ESlMeasure::M_DEPTH_U16_MM_RIGHT:
-					return sl::MEASURE::DEPTH_U16_MM_RIGHT;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlMeasure entry %u"), (uint32)UnrealType);
+			case ESlMeasure::M_Depth:
+				return sl::MEASURE::DEPTH;
+			case ESlMeasure::M_DepthRight:
+				return sl::MEASURE::DEPTH_RIGHT;
+			case ESlMeasure::M_Disparity:
+				return sl::MEASURE::DISPARITY;
+			case ESlMeasure::M_DisparityRight:
+				return sl::MEASURE::DISPARITY_RIGHT;
+			case ESlMeasure::M_Normals:
+				return sl::MEASURE::NORMALS;
+			case ESlMeasure::M_NormalsRight:
+				return sl::MEASURE::NORMALS_RIGHT;
+			case ESlMeasure::M_XYZ:
+				return sl::MEASURE::XYZ;
+			case ESlMeasure::M_XYZ_Right:
+				return sl::MEASURE::XYZ_RIGHT;
+			case ESlMeasure::M_XYZ_RGBA:
+				return sl::MEASURE::XYZRGBA;
+			case ESlMeasure::M_XYZ_RGBA_Right:
+				return sl::MEASURE::XYZRGBA_RIGHT;
+			case ESlMeasure::M_XYZ_BGRA:
+				return sl::MEASURE::XYZBGRA;
+			case ESlMeasure::M_XYZ_BGRA_Right:
+				return sl::MEASURE::XYZBGRA_RIGHT;
+			case ESlMeasure::M_XYZ_ARGB:
+				return sl::MEASURE::XYZARGB;
+			case ESlMeasure::M_XYZ_ARGB_Right:
+				return sl::MEASURE::XYZARGB_RIGHT;
+			case ESlMeasure::M_XYZ_ABGR:
+				return sl::MEASURE::XYZABGR;
+			case ESlMeasure::M_XYZ_ABGR_Right:
+				return sl::MEASURE::XYZABGR_RIGHT;
+			case ESlMeasure::M_Confidence:
+				return sl::MEASURE::CONFIDENCE;
+			case ESlMeasure::M_DEPTH_U16_MM:
+				return sl::MEASURE::DEPTH_U16_MM;
+			case ESlMeasure::M_DEPTH_U16_MM_RIGHT:
+				return sl::MEASURE::DEPTH_U16_MM_RIGHT;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlMeasure entry %u"), (uint32)UnrealType);
 
-					return (sl::MEASURE)0;
-				}
+				return (sl::MEASURE)0;
+			}
 			}
 		}
 
@@ -855,14 +772,14 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlView::V_Left:
-					return  SL_VIEW_LEFT;
-				case ESlView::V_Right:
-					return SL_VIEW_RIGHT;
-				case ESlView::V_LeftUnrectified:
-					return SL_VIEW_LEFT_UNRECTIFIED;
-				case ESlView::V_RightUnrectified:
-					return SL_VIEW_RIGHT_UNRECTIFIED;
+			case ESlView::V_Left:
+				return  SL_VIEW_LEFT;
+			case ESlView::V_Right:
+				return SL_VIEW_RIGHT;
+			case ESlView::V_LeftUnrectified:
+				return SL_VIEW_LEFT_UNRECTIFIED;
+			case ESlView::V_RightUnrectified:
+				return SL_VIEW_RIGHT_UNRECTIFIED;
 				// Not supported for the moment.
 				//case ESlView::V_LeftUnrectifiedGray:
 				//	return sl::VIEW::LEFT_UNRECTIFIED_GRAY;
@@ -872,27 +789,27 @@ namespace sl
 				//	return sl::VIEW::LEFT_GRAY;
 				//case ESlView::V_RightGray:
 				//	return sl::VIEW::RIGHT_GRAY;
-				case ESlView::V_SideBySide:
-					return SL_VIEW_SIDE_BY_SIDE;
-				case ESlView::V_Depth:
-					return SL_VIEW_DEPTH;
-				case ESlView::V_DepthRight:
-					return SL_VIEW_DEPTH_RIGHT;
-				case ESlView::V_Confidence:
-					return SL_VIEW_CONFIDENCE;
-				case ESlView::V_Normals:
-					return SL_VIEW_NORMALS;
-				case ESlView::V_NormalsRight:
-					return SL_VIEW_NORMALS_RIGHT;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlView entry %u"), (uint32)UnrealType);
+			case ESlView::V_SideBySide:
+				return SL_VIEW_SIDE_BY_SIDE;
+			case ESlView::V_Depth:
+				return SL_VIEW_DEPTH;
+			case ESlView::V_DepthRight:
+				return SL_VIEW_DEPTH_RIGHT;
+			case ESlView::V_Confidence:
+				return SL_VIEW_CONFIDENCE;
+			case ESlView::V_Normals:
+				return SL_VIEW_NORMALS;
+			case ESlView::V_NormalsRight:
+				return SL_VIEW_NORMALS_RIGHT;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlView entry %u"), (uint32)UnrealType);
 
-					return (SL_VIEW)0;
-				}
+				return (SL_VIEW)0;
+			}
 			}
 		}
-		
+
 		/*
 		 * Convert from EStereoRenderingDeviceType to sl::mr::HMD_DEVICE_TYPE
 		 */
@@ -920,82 +837,82 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlErrorCode::EC_Success: /**< Standard code for successful behavior.*/
-					return sl::ERROR_CODE::SUCCESS;
-				case ESlErrorCode::EC_Failure: /**< Standard code for unsuccessful behavior.*/
-					return sl::ERROR_CODE::FAILURE;
-				case ESlErrorCode::EC_NoGpuCompatible: /**< No GPU found or CUDA capability of the device is not supported.*/
-					return sl::ERROR_CODE::NO_GPU_COMPATIBLE;
-				case ESlErrorCode::EC_NotEnoughGPUMemory: /**< Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
-					return sl::ERROR_CODE::NOT_ENOUGH_GPU_MEMORY ;
-				case ESlErrorCode::EC_CameraNotDetected: /**< The ZED camera is not plugged or detected.*/
-					return sl::ERROR_CODE::CAMERA_NOT_INITIALIZED;
-				case ESlErrorCode::EC_SensorNotInitialized: /**<The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
-					return sl::ERROR_CODE::SENSORS_NOT_AVAILABLE;
-				case ESlErrorCode::EC_SensorNotAvailable: /**< a ZED-M or ZED2 camera is detected but the sensors (imu,barometer...) cannot be opened. Only for ZED-M or ZED2 devices*/
-					return sl::ERROR_CODE::SENSORS_NOT_AVAILABLE;
-				case ESlErrorCode::EC_InvalidResolution: /**< In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
-					return sl::ERROR_CODE::INVALID_RESOLUTION;
-				case  ESlErrorCode::EC_LowUSBBandwidth: /**< This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
-					return sl::ERROR_CODE::LOW_USB_BANDWIDTH;
-				case ESlErrorCode::EC_CalibrationFileNotAvailable: /**< ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
-					return sl::ERROR_CODE::CALIBRATION_FILE_NOT_AVAILABLE;
-				case ESlErrorCode::EC_InvalidCalibrationFile: /**< ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
-					return sl::ERROR_CODE::INVALID_CALIBRATION_FILE;
-				case ESlErrorCode::EC_InvalidSVOFile : /**< The provided SVO file is not valid.*/
-					return sl::ERROR_CODE::INVALID_SVO_FILE;
-				case ESlErrorCode::EC_SVORecordingError : /**< An recorder related error occurred (not enough free storage, invalid file).*/
-					return sl::ERROR_CODE::SVO_RECORDING_ERROR;
-				case ESlErrorCode::EC_SVOUnsupportedCompression : /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
-					return sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION;
-				case ESlErrorCode::EC_EndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-					return sl::ERROR_CODE::END_OF_SVOFILE_REACHED;
-				case ESlErrorCode::EC_InvalidCoordinateSystem: /**< The requested coordinate system is not available.*/
-					return sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM ;
-				case ESlErrorCode::EC_InvalidFirmware : /**< The firmware of the ZED is out of date. Update to the latest version.*/
-					return sl::ERROR_CODE::INVALID_FIRMWARE;
-				case  ESlErrorCode::EC_InvalidFunctionParameters: /**< An invalid parameter has been set for the function. */
-					return sl::ERROR_CODE::INVALID_FUNCTION_PARAMETERS;
-				case ESlErrorCode::EC_CUDAError: /**< In grab() only, a CUDA error has been detected in the process. Activate verbose in sl::Camera::open for more info.*/
-					return sl::ERROR_CODE::CUDA_ERROR ;
-				case ESlErrorCode::EC_CameraNotInitialized : /**< In grab() only, ZED SDK is not initialized. Probably a missing call to sl::Camera::open.*/
-					return sl::ERROR_CODE::CAMERA_NOT_INITIALIZED;
-				case ESlErrorCode::EC_NVIDIADriverOutOfDate: /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
-					return sl::ERROR_CODE::NVIDIA_DRIVER_OUT_OF_DATE;
-				case ESlErrorCode::EC_InvalidFunctionCall: /**< The call of the function is not valid in the current context. Could be a missing call of sl::Camera::open. */
-					return sl::ERROR_CODE::INVALID_FUNCTION_CALL;
-				case ESlErrorCode::EC_CorruptedSDKInstallation: /**< The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
-					return sl::ERROR_CODE::CORRUPTED_SDK_INSTALLATION;
-				case ESlErrorCode::EC_IncompatibleSDKVersion: /**< The installed SDK is incompatible SDK used to compile the program. */
-					return sl::ERROR_CODE::INCOMPATIBLE_SDK_VERSION ;
-				case ESlErrorCode::EC_InvalidAreaFile: /**< The given area file does not exist, check the path. */
-					return sl::ERROR_CODE::INVALID_AREA_FILE;
-				case ESlErrorCode::EC_IncompatibleAreaFile: /**< The area file does not contain enought data to be used or the sl::DEPTH_MODE used during the creation of the area file is different from the one currently set. */
-					return sl::ERROR_CODE::INCOMPATIBLE_AREA_FILE;
-				case ESlErrorCode::EC_CameraFailedToSetup: /**< Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
-					return sl::ERROR_CODE::CAMERA_FAILED_TO_SETUP;
-				case ESlErrorCode::EC_CameraDetectionIssue : /**< Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
-					return sl::ERROR_CODE::CAMERA_DETECTION_ISSUE;
-				case ESlErrorCode::EC_CameraStreamFailedToStart: /**< Cannot start camera stream. Make sure your camera is not already used by another process or blocked by firewall or antivirus.*/
-					return sl::ERROR_CODE::CANNOT_START_CAMERA_STREAM;
-				case ESlErrorCode::EC_NoGpuDetected: /**< No GPU found, CUDA is unable to list it. Can be a driver/reboot issue.*/
-					return  sl::ERROR_CODE::NO_GPU_DETECTED;
-				case ESlErrorCode::EC_NoplaneFound : /**< Plane not found, either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given*/
-					return sl::ERROR_CODE::PLANE_NOT_FOUND;
-				case ESlErrorCode::EC_ModuleNotCompatibleWithCamera : /**< The Object detection module is only compatible with the ZED 2*/
-					return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CAMERA;
-				case  ESlErrorCode::EC_MotionSensorsRequired: /**< The module needs the sensors to be enabled (see InitParameters::disable_sensors) */
-					return sl::ERROR_CODE::MOTION_SENSORS_REQUIRED;
-				case ESlErrorCode::EC_ModuleNotCompatibleWithCuda: /**< The module needs a newer version of CUDA*/
-					return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION;
-				case ESlErrorCode::EC_None:
-					return  sl::ERROR_CODE::LAST;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlErrorCode entry %u"), (uint32)UnrealType);
+			case ESlErrorCode::EC_Success: /**< Standard code for successful behavior.*/
+				return sl::ERROR_CODE::SUCCESS;
+			case ESlErrorCode::EC_Failure: /**< Standard code for unsuccessful behavior.*/
+				return sl::ERROR_CODE::FAILURE;
+			case ESlErrorCode::EC_NoGpuCompatible: /**< No GPU found or CUDA capability of the device is not supported.*/
+				return sl::ERROR_CODE::NO_GPU_COMPATIBLE;
+			case ESlErrorCode::EC_NotEnoughGPUMemory: /**< Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
+				return sl::ERROR_CODE::NOT_ENOUGH_GPU_MEMORY;
+			case ESlErrorCode::EC_CameraNotDetected: /**< The ZED camera is not plugged or detected.*/
+				return sl::ERROR_CODE::CAMERA_NOT_INITIALIZED;
+			case ESlErrorCode::EC_SensorNotInitialized: /**<The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
+				return sl::ERROR_CODE::SENSORS_NOT_AVAILABLE;
+			case ESlErrorCode::EC_SensorNotAvailable: /**< a ZED-M or ZED2 camera is detected but the sensors (imu,barometer...) cannot be opened. Only for ZED-M or ZED2 devices*/
+				return sl::ERROR_CODE::SENSORS_NOT_AVAILABLE;
+			case ESlErrorCode::EC_InvalidResolution: /**< In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
+				return sl::ERROR_CODE::INVALID_RESOLUTION;
+			case  ESlErrorCode::EC_LowUSBBandwidth: /**< This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
+				return sl::ERROR_CODE::LOW_USB_BANDWIDTH;
+			case ESlErrorCode::EC_CalibrationFileNotAvailable: /**< ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
+				return sl::ERROR_CODE::CALIBRATION_FILE_NOT_AVAILABLE;
+			case ESlErrorCode::EC_InvalidCalibrationFile: /**< ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
+				return sl::ERROR_CODE::INVALID_CALIBRATION_FILE;
+			case ESlErrorCode::EC_InvalidSVOFile: /**< The provided SVO file is not valid.*/
+				return sl::ERROR_CODE::INVALID_SVO_FILE;
+			case ESlErrorCode::EC_SVORecordingError: /**< An recorder related error occurred (not enough free storage, invalid file).*/
+				return sl::ERROR_CODE::SVO_RECORDING_ERROR;
+			case ESlErrorCode::EC_SVOUnsupportedCompression: /**< An SVO related error when NVIDIA based compression cannot be loaded.*/
+				return sl::ERROR_CODE::SVO_UNSUPPORTED_COMPRESSION;
+			case ESlErrorCode::EC_EndOfSVOFile: /**<SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
+				return sl::ERROR_CODE::END_OF_SVOFILE_REACHED;
+			case ESlErrorCode::EC_InvalidCoordinateSystem: /**< The requested coordinate system is not available.*/
+				return sl::ERROR_CODE::INVALID_COORDINATE_SYSTEM;
+			case ESlErrorCode::EC_InvalidFirmware: /**< The firmware of the ZED is out of date. Update to the latest version.*/
+				return sl::ERROR_CODE::INVALID_FIRMWARE;
+			case  ESlErrorCode::EC_InvalidFunctionParameters: /**< An invalid parameter has been set for the function. */
+				return sl::ERROR_CODE::INVALID_FUNCTION_PARAMETERS;
+			case ESlErrorCode::EC_CUDAError: /**< In grab() only, a CUDA error has been detected in the process. Activate verbose in sl::Camera::open for more info.*/
+				return sl::ERROR_CODE::CUDA_ERROR;
+			case ESlErrorCode::EC_CameraNotInitialized: /**< In grab() only, ZED SDK is not initialized. Probably a missing call to sl::Camera::open.*/
+				return sl::ERROR_CODE::CAMERA_NOT_INITIALIZED;
+			case ESlErrorCode::EC_NVIDIADriverOutOfDate: /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
+				return sl::ERROR_CODE::NVIDIA_DRIVER_OUT_OF_DATE;
+			case ESlErrorCode::EC_InvalidFunctionCall: /**< The call of the function is not valid in the current context. Could be a missing call of sl::Camera::open. */
+				return sl::ERROR_CODE::INVALID_FUNCTION_CALL;
+			case ESlErrorCode::EC_CorruptedSDKInstallation: /**< The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
+				return sl::ERROR_CODE::CORRUPTED_SDK_INSTALLATION;
+			case ESlErrorCode::EC_IncompatibleSDKVersion: /**< The installed SDK is incompatible SDK used to compile the program. */
+				return sl::ERROR_CODE::INCOMPATIBLE_SDK_VERSION;
+			case ESlErrorCode::EC_InvalidAreaFile: /**< The given area file does not exist, check the path. */
+				return sl::ERROR_CODE::INVALID_AREA_FILE;
+			case ESlErrorCode::EC_IncompatibleAreaFile: /**< The area file does not contain enought data to be used or the sl::DEPTH_MODE used during the creation of the area file is different from the one currently set. */
+				return sl::ERROR_CODE::INCOMPATIBLE_AREA_FILE;
+			case ESlErrorCode::EC_CameraFailedToSetup: /**< Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
+				return sl::ERROR_CODE::CAMERA_FAILED_TO_SETUP;
+			case ESlErrorCode::EC_CameraDetectionIssue: /**< Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
+				return sl::ERROR_CODE::CAMERA_DETECTION_ISSUE;
+			case ESlErrorCode::EC_CameraStreamFailedToStart: /**< Cannot start camera stream. Make sure your camera is not already used by another process or blocked by firewall or antivirus.*/
+				return sl::ERROR_CODE::CANNOT_START_CAMERA_STREAM;
+			case ESlErrorCode::EC_NoGpuDetected: /**< No GPU found, CUDA is unable to list it. Can be a driver/reboot issue.*/
+				return  sl::ERROR_CODE::NO_GPU_DETECTED;
+			case ESlErrorCode::EC_NoplaneFound: /**< Plane not found, either no plane is detected in the scene, at the location or corresponding to the floor, or the floor plane doesn't match the prior given*/
+				return sl::ERROR_CODE::PLANE_NOT_FOUND;
+			case ESlErrorCode::EC_ModuleNotCompatibleWithCamera: /**< The Object detection module is only compatible with the ZED 2*/
+				return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CAMERA;
+			case  ESlErrorCode::EC_MotionSensorsRequired: /**< The module needs the sensors to be enabled (see InitParameters::disable_sensors) */
+				return sl::ERROR_CODE::MOTION_SENSORS_REQUIRED;
+			case ESlErrorCode::EC_ModuleNotCompatibleWithCuda: /**< The module needs a newer version of CUDA*/
+				return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION;
+			case ESlErrorCode::EC_None:
+				return  sl::ERROR_CODE::LAST;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlErrorCode entry %u"), (uint32)UnrealType);
 
-					return (sl::ERROR_CODE)0;
-				}
+				return (sl::ERROR_CODE)0;
+			}
 			}
 		}
 
@@ -1006,24 +923,24 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlSpatialMemoryExportingState::SMES_Success:
-					return sl::AREA_EXPORTING_STATE::SUCCESS;
-				case ESlSpatialMemoryExportingState::SMES_Running:
-					return sl::AREA_EXPORTING_STATE::RUNNING;
-				case ESlSpatialMemoryExportingState::SMES_NotStarted:
-					return sl::AREA_EXPORTING_STATE::NOT_STARTED;
-				case ESlSpatialMemoryExportingState::SMES_FileEmpty:
-					return sl::AREA_EXPORTING_STATE::FILE_EMPTY;
-				case ESlSpatialMemoryExportingState::SMES_FileError:
-					return sl::AREA_EXPORTING_STATE::FILE_ERROR;
-				case ESlSpatialMemoryExportingState::SMES_SpatialMemoryDisabled:
-					return sl::AREA_EXPORTING_STATE::SPATIAL_MEMORY_DISABLED;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSpatialMemoryExportState entry %u"), (uint32)UnrealType);
+			case ESlSpatialMemoryExportingState::SMES_Success:
+				return sl::AREA_EXPORTING_STATE::SUCCESS;
+			case ESlSpatialMemoryExportingState::SMES_Running:
+				return sl::AREA_EXPORTING_STATE::RUNNING;
+			case ESlSpatialMemoryExportingState::SMES_NotStarted:
+				return sl::AREA_EXPORTING_STATE::NOT_STARTED;
+			case ESlSpatialMemoryExportingState::SMES_FileEmpty:
+				return sl::AREA_EXPORTING_STATE::FILE_EMPTY;
+			case ESlSpatialMemoryExportingState::SMES_FileError:
+				return sl::AREA_EXPORTING_STATE::FILE_ERROR;
+			case ESlSpatialMemoryExportingState::SMES_SpatialMemoryDisabled:
+				return sl::AREA_EXPORTING_STATE::SPATIAL_MEMORY_DISABLED;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlSpatialMemoryExportState entry %u"), (uint32)UnrealType);
 
-					return (sl::AREA_EXPORTING_STATE)0;
-				}
+				return (sl::AREA_EXPORTING_STATE)0;
+			}
 			}
 		}
 
@@ -1034,22 +951,22 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlSVOCompressionMode::SCM_Lossless:
-					return sl::SVO_COMPRESSION_MODE::LOSSLESS;
-				case ESlSVOCompressionMode::SCM_H264:
-					return sl::SVO_COMPRESSION_MODE::H264;
-				case ESlSVOCompressionMode::SCM_H265:
-					return sl::SVO_COMPRESSION_MODE::H265;
-				case ESlSVOCompressionMode::SCM_H264_Lossless:
-					return sl::SVO_COMPRESSION_MODE::H264_LOSSLESS;
-				case ESlSVOCompressionMode::SCM_H265_Lossless:
-					return sl::SVO_COMPRESSION_MODE::H265_LOSSLESS;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSVOCompressionMode entry %u"), (uint32)UnrealType);
+			case ESlSVOCompressionMode::SCM_Lossless:
+				return sl::SVO_COMPRESSION_MODE::LOSSLESS;
+			case ESlSVOCompressionMode::SCM_H264:
+				return sl::SVO_COMPRESSION_MODE::H264;
+			case ESlSVOCompressionMode::SCM_H265:
+				return sl::SVO_COMPRESSION_MODE::H265;
+			case ESlSVOCompressionMode::SCM_H264_Lossless:
+				return sl::SVO_COMPRESSION_MODE::H264_LOSSLESS;
+			case ESlSVOCompressionMode::SCM_H265_Lossless:
+				return sl::SVO_COMPRESSION_MODE::H265_LOSSLESS;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlSVOCompressionMode entry %u"), (uint32)UnrealType);
 
-					return (sl::SVO_COMPRESSION_MODE)0;
-				}
+				return (sl::SVO_COMPRESSION_MODE)0;
+			}
 			}
 		}
 
@@ -1060,38 +977,38 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlMeshFileFormat::MFF_OBJ:
-					return SL_MESH_FILE_FORMAT_OBJ;
-				case ESlMeshFileFormat::MFF_PLY:
-					return SL_MESH_FILE_FORMAT_PLY;
-				case ESlMeshFileFormat::MFF_PLY_BIN:
-					return SL_MESH_FILE_FORMAT_PLY_BIN;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlMeshFileFormat entry %u"), (uint32)UnrealType);
+			case ESlMeshFileFormat::MFF_OBJ:
+				return SL_MESH_FILE_FORMAT_OBJ;
+			case ESlMeshFileFormat::MFF_PLY:
+				return SL_MESH_FILE_FORMAT_PLY;
+			case ESlMeshFileFormat::MFF_PLY_BIN:
+				return SL_MESH_FILE_FORMAT_PLY_BIN;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlMeshFileFormat entry %u"), (uint32)UnrealType);
 
-					return (SL_MESH_FILE_FORMAT)0;
-				}
+				return (SL_MESH_FILE_FORMAT)0;
+			}
 			}
 		}
 
 		/*
 		 * Convert from ESlMeshTextureFormat to sl::MESH_TEXTURE_FORMAT
-	 	 */
+		 */
 		FORCEINLINE sl::MESH_TEXTURE_FORMAT ToSlType(ESlMeshTextureFormat UnrealType)
 		{
 			switch (UnrealType)
 			{
-				case ESlMeshTextureFormat::MTF_RGB:
-					return sl::MESH_TEXTURE_FORMAT::RGB;
-				case ESlMeshTextureFormat::MTF_RGBA:
-					return sl::MESH_TEXTURE_FORMAT::RGBA;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlMeshTextureFormat entry %u"), (uint32)UnrealType);
+			case ESlMeshTextureFormat::MTF_RGB:
+				return sl::MESH_TEXTURE_FORMAT::RGB;
+			case ESlMeshTextureFormat::MTF_RGBA:
+				return sl::MESH_TEXTURE_FORMAT::RGBA;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlMeshTextureFormat entry %u"), (uint32)UnrealType);
 
-					return (sl::MESH_TEXTURE_FORMAT)0;
-				}
+				return (sl::MESH_TEXTURE_FORMAT)0;
+			}
 			}
 		}
 
@@ -1102,21 +1019,21 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlFilterIntensity::FI_Low:
-					return  sl::MeshFilterParameters::MESH_FILTER::LOW;
-				case ESlFilterIntensity::FI_Medium:
-					return  sl::MeshFilterParameters::MESH_FILTER::MEDIUM;
-				case ESlFilterIntensity::FI_High:
-					return  sl::MeshFilterParameters::MESH_FILTER::HIGH;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlFilterIntensity entry %u"), (uint32)UnrealType);
+			case ESlFilterIntensity::FI_Low:
+				return  sl::MeshFilterParameters::MESH_FILTER::LOW;
+			case ESlFilterIntensity::FI_Medium:
+				return  sl::MeshFilterParameters::MESH_FILTER::MEDIUM;
+			case ESlFilterIntensity::FI_High:
+				return  sl::MeshFilterParameters::MESH_FILTER::HIGH;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlFilterIntensity entry %u"), (uint32)UnrealType);
 
-					return (sl::MeshFilterParameters::MESH_FILTER)0;
-				}
+				return (sl::MeshFilterParameters::MESH_FILTER)0;
+			}
 			}
 		}
-		
+
 		/*
 		 * Convert from ESlUnit to sl::UNIT
 		 */
@@ -1124,14 +1041,14 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlUnit::DU_Centimeter:
-					return sl::UNIT::CENTIMETER;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlUnit entry %u"), (uint32)UnrealType);
+			case ESlUnit::DU_Centimeter:
+				return sl::UNIT::CENTIMETER;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlUnit entry %u"), (uint32)UnrealType);
 
-					return (sl::UNIT)0;
-				}
+				return (sl::UNIT)0;
+			}
 			}
 		}
 
@@ -1142,14 +1059,14 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlCoordinateSystem::CS_Cartesian:
-					return sl::COORDINATE_SYSTEM::LEFT_HANDED_Z_UP;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlCoordinateSystem entry %u"), (uint32)UnrealType);
+			case ESlCoordinateSystem::CS_Cartesian:
+				return sl::COORDINATE_SYSTEM::LEFT_HANDED_Z_UP;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlCoordinateSystem entry %u"), (uint32)UnrealType);
 
-					return (sl::COORDINATE_SYSTEM)0;
-				}
+				return (sl::COORDINATE_SYSTEM)0;
+			}
 			}
 		}
 
@@ -1160,20 +1077,20 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlCopyType::CT_CPUToCPU:
-					return sl::COPY_TYPE::CPU_CPU;
-				case ESlCopyType::CT_CPUToGPU:
-					return sl::COPY_TYPE::CPU_GPU;
-				case ESlCopyType::CT_GPUToCPU:
-					return sl::COPY_TYPE::GPU_CPU;
-				case ESlCopyType::CT_GPUToGPU:
-					return sl::COPY_TYPE::GPU_GPU;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlCopyType entry %u"), (uint32)UnrealType);
+			case ESlCopyType::CT_CPUToCPU:
+				return sl::COPY_TYPE::CPU_CPU;
+			case ESlCopyType::CT_CPUToGPU:
+				return sl::COPY_TYPE::CPU_GPU;
+			case ESlCopyType::CT_GPUToCPU:
+				return sl::COPY_TYPE::GPU_CPU;
+			case ESlCopyType::CT_GPUToGPU:
+				return sl::COPY_TYPE::GPU_GPU;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlCopyType entry %u"), (uint32)UnrealType);
 
-					return (sl::COPY_TYPE)0;
-				}
+				return (sl::COPY_TYPE)0;
+			}
 			}
 		}
 
@@ -1184,28 +1101,28 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlMatType::MT_32F_C1:
-					return sl::MAT_TYPE::F32_C1;
-				case ESlMatType::MT_32F_C2:
-					return sl::MAT_TYPE::F32_C2;
-				case ESlMatType::MT_32F_C3:
-					return sl::MAT_TYPE::F32_C3;
-				case  ESlMatType::MT_32F_C4:
-					return sl::MAT_TYPE::F32_C4;
-				case ESlMatType::MT_8U_C1:
-					return sl::MAT_TYPE::U8_C1;
-				case ESlMatType::MT_8U_C2:
-					return sl::MAT_TYPE::U8_C2;
-				case ESlMatType::MT_8U_C3:
-					return sl::MAT_TYPE::U8_C3;
-				case ESlMatType::MT_8U_C4:
-					return sl::MAT_TYPE::U8_C4;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlMatType entry %u"), (uint32)UnrealType);
+			case ESlMatType::MT_32F_C1:
+				return sl::MAT_TYPE::F32_C1;
+			case ESlMatType::MT_32F_C2:
+				return sl::MAT_TYPE::F32_C2;
+			case ESlMatType::MT_32F_C3:
+				return sl::MAT_TYPE::F32_C3;
+			case  ESlMatType::MT_32F_C4:
+				return sl::MAT_TYPE::F32_C4;
+			case ESlMatType::MT_8U_C1:
+				return sl::MAT_TYPE::U8_C1;
+			case ESlMatType::MT_8U_C2:
+				return sl::MAT_TYPE::U8_C2;
+			case ESlMatType::MT_8U_C3:
+				return sl::MAT_TYPE::U8_C3;
+			case ESlMatType::MT_8U_C4:
+				return sl::MAT_TYPE::U8_C4;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlMatType entry %u"), (uint32)UnrealType);
 
-					return (sl::MAT_TYPE)0;
-				}
+				return (sl::MAT_TYPE)0;
+			}
 			}
 		}
 
@@ -1216,20 +1133,20 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlModel::M_Zed:
-					return  sl::MODEL::ZED;
-				case  ESlModel::M_ZedM:
-					return sl::MODEL::ZED_M;
-				case  ESlModel::M_Zed2:
-					return sl::MODEL::ZED2;
-				case  ESlModel::M_Zed2i:
-					return sl::MODEL::ZED2i;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlModel entry %u"), (uint32)UnrealType);
+			case ESlModel::M_Zed:
+				return  sl::MODEL::ZED;
+			case  ESlModel::M_ZedM:
+				return sl::MODEL::ZED_M;
+			case  ESlModel::M_Zed2:
+				return sl::MODEL::ZED2;
+			case  ESlModel::M_Zed2i:
+				return sl::MODEL::ZED2i;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlModel entry %u"), (uint32)UnrealType);
 
-					return (sl::MODEL)0;
-				}
+				return (sl::MODEL)0;
+			}
 			}
 		}
 
@@ -1240,16 +1157,16 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlCameraState::CS_Available:
-					return sl::CAMERA_STATE::AVAILABLE;
-				case ESlCameraState::CS_NotAvailable:
-					return sl::CAMERA_STATE::NOT_AVAILABLE;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlCameraState entry %u"), (uint32)UnrealType);
+			case ESlCameraState::CS_Available:
+				return sl::CAMERA_STATE::AVAILABLE;
+			case ESlCameraState::CS_NotAvailable:
+				return sl::CAMERA_STATE::NOT_AVAILABLE;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlCameraState entry %u"), (uint32)UnrealType);
 
-					return (sl::CAMERA_STATE)0;
-				}
+				return (sl::CAMERA_STATE)0;
+			}
 			}
 		}
 
@@ -1278,20 +1195,20 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlSpatialMappingRange::SMR_Short:
-					return sl::SpatialMappingParameters::MAPPING_RANGE::SHORT;
-				case ESlSpatialMappingRange::SMR_Medium:
-					return sl::SpatialMappingParameters::MAPPING_RANGE::MEDIUM;
-				case ESlSpatialMappingRange::SMR_Long:
-					return sl::SpatialMappingParameters::MAPPING_RANGE::LONG;
-				case ESlSpatialMappingRange::SMR_Auto:
-					return sl::SpatialMappingParameters::MAPPING_RANGE::AUTO;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingRange entry %u"), (uint32)UnrealType);
+			case ESlSpatialMappingRange::SMR_Short:
+				return sl::SpatialMappingParameters::MAPPING_RANGE::SHORT;
+			case ESlSpatialMappingRange::SMR_Medium:
+				return sl::SpatialMappingParameters::MAPPING_RANGE::MEDIUM;
+			case ESlSpatialMappingRange::SMR_Long:
+				return sl::SpatialMappingParameters::MAPPING_RANGE::LONG;
+			case ESlSpatialMappingRange::SMR_Auto:
+				return sl::SpatialMappingParameters::MAPPING_RANGE::AUTO;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingRange entry %u"), (uint32)UnrealType);
 
-					return (sl::SpatialMappingParameters::MAPPING_RANGE)0;
-				}
+				return (sl::SpatialMappingParameters::MAPPING_RANGE)0;
+			}
 			}
 		}
 
@@ -1302,18 +1219,18 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
-				case ESlSpatialMappingResolution::SMR_Low:
-					return sl::SpatialMappingParameters::MAPPING_RESOLUTION::LOW;
-				case ESlSpatialMappingResolution::SMR_Medium:
-					return sl::SpatialMappingParameters::MAPPING_RESOLUTION::MEDIUM;
-				case ESlSpatialMappingResolution::SMR_High:
-					return sl::SpatialMappingParameters::MAPPING_RESOLUTION::HIGH;
-				default:
-				{
-					ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingResolution entry %u"), (uint32)UnrealType);
+			case ESlSpatialMappingResolution::SMR_Low:
+				return sl::SpatialMappingParameters::MAPPING_RESOLUTION::LOW;
+			case ESlSpatialMappingResolution::SMR_Medium:
+				return sl::SpatialMappingParameters::MAPPING_RESOLUTION::MEDIUM;
+			case ESlSpatialMappingResolution::SMR_High:
+				return sl::SpatialMappingParameters::MAPPING_RESOLUTION::HIGH;
+			default:
+			{
+				ensureMsgf(false, TEXT("Unhandled ESlSpatialMappingResolution entry %u"), (uint32)UnrealType);
 
-					return (sl::SpatialMappingParameters::MAPPING_RESOLUTION)0;
-				}
+				return (sl::SpatialMappingParameters::MAPPING_RESOLUTION)0;
+			}
 			}
 		}
 
@@ -1392,7 +1309,7 @@ namespace sl
 		}
 
 		/*
-	 	 * Convert from sl::float2 to FVector2D
+		 * Convert from sl::float2 to FVector2D
 		 */
 		FORCEINLINE FVector2D ToUnrealType(const sl::float2& SlVector)
 		{
@@ -1520,7 +1437,7 @@ namespace sl
 		FORCEINLINE FMatrix ToUnrealType(const Eigen::Matrix4f& SlMatrix)
 		{
 			FMatrix Matrix;
-			
+
 			// X plane
 			Matrix.M[0][0] = SlMatrix(0, 0);
 			Matrix.M[0][1] = SlMatrix(1, 0);
@@ -1710,7 +1627,7 @@ namespace sl
 			return CalibrationParameters;
 		}
 
-		 
+
 		/*
 		 * Convert from sl::CameraInformation to FSlCameraInformation
 		 */
@@ -1787,7 +1704,7 @@ namespace sl
 		FORCEINLINE FSlObjectData ToUnrealType(const SL_ObjectData SlData)
 		{
 			FSlObjectData ObjectData;
-			
+
 			ObjectData.Id = SlData.id;
 			ObjectData.UniqueObjectId = FString(TCHAR_TO_UTF8(SlData.unique_object_id));
 			ObjectData.RawLabel = SlData.raw_label;
@@ -1820,7 +1737,7 @@ namespace sl
 			}
 
 			ObjectData.HeadPosition = ToUnrealType(SlData.head_position);
-			
+
 			return ObjectData;
 		}
 
@@ -1992,7 +1909,7 @@ namespace sl
 		}
 
 		/*
-		 * Convert from FTransform to sl::Transform 
+		 * Convert from FTransform to sl::Transform
 		 */
 		FORCEINLINE sl::Transform ToSlType(const FTransform& UnrealTransform)
 		{
@@ -2184,7 +2101,7 @@ namespace sl
 			return ODParameters;
 		}
 
-		FORCEINLINE SL_ObjectDetectionRuntimeParameters ToSlType(const FSlObjectDetectionRuntimeParameters& UnrealData) 
+		FORCEINLINE SL_ObjectDetectionRuntimeParameters ToSlType(const FSlObjectDetectionRuntimeParameters& UnrealData)
 		{
 			struct SL_ObjectDetectionRuntimeParameters ODParameters;
 			ODParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
