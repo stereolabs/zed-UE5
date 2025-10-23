@@ -30,6 +30,8 @@ extern "C" {
 #endif
 
 
+	INTERFACE_API void sl_free(void* ptr);
+
     /**
     \brief Forces unload of all instances.
     */
@@ -826,6 +828,27 @@ extern "C" {
      */
     INTERFACE_API int sl_get_sensors_data(int camera_id, struct SL_SensorsData* data, enum SL_TIME_REFERENCE time_reference);
 
+    /**
+	\brief Retrieves the size of the imu batch array. Needs to be called before sl_get_sensors_data_batch().
+	\param [out] count : The number of sensors data available in the batch.
+    \param camera_id : Id of the camera instance.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if sensors data have been extracted.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SENSORS_NOT_AVAILABLE" if the camera model is a \ref SL_MODEL "SL_MODEL_ZED".
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MOTION_SENSORS_REQUIRED" if the camera model is correct but the sensors module is not opened.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the <b>reference_time</b> is not valid.
+    */
+    INTERFACE_API int sl_get_sensors_data_batch_count(int camera_id, int* count);
+    /**
+    \brief Retrieves all SL_SensorsData associated to most recent grabbed frame in the specified \ref COORDINATE_SYSTEM of InitParameters.
+	\note sl_get_sensors_data_batch needs to be called before this function to retrieve the size of the imu batch array.
+    \param [out] data : The SensorsData array to store the data.
+    \param camera_id : Id of the camera instance.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if sensors data have been extracted.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SENSORS_NOT_AVAILABLE" if the camera model is a \ref SL_MODEL "SL_MODEL_ZED".
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MOTION_SENSORS_REQUIRED" if the camera model is correct but the sensors module is not opened.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the <b>reference_time</b> is not valid.
+    */
+    INTERFACE_API int sl_get_sensors_data_batch(int camera_id, struct SL_SensorsData** data);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Spatial Mapping ///////////////////////////////////////////////////////////////////////
@@ -1162,7 +1185,7 @@ extern "C" {
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_RESOLUTION" if the resolution is higher than one provided by getCameraInformation().camera_configuration.resolution.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if another error occurred.
      */
-    INTERFACE_API int sl_retrieve_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, int width, int height, cudaStream_t custream);
+    INTERFACE_API int sl_retrieve_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, int width, int height, void* custream);
     /**
     \brief Retrieves an image texture from the ZED SDK in a human-viewable format.
     
@@ -1176,7 +1199,7 @@ extern "C" {
     \param height : Height of the texture in pixel.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the retrieve succeeded.
      */
-    INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height, cudaStream_t custream);
+    INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height, void* custream);
 
     /**
     \brief Convert Image format from Unsigned char to Signed char, designed for Unreal Engine pipeline, works on GPU memory.
@@ -1185,7 +1208,7 @@ extern "C" {
     \param stream : a cuda stream to put the compute to (def. 0)
     \note If the Output Mat does not satisfies the requirements, it is freed and re-allocated.
     */
-    INTERFACE_API int sl_convert_image(void* image_in_ptr, void* image_signed_ptr, cudaStream_t stream);
+    INTERFACE_API int sl_convert_image(void* image_in_ptr, void* image_signed_ptr, void* stream);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Streaming Sender //////////////////////////////////////////////////////////////////////
@@ -1290,9 +1313,8 @@ extern "C" {
     /**
     \brief Initializes and starts object detection module.
     
-    The object detection module currently supports multiple class of objects with the \ref SL_OBJECT_DETECTION_MODEL "SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX"
-    or \ref SL_OBJECT_DETECTION_MODEL "SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_ACCURATE".
-    \n The full list of detectable objects is available through \ref SL_OBJECT_CLASS and \ref SL_OBJECT_SUBCLASS.
+    The object detection module currently support multiple StereoLabs' model for different purposes: "MULTI_CLASS", "PERSON_HEAD"
+    \n The full list of model is available through \ref SL_OBJECT_DETECTION_MODEL and the full list of detectable objects is available through \ref SL_OBJECT_CLASS and \ref SL_OBJECT_SUBCLASS.
 
     \note - <b>This Deep Learning detection module is not available for \ref MODEL "MODEL::ZED" cameras (ZED first generation).</b>.
     \note - This feature uses AI to locate objects and requires a powerful GPU. A GPU with at least 3GB of memory is recommended.
@@ -1341,7 +1363,7 @@ extern "C" {
     \param params : ObjectDetectionRuntimeParameters parameters
     \param instance_id : Object detection instance id, by default the first instance
     */
-    INTERFACE_API int sl_set_object_detection_runtime_parameters(int camera_id, struct SL_ObjectDetectionRuntimeParameters* object_detection_parameters, unsigned int instance_id);
+    INTERFACE_API int sl_set_object_detection_runtime_parameters(int camera_id, struct SL_ObjectDetectionRuntimeParameters object_detection_parameters, unsigned int instance_id);
 
     /**
     \brief Initializes and starts the Deep Learning Body Tracking module.
@@ -1394,7 +1416,7 @@ extern "C" {
     \param params : BodyTrackingRuntimeParameters parameters
     \param instance_id : Body tracking instance id, by default the first instance
     */
-    INTERFACE_API int sl_set_body_tracking_runtime_parameters(int camera_id, struct SL_BodyTrackingRuntimeParameters* body_tracking_parameters, unsigned int instance_id);
+    INTERFACE_API int sl_set_body_tracking_runtime_parameters(int camera_id, struct SL_BodyTrackingRuntimeParameters body_tracking_parameters, unsigned int instance_id);
 
     /**
     \brief Generate a UUID like unique id to help identify and track AI detections.
@@ -1402,6 +1424,8 @@ extern "C" {
     \return Size of the unique ID generated.
      */
     INTERFACE_API int sl_generate_unique_id(char* uuid);
+
+    INTERFACE_API int sl_generate_unique_id_str(char* uuid);
 
     /**
     \brief Feed the 3D Object tracking function with your own 2D bounding boxes from your own detection algorithm.
@@ -1454,7 +1478,7 @@ extern "C" {
     \param params : CustomObjectDetectionRuntimeParameters parameters
     \param instance_id : Object detection instance id, by default the first instance
     */
-    INTERFACE_API int sl_set_custom_object_detection_runtime_parameters(int camera_id, struct SL_CustomObjectDetectionRuntimeParameters* custom_object_detection_parameters, unsigned int instance_id);
+    INTERFACE_API int sl_set_custom_object_detection_runtime_parameters(int camera_id, struct SL_CustomObjectDetectionRuntimeParameters custom_object_detection_parameters, unsigned int instance_id);
 
     /**
     \brief Retrieve bodies detected by the body tracking module.
@@ -2204,14 +2228,14 @@ extern "C" {
     \brief Convert the color channels of the Mat (RGB<->BGR or RGBA<->BGRA)
      * This methods works only on 8U_C4 or 8U_C3
      */
-    INTERFACE_API int sl_mat_convert_color(void* ptr, enum SL_MEM memory, bool swap_RB_channels, cudaStream_t stream);
+    INTERFACE_API int sl_mat_convert_color(void* ptr, enum SL_MEM memory, bool swap_RB_channels, void* stream);
 
     /**
     \brief Convert the color channels of the Mat into another Mat
      * This methods works only on 8U_C4 if remove_alpha_channels is enabled, or 8U_C4 and 8U_C3 if swap_RB_channels is enabled
      * The inplace method sl::Mat::convertColor can be used for only swapping the Red and Blue channel efficiently
      */
-    INTERFACE_API int sl_convert_color(void* mat1, void* mat2, bool swap_RB_channels, bool remove_alpha_channels, enum SL_MEM memory, cudaStream_t stream);
+    INTERFACE_API int sl_convert_color(void* mat1, void* mat2, bool swap_RB_channels, bool remove_alpha_channels, enum SL_MEM memory, void* stream);
 
     /**
     \brief Convert an image into a GPU Tensor in planar channel configuration (NCHW), ready to use for deep learning model
@@ -2227,7 +2251,7 @@ extern "C" {
      */
     INTERFACE_API int sl_blob_from_image(void* image_in, void* tensor_out, struct SL_Resolution resolution_out,
         float scalefactor, struct SL_Vector3 mean, struct SL_Vector3 stddev, bool keep_aspect_ratio, bool swap_RB_channels,
-        cudaStream_t stream);
+        void* stream);
 
     /**
     \brief Convert a list of images into a GPU Tensor in planar channel configuration (NCHW), ready to use for deep learning model
@@ -2245,7 +2269,36 @@ extern "C" {
 
 	INTERFACE_API int sl_blob_from_images(void** image_in, int nb_images, void* tensor_out, struct SL_Resolution resolution_out,
 		float scalefactor, struct SL_Vector3 mean, struct SL_Vector3 stddev, bool keep_aspect_ratio, bool swap_RB_channels,
-		cudaStream_t stream);
+        void* stream);
+
+    /**
+    \brief Check if the camera is a ZED One (Monocular) or ZED (Stereo)
+    \param m : Camera model
+    */
+    INTERFACE_API bool sl_is_camera_one(enum SL_MODEL m);
+
+    /**
+    \brief Check if a resolution is available for a given camera model
+    \param r : Resolution to check
+    \param m : Camera model
+    */
+    INTERFACE_API bool sl_is_resolution_available(enum SL_RESOLUTION r, enum SL_MODEL m);
+
+    /**
+    \brief Check if a frame rate is available for a given resolution and camera model
+    \param fps : Frame rate to check
+    \param r : Resolution to check
+    \param m : Camera model
+    */
+    INTERFACE_API bool sl_is_FPS_available(int fps, enum SL_RESOLUTION r, enum SL_MODEL m);
+
+    /**
+    \brief Check if a resolution for a given camera model is available for HDR
+    \param r : Resolution to check
+    \param m : Camera model
+    */
+    INTERFACE_API bool sl_is_HDR_available(enum SL_RESOLUTION r, enum SL_MODEL m);
+
 
 #ifdef __cplusplus
 }

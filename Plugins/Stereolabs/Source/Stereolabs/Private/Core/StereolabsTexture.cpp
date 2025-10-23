@@ -8,16 +8,11 @@
 #include "RHI.h"
 #include "Rendering/Texture2DResource.h"
 
-#include "D3D11RHIPrivate.h"
-#include "D3D11StateCachePrivate.h"
-#include "D3D11State.h"
-typedef FD3D11StateCacheBase FD3D11StateCache;
-#include "D3D11Resources.h"
 #include "ID3D11DynamicRHI.h"
-#include "D3D11RHIPrivate.h"
-
-#include "D3D12RHIPrivate.h"
-#include "D3D12Util.h"
+#include "D3D11RHI.h"
+#include "D3D11Util.h"
+#include "RHICommandList.h"
+#include "RHIDefinitions.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h" 
 #include <cuda.h>
@@ -26,6 +21,9 @@ typedef FD3D11StateCacheBase FD3D11StateCache;
 #include "Windows/HideWindowsPlatformTypes.h"
 
 #include "Runtime/Launch/Resources/Version.h"
+THIRD_PARTY_INCLUDES_START
+#include <d3d12.h>
+THIRD_PARTY_INCLUDES_END
 
 DEFINE_LOG_CATEGORY(SlTexture);
 
@@ -109,7 +107,7 @@ void USlTexture::BP_UpdateTexture()
 				UpdateTexture();
 			}
 		}
-	);
+		);
 }
 
 void USlTexture::BP_UpdateTextureWithMat(const FSlMat& NewMat)
@@ -138,7 +136,7 @@ void USlTexture::BP_UpdateTextureWithMat(const FSlMat& NewMat)
 				UpdateTexture(NewMat);
 			}
 		}
-	);
+		);
 }
 
 void USlTexture::UpdateTexture()
@@ -222,7 +220,7 @@ void USlTexture::UpdateTexture(void* NewMat)
 		sl_mat_update_cpu_from_gpu(NewMat);
 
 		MatPtr = sl_mat_get_ptr(NewMat, SL_MEM_CPU);
-		
+
 		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
 		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
 
@@ -396,8 +394,8 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 		GSlCameraProxy->PushCudaContext();
 
 		cudaError_t CudaError = cudaError::cudaSuccess;
-		
-	// This function has changed between 5.0 and 5.1.
+
+		// This function has changed between 5.0 and 5.1.
 #if ENGINE_MINOR_VERSION == 0		// 5.0
 		FD3D11TextureBase* D3D11Texture = GetD3D11TextureFromRHITexture(Texture->Resource->TextureRHI);
 #elif ENGINE_MINOR_VERSION == 1		// 5.1

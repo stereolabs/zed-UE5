@@ -4,16 +4,20 @@ using System.IO;
 
 namespace UnrealBuildTool.Rules
 {
-	public class SpatialMappingEditor : ModuleRules
-	{
+    public class SpatialMappingEditor : ModuleRules
+    {
         public SpatialMappingEditor(ReadOnlyTargetRules Target) : base(Target)
         {
             PrivatePCHHeaderFile = "Public/SpatialMappingEditorPlugin.h";
 
             PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
             PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
-            UndefinedIdentifierWarningLevel = WarningLevel.Error;
 
+#if UE_5_6_OR_LATER
+            CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
+        UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#endif
             PrivateDependencyModuleNames.AddRange(new string[]
                 {"Slate",
                     "SlateCore" });
@@ -27,10 +31,10 @@ namespace UnrealBuildTool.Rules
                 );
 
             PublicDependencyModuleNames.AddRange(
-				new string[]
-				{
-					"Core",
-					"CoreUObject",
+                new string[]
+                {
+                    "Core",
+                    "CoreUObject",
                     "Slate",
                     "SlateCore",
                     "Engine",
@@ -38,7 +42,7 @@ namespace UnrealBuildTool.Rules
                     "DesktopPlatform",
                     "InputCore"
                 }
-				);
-		}
-	}
+                );
+        }
+    }
 }

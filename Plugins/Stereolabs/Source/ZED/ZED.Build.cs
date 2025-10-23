@@ -24,14 +24,19 @@ public class ZED : ModuleRules
     public ZED(ReadOnlyTargetRules Target) : base(Target)
     {
         PrivatePCHHeaderFile = "Public/ZED.h";
+
+#if UE_5_6_OR_LATER
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#endif
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
 
         PublicDependencyModuleNames.AddRange(
             new string[]
-			{
+            {
                  "Stereolabs",
                  "MixedReality",
                  "Niagara",
@@ -48,17 +53,17 @@ public class ZED : ModuleRules
             );
 
         PrivateDependencyModuleNames.AddRange(
-            new string[] 
+            new string[]
             {
                 "Core",
                 "CoreUObject",
 
-                "Engine", 
+                "Engine",
 
                 "RenderCore",
                 "InputCore",
 
-                "RHI", 
+                "RHI",
                 "RHICore",
                 "D3D11RHI"
             }
@@ -78,7 +83,7 @@ public class ZED : ModuleRules
             Directory.CreateDirectory(ProjectConfigPathDirectory);
         }
 
-        if(!File.Exists(DefaultEngineConfigFilePath))
+        if (!File.Exists(DefaultEngineConfigFilePath))
         {
             File.Copy(Path.Combine(ModulePath, "Defaults", DefaultEngineConfigFileName), DefaultEngineConfigFilePath, true);
         }

@@ -14,7 +14,12 @@ public class SpatialMapping : ModuleRules
     public SpatialMapping(ReadOnlyTargetRules Target) : base(Target)
     {
         PrivatePCHHeaderFile = "Public/SpatialMapping.h";
+
+#if UE_5_6_OR_LATER
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#endif
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

@@ -145,9 +145,6 @@ void FAnimNode_ZEDPose::BuildPoseFromSlBodyData(FPoseContext& PoseContext)
     // Compact Pose Root index
     FCompactPoseBoneIndex CPIndexRoot = GetCPIndex(0, OutPose);
 
-    TArray<FName> TargetBoneNames;
-    SkeletalMesh->GetBoneNames(TargetBoneNames);
-
     // Apply an offset to put the feet of the ground and offset "floating" avatars.
     if (bStickAvatarOnFloor && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("LEFT_ANKLE"))] > 0 && BodyData.KeypointConfidence[*Keypoints.FindKey(FName("RIGHT_ANKLE"))] > 0) { //if both foot are visible/detected
         if (SkeletalMesh) 
@@ -412,6 +409,11 @@ void FAnimNode_ZEDPose::Initialize_AnyThread(const FAnimationInitializeContext& 
     {
         UE_LOG(LogTemp, Warning, TEXT("Automatic offset of avatar and Foot IK can not be enabled together. FootIK will be ignored"));
     }
+
+    if (SkeletalMesh)
+    {
+        SkeletalMesh->GetBoneNames(TargetBoneNames);
+    }
 }
 
 void FAnimNode_ZEDPose::PreUpdate(const UAnimInstance* InAnimInstance)
@@ -428,9 +430,6 @@ void FAnimNode_ZEDPose::Update_AnyThread(const FAnimationUpdateContext& Context)
     {
         if (RefPoseBoneSize.Num() == 0 && NbKeypoints > 0)
         {
-            TArray<FName> TargetBoneNames;
-            SkeletalMesh->GetBoneNames(TargetBoneNames);
-
             for (auto& TargetBoneName : TargetBoneNames)
             {
                 FVector TargetBonePosition = SkeletalMesh->GetBoneLocation(TargetBoneName, EBoneSpaces::WorldSpace);
