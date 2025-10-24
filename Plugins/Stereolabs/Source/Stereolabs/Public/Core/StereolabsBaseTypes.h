@@ -25,7 +25,7 @@ THIRD_PARTY_INCLUDES_END
  * @return
  *	The key/name that corresponds to the value in the enumerated type.
  */
-template<typename T>
+	template<typename T>
 FString EnumToString(const T EnumValue)
 {
 	FString Name = StaticEnum<T>()->GetNameStringByValue(static_cast<__underlying_type(T)>(EnumValue));
@@ -330,11 +330,12 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
-	EC_ConfigurationFallback = 254	 UMETA(DisplayName = "Configuration fallback"),
+	EC_PotentialCalibrationIssue = 251	 UMETA(DisplayName = "Potential calibration issue"),
+	EC_ConfigurationFallback = 252	 UMETA(DisplayName = "Configuration fallback"),
 	EC_SensorsDataRequired = 253	 UMETA(DisplayName = "Sensors data required"),
 	EC_CorruptedFrame = 254			 UMETA(DisplayName = "Corrupted frame"),
-	EC_CameraRebooting  = 255		 UMETA(DisplayName = "Camera rebooting"),
- 	EC_Success		    = 0			 UMETA(DisplayName = "Success"),
+	EC_CameraRebooting = 255		 UMETA(DisplayName = "Camera rebooting"),
+	EC_Success = 0			 UMETA(DisplayName = "Success"),
 	EC_Failure					     UMETA(DisplayName = "Failure"),
 	EC_NoGpuCompatible			     UMETA(DisplayName = "No GPU compatible"),
 	EC_NotEnoughGPUMemory		     UMETA(DisplayName = "Not enough GPU memory"),
@@ -378,7 +379,7 @@ enum class ESlErrorCode : uint8
  GAIN and EXPOSURE are linked in auto/default mode (see \ref sl::Camera.setCameraSettings()).
  */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlVideoSettings: uint8
+enum class ESlVideoSettings : uint8
 {
 	VS_BRIGHTNESS					UMETA(DisplayName = "Brightness"), /**< Brightness control \n Affected value should be between 0 and 8. \note Not available for ZED X/X Mini cameras.*/
 	VS_CONTRAST						UMETA(DisplayName = "Contrast"), /**< Contrast control \n Affected value should be between 0 and 8. \note Not available for ZED X/X Mini cameras.*/
@@ -415,7 +416,7 @@ enum class ESlSVOCompressionMode : uint8
 	SCM_Lossless			UMETA(DisplayName = "Lossless"),
 	SCM_H264				UMETA(DisplayName = "H264"),
 	SCM_H265				UMETA(DisplayName = "H265"),
-    SCM_H264_Lossless	    UMETA(DisplayName = "H264_Lossless"),
+	SCM_H264_Lossless	    UMETA(DisplayName = "H264_Lossless"),
 	SCM_H265_Lossless	    UMETA(DisplayName = "H265_Lossless")
 };
 
@@ -473,9 +474,9 @@ enum class ESlModel : uint8
 	M_ZedXHDR				UMETA(DisplayName = "ZED X HDR"),
 	M_ZedXMiniHDR			UMETA(DisplayName = "ZED X Mini HDR"),
 	M_VirtualZedX = 11		UMETA(DisplayName = "Virtual ZED X"),
-	M_ZedXOneGS	  = 30		UMETA(DisplayName = "ZED X One GS"),
-	M_ZedXOneUHD  = 31		UMETA(DisplayName = "ZED X One UHD"),
-	M_ZedXOneHDR  = 32		UMETA(DisplayName = "ZED X One HDR"),
+	M_ZedXOneGS = 30		UMETA(DisplayName = "ZED X One GS"),
+	M_ZedXOneUHD = 31		UMETA(DisplayName = "ZED X One UHD"),
+	M_ZedXOneHDR = 32		UMETA(DisplayName = "ZED X One HDR"),
 	M_Unknown				UMETA(DisplayName = "Unknown")
 };
 
@@ -555,7 +556,8 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlPositionalTrackingMode : uint8
 {
 	PTM_Gen_1		UMETA(DisplayName = "GEN 1"),
-	PTM_Gen_2			UMETA(DisplayName = "GEN 2")
+	PTM_Gen_2		UMETA(DisplayName = "GEN 2"),
+	PTM_Gen_3		UMETA(DisplayName = "GEN 3")
 };
 
 /*
@@ -702,7 +704,7 @@ enum class ESlObjectClass : uint8
 	OC_PERSON = 0			UMETA(DisplayName = "Person"),
 	OC_VEHICLE = 1			UMETA(DisplayName = "Vehicle"),
 	OC_BAG = 2				UMETA(DisplayName = "Bag"),
-	OC_ANIMAL= 3			UMETA(DisplayName = "Animal"),
+	OC_ANIMAL = 3			UMETA(DisplayName = "Animal"),
 	OC_ELECTRONICS = 4		UMETA(DisplayName = "Electronics"),
 	OC_FRUIT_VEGETABLE = 5	UMETA(DisplayName = "Fruit and Vegetables"),
 	OC_SPORT = 6			UMETA(DisplayName = "Sport"),
@@ -738,6 +740,7 @@ enum class ESlObjectSubClass : uint8
 	OSC_ORANGE = 20			UMETA(DisplayName = "Orange"),
 	OSC_CARROT = 21			UMETA(DisplayName = "Carrot"),
 	OSC_SPORTBALL = 23		UMETA(DisplayName = "Sportball"),
+	OSC_MACHINERY = 24		UMETA(DisplayName = "Machinery")
 };
 
 /*
@@ -990,9 +993,9 @@ struct STEREOLABS_API FSlBody18Bone
 	GENERATED_BODY()
 
 	FSlBody18Bone()
-		: 
+		:
 		FSlBody18Bone(ESlBody18Parts::LEFT_ANKLE,
-						 ESlBody18Parts::LEFT_KNEE)
+			ESlBody18Parts::LEFT_KNEE)
 	{
 	};
 
@@ -1023,9 +1026,9 @@ struct STEREOLABS_API FSlBody34Bone
 	GENERATED_BODY()
 
 	FSlBody34Bone()
-		: 
+		:
 		FSlBody34Bone(ESlBody34Parts::LEFT_ANKLE,
-					 ESlBody34Parts::LEFT_KNEE)
+			ESlBody34Parts::LEFT_KNEE)
 	{
 	};
 
@@ -1057,7 +1060,7 @@ struct STEREOLABS_API FSlBody38Bone
 	FSlBody38Bone()
 		:
 		FSlBody38Bone(ESlBody38Parts::LEFT_ANKLE,
-						 ESlBody38Parts::LEFT_KNEE)
+			ESlBody38Parts::LEFT_KNEE)
 	{
 	};
 
@@ -1070,11 +1073,11 @@ struct STEREOLABS_API FSlBody38Bone
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBody38Parts FirstEnd;
+	ESlBody38Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBody38Parts SecondEnd;
+	ESlBody38Parts SecondEnd;
 };
 
 #if 0
@@ -1091,7 +1094,7 @@ struct STEREOLABS_API FSlBody70Bone
 	FSlBody70Bone()
 		:
 		FSlBody70Bone(ESlBody70Parts::LEFT_ANKLE,
-						 ESlBody70Parts::LEFT_KNEE)
+			ESlBody70Parts::LEFT_KNEE)
 	{
 	}
 
@@ -1104,11 +1107,11 @@ struct STEREOLABS_API FSlBody70Bone
 
 	/** First end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBody70Parts FirstEnd;
+	ESlBody70Parts FirstEnd;
 
 	/** Second end of the bone */
 	UPROPERTY(BlueprintReadOnly)
-		ESlBody70Parts SecondEnd;
+	ESlBody70Parts SecondEnd;
 };
 
 #endif
@@ -1223,7 +1226,7 @@ struct STEREOLABS_API FSlCalibrationParameters
 	{
 	}
 
-    /** Intrinsic parameters of the left camera */
+	/** Intrinsic parameters of the left camera */
 	UPROPERTY(BlueprintReadOnly)
 	FSlCameraParameters LeftCameraParameters;
 
@@ -1464,7 +1467,7 @@ private:
 	 *	Updating the Mesh is time consuming, consider using only Chunks data for better performance.
 	 *  Chunks are not supported, forced to false.
 	 */
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	 //UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bUseChunkOnly = false;
 };
 
@@ -1479,7 +1482,7 @@ struct STEREOLABS_API FSlPlaneDetectionParameters
 {
 	GENERATED_BODY()
 
-		FSlPlaneDetectionParameters()
+	FSlPlaneDetectionParameters()
 		:
 		MaxDistanceThreshold(0.15f),
 		NormalSimilarityThreshold(15.0f)
@@ -1538,7 +1541,7 @@ struct STEREOLABS_API FSlRecordingState
 
 	/** Status of current frame. May be true for success or false if frame could not be written in the SVO file. */
 	UPROPERTY(BlueprintReadOnly)
-	uint8 Status:1;
+	uint8 Status : 1;
 };
 
 /*
@@ -1576,28 +1579,28 @@ struct STEREOLABS_API FSlVideoSettings
 			TEXT("Brightness"),
 			Brightness,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("Contrast"),
 			Contrast,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("Hue"),
 			Hue,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("Saturation"),
 			Saturation,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
@@ -1611,14 +1614,14 @@ struct STEREOLABS_API FSlVideoSettings
 			TEXT("WhiteBalance"),
 			WhiteBalance,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("Gain"),
 			Gain,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
@@ -1632,28 +1635,28 @@ struct STEREOLABS_API FSlVideoSettings
 			TEXT("Exposure"),
 			Exposure,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bAutoWhiteBalance"),
 			bAutoWhiteBalance,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bAutoGainAndExposure"),
 			bAutoGainAndExposure,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bDefault"),
 			bDefault,
 			*Path
-			);
+		);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -1664,28 +1667,28 @@ struct STEREOLABS_API FSlVideoSettings
 			TEXT("Brightness"),
 			Brightness,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Contrast"),
 			Contrast,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Hue"),
 			Hue,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Saturation"),
 			Saturation,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -1706,42 +1709,42 @@ struct STEREOLABS_API FSlVideoSettings
 			TEXT("WhiteBalance"),
 			WhiteBalance,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Gain"),
 			Gain,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Exposure"),
 			Exposure,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bAutoWhiteBalance"),
 			bAutoWhiteBalance,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bAutoGainAndExposure"),
 			bAutoGainAndExposure,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bDefault"),
 			bDefault,
 			*Path
-			);
+		);
 	}
 
 	/** Brightness, default = 4 */
@@ -1822,14 +1825,14 @@ struct STEREOLABS_API FSlRuntimeParameters
 			TEXT("bEnableDepth"),
 			bEnableDepth,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("ConfidenceThreshold"),
 			ConfidenceThreshold,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
@@ -1844,7 +1847,7 @@ struct STEREOLABS_API FSlRuntimeParameters
 			TEXT("ReferenceFrame"),
 			ConfigReferenceFrame,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
@@ -1869,14 +1872,14 @@ struct STEREOLABS_API FSlRuntimeParameters
 			TEXT("bEnableDepth"),
 			bEnableDepth,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("ConfidenceThreshold"),
 			ConfidenceThreshold,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -1978,13 +1981,14 @@ struct STEREOLABS_API FSlRecordingParameters
 {
 	GENERATED_BODY()
 
-	FSlRecordingParameters():
+	FSlRecordingParameters() :
 		VideoFilename(""),
 		CompressionMode(ESlSVOCompressionMode::SCM_H264),
 		TargetFramerate(0),
 		Bitrate(0),
 		bTranscodeStreamingInput(false)
-	{}
+	{
+	}
 
 	FORCEINLINE void Load(const FString& Path)
 	{
@@ -2111,7 +2115,9 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bSetAsStatic(false),
 		DepthMinRange(-1),
 		bSetGravityAsOrigin(true),
-		Mode(ESlPositionalTrackingMode::PTM_Gen_1)
+		Mode(ESlPositionalTrackingMode::PTM_Gen_1),
+		bEnableLocalizationOnly(false),
+		bEnable2DGroundMode(false)
 	{
 	}
 
@@ -2122,21 +2128,21 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			TEXT("AreaFilePath"),
 			AreaFilePath,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bEnableTracking"),
 			bEnableTracking,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bEnableAreaMemory"),
 			bEnableAreaMemory,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
@@ -2157,14 +2163,14 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			TEXT("Location"),
 			Location,
 			*Path
-			);
+		);
 
 		GConfig->GetRotator(
 			Section,
 			TEXT("Rotation"),
 			Rotation,
 			*Path
-			);
+		);
 	}
 
 	FORCEINLINE void Save(const FString& Path) const
@@ -2174,21 +2180,21 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			TEXT("AreaFilePath"),
 			*AreaFilePath,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bEnableTracking"),
 			bEnableTracking,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bEnableAreaMemory"),
 			bEnableAreaMemory,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
@@ -2209,14 +2215,14 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			TEXT("Location"),
 			Location,
 			*Path
-			);
+		);
 
 		GConfig->SetRotator(
 			Section,
 			TEXT("Rotation"),
 			Rotation,
 			*Path
-			);
+		);
 	}
 
 	/*
@@ -2279,6 +2285,12 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlPositionalTrackingMode Mode;
+
+	//Whether to enable the area mode in localize only mode.
+	bool bEnableLocalizationOnly = false;
+
+	// Whether to enable 2D ground mode for tracking.
+	bool bEnable2DGroundMode = false;
 };
 
 /*
@@ -2321,11 +2333,12 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 	GENERATED_BODY()
 
 	FSlRegionOfInterestParameters()
-	:
+		:
 		depthFarThresholdMeters(2.5f),
 		imageHeightRatioCutoff(0.5f),
-		autoApplyModule({ESlModule::M_All })
-	{}
+		autoApplyModule({ ESlModule::M_All })
+	{
+	}
 
 	/**
 	 \brief Filtering how far object in the ROI should be considered, this is useful for a vehicle for instance
@@ -2426,7 +2439,7 @@ struct STEREOLABS_API FSlInitParameters
 		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
 		bEnableImageValidityCheck(false),
-		MaximumWorkingResolution(FIntPoint(0,0))
+		MaximumWorkingResolution(FIntPoint(0, 0))
 	{
 	}
 
@@ -2438,7 +2451,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("DepthMode"),
 			ConfigDepthMode,
 			*Path
-			);
+		);
 		DepthMode = (ESlDepthMode)ConfigDepthMode;
 
 		int32 ConfigUnit;
@@ -2447,7 +2460,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("Unit"),
 			ConfigUnit,
 			*Path
-			);
+		);
 		Unit = (ESlUnit)ConfigUnit;
 
 		int32 ConfigCoordinateSystem;
@@ -2456,7 +2469,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("CoordinateSystem"),
 			ConfigCoordinateSystem,
 			*Path
-			);
+		);
 		CoordinateSystem = (ESlCoordinateSystem)ConfigCoordinateSystem;
 
 		GConfig->GetFloat(
@@ -2464,7 +2477,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("GPUID"),
 			GPUID,
 			*Path
-			);
+		);
 
 		int32 inputType;
 		GConfig->GetInt(
@@ -2480,35 +2493,35 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("DepthMinimumDistance"),
 			DepthMinimumDistance,
 			*Path
-			);
+		);
 
 		GConfig->GetFloat(
 			Section,
 			TEXT("DepthMaximumDistance"),
 			DepthMaximumDistance,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bRealTime"),
 			bRealTime,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("Verbose"),
 			Verbose,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
 			TEXT("bDisableSelfCalibration"),
 			bDisableSelfCalibration,
 			*Path
-			);
+		);
 
 		int32 FlipMode;
 		GConfig->GetInt(
@@ -2525,7 +2538,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("Resolution"),
 			ConfigResolution,
 			*Path
-			);
+		);
 		Resolution = (ESlResolution)ConfigResolution;
 
 		GConfig->GetInt(
@@ -2533,14 +2546,14 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("FPS"),
 			FPS,
 			*Path
-			);
+		);
 
 		GConfig->GetString(
 			Section,
 			TEXT("SvoPath"),
 			SvoPath,
 			*Path
-			);
+		);
 
 		GConfig->GetString(
 			Section,
@@ -2568,14 +2581,14 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("VerboseFilePath"),
 			VerboseFilePath,
 			*Path
-			);
+		);
 
 		GConfig->GetInt(
 			Section,
 			TEXT("DepthStabilization"),
 			DepthStabilization,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
@@ -2622,7 +2635,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("Resolution"),
 			static_cast<int32>(Resolution),
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -2636,7 +2649,7 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("FPS"),
 			FPS,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -2650,63 +2663,63 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("bRealTime"),
 			bRealTime,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("DepthMode"),
 			static_cast<int32>(DepthMode),
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Unit"),
 			static_cast<int32>(Unit),
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("CoordinateSystem"),
 			static_cast<int32>(CoordinateSystem),
 			*Path
-			);
+		);
 
 		GConfig->SetFloat(
 			Section,
 			TEXT("GPUID"),
 			GPUID,
 			*Path
-			);
+		);
 
 		GConfig->SetFloat(
 			Section,
 			TEXT("DepthMinimumDistance"),
 			DepthMinimumDistance,
 			*Path
-			);
+		);
 
 		GConfig->SetFloat(
 			Section,
 			TEXT("DepthMaximumDistance"),
 			DepthMaximumDistance,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("Verbose"),
 			Verbose,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,
 			TEXT("bDisableSelfCalibration"),
 			bDisableSelfCalibration,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
@@ -2734,21 +2747,21 @@ struct STEREOLABS_API FSlInitParameters
 			TEXT("SvoPath"),
 			*SvoPath,
 			*Path
-			);
+		);
 
 		GConfig->SetString(
 			Section,
 			TEXT("VerboseFilePath"),
 			*VerboseFilePath,
 			*Path
-			);
+		);
 
 		GConfig->SetInt(
 			Section,
 			TEXT("DepthStabilization"),
 			DepthStabilization,
 			*Path
-			);
+		);
 		GConfig->SetBool(
 			Section,
 			TEXT("bAsyncGrabCameraRecovery"),
@@ -2777,7 +2790,7 @@ struct STEREOLABS_API FSlInitParameters
 			GrabComputeCappingFPS,
 			*Path
 		);
-		
+
 		GConfig->SetBool(
 			Section,
 			TEXT("bEnableImageValidityCheck"),
@@ -2963,7 +2976,8 @@ struct STEREOLABS_API FSlBatchParameters
 		bEnable(false),
 		IdRetentionTime(240),
 		Latency(2.0f)
-	{}
+	{
+	}
 };
 
 /*
@@ -2995,7 +3009,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString CustomOnnxFile;
 
-	/*  Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only. 
+	/*  Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only.
 	The batch and channel dimensions are automatically handled, it assumes it's color images like default YOLO models. */
 	FIntPoint CustomOnnxDynamicInputShape;
 
@@ -3006,7 +3020,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	/* Batching system parameters. Batching system (introduced in 3.5) performs short-term re-identification with deep learning and trajectories filtering. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSlBatchParameters BatchParameters;
-	 /* Defines the filtering mode that should be applied to raw detections. */
+	/* Defines the filtering mode that should be applied to raw detections. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlObjectFilteringMode FilteringMode;
 
@@ -3040,7 +3054,8 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 		FilteringMode(ESlObjectFilteringMode::OFM_NMS3D),
 		PredictionTimeout_s(0.2f),
 		bAllowReducedPrecisionInference(false)
-	{}
+	{
+	}
 };
 
 /*
@@ -3086,20 +3101,20 @@ struct STEREOLABS_API FSlObjectData
 
 	FSlObjectData()
 		:
-		Section( TEXT( "ObjectData" ) ),
-		Id( 0 ),
-		UniqueObjectId( "" ),
-		RawLabel( 0 ),
-		Label( ESlObjectClass::OC_ANIMAL ),
-		Sublabel( ESlObjectSubClass::OSC_APPLE ),
-		TrackingState( ESlObjectTrackingState::OTS_Off ),
-		ActionState( ESlObjectActionState::OAS_Idle ),
-		Position( FVector::ZeroVector ),
-		Velocity( FVector::ZeroVector ),
+		Section(TEXT("ObjectData")),
+		Id(0),
+		UniqueObjectId(""),
+		RawLabel(0),
+		Label(ESlObjectClass::OC_ANIMAL),
+		Sublabel(ESlObjectSubClass::OSC_APPLE),
+		TrackingState(ESlObjectTrackingState::OTS_Off),
+		ActionState(ESlObjectActionState::OAS_Idle),
+		Position(FVector::ZeroVector),
+		Velocity(FVector::ZeroVector),
 		Mask(),
-		Confidence( 0.f ),
-		Dimensions( FVector::ZeroVector ),
-		HeadPosition( FVector::ZeroVector )
+		Confidence(0.f),
+		Dimensions(FVector::ZeroVector),
+		HeadPosition(FVector::ZeroVector)
 	{
 	};
 
@@ -3217,7 +3232,8 @@ struct STEREOLABS_API FSlObjects
 		ObjectList(TArray<FSlObjectData>()),
 		bIsNew(false),
 		bIsTracked(false)
-	{}
+	{
+	}
 };
 
 /*
@@ -3277,13 +3293,14 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 		bEnableTracking(true),
 		bEnableSegmentation(false),
 		DetectionModel(ESlBodyTrackingModel::BTM_HumanBodyMedium),
-		bEnableBodyFitting(true), 
+		bEnableBodyFitting(true),
 		BodyFormat(ESlBodyFormat::BF_BODY_38),
 		BodySelection(ESlBodyKeypointsSelection::BKS_FULL),
 		MaxRange(-1.0f),
 		PredictionTimeout_s(0.2f),
 		bAllowReducedPrecisionInference(false)
-	{}
+	{
+	}
 };
 
 /*
@@ -3315,7 +3332,8 @@ struct STEREOLABS_API FSlBodyTrackingRuntimeParameters
 		DetectionConfidenceThreshold(20.0f),
 		MinimumKeypointsThreshold(-1),
 		SkeletonSmoothing(0.0f)
-	{}
+	{
+	}
 };
 
 
@@ -3326,18 +3344,18 @@ struct STEREOLABS_API FSlBodyData
 
 	FSlBodyData()
 		:
-		Section( TEXT( "BodyData" ) ),
-		Id( 0 ),
-		UniqueObjectId( "" ),
-		TrackingState( ESlObjectTrackingState::OTS_Off ),
-		ActionState( ESlObjectActionState::OAS_Idle ),
-		Position( FVector::ZeroVector ),
-		Velocity( FVector::ZeroVector ),
+		Section(TEXT("BodyData")),
+		Id(0),
+		UniqueObjectId(""),
+		TrackingState(ESlObjectTrackingState::OTS_Off),
+		ActionState(ESlObjectActionState::OAS_Idle),
+		Position(FVector::ZeroVector),
+		Velocity(FVector::ZeroVector),
 		Mask(),
-		Confidence( 0.f ),
-		Dimensions( FVector::ZeroVector ),
-		HeadPosition( FVector::ZeroVector ),
-		GlobalRootOrientation( EForceInit::ForceInit )
+		Confidence(0.f),
+		Dimensions(FVector::ZeroVector),
+		HeadPosition(FVector::ZeroVector),
+		GlobalRootOrientation(EForceInit::ForceInit)
 	{
 	};
 
@@ -3467,12 +3485,13 @@ struct STEREOLABS_API FSlBodies
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTracked;
 
-	FSlBodies():
+	FSlBodies() :
 		Timestamp(FSlTimestamp()),
 		BodyList(TArray<FSlBodyData>()),
 		bIsNew(false),
 		bIsTracked(false)
-	{}
+	{
+	}
 };
 
 USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
@@ -3505,7 +3524,8 @@ struct STEREOLABS_API FSlSVOData
 		Key(""),
 		TimestampNano(""),
 		Content("")
-	{}
+	{
+	}
 };
 
 
@@ -3523,7 +3543,8 @@ struct STEREOLABS_API FSlRenderingParameters
 		:
 		PerceptionDistance(100.0f),
 		SRemapEnable(false)
-	{}
+	{
+	}
 
 	FORCEINLINE void Load(const FString& Path)
 	{
@@ -3532,7 +3553,7 @@ struct STEREOLABS_API FSlRenderingParameters
 			TEXT("PerceptionDistance"),
 			PerceptionDistance,
 			*Path
-			);
+		);
 
 		GConfig->GetBool(
 			Section,
@@ -3549,7 +3570,7 @@ struct STEREOLABS_API FSlRenderingParameters
 			TEXT("PerceptionDistance"),
 			PerceptionDistance,
 			*Path
-			);
+		);
 
 		GConfig->SetBool(
 			Section,

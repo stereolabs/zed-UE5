@@ -16,12 +16,15 @@ public class Stereolabs : ModuleRules
         get { return Path.GetFullPath(Path.Combine(ModulePath, "../../Binaries/Win64/")); }
     }
 
-
     public Stereolabs(ReadOnlyTargetRules Target) : base(Target)
     {
         PrivatePCHHeaderFile = "Public/Stereolabs.h";
 
+#if UE_5_6_OR_LATER
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#endif
 
         string CudaSDKPath = System.Environment.GetEnvironmentVariable("CUDA_PATH", EnvironmentVariableTarget.Machine);
         string ZEDSDKPath = System.Environment.GetEnvironmentVariable("ZED_SDK_ROOT_DIR", EnvironmentVariableTarget.Machine);
@@ -53,26 +56,6 @@ public class Stereolabs : ModuleRules
             }
             );
 
-        // Paths for low-level directx and opengl access
-        string engine_path = Path.GetFullPath(Target.RelativeEnginePath);
-
-        PrivateIncludePaths.AddRange(
-          new string[]
-          {
-                engine_path + "Source/Runtime/Windows/D3D11RHI/Private/",
-                engine_path + "Source/Runtime/Windows/D3D11RHI/Private/Windows",
-                engine_path + "Source/Runtime/D3D12RHI/Private/Windows",
-                engine_path + "Source/Runtime/D3D12RHI/Private/"
-              // ... add other private include paths required here ...
-          }
-          );
-
-        // required by D3D11RHI
-        AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAPI");
-        AddEngineThirdPartyPrivateStaticDependencies(Target, "AMD_AGS");
-        AddEngineThirdPartyPrivateStaticDependencies(Target, "NVAftermath");
-        AddEngineThirdPartyPrivateStaticDependencies(Target, "IntelExtensionsFramework");
-
         PrivateDependencyModuleNames.AddRange(new string[] {
                         "D3D11RHI",
                         "D3D12RHI",
@@ -91,7 +74,7 @@ public class Stereolabs : ModuleRules
     {
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            if(!Directory.Exists(DirPath))
+            if (!Directory.Exists(DirPath))
             {
                 string Err = string.Format("ZED SDK missing");
                 System.Console.WriteLine(Err);
@@ -101,7 +84,7 @@ public class Stereolabs : ModuleRules
             // Check SDK version
             string DefinesHeaderFilePath = Path.Combine(DirPath, "include\\sl\\Camera.hpp");
             string Major = "5";
-            string Minor = "0";
+            string Minor = "1";
             //string Patch = "0";
 
             // Find SDK major and minor version and compare
@@ -109,10 +92,10 @@ public class Stereolabs : ModuleRules
             {
                 if (!string.IsNullOrEmpty(line))
                 {
-                    if(line.Contains("#define ZED_SDK_MAJOR_VERSION"))
+                    if (line.Contains("#define ZED_SDK_MAJOR_VERSION"))
                     {
                         string SDKMajor = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2];
-                        if(!SDKMajor.Equals(Major))
+                        if (!SDKMajor.Equals(Major))
                         {
                             string Err = string.Format("ZED SDK Major Version mismatch : found {0} expected {1}", SDKMajor, Major);
                             System.Console.WriteLine(Err);

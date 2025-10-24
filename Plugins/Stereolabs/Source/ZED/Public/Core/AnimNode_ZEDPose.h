@@ -88,6 +88,7 @@ private:
     TArray<int> ParentsIdx;
 
 	//FBoneContainer& RequiredBones;
+    TArray<FName> TargetBoneNames;
 
 	TMap<FName, float> RefPoseBoneSize;
 	TMap<FName, float> ZEDBoneSize;

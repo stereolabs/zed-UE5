@@ -436,7 +436,7 @@ struct SL_SensorsData {
 \brief Lists error codes in the ZED SDK.
  */
 enum SL_ERROR_CODE {
-
+    SL_ERROR_CODE_POTENTIAL_CALIBRATION_ISSUE = -5, /**< The camera has a potential calibration issue*/
 	SL_ERROR_CODE_CONFIGURATION_FALLBACK = -4,/**< The operation could not proceed with the target configuration but did success with a fallback.*/
 	SL_ERROR_CODE_SENSORS_DATA_REQUIRED = -3,/**< The input data does not contains the high frequency sensors data, this is usually because it requires newer SVO/Streaming. In order to work this modules needs inertial data present in it input.*/
 	SL_ERROR_CODE_CORRUPTED_FRAME = -2,/**< The image could be corrupted, Enabled with the parameter InitParameters::enable_image_validity_check.*/
@@ -545,7 +545,7 @@ enum SL_MODEL {
 	SL_MODEL_VIRTUAL_ZED_X = 11, /**< Virtual ZED X generated from 2 ZED X One */
 	SL_MODEL_ZED_XONE_GS = 30, /**< ZED X One with global shutter AR0234 sensor */
 	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED X One with 4K rolling shutter IMX678 sensor */
-	SL_MODEL_ZED_XONE_HDR = 32, /**< ZED XOne HDR */
+	SL_MODEL_ZED_XONE_HDR = 32, /**< ZED X One HDR */
 };
 
 /**
@@ -701,7 +701,36 @@ enum SL_VIEW {
 	SL_VIEW_CONFIDENCE, /**< Color rendering of the depth confidence. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 \note Use \ref SL_MEASURE_CONFIDENCE with \ref sl_retrieve_measure() to get confidence values.*/
 	SL_VIEW_NORMALS, /**< Color rendering of the normals. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 \note Use \ref SL_MEASURE_NORMALS with \ref sl_retrieve_measure() to get normal values.*/
 	SL_VIEW_DEPTH_RIGHT, /**< Color rendering of the right depth mapped on right sensor. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 \note Use \ref SL_MEASURE_DEPTH_RIGHT with \ref sl_retrieve_measure() to get depth right values.*/
-	SL_VIEW_NORMALS_RIGHT /**< Color rendering of the normals mapped on right sensor. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 \note Use \ref SL_MEASURE_NORMALS_RIGHT with \ref sl_retrieve_measure() to get normal right values.*/
+	SL_VIEW_NORMALS_RIGHT, /**< Color rendering of the normals mapped on right sensor. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 \note Use \ref SL_MEASURE_NORMALS_RIGHT with \ref sl_retrieve_measure() to get normal right values.*/
+	SL_VIEW_LEFT_BGRA,              /**< Alias of \ref SL_VIEW_LEFT.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_LEFT_BGR,               /**< Left image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_RIGHT_BGRA,             /**< Alias of \ref SL_VIEW_RIGHT.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_RIGHT_BGR,              /**< Right image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_LEFT_UNRECTIFIED_BGRA,  /**< Alias of \ref SL_VIEW_LEFT_UNRECTIFIED.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_LEFT_UNRECTIFIED_BGR,   /**< Left unrectified image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_RIGHT_UNRECTIFIED_BGRA, /**< Alias of \ref SL_VIEW_RIGHT_UNRECTIFIED.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_RIGHT_UNRECTIFIED_BGR,  /**< Right unrectified image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_SIDE_BY_SIDE_BGRA,      /**< Alias of \ref SL_VIEW_SIDE_BY_SIDE.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_SIDE_BY_SIDE_BGR,       /**< Side by side image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_SIDE_BY_SIDE_GRAY,      /**< Side by side image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_SIDE_BY_SIDE_UNRECTIFIED_BGRA,      /**< Alias of \ref VIEW "sl::VIEW::SIDE_BY_SIDE_UNRECTIFIED".\n Type: \ref MAT_TYPE "sl::MAT_TYPE::U8_C4" */
+	SL_VIEW_SIDE_BY_SIDE_UNRECTIFIED_BGR,       /**< Side by side unrectified image in BGR pixel format: Type: \ref MAT_TYPE "sl::MAT_TYPE::U8_C3" */
+	SL_VIEW_SIDE_BY_SIDE_UNRECTIFIED_GRAY,      /**< Side by side unrectified image in gray scale: Type: \ref MAT_TYPE "sl::MAT_TYPE::U8_C1" */
+	SL_VIEW_DEPTH_BGRA,             /**< Alias of \ref SL_VIEW_DEPTH.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_DEPTH_BGR,              /**< Depth image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_DEPTH_GRAY,             /**< Depth image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_CONFIDENCE_BGRA,        /**< Alias of \ref SL_VIEW_CONFIDENCE.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_CONFIDENCE_BGR,         /**< Confidence image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_CONFIDENCE_GRAY,        /**< Confidence image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_NORMALS_BGRA,           /**< Alias of \ref SL_VIEW_NORMALS.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_NORMALS_BGR,            /**< Normal image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_NORMALS_GRAY,           /**< Normal image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_DEPTH_RIGHT_BGRA,       /**< Alias of \ref SL_VIEW_DEPTH_RIGHT.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_DEPTH_RIGHT_BGR,        /**< Depth right image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_DEPTH_RIGHT_GRAY,       /**< Depth right image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_NORMALS_RIGHT_BGRA,     /**< Alias of \ref SL_VIEW_NORMALS_RIGHT.\n Type: \ref SL_MAT_TYPE_U8_C4 */
+	SL_VIEW_NORMALS_RIGHT_BGR,      /**< Normal right image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
+	SL_VIEW_NORMALS_RIGHT_GRAY      /**< Normal right image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
 };
 
 /**
@@ -750,8 +779,9 @@ enum SL_SPATIAL_MEMORY_STATUS {
 \brief Lists the mode of positional tracking that can be used.
 */
 enum SL_POSITIONAL_TRACKING_MODE {
-	SL_POSITIONAL_TRACKING_MODE_GEN_1, /**< Default mode. Best compromise in performance and accuracy. */
-	SL_POSITIONAL_TRACKING_MODE_GEN_2, /**< Next generation of positional tracking, allow better accuracy. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_1, /**< Default mode. Fast and stable mode. Requires depth computation. Less robust than GEN_3. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_2, /**< \deprecated. */
+	SL_POSITIONAL_TRACKING_MODE_GEN_3  /**< Fast and accurate, in both exploratory mode and mapped environments.\Note Can be used even if depth_mode is set to \ref SL_DEPTH_MODE_NONE. */
 };
 
 /**
@@ -943,7 +973,9 @@ enum SL_OBJECT_SUBCLASS
 	SL_OBJECT_SUBCLASS_ORANGE = 20,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
 	SL_OBJECT_SUBCLASS_CARROT = 21,      /**< \ref SL_OBJECT_CLASS_FRUIT_VEGETABLE */
 	SL_OBJECT_SUBCLASS_PERSON_HEAD = 22, /**< \ref SL_OBJECT_CLASS_PERSON */
-	SL_OBJECT_SUBCLASS_SPORTSBALL = 23    /**< \ref SL_OBJECT_CLASS_SPORT*/
+	SL_OBJECT_SUBCLASS_SPORTSBALL = 23,  /**< \ref SL_OBJECT_CLASS_SPORT */
+	SL_OBJECT_SUBCLASS_MACHINERY = 24,   /**< \ref SL_OBJECT_CLASS_VEHICLE */
+	SL_OBJECT_SUBCLASS_LAST = 25         /**< Last object subclass, used for iteration purposes. */
 
 };
 
@@ -1497,7 +1529,7 @@ struct SL_InitParameters
 	This parameter allows you to enable the verbosity of the ZED SDK to get a variety of runtime information in the console.
 	\n When developing an application, enabling verbose (<code>\ref sdk_verbose >= 1</code>) mode can help you understand the current ZED SDK behavior.
 	\n However, this might not be desirable in a shipped version.
-	\n Default: 0 (no verbose message)
+	\n Default: 1 (verbose messages enabled)
 	\note The verbose messages can also be exported into a log file.
 	 */
 	int sdk_verbose;
@@ -1695,16 +1727,16 @@ struct SL_DeviceProperties {
 	/**
 	\brief badge name (zedx_ar0234)
 	 */
-	char* camera_badge;
+	char camera_badge[128];
 
 	/**
 	\brief Name of sensor (zedx)
 	 */
-	char* camera_sensor_model;
+	char camera_sensor_model[128];
 	/**
 	\brief Name of Camera in DT (ZED_CAM1)
 	 */
-	char* camera_name;
+	char camera_name[128];
 	/**
 	\brief Input type of the camera.
 	 */
@@ -2023,6 +2055,16 @@ struct SL_PositionalTrackingParameters
 	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_1
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
+
+	/**
+	 * \brief Whether to enable the area mode in localize only mode.
+	 */
+	bool enable_localization_only;
+
+	/**
+	 * \brief Whether to enable the 2D ground mode.
+	 */
+	bool enable_2d_ground_mode;
 };
 
 /**
@@ -2046,13 +2088,22 @@ struct SL_Landmark
 struct SL_Landmark2D
 {
 	/**
-	 \brief Unique identifier for the landmark.
+	\brief Unique identifier for the landmark.
 	 */
 	uint64_t id;
+
 	/**
-	 \brief  Projection of the landmark in the image.
-	 */
+	\brief  Projection of the landmark in the image.
+	*/
 	struct SL_Uint2 image_position;
+	
+	/**
+	\brief Confidence score indicating the likelihood that the landmark is associated with a dynamic object.
+
+	The value ranges from 0 to 1, where a smaller value indicates greater confidence that the landmark
+	is owned by a dynamic object.
+	*/
+	float dynamic_confidence;
 };
 
 /**
@@ -2599,7 +2650,7 @@ enum SL_OBJECT_CLASS
 	SL_OBJECT_CLASS_ANIMAL,          /**< For animal detection (cow, sheep, horse, dog, cat, bird, etc.) */
 	SL_OBJECT_CLASS_ELECTRONICS,     /**< For electronic device detection (cellphone, laptop, etc.) */
 	SL_OBJECT_CLASS_FRUIT_VEGETABLE, /**< For fruit and vegetable detection (banana, apple, orange, carrot, etc.) */
-	SL_OBJECT_CLASS_SPORT,			 /**< For sport-related object detection (sport ball, etc.) */
+	SL_OBJECT_CLASS_SPORT,           /**< For sport-related object detection (sport ball, etc.) */
 	SL_OBJECT_CLASS_LAST
 };
 
@@ -4022,6 +4073,12 @@ struct SL_FusionConfiguration {
 	The input type for the current camera.
 	*/
 	struct SL_InputType input_type;
+	/**
+	 * \brief Indicates the behavior of the fusion with respect to given calibration pose.
+	 * If true : The calibration pose directly specifies the camera's absolute pose relative to a global reference frame.
+	 * If false : The calibration pose (Pose_rel) is defined relative to the camera's IMU rotational pose. To determine the true absolute position, the Fusion process will compute Pose_abs = Pose_rel * Rot_IMU_camera.
+	 */
+	bool override_gravity;
 };
 
 
@@ -4333,6 +4390,16 @@ struct SL_GNSSData
 	 *
 	 */
 	double altitude_std;
+	/**
+	* \brief GNSS status of the data.
+	*
+	*/
+	enum SL_GNSS_STATUS gnss_status;
+	/**
+	* \brief GNSS mode of the data.
+	*
+	*/
+	enum SL_GNSS_MODE gnss_mode;
 };
 
 /**

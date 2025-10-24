@@ -48,9 +48,9 @@
 		} \
 	}
 
-/**
-* UI Stats
-*/
+ /**
+ * UI Stats
+ */
 DECLARE_CYCLE_STAT(TEXT("UI Drawing Time"), STAT_UIDrawingTime, STATGROUP_UI);
 
 static TAutoConsoleVariable<int32> CVarSetBlackBordersEnabled(
@@ -266,7 +266,11 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 						View->DiffuseOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
 						View->SpecularOverrideParameter = FVector4f(1, 1, 1, 0.0f);
 						View->NormalOverrideParameter = FVector4f(0, 0, 1, 0.0f);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+						View->RoughnessOverrideParameter = FVector2f(0.0f, 0.0f);
+#else
 						View->RoughnessOverrideParameter = FVector2D(0.0f, 0.0f);
+#endif
 					}
 
 					if (!View->Family->EngineShowFlags.Diffuse)
@@ -329,7 +333,7 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 								AudioDevice->SetListener(MyWorld, ViewportIndex, ListenerTransform, (View->bCameraCut ? 0.f : MyWorld->GetDeltaSeconds()));
 							}
 						}
-						if (i ==  eSSE_LEFT_EYE)
+						if (i == eSSE_LEFT_EYE)
 						{
 							// Save the size of the left eye view, so we can use it to reinitialize the DebugCanvasObject when rendering the console at the end of this method
 							DebugCanvasSize = View->UnscaledViewRect.Size();
@@ -385,7 +389,7 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 
 	// If the views don't cover the entire bounding rectangle, clear the entire buffer.
 	bool bBufferCleared = false;
-	if (ViewFamily.Views.Num() == 0 || TotalArea != (MaxX - MinX)*(MaxY - MinY) || bDisableWorldRendering)
+	if (ViewFamily.Views.Num() == 0 || TotalArea != (MaxX - MinX) * (MaxY - MinY) || bDisableWorldRendering)
 	{
 		bool bStereoscopicPass = (ViewFamily.Views.Num() != 0 && ViewFamily.Views[0]->StereoPass != EStereoscopicPass::eSSP_FULL);
 		if (bDisableWorldRendering || !bStereoscopicPass) // TotalArea computation does not work correctly for stereoscopic views
@@ -430,7 +434,7 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 	// game play experience on platforms that does not support it, but have it enabled by mistake.
 	if (ViewFamily.EngineShowFlags.ScreenPercentage && GEngine->GetDynamicResolutionState() && GEngine->GetDynamicResolutionState()->IsSupported())
 	{
-		GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::BeginDynamicResolutionRendering);
+		GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::BeginFrame);
 		GEngine->GetDynamicResolutionState()->SetupMainViewFamily(ViewFamily);
 	}
 
@@ -474,14 +478,14 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 		// Does not exist anymore
 		// Make sure RHI resources get flushed if we're not using a renderer
 		ENQUEUE_RENDER_COMMAND(UGameViewportClient_FlushRHIResources)([this](FRHICommandListImmediate& RHICmdList)
-		{
-			FRHICommandListExecutor::GetImmediateCommandList().ImmediateFlush(EImmediateFlushType::FlushRHIThreadFlushResources);
-		});
+			{
+				FRHICommandListExecutor::GetImmediateCommandList().ImmediateFlush(EImmediateFlushType::FlushRHIThreadFlushResources);
+			});
 
 	}
 
 	// Beyond this point, only UI rendering independent from dynamc resolution.
-	GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::EndDynamicResolutionRendering);
+	GEngine->EmitDynamicResolutionEvent(EDynamicResolutionStateEvent::EndFrame);
 
 	// Clear areas of the rendertarget (backbuffer) that aren't drawn over by the views.
 	if (!bBufferCleared)
@@ -508,16 +512,28 @@ void UZEDGameViewportClient::Draw(FViewport* InViewport, FCanvas* SceneCanvas)
 		}
 	}
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	// Remove temporary debug lines.
+	if (MyWorld->GetLineBatcher(UWorld::ELineBatcherType::World) != nullptr)
+	{
+		MyWorld->GetLineBatcher(UWorld::ELineBatcherType::World)->Flush();
+	}
+
+	if (MyWorld->GetLineBatcher(UWorld::ELineBatcherType::Foreground) != nullptr)
+	{
+		MyWorld->GetLineBatcher(UWorld::ELineBatcherType::Foreground)->Flush();
+	}
+#else
 	// Remove temporary debug lines.
 	if (MyWorld->LineBatcher != nullptr)
 	{
 		MyWorld->LineBatcher->Flush();
 	}
-
 	if (MyWorld->ForegroundLineBatcher != nullptr)
 	{
 		MyWorld->ForegroundLineBatcher->Flush();
 	}
+#endif
 
 	// Draw FX debug information.
 	if (MyWorld->FXSystem)

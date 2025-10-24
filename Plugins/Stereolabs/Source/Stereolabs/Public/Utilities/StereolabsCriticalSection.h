@@ -4,8 +4,7 @@
 
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "HAL/ThreadSafeBool.h"
-#include "Windows/WindowsCriticalSection.h"
-
+#include "HAL/CriticalSection.h"
 #include "StereolabsCriticalSection.generated.h"
 
 /*
