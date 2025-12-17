@@ -74,10 +74,6 @@ void USlTexture::BeginDestroy()
 		CudaResource = nullptr;
 	}
 
-	if (Mat.Mat) {
-		FMemory::Free(MatPtr);
-	}
-
 	Super::BeginDestroy();
 }
 
@@ -146,7 +142,7 @@ void USlTexture::UpdateTexture()
 	if (!bCudaInteropEnabled)
 	{
 		sl_mat_update_cpu_from_gpu(Mat.Mat);
-		MatPtr = sl_mat_get_ptr(Mat.Mat, SL_MEM_CPU);
+		void* MatPtr = sl_mat_get_ptr(Mat.Mat, SL_MEM_CPU);
 
 		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
 		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
@@ -182,7 +178,7 @@ void USlTexture::UpdateTexture(const FSlMat& NewMat)
 	if (!bCudaInteropEnabled)
 	{
 		sl_mat_update_cpu_from_gpu(NewMat.Mat);
-		MatPtr = sl_mat_get_ptr(NewMat.Mat, SL_MEM_CPU);
+		void* MatPtr = sl_mat_get_ptr(NewMat.Mat, SL_MEM_CPU);
 
 		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
 		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
@@ -219,7 +215,7 @@ void USlTexture::UpdateTexture(void* NewMat)
 	{
 		sl_mat_update_cpu_from_gpu(NewMat);
 
-		MatPtr = sl_mat_get_ptr(NewMat, SL_MEM_CPU);
+		void* MatPtr = sl_mat_get_ptr(NewMat, SL_MEM_CPU);
 
 		SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(TextureFormat);
 		int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
@@ -280,8 +276,6 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 			CudaResource = nullptr;
 		}
-
-		if (MatPtr) FMemory::Free(MatPtr);
 
 		InitResources(TextureFormat, Compression);
 	}
@@ -419,32 +413,7 @@ void USlTexture::InitResources(ESlTextureFormat Format, TextureCompressionSettin
 	}
 	else if (RHIName.Equals("D3D12"))
 	{
-		if (ID3D12Device* D3D12DevicePtr = static_cast<ID3D12Device*>(GDynamicRHI->RHIGetNativeDevice()))
-		{
-			if (ID3D12Resource* D3D12ResourcePtr = (ID3D12Resource*)(Texture->GetResource()->TextureRHI->GetNativeResource()))
-			{
-				SL_MAT_TYPE mat_type = sl::unreal::GetSlMatTypeFormatFromSlTextureFormat(Format);
-				int ByteSize = sl::unreal::GetSizeInBytes(mat_type);
-
-				int TextureSize = Height * Width * ByteSize;
-
-				MatPtr = FMemory::Malloc(TextureSize);
-				// Populate texture
-				FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
-				Mip.BulkData.Lock(LOCK_READ_WRITE);
-				void* Data = Mip.BulkData.Realloc(TextureSize);
-
-				FMemory::Memcpy(Data, MatPtr, TextureSize);
-				Mip.BulkData.Unlock();
-			}
-		}
-		else
-		{
-			SL_LOG_F(SlTexture, "Selected RHI not supported : %s", *RHIName);
-		}
-
 		bCudaInteropEnabled = false; // Cuda interop is not available with DX12
-
 	}
 	else
 	{
