@@ -2115,7 +2115,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bSetAsStatic(false),
 		DepthMinRange(-1),
 		bSetGravityAsOrigin(true),
-		Mode(ESlPositionalTrackingMode::PTM_Gen_1),
+		Mode(ESlPositionalTrackingMode::PTM_Gen_3),
 		bEnableLocalizationOnly(false),
 		bEnable2DGroundMode(false)
 	{
