@@ -66,14 +66,63 @@ extern "C" {
     \param path_svo : Filename of the svo to read (for SVO input).
     \param ip : IP of the camera to open (for Stream input).
     \param stream_port : Port of the camera to open (for Stream input).
+    \param gmsl_port : GMSL port number for camera selection (only used when input_type is GMSL). Default: -1 (do nothing).
+	\param bus_type : Whether the camera is a USB or a GMSL camera (when opening with camera ID).
     \param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
     \param opt_settings_path[optional] : Settings path.
     \param opencv_calib_path[optional] : openCV calibration file.
+    
     \return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
-    INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, int stream_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, int stream_port, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
+    /**
+	\brief Opens the ZED camera from the provided SL_InitParameters using its  camera ID.
+	\param camera_id : Id of the camera to open.
+	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
+	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
+	\param opt_settings_path[optional] : Settings path.
+	\param opencv_calib_path[optional] : openCV calibration file.
+	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
+    */
+    INTERFACE_API int sl_open_camera_from_camera_id(int camera_id, struct SL_InitParameters* init_parameters, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
+    /**
+	\brief Opens the ZED camera from the provided SL_InitParameters using its serial number.
+	\param camera_id : Id of the camera to open.
+	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
+	\param serial_number : Serial number of the camera to open.
+	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
+	\param opt_settings_path[optional] : Settings path.
+	\param opencv_calib_path[optional] : openCV calibration file.
+	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
+    */
+	INTERFACE_API int sl_open_camera_from_serial_number(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+
+    /**
+	\brief Opens the ZED camera from the provided SL_InitParameters using an SVO file.
+	\param camera_id : Id of the camera to open.
+	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
+	\param path_svo : Filename of the svo to read (for SVO input).
+	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
+	\param opt_settings_path[optional] : Settings path.
+	\param opencv_calib_path[optional] : openCV calibration file.
+	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
+    */
+	INTERFACE_API int sl_open_camera_from_svo_file(int camera_id, struct SL_InitParameters* init_parameters, const char* path_svo, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+
+    /**
+	\brief Opens the ZED camera from the provided SL_InitParameters using its IP and stream port.
+	\param camera_id : Id of the camera to open.
+	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
+	\param ip : IP of the camera to open (for Stream input).
+	\param stream_port : Port of the camera to open (for Stream input).
+	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
+	\param opt_settings_path[optional] : Settings path.
+	\param opencv_calib_path[optional] : openCV calibration file.
+	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
+    */
+	INTERFACE_API int sl_open_camera_from_stream(int camera_id, struct SL_InitParameters* init_parameters, const char* ip, int stream_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
     /**
     \brief Set this camera as a data provider for the Fusion module.
 

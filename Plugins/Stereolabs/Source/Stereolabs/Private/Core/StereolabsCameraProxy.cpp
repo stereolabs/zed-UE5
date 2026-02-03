@@ -275,9 +275,9 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	SL_ERROR_CODE ErrorCode;
 	do
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath), TCHAR_TO_UTF8(*InitParameters.StreamIP),
-			InitParameters.StreamPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath), TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath),
-				TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile));
+		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath),
+			TCHAR_TO_UTF8(*InitParameters.StreamIP), InitParameters.StreamPort, InitParameters.GmslPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath),
+			TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath),	TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile));
 
 		SetOpenCameraErrorCode(sl::unreal::ToUnrealType(ErrorCode));
 

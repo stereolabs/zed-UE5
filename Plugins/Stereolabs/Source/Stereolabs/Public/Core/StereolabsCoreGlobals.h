@@ -9,13 +9,11 @@
 
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <sl_mr_core/defines.hpp>
-#include <sl/Camera.hpp>
 #include "Windows/HideWindowsPlatformTypes.h"
 
 THIRD_PARTY_INCLUDES_START
 #include "../../../ThirdParty/sl_zed_c/include/sl/c_api/zed_interface.h"
 THIRD_PARTY_INCLUDES_END
-
 
 /** Id of the grab thread */
 extern STEREOLABS_API uint32 GSlGrabThreadId;
@@ -2106,12 +2104,27 @@ namespace sl
 			struct SL_ObjectDetectionRuntimeParameters ODParameters;
 			ODParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 
-			for (int i = 0; i < UnrealData.ObjectClassFilter.Num(); i++) {
-				ODParameters.object_class_filter[i] = UnrealData.ObjectClassFilter[i];
+			for (auto& value : UnrealData.ObjectClassFilter) {
+				ODParameters.object_class_filter[(int)value.Key] = value.Value;
 			}
 
 			for (auto& conf : UnrealData.ObjectClassDetectionConfidenceThreshold) {
-				ODParameters.object_confidence_threshold[conf.Key] = conf.Value;
+				ODParameters.object_confidence_threshold[(int)conf.Key] = conf.Value;
+			}
+
+			struct SL_ObjectTrackingParameters trackingParameters;
+			trackingParameters.object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)UnrealData.ObjectTrackingParameters.ObjectAccelerationPreset;
+			trackingParameters.min_confirmation_time_s = UnrealData.ObjectTrackingParameters.MinConfirmationTime_s;
+			trackingParameters.min_velocity_threshold = UnrealData.ObjectTrackingParameters.MinVelocityThreshold;
+			trackingParameters.prediction_timeout_s = UnrealData.ObjectTrackingParameters.PredictionTimeout_s;
+			trackingParameters.velocity_smoothing_factor = UnrealData.ObjectTrackingParameters.VelocitySmoothingFactor;
+
+			for (auto& value : UnrealData.ObjectClassTrackingParameters) {
+				ODParameters.object_class_tracking_parameters[(int)value.Key].object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)value.Value.ObjectAccelerationPreset;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].min_confirmation_time_s = value.Value.MinConfirmationTime_s;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].min_velocity_threshold = value.Value.MinVelocityThreshold;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].prediction_timeout_s = value.Value.PredictionTimeout_s;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].velocity_smoothing_factor = value.Value.VelocitySmoothingFactor;
 			}
 
 			return ODParameters;
