@@ -332,6 +332,7 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
+	EC_SensorConfigurationChanged = 250 UMETA(DisplayName = "Sensor configuration changed"),
 	EC_PotentialCalibrationIssue = 251	 UMETA(DisplayName = "Potential calibration issue"),
 	EC_ConfigurationFallback = 252	 UMETA(DisplayName = "Configuration fallback"),
 	EC_SensorsDataRequired = 253	 UMETA(DisplayName = "Sensors data required"),

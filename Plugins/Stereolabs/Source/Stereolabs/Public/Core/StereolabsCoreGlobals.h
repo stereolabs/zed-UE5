@@ -226,7 +226,8 @@ namespace sl
 		{
 			switch (SlType)
 			{
-
+			case SL_ERROR_CODE_SENSOR_CONFIGURATION_CHANGED:
+				return ESlErrorCode::EC_SensorConfigurationChanged;
 			case SL_ERROR_CODE_POTENTIAL_CALIBRATION_ISSUE:
 				return ESlErrorCode::EC_PotentialCalibrationIssue;
 			case SL_ERROR_CODE_CONFIGURATION_FALLBACK:

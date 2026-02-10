@@ -428,12 +428,13 @@ extern "C" {
     /**
     \brief Sets the playback cursor to the desired frame number in the SVO file.
 
-    This function allows you to move around within a played-back SVO file. After calling, the next call to sl_grab() will read the provided frame number.
+    This function allows you to move around within a played-back SVO file. After calling, the next call to sl_grab() will read the provided position.
 
     \param camera_id : Id of the camera instance.
-    \param frame_number : The number of the desired frame to be decoded.
+    \param position : The position of the desired frame to be decoded.
+    \return \ref SL_ERROR_CODE to indicate if the method was successful.
      */
-    INTERFACE_API void sl_set_svo_position(int camera_id, int frame_number);
+    INTERFACE_API enum SL_ERROR_CODE sl_set_svo_position(int camera_id, int position);
 
     /**
     \brief Pauses or resumes SVO reading

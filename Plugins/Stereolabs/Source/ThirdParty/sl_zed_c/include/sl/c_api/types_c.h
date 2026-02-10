@@ -436,10 +436,11 @@ struct SL_SensorsData {
 \brief Lists error codes in the ZED SDK.
  */
 enum SL_ERROR_CODE {
+    SL_ERROR_CODE_SENSOR_CONFIGURATION_CHANGED = -6, /**< The sensor's configuration (mode, multicast, etc.) was changed externally while streaming. If auto_recovery_on_config_change is enabled, the SDK will automatically reconnect. This warning code is returned once after successful recovery.*/
     SL_ERROR_CODE_POTENTIAL_CALIBRATION_ISSUE = -5, /**< The camera has a potential calibration issue*/
 	SL_ERROR_CODE_CONFIGURATION_FALLBACK = -4,/**< The operation could not proceed with the target configuration but did success with a fallback.*/
 	SL_ERROR_CODE_SENSORS_DATA_REQUIRED = -3,/**< The input data does not contains the high frequency sensors data, this is usually because it requires newer SVO/Streaming. In order to work this modules needs inertial data present in it input.*/
-	SL_ERROR_CODE_CORRUPTED_FRAME = -2,/**< The image could be corrupted, Enabled with the parameter InitParameters::enable_image_validity_check.*/
+	SL_ERROR_CODE_CORRUPTED_FRAME = -2,/**< The image is corrupted with invalid colors (green/purple images). This indicates a serious hardware or driver issue.*/
 	SL_ERROR_CODE_CAMERA_REBOOTING = -1, /**< The camera is currently rebooting.*/
 	SL_ERROR_CODE_SUCCESS, /**< Standard code for successful behavior.*/
 	SL_ERROR_CODE_FAILURE, /**< Standard code for unsuccessful behavior.*/
