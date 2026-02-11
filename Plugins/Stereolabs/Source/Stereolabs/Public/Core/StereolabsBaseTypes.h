@@ -338,7 +338,7 @@ enum class ESlErrorCode : uint8
 	EC_SensorsDataRequired = 253	 UMETA(DisplayName = "Sensors data required"),
 	EC_CorruptedFrame = 254			 UMETA(DisplayName = "Corrupted frame"),
 	EC_CameraRebooting = 255		 UMETA(DisplayName = "Camera rebooting"),
-	EC_Success = 0			 UMETA(DisplayName = "Success"),
+	EC_Success = 0					 UMETA(DisplayName = "Success"),
 	EC_Failure					     UMETA(DisplayName = "Failure"),
 	EC_NoGpuCompatible			     UMETA(DisplayName = "No GPU compatible"),
 	EC_NotEnoughGPUMemory		     UMETA(DisplayName = "Not enough GPU memory"),
@@ -372,6 +372,7 @@ enum class ESlErrorCode : uint8
 	EC_ModuleNotCompatibleWithCamera UMETA(DisplayName = "Module not compatible with camera"),
 	EC_MotionSensorsRequired         UMETA(DisplayName = "Motion sensors required"),
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
+	EC_DriverFailure  				 UMETA(DisplayName = "Driver failure"),
 	// ERROR_CODE_LAST
 	EC_None					  	   UMETA(DisplayName = "No error")
 };

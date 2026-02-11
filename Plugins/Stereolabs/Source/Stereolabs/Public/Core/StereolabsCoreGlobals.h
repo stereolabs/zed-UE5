@@ -306,6 +306,8 @@ namespace sl
 				return ESlErrorCode::EC_MotionSensorsRequired;
 			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
 				return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
+			case SL_ERROR_CODE_DRIVER_FAILURE: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
+				return ESlErrorCode::EC_DriverFailure;
 			default:
 			{
 				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
@@ -836,6 +838,18 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
+			case ESlErrorCode::EC_SensorConfigurationChanged:
+				return sl::ERROR_CODE::SENSOR_CONFIGURATION_CHANGED;
+			case ESlErrorCode::EC_PotentialCalibrationIssue:
+				return sl::ERROR_CODE::POTENTIAL_CALIBRATION_ISSUE;
+			case ESlErrorCode::EC_ConfigurationFallback:
+				return sl::ERROR_CODE::CONFIGURATION_FALLBACK;
+			case ESlErrorCode::EC_SensorsDataRequired:
+				return sl::ERROR_CODE::SENSORS_DATA_REQUIRED;
+			case ESlErrorCode::EC_CorruptedFrame:
+				return sl::ERROR_CODE::CORRUPTED_FRAME;
+			case ESlErrorCode::EC_CameraRebooting:
+				return sl::ERROR_CODE::CAMERA_REBOOTING;
 			case ESlErrorCode::EC_Success: /**< Standard code for successful behavior.*/
 				return sl::ERROR_CODE::SUCCESS;
 			case ESlErrorCode::EC_Failure: /**< Standard code for unsuccessful behavior.*/
@@ -904,6 +918,8 @@ namespace sl
 				return sl::ERROR_CODE::MOTION_SENSORS_REQUIRED;
 			case ESlErrorCode::EC_ModuleNotCompatibleWithCuda: /**< The module needs a newer version of CUDA*/
 				return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION;
+			case ESlErrorCode::EC_DriverFailure: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
+				return sl::ERROR_CODE::DRIVER_FAILURE;
 			case ESlErrorCode::EC_None:
 				return  sl::ERROR_CODE::LAST;
 			default:

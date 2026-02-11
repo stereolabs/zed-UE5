@@ -117,22 +117,14 @@ void USlFunctionLibrary::GetSceneCaptureProjectionMatrix(FMatrix& ProjectionMatr
 FString USlFunctionLibrary::ErrorCodeToString(ESlErrorCode ErrorCode)
 {
 	FString ErrorCodeString;
-
-	if (ErrorCode > ESlErrorCode::EC_None)
+	if (ErrorCode == ESlErrorCode::EC_None)
 	{
-		ErrorCodeString = FString("Error code not in range");
+		ErrorCodeString = "No Error";
 	}
 	else
 	{
-		if (ErrorCode == ESlErrorCode::EC_None)
-		{
-			ErrorCodeString = "No Error";
-		}
-		else
-		{
-			FString Tmp = FString(sl::toString(sl::unreal::ToSlType(ErrorCode)).get());
-			ErrorCodeString = Tmp.Left(1) + Tmp.ToLower().RightChop(1);
-		}
+		FString Tmp = FString(sl::toString(sl::unreal::ToSlType(ErrorCode)).get());
+		ErrorCodeString = Tmp.Left(1) + Tmp.ToLower().RightChop(1);
 	}
 
 	return ErrorCodeString;
