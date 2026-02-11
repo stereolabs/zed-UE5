@@ -701,12 +701,12 @@ void AZEDPlayerController::UpdateHUDCheckOpeningZed_Implementation()
 {
 	ESlErrorCode OpenErrorCode = GSlCameraProxy->GetOpenCameraErrorCode();
 
-	if (OpenErrorCode != ESlErrorCode::EC_Success && OpenErrorCode != ESlErrorCode::EC_None)
+	sl::ERROR_CODE error_code = sl::unreal::ToSlType(OpenErrorCode);
+	if (error_code > sl::ERROR_CODE::SUCCESS)
 	{
 		ZedPawn->ZedLoadingWidget->SetVisibility(false);
-
 		ZedPawn->ZedErrorWidget->SetVisibility(true);
-		ZedPawn->ZedErrorWidget->SetText(FText::FromString(USlFunctionLibrary::ErrorCodeToString(GSlCameraProxy->GetOpenCameraErrorCode())));
+		ZedPawn->ZedErrorWidget->SetText(FText::FromString(USlFunctionLibrary::ErrorCodeToString(OpenErrorCode)));
 	}
 	else
 	{
@@ -748,7 +748,6 @@ void AZEDPlayerController::UpdateHUDZedTrackingEnabled_Implementation(bool bSucc
 	if (!bSuccess)
 	{
 		ZedPawn->ZedLoadingWidget->SetVisibility(false);
-
 		ZedPawn->ZedErrorWidget->SetText(FText::FromString(USlFunctionLibrary::ErrorCodeToString(ErrorCode)));
 		ZedPawn->ZedErrorWidget->SetVisibility(true);
 	}

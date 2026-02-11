@@ -9,13 +9,11 @@
 
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <sl_mr_core/defines.hpp>
-#include <sl/Camera.hpp>
 #include "Windows/HideWindowsPlatformTypes.h"
 
 THIRD_PARTY_INCLUDES_START
 #include "../../../ThirdParty/sl_zed_c/include/sl/c_api/zed_interface.h"
 THIRD_PARTY_INCLUDES_END
-
 
 /** Id of the grab thread */
 extern STEREOLABS_API uint32 GSlGrabThreadId;
@@ -228,7 +226,8 @@ namespace sl
 		{
 			switch (SlType)
 			{
-
+			case SL_ERROR_CODE_SENSOR_CONFIGURATION_CHANGED:
+				return ESlErrorCode::EC_SensorConfigurationChanged;
 			case SL_ERROR_CODE_POTENTIAL_CALIBRATION_ISSUE:
 				return ESlErrorCode::EC_PotentialCalibrationIssue;
 			case SL_ERROR_CODE_CONFIGURATION_FALLBACK:
@@ -307,6 +306,8 @@ namespace sl
 				return ESlErrorCode::EC_MotionSensorsRequired;
 			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
 				return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
+			case SL_ERROR_CODE_DRIVER_FAILURE: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
+				return ESlErrorCode::EC_DriverFailure;
 			default:
 			{
 				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
@@ -837,6 +838,18 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
+			case ESlErrorCode::EC_SensorConfigurationChanged:
+				return sl::ERROR_CODE::SENSOR_CONFIGURATION_CHANGED;
+			case ESlErrorCode::EC_PotentialCalibrationIssue:
+				return sl::ERROR_CODE::POTENTIAL_CALIBRATION_ISSUE;
+			case ESlErrorCode::EC_ConfigurationFallback:
+				return sl::ERROR_CODE::CONFIGURATION_FALLBACK;
+			case ESlErrorCode::EC_SensorsDataRequired:
+				return sl::ERROR_CODE::SENSORS_DATA_REQUIRED;
+			case ESlErrorCode::EC_CorruptedFrame:
+				return sl::ERROR_CODE::CORRUPTED_FRAME;
+			case ESlErrorCode::EC_CameraRebooting:
+				return sl::ERROR_CODE::CAMERA_REBOOTING;
 			case ESlErrorCode::EC_Success: /**< Standard code for successful behavior.*/
 				return sl::ERROR_CODE::SUCCESS;
 			case ESlErrorCode::EC_Failure: /**< Standard code for unsuccessful behavior.*/
@@ -905,6 +918,8 @@ namespace sl
 				return sl::ERROR_CODE::MOTION_SENSORS_REQUIRED;
 			case ESlErrorCode::EC_ModuleNotCompatibleWithCuda: /**< The module needs a newer version of CUDA*/
 				return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION;
+			case ESlErrorCode::EC_DriverFailure: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
+				return sl::ERROR_CODE::DRIVER_FAILURE;
 			case ESlErrorCode::EC_None:
 				return  sl::ERROR_CODE::LAST;
 			default:
@@ -2106,12 +2121,27 @@ namespace sl
 			struct SL_ObjectDetectionRuntimeParameters ODParameters;
 			ODParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 
-			for (int i = 0; i < UnrealData.ObjectClassFilter.Num(); i++) {
-				ODParameters.object_class_filter[i] = UnrealData.ObjectClassFilter[i];
+			for (auto& value : UnrealData.ObjectClassFilter) {
+				ODParameters.object_class_filter[(int)value.Key] = value.Value;
 			}
 
 			for (auto& conf : UnrealData.ObjectClassDetectionConfidenceThreshold) {
-				ODParameters.object_confidence_threshold[conf.Key] = conf.Value;
+				ODParameters.object_confidence_threshold[(int)conf.Key] = conf.Value;
+			}
+
+			struct SL_ObjectTrackingParameters trackingParameters;
+			trackingParameters.object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)UnrealData.ObjectTrackingParameters.ObjectAccelerationPreset;
+			trackingParameters.min_confirmation_time_s = UnrealData.ObjectTrackingParameters.MinConfirmationTime_s;
+			trackingParameters.min_velocity_threshold = UnrealData.ObjectTrackingParameters.MinVelocityThreshold;
+			trackingParameters.prediction_timeout_s = UnrealData.ObjectTrackingParameters.PredictionTimeout_s;
+			trackingParameters.velocity_smoothing_factor = UnrealData.ObjectTrackingParameters.VelocitySmoothingFactor;
+
+			for (auto& value : UnrealData.ObjectClassTrackingParameters) {
+				ODParameters.object_class_tracking_parameters[(int)value.Key].object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)value.Value.ObjectAccelerationPreset;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].min_confirmation_time_s = value.Value.MinConfirmationTime_s;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].min_velocity_threshold = value.Value.MinVelocityThreshold;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].prediction_timeout_s = value.Value.PredictionTimeout_s;
+				ODParameters.object_class_tracking_parameters[(int)value.Key].velocity_smoothing_factor = value.Value.VelocitySmoothingFactor;
 			}
 
 			return ODParameters;

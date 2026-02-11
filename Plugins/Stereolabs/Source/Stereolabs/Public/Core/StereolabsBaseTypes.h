@@ -2,7 +2,9 @@
 
 #pragma once
 
+
 #include "Windows/AllowWindowsPlatformTypes.h"
+#undef FLOAT
 #include <sl/Camera.hpp>
 #include "Windows/HideWindowsPlatformTypes.h"
 
@@ -330,12 +332,13 @@ enum class ESlRetrieveResult : uint8
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlErrorCode : uint8
 {
+	EC_SensorConfigurationChanged = 250 UMETA(DisplayName = "Sensor configuration changed"),
 	EC_PotentialCalibrationIssue = 251	 UMETA(DisplayName = "Potential calibration issue"),
 	EC_ConfigurationFallback = 252	 UMETA(DisplayName = "Configuration fallback"),
 	EC_SensorsDataRequired = 253	 UMETA(DisplayName = "Sensors data required"),
 	EC_CorruptedFrame = 254			 UMETA(DisplayName = "Corrupted frame"),
 	EC_CameraRebooting = 255		 UMETA(DisplayName = "Camera rebooting"),
-	EC_Success = 0			 UMETA(DisplayName = "Success"),
+	EC_Success = 0					 UMETA(DisplayName = "Success"),
 	EC_Failure					     UMETA(DisplayName = "Failure"),
 	EC_NoGpuCompatible			     UMETA(DisplayName = "No GPU compatible"),
 	EC_NotEnoughGPUMemory		     UMETA(DisplayName = "Not enough GPU memory"),
@@ -369,6 +372,7 @@ enum class ESlErrorCode : uint8
 	EC_ModuleNotCompatibleWithCamera UMETA(DisplayName = "Module not compatible with camera"),
 	EC_MotionSensorsRequired         UMETA(DisplayName = "Motion sensors required"),
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
+	EC_DriverFailure  				 UMETA(DisplayName = "Driver failure"),
 	// ERROR_CODE_LAST
 	EC_None					  	   UMETA(DisplayName = "No error")
 };
@@ -693,6 +697,15 @@ enum class ESlObjectFilteringMode : uint8
 	OFM_NMS3D				UMETA(DisplayName = "Nms3d"),
 	OFM_NMS3D_PER_CLASS		UMETA(DisplayName = "Nms3d per class")
 
+};
+
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlObjectAccelerationPreset : uint8
+{
+	OAP_DEFAULT				UMETA(DisplayName = "Default"),
+	OAP_LOW					UMETA(DisplayName = "Low"),
+	OAP_MEDIUM				UMETA(DisplayName = "Medium"),
+	OAP_HIGH				UMETA(DisplayName = "High")
 };
 
 /*
@@ -2115,7 +2128,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bSetAsStatic(false),
 		DepthMinRange(-1),
 		bSetGravityAsOrigin(true),
-		Mode(ESlPositionalTrackingMode::PTM_Gen_1),
+		Mode(ESlPositionalTrackingMode::PTM_Gen_3),
 		bEnableLocalizationOnly(false),
 		bEnable2DGroundMode(false)
 	{
@@ -2413,6 +2426,7 @@ struct STEREOLABS_API FSlInitParameters
 		InputType(ESlInputType::IT_USB),
 		SerialNumber(0),
 		SvoPath(""),
+		GmslPort(-1),
 		bLoop(false),
 		StreamIP(""),
 		StreamPort(30000),
@@ -2559,6 +2573,13 @@ struct STEREOLABS_API FSlInitParameters
 			Section,
 			TEXT("StreamIP"),
 			StreamIP,
+			*Path
+		);
+
+		GConfig->GetInt(
+			Section,
+			TEXT("GmslPort"),
+			GmslPort,
 			*Path
 		);
 
@@ -2742,6 +2763,13 @@ struct STEREOLABS_API FSlInitParameters
 			*Path
 		);
 
+		GConfig->SetInt(
+			Section,
+			TEXT("GmslPort"),
+			GmslPort,
+			*Path
+		);
+
 		GConfig->SetString(
 			Section,
 			TEXT("SvoPath"),
@@ -2810,6 +2838,10 @@ struct STEREOLABS_API FSlInitParameters
 	/** Path to a SVO file if inputType is set to SVO */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString SvoPath;
+
+	/* Gmsl port of the camera (default : -1)*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 GmslPort;
 
 	/** True to loop when SVO playback enabled */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -3058,6 +3090,27 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	}
 };
 
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlObjectTrackingParameters
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlObjectAccelerationPreset ObjectAccelerationPreset = ESlObjectAccelerationPreset::OAP_DEFAULT;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float VelocitySmoothingFactor = -1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MinVelocityThreshold = -1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PredictionTimeout_s = -1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MinConfirmationTime_s = -1.0f;
+};
+
 /*
 * Object Detection parameters
 */
@@ -3074,23 +3127,30 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 
 	/* Select which object types to detect and track. By default all classes are tracked. Fewer object types can slightly speed up the process, since every objects are tracked. Only the selected classes in the vector will be output.  */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int>	ObjectClassFilter;
+	TMap<ESlObjectClass, bool>	ObjectClassFilter;
 
 	/* Defines a detection threshold for each classes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<int, float> ObjectClassDetectionConfidenceThreshold;
+	TMap<ESlObjectClass, float> ObjectClassDetectionConfidenceThreshold;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSlObjectTrackingParameters ObjectTrackingParameters;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<ESlObjectClass, FSlObjectTrackingParameters> ObjectClassTrackingParameters;
 
 	FSlObjectDetectionRuntimeParameters() :
 		DetectionConfidenceThreshold(35.0f)
 	{
-		ObjectClassFilter = TArray<int>();
-		ObjectClassFilter.Init(0, (int)SL_OBJECT_CLASS_LAST);
+		ObjectClassFilter = TMap<ESlObjectClass, bool>();
 
-		ObjectClassDetectionConfidenceThreshold = TMap<int, float>();
+		ObjectClassDetectionConfidenceThreshold = TMap<ESlObjectClass, float>();
 
 		for (int i = 0; i < (int)SL_OBJECT_CLASS_LAST; i++) {
-			ObjectClassDetectionConfidenceThreshold.Add(i, 35.0f);
+			ObjectClassDetectionConfidenceThreshold.Add((ESlObjectClass)i, 35.0f);
 		}
+
+		ObjectClassTrackingParameters = TMap<ESlObjectClass, FSlObjectTrackingParameters>();
 	}
 };
 
