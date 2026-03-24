@@ -66,17 +66,23 @@ public:
 
 	/*
 	 * Update the UE texture. Must be called from rendering thread, only for GPU texture.
+	 * If CUDA interop is enabled, then synchronization between CUDA context and Graphics API must be performed
+	 * before and after calling this function. This can be done either by using a TextureBatch or calling BP_UpdateTexture from the game thread.
 	 */
 	void UpdateTexture();
 
 	/*
 	 * Update the UE texture. Must be called from rendering thread, only for GPU texture.
+	 * If CUDA interop is enabled, then synchronization between CUDA context and Graphics API must be performed
+	 * before and after calling this function. This can be done either by using a TextureBatch or calling BP_UpdateTexture from the game thread.
 	 * @param NewMat The mat used to update
 	 */
 	void UpdateTexture(const FSlMat& NewMat);
 
 	/*
 	 * Update the UE texture. Must be called from rendering thread, only for GPU texture.
+	 * If CUDA interop is enabled, then synchronization between CUDA context and Graphics API must be performed
+	 * before and after calling this function. This can be done either by using a TextureBatch or calling BP_UpdateTexture from the game thread.
 	 * @param NewMat The mat used to update if different from that owning by the texture
 	 */
 	void UpdateTexture(void* NewMat);
@@ -88,6 +94,12 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Texture")
 	bool Resize(int32 NewWidth, int32 NewHeight);
+
+	/*
+	 * An IStereolabsCudaInterop object is responsible for managing shared resources between CUDA and the graphics API
+	 * Access to the interop object is needed by the texture batch to perform pre- and post- update synchronization.
+	 */
+	class IStereolabsCudaInterop* GetCudaInterop() const { return CudaInterop.Get(); }
 
 protected:
 	/*
@@ -118,12 +130,12 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FName Name;
 
-public:
-	/** Cuda resource used for copying from SDK to render API */
-	cudaGraphicsResource_t CudaResource;
-
-	bool bCudaInteropEnabled;
 protected:
+	bool bCudaInteropEnabled;
+
+	TSharedPtr<class IStereolabsCudaInterop> CudaInterop;
+	TSharedPtr<class IStereolabsCudaInteropSyncPoint> CudaSync;
+
 	/** Type of memory used to access the texture */
 	ESlMemoryType MemoryType;
 

@@ -4,6 +4,7 @@
 #include "StereolabsPrivatePCH.h"
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
+#include "StereolabsCudaInterop.h"
 
 DEFINE_LOG_CATEGORY(SlTextureBatch);
 
@@ -69,6 +70,8 @@ void USlTextureBatch::BeginDestroy()
 		GSlCameraProxy->OnGrabThreadEnabled.RemoveDynamic(this, &USlTextureBatch::SetAsyncRetrieveEnabled);
 	}
 
+	CudaSync.Reset();
+
 	Super::BeginDestroy();
 }
 
@@ -88,7 +91,20 @@ USlTextureBatch* USlTextureBatch::CreateTextureBatch(const FName& Name, ESlMemor
 	TextureBatch->Name = Name;
 
 	FString RHIName = GDynamicRHI->GetName();
-	TextureBatch->bCudaInteropEnabled = RHIName.Equals("D3D11") ? true : false; // for the moment, cuda interop is only available with dx11
+	if (RHIName.Equals("D3D11"))
+	{
+		TextureBatch->CudaSync = MakeShared<FStereolabsCudaInteropSyncPointD3D11>();
+		TextureBatch->bCudaInteropEnabled = true;
+	}
+	else if (RHIName.Equals("D3D12"))
+	{
+		TextureBatch->CudaSync = MakeShared<FStereolabsCudaInteropSyncPointD3D12>();
+		TextureBatch->bCudaInteropEnabled = true;
+	}
+	else
+	{
+		TextureBatch->bCudaInteropEnabled = false;
+	}
 
 	GSlCameraProxy->OnGrabThreadEnabled.AddDynamic(TextureBatch, &USlTextureBatch::SetAsyncRetrieveEnabled);
 
@@ -346,7 +362,7 @@ void USlGPUTextureBatch::AddTexture(USlTexture* Texture)
 
 	// Synchronize if async retrieve
 	SL_SCOPE_LOCK(Lock, RetrieveSection)
-		CudaResourcesPool.AddUnique(Texture->CudaResource);
+		CudaResources.AddUnique(Texture->GetCudaInterop());
 		TexturesPool.AddUnique(Texture);
 
 		SL_SCOPE_LOCK(SubLock, BuffersSection)
@@ -369,7 +385,7 @@ void USlGPUTextureBatch::RemoveTexture(USlTexture* Texture)
 
 	// Synchronize if async retrieve
 	SL_SCOPE_LOCK(Lock, RetrieveSection)
-		CudaResourcesPool.RemoveSingle(Texture->CudaResource);
+		CudaResources.RemoveSingle(Texture->GetCudaInterop());
 		TexturesPool.RemoveSingle(Texture);
 
 		SL_SCOPE_LOCK(SubLock, BuffersSection)
@@ -391,7 +407,7 @@ void USlGPUTextureBatch::Clear()
 
 	// Synchronize if async retrieve
 	SL_SCOPE_LOCK(Lock, RetrieveSection)
-		CudaResourcesPool.Empty();
+		CudaResources.Empty();
 		TexturesPool.Empty();
 
 		SL_SCOPE_LOCK(SubLock, BuffersSection)
@@ -462,13 +478,9 @@ bool USlGPUTextureBatch::Tick()
 		ENQUEUE_RENDER_COMMAND(TickGPUBatch)(
 			[this](FRHICommandListImmediate& RHICmdList)
 			{
-				int32 BatchSize = TexturesPool.Num();
-
 				if (bCudaInteropEnabled)
 				{
-					GSlCameraProxy->PushCudaContext();
-
-					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+					CudaSync->SyncCudaToGraphics(CudaResources, RHICmdList, nullptr);
 
 					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 					{
@@ -486,9 +498,7 @@ bool USlGPUTextureBatch::Tick()
 						}		
 					}
 
-					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
-
-					GSlCameraProxy->PopCudaContext();
+					CudaSync->SyncGraphicsToCuda(CudaResources, RHICmdList, nullptr);
 				}
 				else
 				{
@@ -531,22 +541,16 @@ bool USlGPUTextureBatch::Tick()
 		ENQUEUE_RENDER_COMMAND(TickGPUBatchAsyncRetrieve)(
 			[this, &Buffer = *Buffers[1]](FRHICommandListImmediate& RHICmdList)
 			{
-				int32 BatchSize = TexturesPool.Num();
-
 				if (bCudaInteropEnabled)
 				{
-					GSlCameraProxy->PushCudaContext();
-
-					cudaGraphicsMapResources(BatchSize, CudaResourcesPool.GetData(), 0);
+					CudaSync->SyncCudaToGraphics(CudaResources, RHICmdList, nullptr);
 
 					for (auto TextureIt = TexturesPool.CreateIterator(); TextureIt; ++TextureIt)
 					{
 						(*TextureIt)->UpdateTexture(Buffer.Mats[TextureIt.GetIndex()]);
 					}
 
-					cudaGraphicsUnmapResources(BatchSize, CudaResourcesPool.GetData(), 0);
-
-					GSlCameraProxy->PopCudaContext();
+					CudaSync->SyncGraphicsToCuda(CudaResources, RHICmdList, nullptr);
 				}
 				else
 				{

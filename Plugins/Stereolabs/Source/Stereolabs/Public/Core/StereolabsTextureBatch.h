@@ -137,6 +137,12 @@ protected:
 private:
 	/** True to automatically add this batch to the OnGrabThreadEnabled delegate */
 	bool bIsAutoAddToGrabDelegate;
+
+protected:
+	// Collection of all cuda resources that are required to be synchronized upon update
+	TArray<const IStereolabsCudaInterop*> CudaResources;
+	// Only created and used by GPU texture batches when cuda interop is available
+	TSharedPtr<IStereolabsCudaInteropSyncPoint> CudaSync;
 };
 
 
@@ -190,10 +196,6 @@ private:
 	 * @param bEnabled True to enable
 	 */
 	virtual void SetAsyncRetrieveEnabled(bool bEnabled) override;
-
-private:
-	/** Pool of CUDA resources associated with textures */
-	TArray<cudaGraphicsResource_t> CudaResourcesPool;
 };
 
 /*
