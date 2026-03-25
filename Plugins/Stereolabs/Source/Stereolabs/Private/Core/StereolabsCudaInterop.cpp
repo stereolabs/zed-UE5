@@ -22,14 +22,14 @@ THIRD_PARTY_INCLUDES_START
 THIRD_PARTY_INCLUDES_END
 
 
-struct ScopedCudaContext
+struct FScopedCudaContext
 {
-	ScopedCudaContext()
+	FScopedCudaContext()
 	{
 		if (GSlCameraProxy)
 			GSlCameraProxy->PushCudaContext();
 	}
-	~ScopedCudaContext()
+	~FScopedCudaContext()
 	{
 		if (GSlCameraProxy)
 			GSlCameraProxy->PopCudaContext();
@@ -56,7 +56,7 @@ void IStereolabsCudaInteropSyncPoint::SyncGraphicsToCuda(const IStereolabsCudaIn
 FStereolabsCudaInteropD3D11::FStereolabsCudaInteropD3D11(FTextureRHIRef TextureRHI)
 {
 	check(TextureRHI);
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	ID3D11Resource* D3D11NativeTexture = GetID3D11DynamicRHI()->RHIGetResource(TextureRHI);
 	cudaError CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11NativeTexture, cudaGraphicsMapFlagsNone);
@@ -65,19 +65,20 @@ FStereolabsCudaInteropD3D11::FStereolabsCudaInteropD3D11(FTextureRHIRef TextureR
 
 FStereolabsCudaInteropD3D11::~FStereolabsCudaInteropD3D11()
 {
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	if (CudaResource)
 	{
-		cudaGraphicsUnregisterResource(CudaResource);
+		cudaError CudaError = cudaGraphicsUnregisterResource(CudaResource);
+		check(CudaError == cudaSuccess);
 	}
 }
 
 void FStereolabsCudaInteropD3D11::UpdateTexture(void* Mat, FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	cudaArray_t Array = nullptr;
 	cudaError CudaError = cudaGraphicsSubResourceGetMappedArray(&Array, CudaResource, 0, 0);
@@ -95,9 +96,9 @@ void FStereolabsCudaInteropD3D11::UpdateTexture(void* Mat, FRHICommandListImmedi
 void FStereolabsCudaInteropSyncPointD3D11::SyncCudaToGraphics(TArrayView<const IStereolabsCudaInterop*> Resources,
 	FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	TArray<cudaGraphicsResource_t> CudaResources;
 	CudaResources.Reserve(Resources.Num());
@@ -113,9 +114,9 @@ void FStereolabsCudaInteropSyncPointD3D11::SyncCudaToGraphics(TArrayView<const I
 void FStereolabsCudaInteropSyncPointD3D11::SyncGraphicsToCuda(TArrayView<const IStereolabsCudaInterop*> Resources,
 	FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	TArray<cudaGraphicsResource_t> CudaResources;
 	CudaResources.Reserve(Resources.Num());
@@ -262,7 +263,7 @@ unsigned int getCudaMipmappedArrayFlagsForD3D12Resource(D3D12_SRV_DIMENSION d3d1
 FStereolabsCudaInteropD3D12::FStereolabsCudaInteropD3D12(FTextureRHIRef TextureRHI)
 	: OutputTexture(TextureRHI)
 {
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	check(TextureRHI);
 
@@ -331,23 +332,25 @@ FStereolabsCudaInteropD3D12::FStereolabsCudaInteropD3D12(FTextureRHIRef TextureR
 
 FStereolabsCudaInteropD3D12::~FStereolabsCudaInteropD3D12()
 {
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	if (CudaMipmappedArray)
 	{
-		cudaFreeMipmappedArray(CudaMipmappedArray);
+		cudaError_t CudaError = cudaFreeMipmappedArray(CudaMipmappedArray);
+		check(CudaError == cudaSuccess);
 	}
 	if (CudaExternalMemory)
 	{
-		cudaDestroyExternalMemory(CudaExternalMemory);
+		cudaError_t CudaError = cudaDestroyExternalMemory(CudaExternalMemory);
+		check(CudaError == cudaSuccess);
 	}
 }
 
 void FStereolabsCudaInteropD3D12::UpdateTexture(void* Mat, FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	cudaArray_t LevelArray = nullptr;
 	cudaError CudaError = cudaGetMipmappedArrayLevel(&LevelArray, CudaMipmappedArray, 0);
@@ -370,7 +373,7 @@ void FStereolabsCudaInteropD3D12::UpdateTexture(void* Mat, FRHICommandListImmedi
 
 FStereolabsCudaInteropSyncPointD3D12::FStereolabsCudaInteropSyncPointD3D12()
 {
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	ID3D12DynamicRHI* D3D12RHI = GetID3D12DynamicRHI();
 
@@ -400,15 +403,15 @@ FStereolabsCudaInteropSyncPointD3D12::FStereolabsCudaInteropSyncPointD3D12()
 
 FStereolabsCudaInteropSyncPointD3D12::~FStereolabsCudaInteropSyncPointD3D12()
 {
-	ScopedCudaContext CudaContext;
+	FScopedCudaContext CudaContext;
 
 	if (CudaExternalSemaphore)
 	{
-		cudaDestroyExternalSemaphore(CudaExternalSemaphore);
+		cudaError CudaError = cudaDestroyExternalSemaphore(CudaExternalSemaphore);
+		check(CudaError == cudaSuccess);
 	}
 	if (Fence)
 	{
-		Fence->Release();
 		Fence.SafeRelease();
 	}
 }
@@ -416,9 +419,9 @@ FStereolabsCudaInteropSyncPointD3D12::~FStereolabsCudaInteropSyncPointD3D12()
 void FStereolabsCudaInteropSyncPointD3D12::SyncCudaToGraphics(TArrayView<const IStereolabsCudaInterop*> Resources,
 	FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	// Signal fence
 	GetID3D12DynamicRHI()->RHIRunOnQueue(ED3D12RHIRunOnQueueType::Graphics, [this](ID3D12CommandQueue* Queue)
@@ -442,9 +445,9 @@ void FStereolabsCudaInteropSyncPointD3D12::SyncCudaToGraphics(TArrayView<const I
 void FStereolabsCudaInteropSyncPointD3D12::SyncGraphicsToCuda(TArrayView<const IStereolabsCudaInterop*> Resources,
 	FRHICommandListImmediate& RHICmdList, cudaStream_t Stream)
 {
-	ScopedCudaContext CudaContext;
-
 	check(IsInRenderingThread());
+
+	FScopedCudaContext CudaContext;
 
 	// Signal fence
 	cudaExternalSemaphoreSignalParams ExternalSemaphoreSignalParams = {};
