@@ -72,8 +72,8 @@ public:
 	virtual void UpdateTexture(void* Mat, FRHICommandListImmediate& RHICmdList, cudaStream_t Stream) override;
 
 private:
-	cudaExternalMemory_t CudaExternalMemory;
-	cudaMipmappedArray_t CudaMipmappedArray;
+	cudaExternalMemory_t CudaExternalMemory = nullptr;
+	cudaMipmappedArray_t CudaMipmappedArray = nullptr;
 
 	// On D3D12, to interop we need a texture created with TexCreate_Shared flag.
 	// This cannot be done with a UTexture2D - instead we need a staging texture
@@ -94,6 +94,6 @@ public:
 
 private:
 	TRefCountPtr<class ID3D12Fence> Fence;
-	cudaExternalSemaphore_t CudaExternalSemaphore;
+	cudaExternalSemaphore_t CudaExternalSemaphore = nullptr;
 	uint64 FenceValue;
 };
