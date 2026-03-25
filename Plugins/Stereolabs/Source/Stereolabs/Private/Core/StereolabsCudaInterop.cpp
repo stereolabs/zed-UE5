@@ -10,6 +10,7 @@
 #include "RHIDefinitions.h"
 
 #include "Utilities/StereolabsMatFunctionLibrary.h"
+#include "Core/StereolabsTexture.h"
 
 #include "Windows/AllowWindowsPlatformTypes.h" 
 #include <cuda_d3d11_interop.h>
@@ -21,6 +22,15 @@ THIRD_PARTY_INCLUDES_START
 #include <d3d12.h>
 THIRD_PARTY_INCLUDES_END
 
+
+static void CheckCudaError(cudaError_t result) {
+#if !UE_BUILD_SHIPPING
+	if (result) {
+		UE_LOG(SlTexture, Error, TEXT("CUDA error: %hs"), cudaGetErrorString(result));
+		check(false);
+	}
+#endif
+}
 
 struct FScopedCudaContext
 {
@@ -59,8 +69,7 @@ FStereolabsCudaInteropD3D11::FStereolabsCudaInteropD3D11(FTextureRHIRef TextureR
 	FScopedCudaContext CudaContext;
 
 	ID3D11Resource* D3D11NativeTexture = GetID3D11DynamicRHI()->RHIGetResource(TextureRHI);
-	cudaError CudaError = cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11NativeTexture, cudaGraphicsMapFlagsNone);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaGraphicsD3D11RegisterResource(&CudaResource, D3D11NativeTexture, cudaGraphicsMapFlagsNone));
 }
 
 FStereolabsCudaInteropD3D11::~FStereolabsCudaInteropD3D11()
@@ -69,8 +78,7 @@ FStereolabsCudaInteropD3D11::~FStereolabsCudaInteropD3D11()
 
 	if (CudaResource)
 	{
-		cudaError CudaError = cudaGraphicsUnregisterResource(CudaResource);
-		check(CudaError == cudaSuccess);
+		CheckCudaError(cudaGraphicsUnregisterResource(CudaResource));
 	}
 }
 
@@ -81,15 +89,12 @@ void FStereolabsCudaInteropD3D11::UpdateTexture(void* Mat, FRHICommandListImmedi
 	FScopedCudaContext CudaContext;
 
 	cudaArray_t Array = nullptr;
-	cudaError CudaError = cudaGraphicsSubResourceGetMappedArray(&Array, CudaResource, 0, 0);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaGraphicsSubResourceGetMappedArray(&Array, CudaResource, 0, 0));
 
-	SL_MEM MemType = static_cast<SL_MEM>(sl_mat_get_memory_type(Mat));
-	CudaError = cudaMemcpy2DToArrayAsync(
+	CheckCudaError(cudaMemcpy2DToArrayAsync(
 		Array, 0, 0, 
-	sl_mat_get_ptr(Mat, MemType), sl_mat_get_step_bytes(Mat, MemType), sl_mat_get_width_bytes(Mat), sl_mat_get_height(Mat),
-	cudaMemcpyDeviceToDevice, Stream);
-	check(CudaError == cudaSuccess);
+		sl_mat_get_ptr(Mat, SL_MEM_GPU), sl_mat_get_step_bytes(Mat, SL_MEM_GPU), sl_mat_get_width_bytes(Mat), sl_mat_get_height(Mat),
+		cudaMemcpyDeviceToDevice, Stream));
 }
 
 
@@ -107,8 +112,7 @@ void FStereolabsCudaInteropSyncPointD3D11::SyncCudaToGraphics(TArrayView<const I
 		CudaResources.Add(static_cast<const FStereolabsCudaInteropD3D11*>(Resource)->GetCudaResource());
 	}
 
-	cudaError CudaError = cudaGraphicsMapResources(Resources.Num(), CudaResources.GetData(), Stream);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaGraphicsMapResources(Resources.Num(), CudaResources.GetData(), Stream));
 }
 
 void FStereolabsCudaInteropSyncPointD3D11::SyncGraphicsToCuda(TArrayView<const IStereolabsCudaInterop*> Resources,
@@ -125,13 +129,13 @@ void FStereolabsCudaInteropSyncPointD3D11::SyncGraphicsToCuda(TArrayView<const I
 		CudaResources.Add(static_cast<const FStereolabsCudaInteropD3D11*>(Resource)->GetCudaResource());
 	}
 
-	cudaError CudaError = cudaGraphicsUnmapResources(Resources.Num(), CudaResources.GetData(), Stream);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaGraphicsUnmapResources(Resources.Num(), CudaResources.GetData(), Stream));
 }
 
 
 // D3D12 IMPLEMENTATION
 
+// From simpleD3D12 CUDA sample (https://github.com/NVIDIA/cuda-samples/tree/master/Samples/5_Domain_Specific/simpleD3D12)
 class FWindowsSecurityAttributes
 {
 protected:
@@ -186,6 +190,7 @@ public:
 };
 
 
+// Modified from CUDA documentation (https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/graphics-interop.html#mapping-mipmapped-arrays-onto-imported-memory-objects-dir3d-12-int)
 cudaChannelFormatDesc getCudaChannelFormatDescForDxgiFormat(DXGI_FORMAT dxgiFormat)
 {
 	cudaChannelFormatDesc d;
@@ -221,6 +226,7 @@ cudaChannelFormatDesc getCudaChannelFormatDescForDxgiFormat(DXGI_FORMAT dxgiForm
 	return d;
 }
 
+// From CUDA documentation (https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/graphics-interop.html#mapping-mipmapped-arrays-onto-imported-memory-objects-dir3d-12-int)
 cudaExtent getCudaExtentForD3D12Extent(UINT64 width, UINT height, UINT16 depthOrArraySize, D3D12_SRV_DIMENSION d3d12SRVDimension) {
 	cudaExtent e = { 0, 0, 0 };
 
@@ -238,6 +244,7 @@ cudaExtent getCudaExtentForD3D12Extent(UINT64 width, UINT height, UINT16 depthOr
 	return e;
 }
 
+// From CUDA documentation (https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/graphics-interop.html#mapping-mipmapped-arrays-onto-imported-memory-objects-dir3d-12-int)
 unsigned int getCudaMipmappedArrayFlagsForD3D12Resource(D3D12_SRV_DIMENSION d3d12SRVDimension, D3D12_RESOURCE_FLAGS d3d12ResourceFlags, bool allowSurfaceLoadStore) {
 	unsigned int flags = 0;
 
@@ -312,8 +319,7 @@ FStereolabsCudaInteropD3D12::FStereolabsCudaInteropD3D12(FTextureRHIRef TextureR
 	ExternalMemoryDesc.size = ResourceAllocationInfo.SizeInBytes;
 	ExternalMemoryDesc.flags = cudaExternalMemoryDedicated;
 
-	cudaError_t CudaError = cudaImportExternalMemory(&CudaExternalMemory, &ExternalMemoryDesc);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaImportExternalMemory(&CudaExternalMemory, &ExternalMemoryDesc));
 
 	cudaExternalMemoryMipmappedArrayDesc MipmappedArrayDesc = {};
 	memset(&MipmappedArrayDesc, 0, sizeof(MipmappedArrayDesc));
@@ -324,8 +330,7 @@ FStereolabsCudaInteropD3D12::FStereolabsCudaInteropD3D12(FTextureRHIRef TextureR
 	MipmappedArrayDesc.flags = getCudaMipmappedArrayFlagsForD3D12Resource(D3D12_SRV_DIMENSION_TEXTURE2D, ResourceDesc.Flags, false);
 	MipmappedArrayDesc.numLevels = 1;
 
-	CudaError = cudaExternalMemoryGetMappedMipmappedArray(&CudaMipmappedArray, CudaExternalMemory, &MipmappedArrayDesc);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaExternalMemoryGetMappedMipmappedArray(&CudaMipmappedArray, CudaExternalMemory, &MipmappedArrayDesc));
 
 	CloseHandle(SharedHandle);
 }
@@ -336,13 +341,11 @@ FStereolabsCudaInteropD3D12::~FStereolabsCudaInteropD3D12()
 
 	if (CudaMipmappedArray)
 	{
-		cudaError_t CudaError = cudaFreeMipmappedArray(CudaMipmappedArray);
-		check(CudaError == cudaSuccess);
+		CheckCudaError(cudaFreeMipmappedArray(CudaMipmappedArray));
 	}
 	if (CudaExternalMemory)
 	{
-		cudaError_t CudaError = cudaDestroyExternalMemory(CudaExternalMemory);
-		check(CudaError == cudaSuccess);
+		CheckCudaError(cudaDestroyExternalMemory(CudaExternalMemory));
 	}
 }
 
@@ -353,15 +356,12 @@ void FStereolabsCudaInteropD3D12::UpdateTexture(void* Mat, FRHICommandListImmedi
 	FScopedCudaContext CudaContext;
 
 	cudaArray_t LevelArray = nullptr;
-	cudaError CudaError = cudaGetMipmappedArrayLevel(&LevelArray, CudaMipmappedArray, 0);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaGetMipmappedArrayLevel(&LevelArray, CudaMipmappedArray, 0));
 
-	SL_MEM MemType = static_cast<SL_MEM>(sl_mat_get_memory_type(Mat));
-	CudaError = cudaMemcpy2DToArrayAsync(
+	CheckCudaError(cudaMemcpy2DToArrayAsync(
 		LevelArray, 0, 0,
-		sl_mat_get_ptr(Mat, MemType), sl_mat_get_step_bytes(Mat, MemType), sl_mat_get_width_bytes(Mat), sl_mat_get_height(Mat),
-		cudaMemcpyDeviceToDevice, Stream);
-	check(CudaError == cudaSuccess);
+		sl_mat_get_ptr(Mat, SL_MEM_GPU), sl_mat_get_step_bytes(Mat, SL_MEM_GPU), sl_mat_get_width_bytes(Mat), sl_mat_get_height(Mat),
+		cudaMemcpyDeviceToDevice, Stream));
 
 	if (!bOutputTextureSupportsInterop)
 	{
@@ -385,15 +385,13 @@ FStereolabsCudaInteropSyncPointD3D12::FStereolabsCudaInteropSyncPointD3D12()
 	D3D12RHI->RHIGetDevice(0)->CreateSharedHandle(Fence.GetReference(), &WindowsSecurityAttributes, GENERIC_ALL, nullptr, &SharedHandle);
 
 	cudaExternalSemaphoreHandleDesc ExternalSemaphoreHandleDesc = {};
-
 	memset(&ExternalSemaphoreHandleDesc, 0, sizeof(ExternalSemaphoreHandleDesc));
 
 	ExternalSemaphoreHandleDesc.type = cudaExternalSemaphoreHandleTypeD3D12Fence;
 	ExternalSemaphoreHandleDesc.handle.win32.handle = SharedHandle;
 	ExternalSemaphoreHandleDesc.flags = 0;
 
-	cudaError CudaError = cudaImportExternalSemaphore(&CudaExternalSemaphore, &ExternalSemaphoreHandleDesc);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaImportExternalSemaphore(&CudaExternalSemaphore, &ExternalSemaphoreHandleDesc));
 
 	CloseHandle(SharedHandle);
 
@@ -407,8 +405,7 @@ FStereolabsCudaInteropSyncPointD3D12::~FStereolabsCudaInteropSyncPointD3D12()
 
 	if (CudaExternalSemaphore)
 	{
-		cudaError CudaError = cudaDestroyExternalSemaphore(CudaExternalSemaphore);
-		check(CudaError == cudaSuccess);
+		CheckCudaError(cudaDestroyExternalSemaphore(CudaExternalSemaphore));
 	}
 	if (Fence)
 	{
@@ -436,8 +433,7 @@ void FStereolabsCudaInteropSyncPointD3D12::SyncCudaToGraphics(TArrayView<const I
 	ExternalSemaphoreWaitParams.params.fence.value = FenceValue;
 	ExternalSemaphoreWaitParams.flags = 0;
 
-	cudaError CudaError = cudaWaitExternalSemaphoresAsync(&CudaExternalSemaphore, &ExternalSemaphoreWaitParams, 1, Stream);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaWaitExternalSemaphoresAsync(&CudaExternalSemaphore, &ExternalSemaphoreWaitParams, 1, Stream));
 
 	FenceValue++;
 }
@@ -456,8 +452,7 @@ void FStereolabsCudaInteropSyncPointD3D12::SyncGraphicsToCuda(TArrayView<const I
 	ExternalSemaphoreSignalParams.params.fence.value = FenceValue;
 	ExternalSemaphoreSignalParams.flags = 0;
 
-	cudaError CudaError = cudaSignalExternalSemaphoresAsync(&CudaExternalSemaphore, &ExternalSemaphoreSignalParams, 1, Stream);
-	check(CudaError == cudaSuccess);
+	CheckCudaError(cudaSignalExternalSemaphoresAsync(&CudaExternalSemaphore, &ExternalSemaphoreSignalParams, 1, Stream));
 
 	// Make graphics queue wait on signalled fence
 	GetID3D12DynamicRHI()->RHIRunOnQueue(ED3D12RHIRunOnQueueType::Graphics, [this](ID3D12CommandQueue* Queue)
