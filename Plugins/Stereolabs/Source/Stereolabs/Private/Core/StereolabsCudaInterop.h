@@ -51,7 +51,7 @@ public:
 	cudaGraphicsResource_t GetCudaResource() const { return CudaResource; }
 
 private:
-	cudaGraphicsResource_t CudaResource;
+	cudaGraphicsResource_t CudaResource = nullptr;
 
 };
 
