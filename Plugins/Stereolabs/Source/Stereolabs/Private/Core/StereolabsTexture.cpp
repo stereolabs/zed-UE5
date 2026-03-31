@@ -150,11 +150,12 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 	Height = NewHeight;
 	if (MemoryType == ESlMemoryType::MT_GPU && Texture)
 	{
+        FlushRenderingCommands();
 		TextureCompressionSettings Compression = Texture->CompressionSettings;
 
 		Texture->ConditionalBeginDestroy();
 		Texture = nullptr;
-
+CudaInterop.Reset();
 		CudaInterop.Reset();
 
 		InitResources(TextureFormat, Compression);
