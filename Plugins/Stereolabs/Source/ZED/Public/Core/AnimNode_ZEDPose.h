@@ -6,7 +6,7 @@
 
 #include "CoreMinimal.h"
 #include "Stereolabs/Public/Core/StereolabsBaseTypes.h"
-
+#include "Components/SkeletalMeshComponent.h"
 #include <deque>
 #include <algorithm>
 

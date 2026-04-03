@@ -155,8 +155,8 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 
 		Texture->ConditionalBeginDestroy();
 		Texture = nullptr;
-CudaInterop.Reset();
 		CudaInterop.Reset();
+		CudaSync.Reset();
 
 		InitResources(TextureFormat, Compression);
 	}

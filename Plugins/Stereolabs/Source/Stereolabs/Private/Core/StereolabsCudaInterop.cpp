@@ -103,6 +103,10 @@ void FStereolabsCudaInteropSyncPointD3D11::SyncCudaToGraphics(TArrayView<const I
 {
 	check(IsInRenderingThread());
 
+	// Flush pending RHI commands so D3D11 finishes all GPU work on these resources
+	// before CUDA takes ownership via map.
+	RHICmdList.ImmediateFlush(EImmediateFlushType::FlushRHIThread);
+
 	FScopedCudaContext CudaContext;
 
 	TArray<cudaGraphicsResource_t> CudaResources;
@@ -127,6 +131,12 @@ void FStereolabsCudaInteropSyncPointD3D11::SyncGraphicsToCuda(TArrayView<const I
 	for (const IStereolabsCudaInterop* Resource : Resources)
 	{
 		CudaResources.Add(static_cast<const FStereolabsCudaInteropD3D11*>(Resource)->GetCudaResource());
+	}
+
+	// Ensure any CUDA work on the default stream is complete before unmapping
+	if (!Stream)
+	{
+		CheckCudaError(cudaStreamSynchronize(nullptr));
 	}
 
 	CheckCudaError(cudaGraphicsUnmapResources(Resources.Num(), CudaResources.GetData(), Stream));
