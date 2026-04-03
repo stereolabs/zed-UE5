@@ -702,7 +702,7 @@ void AZEDPlayerController::UpdateHUDCheckOpeningZed_Implementation()
 	ESlErrorCode OpenErrorCode = GSlCameraProxy->GetOpenCameraErrorCode();
 
 	sl::ERROR_CODE error_code = sl::unreal::ToSlType(OpenErrorCode);
-	if (error_code > sl::ERROR_CODE::SUCCESS)
+	if (error_code > sl::ERROR_CODE::SUCCESS && error_code != sl::ERROR_CODE::LAST)
 	{
 		ZedPawn->ZedLoadingWidget->SetVisibility(false);
 		ZedPawn->ZedErrorWidget->SetVisibility(true);

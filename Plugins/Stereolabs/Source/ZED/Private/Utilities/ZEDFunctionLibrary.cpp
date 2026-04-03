@@ -26,7 +26,7 @@ AZEDPlayerController* UZEDFunctionLibrary::GetPlayerController(UObject* WorldCon
 	}
 #endif
 
-	return static_cast<AZEDPlayerController*>(PlayerController);
+	return Cast<AZEDPlayerController>(PlayerController);
 }
 
 AZEDCamera* UZEDFunctionLibrary::GetCameraActor(UObject* WorldContextObject)
