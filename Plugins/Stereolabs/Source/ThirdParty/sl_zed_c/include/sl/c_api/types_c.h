@@ -476,7 +476,8 @@ enum SL_ERROR_CODE {
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA, /**< The module you try to use is not compatible with your camera \ref SL_MODEL. \note \ref SL_MODEL_ZED does not has an IMU and does not support the AI modules.*/
 	SL_ERROR_CODE_MOTION_SENSORS_REQUIRED, /**< The module needs the sensors to be enabled (see SL_InitParameters.sensors_required). */
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION, /**< The module needs a newer version of CUDA. */
-	SL_ERROR_CODE_DRIVER_FAILURE  /**< The drivers initialization has failed. When using gmsl cameras, try restarting with sudo systemctl restart zed_x_daemon.service */
+	SL_ERROR_CODE_DRIVER_FAILURE, /**< The drivers initialization has failed. When using gmsl cameras, try restarting with sudo systemctl restart zed_x_daemon.service */
+	SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH = 35 /**< The camera configuration exceeds available PHY CSI bandwidth (GMSL). Reduce resolution/FPS or adjust hardware configuration. */
 };
 
 /**
@@ -495,7 +496,9 @@ enum SL_RESOLUTION {
 	SL_RESOLUTION_HD720, /**< 1280*720 (x2) \n Available FPS: 15, 30, 60*/
 	SL_RESOLUTION_SVGA, /**< 960*600 (x2) \n Available FPS: 15, 30, 60, 120*/
 	SL_RESOLUTION_VGA, /**< 672*376 (x2) \n Available FPS: 15, 30, 60, 100*/
-	SL_RESOLUTION_AUTO, /**< Select the resolution compatible with the camera: <ul><li>ZED X/X Mini: \ref SL_RESOLUTION_HD1200</li><li>other cameras: \ref SL_RESOLUTION_HD720</li></ul>*/
+	SL_RESOLUTION_XVGA, /**< 960x768 (x2) \n Available FPS: 30 \n Only supported with ZED-X HDR lineup (One/Stereo) */
+	SL_RESOLUTION_TXGA, /**< 640x512 (x2) \n Available FPS: 30 \n Only supported with ZED-X HDR lineup (One/Stereo) */
+	SL_RESOLUTION_AUTO = 11, /**< Select the resolution compatible with the camera: <ul><li>ZED X/X Mini: \ref SL_RESOLUTION_HD1200</li><li>other cameras: \ref SL_RESOLUTION_HD720</li></ul>*/
 };
 
 /**
@@ -544,6 +547,7 @@ enum SL_MODEL {
 	SL_MODEL_ZED_X_HDR, /**< ZED X HDR camera model */
 	SL_MODEL_ZED_X_HDR_MINI, /**< ZED X HDR Mini camera model */
 	SL_MODEL_ZED_X_HDR_MAX, /**< ZED X HDR Wide camera model */
+	SL_MODEL_ZED_X_NANO = 9, /**< ZED X Nano (18mm baseline) camera model with dual global shutter AR0234 sensor */
 	SL_MODEL_VIRTUAL_ZED_X = 11, /**< Virtual ZED X generated from 2 ZED X One */
 	SL_MODEL_ZED_XONE_GS = 30, /**< ZED X One with global shutter AR0234 sensor */
 	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED X One with 4K rolling shutter IMX678 sensor */
@@ -664,11 +668,74 @@ enum SL_VIDEO_SETTINGS
 	SL_VIDEO_SETTINGS_AUTO_DIGITAL_GAIN_RANGE, /**< Range of digital ISP gain in automatic control.\n Used with sl_get_camera_settings_min_max().\n Min/max range between max range defined in DTS.\n By default: [1 - 256]. \note Only available for ZED X/X Mini cameras. */
 	SL_VIDEO_SETTINGS_EXPOSURE_COMPENSATION, /**< Exposure-target compensation made after auto exposure.\n Reduces the overall illumination target by factor of F-stops.\n Affected value should be between 0 and 100 (mapped between [-2.0,2.0]).\n Default value is 50, i.e. no compensation applied. \note Only available for ZED X/X Mini cameras.*/
 	SL_VIDEO_SETTINGS_DENOISING, /**< Level of denoising applied on both left and right images.\n Affected value should be between 0 and 100.\n Default value is 50. \note Only available for ZED X/X Mini cameras.*/
-	SL_VIDEO_SETTINGS_SCENE_ILLUMINANCE, /** Level of illuminance of the scene. \n Can be used to determine the level of light in the scene and adjust settings accordingly. \note Read-only control. \n Available for ZED-X/Xmini cameras. \n Value provided in [0.1x]Lux for ZED-X / ZED-X Mini / ZED-XOne GS and ZED-XOne UHD cameras.*/
+	SL_VIDEO_SETTINGS_SCENE_ILLUMINANCE, /**< Level of illuminance of the scene. \n Can be used to determine the level of light in the scene and adjust settings accordingly. \note Read-only control. \n Available for ZED-X/Xmini cameras. \n Value provided in [0.1x]Lux for ZED-X / ZED-X Mini / ZED-XOne GS and ZED-XOne UHD cameras.*/
+	SL_VIDEO_SETTINGS_AE_ANTIBANDING, /**< AE anti-banding mode. \n Affected value should be between 0 and 3. \n 0: OFF, 1: AUTO, 2: 50Hz, 3: 60Hz. \note Only available for ZED X/X Mini cameras.*/
 	SL_VIDEO_SETTINGS_LAST
 };
 
 const int SL_VIDEO_SETTINGS_VALUE_AUTO = -1;
+
+/**
+\brief Lists the available encoding presets for SVO recording.
+ */
+enum SL_SVO_ENCODING_PRESET {
+	SL_SVO_ENCODING_PRESET_DEFAULT,   /**< Encoder default. Maps to NVENC P4 / V4L2 default. */
+	SL_SVO_ENCODING_PRESET_ULTRAFAST, /**< Fastest encoding, lowest quality. Maps to NVENC P1 / V4L2 ULTRAFAST. */
+	SL_SVO_ENCODING_PRESET_FAST,      /**< Fast encoding. Maps to NVENC P2 / V4L2 FAST. */
+	SL_SVO_ENCODING_PRESET_MEDIUM,    /**< Balanced speed/quality. Maps to NVENC P3 / V4L2 MEDIUM. */
+	SL_SVO_ENCODING_PRESET_SLOW,      /**< Slow encoding, higher quality. Maps to NVENC P5 / V4L2 SLOW. */
+	SL_SVO_ENCODING_PRESET_LAST
+};
+
+/**
+\brief Selects the clock source used for all timestamps produced by the ZED SDK.
+ */
+enum SL_TIMESTAMP_CLOCK {
+	SL_TIMESTAMP_CLOCK_SYSTEM_CLOCK,   /**< Timestamps use the system (wall-clock) time. Timestamps represent nanoseconds since Unix epoch. \warning Affected by NTP/PTP adjustments. */
+	SL_TIMESTAMP_CLOCK_MONOTONIC_CLOCK, /**< Timestamps use a monotonic clock (CLOCK_MONOTONIC). Immune to system clock step adjustments. */
+	SL_TIMESTAMP_CLOCK_LAST
+};
+
+/**
+\brief Controls how voxel size adapts with depth in sl_retrieve_voxel_measure.
+ */
+enum SL_VOXELIZATION_MODE {
+	SL_VOXELIZATION_MODE_FIXED,              /**< No adaptation. voxel_size is used uniformly everywhere. */
+	SL_VOXELIZATION_MODE_STEREO_UNCERTAINTY, /**< Quadratic growth matching stereo depth noise: Z²/(f·B). Voxels grow larger at distance. */
+	SL_VOXELIZATION_MODE_LINEAR,             /**< Linear growth with depth Z. Suits sensors with linearly increasing noise (e.g. lidar, ToF). */
+	SL_VOXELIZATION_MODE_LAST
+};
+
+/**
+\brief Parameters controlling voxel decimation in sl_retrieve_voxel_measure.
+ */
+struct SL_VoxelMeasureParameters {
+	/**
+	\brief Voxel grid cell size in coordinate_units defined in SL_InitParameters.
+	If <= 0, a 100 mm equivalent default is used. Clamped internally to [5 mm equivalent, max_depth_range].
+	 */
+	float voxel_size;
+
+	/**
+	\brief Controls output point positions within each voxel.
+	If true, output point positions are the centroid of all points in each voxel.
+	If false, output positions are snapped to the voxel grid center.
+	 */
+	bool centroid;
+
+	/**
+	\brief How voxel size adapts with depth.
+	Default: SL_VOXELIZATION_MODE_STEREO_UNCERTAINTY
+	 */
+	enum SL_VOXELIZATION_MODE resolution_mode;
+
+	/**
+	\brief Scale factor for depth-adaptive voxel growth.
+	Typical range: [0.01, 1.0]. Clamped internally to [0.01, 3.0].
+	\note Only used when resolution_mode is not SL_VOXELIZATION_MODE_FIXED.
+	 */
+	float resolution_scale;
+};
 
 /**
 \brief Lists retrievable measures.
@@ -703,6 +770,8 @@ enum SL_VIEW {
 	SL_VIEW_RIGHT, /**<  Right BGRA image. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 */
 	SL_VIEW_LEFT_GRAY, /**< Left gray image. Each pixel contains 1 unsigned char.\n Type: \ref SL_MAT_TYPE_U8_C1 */
 	SL_VIEW_RIGHT_GRAY, /**< Right gray image. Each pixel contains 1 unsigned char.\n Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_LEFT_NV12_UNRECTIFIED,  /**< Left NV12 unrectified image. */
+	SL_VIEW_RIGHT_NV12_UNRECTIFIED, /**< Right NV12 unrectified image. */
 	SL_VIEW_LEFT_UNRECTIFIED, /**< Left BGRA unrectified image. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 */
 	SL_VIEW_RIGHT_UNRECTIFIED, /**< Right BGRA unrectified image. Each pixel contains 4 unsigned char (B, G, R, A).\n Type: \ref SL_MAT_TYPE_U8_C4 */
 	SL_VIEW_LEFT_UNRECTIFIED_GRAY, /**< Left gray unrectified image. Each pixel contains 1 unsigned char.\n Type: \ref SL_MAT_TYPE_U8_C1 */
@@ -780,10 +849,15 @@ enum SL_ODOMETRY_STATUS
 \brief Report the status of current map tracking.
  */
 enum SL_SPATIAL_MEMORY_STATUS {
-	SL_MAP_TRACKING_STATUS_OK = 0,              /**< The positional tracking module is operating normally. */
-	SL_MAP_TRACKING_STATUS_LOOP_CLOSED = 1,     /**< The positional tracking module detected a loop and corrected its position. */
-	SL_MAP_TRACKING_STATUS_SEARCHING = 2,       /**< The positional tracking module is searching for recognizable areas in the global map to relocate. */
-	SL_MAP_TRACKING_STATUS_OFF = 3				/**< Spatial memory is disabled */
+	SL_MAP_TRACKING_STATUS_OK = 0,              /**< \deprecated This state is no longer in use for GEN_3. */
+	SL_MAP_TRACKING_STATUS_LOOP_CLOSED = 1,     /**< Found a loop closure, relocalized within the area map or corrected after a sudden localization loss. */
+	SL_MAP_TRACKING_STATUS_SEARCHING = 2,       /**< \deprecated This state is no longer in use for GEN_3. */
+	SL_MAP_TRACKING_STATUS_OFF = 3,             /**< Spatial memory is disabled. */
+	SL_MAP_TRACKING_STATUS_INITIALIZING = 4,    /**< Camera has not yet acquired enough memory or found its first loop closure. Keep moving the camera. */
+	SL_MAP_TRACKING_STATUS_KNOWN_MAP = 5,       /**< Camera is localized within the loaded area map. */
+	SL_MAP_TRACKING_STATUS_MAP_UPDATE = 6,      /**< Camera is mapping or getting out of area map bounds. */
+	SL_MAP_TRACKING_STATUS_LOST = 7,            /**< Localization cannot operate anymore (camera obstructed or sudden jumps). */
+	SL_MAP_TRACKING_STATUS_NOT_ENOUGH_MEMORY_FOR_TRACKING = 8 /**< Not enough memory to continue tracking. */
 };
 
 /**
@@ -1446,9 +1520,9 @@ struct SL_InitParameters
 	\note Small resolutions offer higher framerate and lower computation time.
 	\note In most situations, \ref SL_RESOLUTION_HD720 at 60 FPS is the best balance between image quality and framerate.
 
-	Default: <ul>
-	<li>ZED X/X Mini: \ref SL_RESOLUTION_HD1200</li>
-	<li>other cameras: \ref SL_RESOLUTION_HD720</li></ul>
+	Default: \ref SL_RESOLUTION_AUTO <ul>
+	<li>Resolves to \ref SL_RESOLUTION_HD1200 for ZED X/X Mini</li>
+	<li>Resolves to \ref SL_RESOLUTION_HD720 for other cameras</li></ul>
 	\note Available resolutions are listed here: \ref SL_RESOLUTION.
 	 */
 	enum  SL_RESOLUTION resolution;
@@ -1666,7 +1740,7 @@ struct SL_InitParameters
 	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
 	 If an issue is found, the grab function will output a warning as sl_ERROR_CODE_CORRUPTED_FRAME.
 	 This version doesn't detect frame tearing currently.
-	 \n default: disabled
+	 \n default: enabled
 	 */
 	bool enable_image_validity_check;
 
@@ -1683,6 +1757,14 @@ struct SL_InitParameters
 	 * - maximum_working_resolution = sl::Resolution(4, 4) -> (image_width/4) x (image_height/4) = quarter size
 	 */
 	struct SL_Resolution maximum_working_resolution;
+
+	/**
+	\brief Decryption key required to open an SVO file that was recorded with encryption.
+
+	Leave empty (all zeros) if the SVO file is not encrypted.
+	\note Must match the \ref SL_RecordingParameters::encryption_key used during recording.
+	 */
+	unsigned char svo_decryption_key[256];
 };
 
 /**
@@ -2129,7 +2211,7 @@ struct SL_PositionalTrackingParameters
 	\brief Positional tracking mode used.
 	
 	Can be used to improve accuracy in some types of scene at the cost of longer runtime.
-	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_1
+	\n Default: \ref SL_POSITIONAL_TRACKING_MODE_GEN_3
 	*/
 	enum SL_POSITIONAL_TRACKING_MODE mode;
 
@@ -2317,6 +2399,22 @@ struct SL_RecordingParameters {
 	\note \ref compression_mode, \ref target_framerate and \ref bitrate will be ignored in this mode.
 	 */
 	bool transcode_streaming_input;
+
+	/**
+	\brief Encryption key used to protect the SVO file.
+
+	Leave empty (all zeros) to record without encryption.
+	\note The same key must be provided in \ref SL_InitParameters::svo_decryption_key for playback.
+	 */
+	unsigned char encryption_key[256];
+
+	/**
+	\brief Encoding preset for H264/H265 compression.
+
+	Controls the tradeoff between encoding speed and quality.
+	Default: \ref SL_SVO_ENCODING_PRESET_DEFAULT
+	 */
+	enum SL_SVO_ENCODING_PRESET encoding_preset;
 };
 
 /**

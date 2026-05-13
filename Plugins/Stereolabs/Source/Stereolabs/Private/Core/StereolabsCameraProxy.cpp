@@ -242,7 +242,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 {
 	SL_CAMERA_PROXY_LOG("Initializing");
 
-	SL_InitParameters sl_init_parameters;
+	SL_InitParameters sl_init_parameters = {};
 
 	sl_init_parameters.input_type = (SL_INPUT_TYPE)InitParameters.InputType;
 	sl_init_parameters.camera_device_id = CameraID;
@@ -268,6 +268,13 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.enable_image_validity_check = InitParameters.bEnableImageValidityCheck;
 	sl_init_parameters.maximum_working_resolution.width = InitParameters.MaximumWorkingResolution.X;
 	sl_init_parameters.maximum_working_resolution.height = InitParameters.MaximumWorkingResolution.Y;
+
+	if (!InitParameters.SvoDecryptionKey.IsEmpty())
+	{
+		const auto KeyAnsi = StringCast<ANSICHAR>(*InitParameters.SvoDecryptionKey);
+		const SIZE_T KeyLen = FMath::Min<SIZE_T>(KeyAnsi.Length(), sizeof(sl_init_parameters.svo_decryption_key) - 1);
+		FMemory::Memcpy(sl_init_parameters.svo_decryption_key, KeyAnsi.Get(), KeyLen);
+	}
 
 	InputType = (SL_INPUT_TYPE)InitParameters.InputType;
 	bool IsCameraCreated = sl_create_camera(CameraID);
@@ -1760,8 +1767,16 @@ void USlCameraProxy::BP_RemoveFromGrabDelegate(FGrabDelegateHandle GrabDelegateH
 ESlErrorCode USlCameraProxy::EnableSVORecording(FSlRecordingParameters RecordingParameters)
 {
 	SL_SCOPE_LOCK(Lock, GrabSection)
+		unsigned char EncryptionKey[256] = {};
+		if (!RecordingParameters.EncryptionKey.IsEmpty())
+		{
+			const auto KeyAnsi = StringCast<ANSICHAR>(*RecordingParameters.EncryptionKey);
+			const SIZE_T KeyLen = FMath::Min<SIZE_T>(KeyAnsi.Length(), sizeof(EncryptionKey) - 1);
+			FMemory::Memcpy(EncryptionKey, KeyAnsi.Get(), KeyLen);
+		}
 		SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_enable_recording(CameraID, TCHAR_TO_UTF8(*RecordingParameters.VideoFilename), (SL_SVO_COMPRESSION_MODE)RecordingParameters.CompressionMode,
-			RecordingParameters.Bitrate, RecordingParameters.TargetFramerate, RecordingParameters.bTranscodeStreamingInput);
+			RecordingParameters.Bitrate, RecordingParameters.TargetFramerate, RecordingParameters.bTranscodeStreamingInput,
+			EncryptionKey, (SL_SVO_ENCODING_PRESET)RecordingParameters.EncodingPreset);
 
 		SL_SCOPE_LOCK(SubLock, SVOSection)
 			bSVORecordingEnabled = (ErrorCode == SL_ERROR_CODE_SUCCESS);
