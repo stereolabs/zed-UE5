@@ -52,6 +52,13 @@ extern "C" {
     INTERFACE_API bool sl_create_camera(int camera_id);
 
     /**
+    \brief Returns an opaque pointer to the ZEDController instance for the given camera.
+    \param camera_id : Id of the camera.
+    \return Pointer to the ZEDController, or nullptr if the camera has not been created yet.
+    */
+    INTERFACE_API void* sl_get_camera_handle(int camera_id);
+
+    /**
     \brief Reports if the camera has been successfully opened.
     \param camera_id : Id of the camera.
     \return true if the ZED camera is already setup, otherwise false.
@@ -74,7 +81,8 @@ extern "C" {
     
     \return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
-    INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, int stream_port, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, 
+        int stream_port, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
     /**
 	\brief Opens the ZED camera from the provided SL_InitParameters using its  camera ID.
@@ -97,7 +105,8 @@ extern "C" {
 	\param opencv_calib_path[optional] : openCV calibration file.
 	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
-	INTERFACE_API int sl_open_camera_from_serial_number(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+	INTERFACE_API int sl_open_camera_from_serial_number(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number, const char* output_file, 
+        const char* opt_settings_path, const char* opencv_calib_path);
 
     /**
 	\brief Opens the ZED camera from the provided SL_InitParameters using an SVO file.
@@ -282,10 +291,24 @@ extern "C" {
     \param bitrate : overrides default bitrate of the SVO file, in KBits/s. Only works if \ref SL_SVO_COMPRESSION_MODE is H264 or H265.
     \param target_fps : Defines the target framerate for the recording module.
     \param transcode : In case of streaming input, if set to false, it will avoid decoding/re-encoding and convert directly streaming input to a SVO file.
-               This saves a encoding session and can be especially useful on NVIDIA Geforce cards where the number of encoding session is limited.
+               This saves a encoding session and can be especially useful on NVIDIA Geforce cards where the number of encoding session is limited. \param encryption_key : An optional 256-bytes array to encrypt the SVO file. If the array is not
+    empty, the generated SVO file will be encrypted and will require the same key to be read.
+    \param encryption_key : Optional encryption key or passphrase to protect the SVO file.
+    \param encoding_preset : Encoding preset for the hardware encoder.
     \return An \ref SL_ERROR_CODE that defines if SVO file was successfully created and can be filled with images.
      */
-    INTERFACE_API int sl_enable_recording(int camera_id, const char* filename, enum SL_SVO_COMPRESSION_MODE compression_mode, unsigned int bitrate, int target_fps, bool transcode);
+    INTERFACE_API int sl_enable_recording(int camera_id, const char* filename, enum SL_SVO_COMPRESSION_MODE compression_mode, unsigned int bitrate, int target_fps, bool transcode,
+        unsigned char encryption_key[256], enum SL_SVO_ENCODING_PRESET encoding_preset);
+
+    /**
+    \brief Creates a file for recording the ZED's output, accepting the full \ref SL_RecordingParameters structure.
+
+    Supports all recording options including encryption and encoding preset (added in SDK 5.3.0).
+    \param camera_id : Id of the camera instance.
+    \param recording_parameters : A structure containing all the recording parameters.
+    \return An \ref SL_ERROR_CODE that defines if the SVO file was successfully created.
+     */
+    INTERFACE_API int sl_enable_recording_from_params(int camera_id, struct SL_RecordingParameters* recording_parameters);
 
     /**
     \brief Get the recording information.
@@ -580,6 +603,30 @@ extern "C" {
     INTERFACE_API unsigned long long sl_get_current_timestamp(int camera_id);
 
     /**
+    \brief Sets the clock source used for all timestamps produced by the ZED SDK.
+    \param clock : The desired \ref SL_TIMESTAMP_CLOCK.
+     */
+    INTERFACE_API void sl_set_timestamp_clock(enum SL_TIMESTAMP_CLOCK clock);
+
+    /**
+    \brief Returns the active clock source used for timestamps.
+    \return The active \ref SL_TIMESTAMP_CLOCK.
+     */
+    INTERFACE_API enum SL_TIMESTAMP_CLOCK sl_get_timestamp_clock();
+
+    /**
+    \brief Sets an upper bound on the step size of system-clock adjustments applied to SDK timestamps.
+    \param limit_ms : Maximum allowed clock step in milliseconds.
+     */
+    INTERFACE_API void sl_set_max_system_clock_step_ms(float limit_ms);
+
+    /**
+    \brief Returns the current maximum system clock step limit in milliseconds.
+    \return The current limit in milliseconds.
+     */
+    INTERFACE_API float sl_get_max_system_clock_step_ms();
+
+    /**
     \brief Returns the number of frames in the SVO file.
     \param camera_id : Id of the camera instance.
     \return The total number of frames in the SVO file. -1 if the SDK is not reading a SVO.
@@ -738,7 +785,6 @@ extern "C" {
     \return The number of frames dropped since the first sl_grab() call.
      */
     INTERFACE_API unsigned int sl_get_frame_dropped_count(int camera_id);
-
 
     /**
 	* \brief Gets the current status of the camera.
@@ -1228,14 +1274,30 @@ extern "C" {
     \param measure_ptr : Pointer to the measure texture.
     \param type : Measure type (depth, confidence, xyz, etc). See \ref SL_MEASURE.
     \param mem : Whether the measure should be on CPU or GPU memory. See \ref SL_MEM.
-    \param width : Width of the texture in pixel.
-    \param height : Height of the texture in pixel.
+    \param width : Width of the texture in pixel. If set to 0, the camera resolution or SL_InitParameters.maximum_working_resolution will be taken, whichever is the smallest.
+    \param height : Height of the texture in pixel. If set to 0, the camera resolution or SL_InitParameters.maximum_working_resolution will be taken, whichever is the smallest.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the retrieve succeeded.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the view mode requires a module not enabled (VIEW::DEPTH with DEPTH_MODE::NONE for example).
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_RESOLUTION" if the resolution is higher than one provided by getCameraInformation().camera_configuration.resolution.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if another error occurred.
      */
     INTERFACE_API int sl_retrieve_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, int width, int height, void* custream);
+
+    /**
+    \brief Retrieves a voxel-decimated point cloud from the ZED SDK.
+
+    Applies spatial decimation (voxelization) to the depth map before returning the point cloud,
+    reducing point density while preserving structure. Useful for reducing data volume for downstream processing.
+    \param camera_id : Id of the camera instance.
+    \param measure_ptr : Pointer to the output Mat that will receive the voxel measure result.
+    \param type : Measure type. Must be a point-cloud type (e.g. \ref SL_MEASURE_XYZRGBA).
+    \param mem : Whether the output should be on CPU or GPU memory (\ref SL_MEM).
+    \param params : Voxelization parameters controlling voxel size and depth-adaptive mode. See \ref SL_VoxelMeasureParameters.
+    \param stream : CUDA stream to use for the computation (0 for default stream).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the retrieve succeeded.
+     */
+    INTERFACE_API int sl_retrieve_voxel_measure(int camera_id, void* measure_ptr, enum SL_MEASURE type, enum SL_MEM mem, struct SL_VoxelMeasureParameters* params, void* stream);
+
     /**
     \brief Retrieves an image texture from the ZED SDK in a human-viewable format.
     
@@ -1245,8 +1307,8 @@ extern "C" {
     \param image_ptr : Pointer to the image texture.
     \param type : Image type (left RGB, right depth map, etc). See \ref SL_VIEW.
     \param  mem : Whether the image should be on CPU or GPU memory (\ref SL_MEM).
-    \param width : Width of the texture in pixel.
-    \param height : Height of the texture in pixel.
+    \param width : Width of the texture in pixel. If set to 0, the camera resolution or SL_InitParameters.maximum_working_resolution will be taken, whichever is the smallest.
+    \param height : Height of the texture in pixel. If set to 0, the camera resolution or SL_InitParameters.maximum_working_resolution will be taken, whichever is the smallest.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the retrieve succeeded.
      */
     INTERFACE_API int sl_retrieve_image(int camera_id, void* image_ptr, enum SL_VIEW type, enum SL_MEM mem, int width, int height, void* custream);

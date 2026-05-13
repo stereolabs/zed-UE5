@@ -156,7 +156,9 @@ ENUM_CLASS_FLAGS(ESlMemoryType)
 	R_HD720		   			 UMETA(DisplayName = "HD 720p"),
 	R_SVGA			   		 UMETA(DisplayName = "SVGA (ZED X only)"),
 	R_VGA			   		 UMETA(DisplayName = "VGA"),
-	R_AUTO				     UMETA(DisplayName = "AUTO, 1200p for ZEDX and 720 otherwise")
+	R_XVGA			   		 UMETA(DisplayName = "XVGA (ZED-X HDR lineup only)"),
+	R_TXGA			   		 UMETA(DisplayName = "TXGA (ZED-X HDR lineup only)"),
+	R_AUTO = 11			     UMETA(DisplayName = "AUTO, 1200p for ZEDX and 720 otherwise")
 };
 
 /*
@@ -373,6 +375,7 @@ enum class ESlErrorCode : uint8
 	EC_MotionSensorsRequired         UMETA(DisplayName = "Motion sensors required"),
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
 	EC_DriverFailure  				 UMETA(DisplayName = "Driver failure"),
+	EC_CameraExceedsBandwidth = 35	 UMETA(DisplayName = "Camera exceeds bandwidth"),
 	// ERROR_CODE_LAST
 	EC_None					  	   UMETA(DisplayName = "No error")
 };
@@ -407,6 +410,7 @@ enum class ESlVideoSettings : uint8
 	VS_EXPOSURE_COMPENSATION		UMETA(DisplayName = "Exposure compensation"), /**< Exposure-target compensation made after auto exposure.\n Reduces the overall illumination target by factor of F-stops.\n Affected value should be between 0 and 100 (mapped between [-2.0,2.0]).\n Default value is 50, i.e. no compensation applied. \note Only available for ZED X/X Mini cameras.*/
 	VS_DENOISING					UMETA(DisplayName = "Denoising"), /**< Level of denoising applied on both left and right images.\n Affected value should be between 0 and 100.\n Default value is 50. \note Only available for ZED X/X Mini cameras.*/
 	VS_SCENE_ILLUMINANCE			UMETA(DisplayName = "Scene illuminance"), /**< Level of illuminance of the scene. \n Can be used to determine the level of light in the scene and adjust settings accordingly. \note Read-only control. \n Available for ZED-X/Xmini cameras. \n Value provided in [0.1x]Lux for ZED-X / ZED-X Mini / ZED-XOne GS and ZED-XOne UHD cameras \note Only available for ZED X/X Mini cameras.*/
+	VS_AE_ANTIBANDING				UMETA(DisplayName = "AE Anti-banding"), /**< AE anti-banding mode. \n Affected value should be between 0 and 3. \n 0: OFF, 1: AUTO, 2: 50Hz, 3: 60Hz. \note Only available for ZED X/X Mini cameras.*/
 	VS_LAST
 };
 
@@ -422,6 +426,20 @@ enum class ESlSVOCompressionMode : uint8
 	SCM_H265				UMETA(DisplayName = "H265"),
 	SCM_H264_Lossless	    UMETA(DisplayName = "H264_Lossless"),
 	SCM_H265_Lossless	    UMETA(DisplayName = "H265_Lossless")
+};
+
+/*
+ * SDK SVO encoding presets
+ * see sl::SVO_ENCODING_PRESET
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlSVOEncodingPreset : uint8
+{
+	SEP_Default		UMETA(DisplayName = "Default"),
+	SEP_Ultrafast	UMETA(DisplayName = "Ultrafast"),
+	SEP_Fast		UMETA(DisplayName = "Fast"),
+	SEP_Medium		UMETA(DisplayName = "Medium"),
+	SEP_Slow		UMETA(DisplayName = "Slow")
 };
 
 /*
@@ -477,6 +495,7 @@ enum class ESlModel : uint8
 	M_ZedXM					UMETA(DisplayName = "ZED X Mini"),
 	M_ZedXHDR				UMETA(DisplayName = "ZED X HDR"),
 	M_ZedXMiniHDR			UMETA(DisplayName = "ZED X Mini HDR"),
+	M_ZedXNano = 9			UMETA(DisplayName = "ZED X Nano"),
 	M_VirtualZedX = 11		UMETA(DisplayName = "Virtual ZED X"),
 	M_ZedXOneGS = 30		UMETA(DisplayName = "ZED X One GS"),
 	M_ZedXOneUHD = 31		UMETA(DisplayName = "ZED X One UHD"),
@@ -1469,6 +1488,27 @@ struct STEREOLABS_API FSlSpatialMappingParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSaveTexture;
 
+	/**
+	 * Disparity noise standard deviation in pixels.
+	 * Use a small value (<0.1) if the depth map is accurate, a large value (>0.5) if noisy.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DisparityStd;
+
+	/**
+	 * Weighting factor of the current depth during integration.
+	 * 1.0 = full fusion with previously integrated depth; 0.0 = discard previous data.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Decay;
+
+	/**
+	 * If true, the previous map is forgotten progressively to limit memory and drift,
+	 * keeping only a mapped scene around the current camera position.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableForgetPast;
+
 	/** remove this function when chunks supported */
 	bool GetUseChunksOnly() const
 	{
@@ -1506,14 +1546,14 @@ struct STEREOLABS_API FSlPlaneDetectionParameters
 	 \brief controls the spread of plane by checking the position difference.
 	 \n default: 0.15 meters
 	 */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxDistanceThreshold;
 
 	/**
 	 \brief controls the spread of plane by checking the angle difference.
 	 \n default: 15 degree
 	 */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float NormalSimilarityThreshold;
 };
 
@@ -1999,7 +2039,8 @@ struct STEREOLABS_API FSlRecordingParameters
 		CompressionMode(ESlSVOCompressionMode::SCM_H264),
 		TargetFramerate(0),
 		Bitrate(0),
-		bTranscodeStreamingInput(false)
+		bTranscodeStreamingInput(false),
+		EncodingPreset(ESlSVOEncodingPreset::SEP_Default)
 	{
 	}
 
@@ -2098,6 +2139,17 @@ struct STEREOLABS_API FSlRecordingParameters
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTranscodeStreamingInput;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlSVOEncodingPreset EncodingPreset;
+
+	/**
+	 * Encryption key used to protect the SVO file.
+	 * Leave empty to record without encryption. The same key must be provided in
+	 * FSlInitParameters::SvoDecryptionKey for playback.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString EncryptionKey;
 
 	/** True to loop when SVO playback enabled */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -2299,11 +2351,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlPositionalTrackingMode Mode;
 
-	//Whether to enable the area mode in localize only mode.
-	bool bEnableLocalizationOnly = false;
+	/** Whether to enable the area mode in localize only mode. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnableLocalizationOnly;
 
-	// Whether to enable 2D ground mode for tracking.
-	bool bEnable2DGroundMode = false;
+	/** Whether to enable 2D ground mode for tracking. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bEnable2DGroundMode;
 };
 
 /*
@@ -2358,6 +2412,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: 2.5 meters
 	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float depthFarThresholdMeters = 2.5;
 
 	/**
@@ -2365,6 +2420,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: 0.5, correspond to the lower half of the image
 	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float imageHeightRatioCutoff = 0.5;
 
 	/**
@@ -2372,6 +2428,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: Enabled
 	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSet<ESlModule> autoApplyModule;
 };
 
@@ -2453,7 +2510,8 @@ struct STEREOLABS_API FSlInitParameters
 		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
 		bEnableImageValidityCheck(false),
-		MaximumWorkingResolution(FIntPoint(0, 0))
+		MaximumWorkingResolution(FIntPoint(0, 0)),
+		SvoDecryptionKey("")
 	{
 	}
 
@@ -2980,6 +3038,13 @@ struct STEREOLABS_API FSlInitParameters
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FIntPoint MaximumWorkingResolution;
+
+	/**
+	 * Decryption key required to open an SVO file that was recorded with encryption.
+	 * Leave empty if the SVO file is not encrypted. Must match the key used during recording.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString SvoDecryptionKey;
 };
 
 /*

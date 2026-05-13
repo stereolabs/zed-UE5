@@ -306,8 +306,10 @@ namespace sl
 				return ESlErrorCode::EC_MotionSensorsRequired;
 			case SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION: /**The module needs a newer version of CUDA*/
 				return ESlErrorCode::EC_ModuleNotCompatibleWithCuda;
-			case SL_ERROR_CODE_DRIVER_FAILURE: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
+			case SL_ERROR_CODE_DRIVER_FAILURE:
 				return ESlErrorCode::EC_DriverFailure;
+			case SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH:
+				return ESlErrorCode::EC_CameraExceedsBandwidth;
 			default:
 			{
 				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
@@ -673,6 +675,10 @@ namespace sl
 				return SL_RESOLUTION_HD720;
 			case ESlResolution::R_VGA:
 				return SL_RESOLUTION_VGA;
+			case ESlResolution::R_XVGA:
+				return SL_RESOLUTION_XVGA;
+			case ESlResolution::R_TXGA:
+				return SL_RESOLUTION_TXGA;
 			case ESlResolution::R_SVGA:
 				return SL_RESOLUTION_SVGA;
 			case ESlResolution::R_AUTO:
@@ -2246,6 +2252,9 @@ namespace sl
 			SpatialMappingParameters.use_chunk_only = UnrealData.GetUseChunksOnly();
 			SpatialMappingParameters.reverse_vertex_order = true;
 			SpatialMappingParameters.stability_counter = UnrealData.StabilityCounter;
+			SpatialMappingParameters.disparity_std = UnrealData.DisparityStd;
+			SpatialMappingParameters.decay = UnrealData.Decay;
+			SpatialMappingParameters.enable_forget_past = UnrealData.bEnableForgetPast;
 
 			return SpatialMappingParameters;
 		}
