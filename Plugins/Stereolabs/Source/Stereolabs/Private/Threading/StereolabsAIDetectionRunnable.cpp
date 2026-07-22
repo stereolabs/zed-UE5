@@ -14,7 +14,7 @@ uint32 FSlObjectDetectionRunnable::Run()
 {
 	if (!GSlCameraProxy->CheckAIModelOptimization((ESlAIModels)sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ObjectDetectionModel)))
 	{	
-		SL_LOG_W(SlAIThread, "Optimizing AI model. The process can take few minutes", (int)ObjectDetectionModel);
+		SL_LOG_W(SlAIThread, "Optimizing AI model. The process can take few minutes %d", (int)ObjectDetectionModel);
 		FPlatformProcess::SleepNoStats(1.0f);
 	}
 
