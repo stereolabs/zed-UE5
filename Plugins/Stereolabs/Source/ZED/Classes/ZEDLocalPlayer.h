@@ -11,21 +11,15 @@ class ZED_API UZEDLocalPlayer : public ULocalPlayer
 {
 	GENERATED_UCLASS_BODY()
 
-private:
-	FSceneViewStateReference ViewState;
-	FSceneViewStateReference StereoViewState;
-
 public:
+	// Injects the ZED left-camera optical center as an off-center projection offset so the virtual
+	// camera's principal point matches the real camera. Reached each frame through the stock
+	// ULocalPlayer::CalcSceneView -> CalcSceneViewInitOptions -> virtual GetProjectionData path.
 	virtual bool GetProjectionData(FViewport* Viewport,
 		FSceneViewProjectionData& ProjectionData,
 		int32 StereoViewIndex = INDEX_NONE) const override;
 
+	// Projection data built from the raw ZED pose and intrinsics, used by ZEDFunctionLibrary's
+	// ProjectWorldToScreen / DeprojectScreenToWorld helpers.
 	bool GetZEDProjectionData(FViewport* Viewport, FSceneViewProjectionData& ProjectionData) const;
-
-	virtual FSceneView* CalcSceneView(class FSceneViewFamily* ViewFamily,
-		FVector& OutViewLocation,
-		FRotator& OutViewRotation,
-		FViewport* Viewport,
-		class FViewElementDrawer* ViewDrawer = NULL,
-		int32 StereoViewIndex = INDEX_NONE) override;
 };

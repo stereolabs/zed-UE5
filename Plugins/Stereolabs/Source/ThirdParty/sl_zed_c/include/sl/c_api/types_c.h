@@ -513,6 +513,20 @@ enum SL_UNIT {
 };
 
 /**
+\brief Lists the lens distortion models used to describe a camera's optics.
+\note The value is tied to the rectification state of the SL_CameraParameters it belongs to:
+raw/unrectified parameters are always RAD_TAN or FISHEYE, rectified parameters are always PINHOLE.
+Code working on raw parameters may treat "not FISHEYE" as RAD_TAN, but must not assume that on
+parameters that could be rectified.
+ */
+enum SL_LENS_DISTORTION_MODEL {
+	SL_LENS_DISTORTION_MODEL_RAD_TAN, /**< Radial-tangential (Brown-Conrady) distortion. Raw/unrectified parameters. */
+	SL_LENS_DISTORTION_MODEL_FISHEYE, /**< Fisheye distortion. Raw/unrectified parameters. */
+	SL_LENS_DISTORTION_MODEL_PINHOLE, /**< Pinhole model, no distortion. Rectified parameters. */
+	SL_LENS_DISTORTION_MODEL_LAST
+};
+
+/**
 \brief Lists available coordinates systems for positional tracking and 3D measures.
 
 \image html CoordinateSystem.webp
@@ -642,6 +656,59 @@ enum SL_STREAMING_CODEC {
 };
 
 /**
+\brief Lists the encoded video sources a Camera can expose to user code.
+A single Camera can produce up to three concurrent encoded H264/H265
+bitstreams: incoming (when opened from a network sender), outgoing
+(when \ref sl_enable_streaming() is active), and the SVO encoder output
+(when \ref sl_enable_recording() is active with a video compression mode).
+ */
+enum SL_ENCODED_STREAM_SOURCE {
+	SL_ENCODED_STREAM_SOURCE_RECEIVING = 0, /**< Incoming stream packets (camera opened from a network sender). */
+	SL_ENCODED_STREAM_SOURCE_SENDING   = 1, /**< Outgoing stream packets (\ref sl_enable_streaming() active). */
+	SL_ENCODED_STREAM_SOURCE_RECORDING = 2, /**< SVO encoder output (\ref sl_enable_recording() active in H264/H265 mode). */
+};
+
+#define SL_ENCODED_STREAM_SOURCE_COUNT 3
+
+/**
+\brief Single encoded video packet retrieved from a Camera source.
+
+Payload is laid out as Annex-B NAL units. The first packet handed back on
+a given source is always an IDR, with SPS/PPS (and VPS for HEVC) inlined
+in front, so writing successive packets to a `.h264` / `.hevc` file
+produces a stream playable by any standard player.
+
+\note \ref data is owned by the SDK and remains valid until the next call
+to \ref sl_retrieve_encoded_stream_packet() on the same source, or until
+the Camera is closed. Other calls do not invalidate the buffer. Copy the
+bytes out if you need them longer.
+ */
+struct SL_EncodedStreamPacket {
+	const unsigned char* data;          /**< Annex-B NAL units. SDK-owned. */
+	uint64_t size;                      /**< Length of \ref data in bytes. */
+	uint64_t timestamp_ns;              /**< Capture timestamp (ns). */
+	enum SL_STREAMING_CODEC codec;      /**< H264 or H265. */
+	int is_keyframe;                    /**< Non-zero if this packet is an IDR. */
+	enum SL_ENCODED_STREAM_SOURCE source; /**< Which path produced this packet. */
+};
+
+/**
+\brief Describes one encoded video source exposed by the Camera.
+
+Returned by \ref sl_get_encoded_streams_info() — one entry per source,
+whether currently active or not. Use this to discover which sources are
+producing data and at what codec/bitrate before calling
+\ref sl_retrieve_encoded_stream_packet().
+ */
+struct SL_EncodedStreamInfo {
+	enum SL_ENCODED_STREAM_SOURCE source;
+	int active;                         /**< Non-zero if this source is producing packets right now. */
+	enum SL_STREAMING_CODEC codec;
+	unsigned int bitrate_kbps;          /**< Configured bitrate, kbps. 0 for lossless / unknown. */
+	int is_lossless;                    /**< Non-zero for H264_LOSSLESS / H265_LOSSLESS recording. */
+};
+
+/**
 \brief Lists available camera settings for the camera (contrast, hue, saturation, gain, ...).
 \warning \ref SL_VIDEO_SETTINGS_GAIN and \ref SL_VIDEO_SETTINGS_EXPOSURE are linked in auto/default mode (see sl_set_camera_settings()).
  */
@@ -692,7 +759,8 @@ enum SL_SVO_ENCODING_PRESET {
  */
 enum SL_TIMESTAMP_CLOCK {
 	SL_TIMESTAMP_CLOCK_SYSTEM_CLOCK,   /**< Timestamps use the system (wall-clock) time. Timestamps represent nanoseconds since Unix epoch. \warning Affected by NTP/PTP adjustments. */
-	SL_TIMESTAMP_CLOCK_MONOTONIC_CLOCK, /**< Timestamps use a monotonic clock (CLOCK_MONOTONIC). Immune to system clock step adjustments. */
+	SL_TIMESTAMP_CLOCK_MONOTONIC_CLOCK, /**< Timestamps use a monotonic clock (CLOCK_MONOTONIC). Never jumps on clock steps, but its rate is still slewed by NTP/PTP (stays aligned with real time, at the cost of a non-constant tick rate). */
+	SL_TIMESTAMP_CLOCK_MONOTONIC_RAW_CLOCK, /**< Timestamps use the raw monotonic clock (CLOCK_MONOTONIC_RAW). Driven directly by hardware; immune to both NTP/PTP steps and frequency slewing, so it can slowly drift from wall-clock time. */
 	SL_TIMESTAMP_CLOCK_LAST
 };
 
@@ -810,7 +878,9 @@ enum SL_VIEW {
 	SL_VIEW_DEPTH_RIGHT_GRAY,       /**< Depth right image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
 	SL_VIEW_NORMALS_RIGHT_BGRA,     /**< Alias of \ref SL_VIEW_NORMALS_RIGHT.\n Type: \ref SL_MAT_TYPE_U8_C4 */
 	SL_VIEW_NORMALS_RIGHT_BGR,      /**< Normal right image in BGR pixel format: Type: \ref SL_MAT_TYPE_U8_C3 */
-	SL_VIEW_NORMALS_RIGHT_GRAY      /**< Normal right image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_NORMALS_RIGHT_GRAY,     /**< Normal right image in gray scale: Type: \ref SL_MAT_TYPE_U8_C1 */
+	SL_VIEW_LEFT_NV12,              /**< Left NV12 rectified image (YUV 4:2:0 semi-planar). Type: \ref SL_MAT_TYPE_NV12 */
+	SL_VIEW_RIGHT_NV12              /**< Right NV12 rectified image (YUV 4:2:0 semi-planar). Type: \ref SL_MAT_TYPE_NV12 */
 };
 
 /**
@@ -973,7 +1043,24 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_ULTRA, /**< Computation mode that favors edges and sharpness.\n Requires more GPU memory and computation power.*/
 	SL_DEPTH_MODE_NEURAL_LIGHT,  /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL, /**< End to End Neural disparity estimation.\n Requires AI module. */
-	SL_DEPTH_MODE_NEURAL_PLUS /**< More accurate Neural disparity estimation.\n Requires AI module. */
+	SL_DEPTH_MODE_NEURAL_PLUS, /**< More accurate Neural disparity estimation.\n Requires AI module. */
+	SL_DEPTH_MODE_CUSTOM /**< No internal depth computation. The depth (or disparity) is provided for each frame with sl_ingest_custom_depth(), between sl_read() and sl_grab(). */
+};
+
+/**
+\brief Lists the content type of the map ingested with sl_ingest_custom_depth().
+ */
+enum SL_CUSTOM_DEPTH_FORMAT {
+	SL_CUSTOM_DEPTH_FORMAT_DISPARITY, /**< Disparity in pixels, expressed at the resolution of the provided map. Positive values = closer. Values <= 0, NaN and -Inf are treated as invalid; +Inf as too close. */
+	SL_CUSTOM_DEPTH_FORMAT_DEPTH /**< Metric depth in the unit set in the init parameters. NaN, 0 and negative values are treated as invalid; +Inf as too far; -Inf as too close. */
+};
+
+/**
+\brief Lists the value convention of the confidence map optionally ingested with sl_ingest_custom_depth().
+ */
+enum SL_CUSTOM_CONFIDENCE_CONVENTION {
+	SL_CUSTOM_CONFIDENCE_CONVENTION_PROBABILITY, /**< Values in [0,1], 1 = confident (typical network output). */
+	SL_CUSTOM_CONFIDENCE_CONVENTION_ZED /**< SL_MEASURE_CONFIDENCE convention: values in [0,100], ~0 = reliable, 100 = unreliable. */
 };
 
 /**
@@ -1824,8 +1911,7 @@ struct SL_RuntimeParameters
 	/**
 	\brief Defines if the saturated area (luminance>=255) must be removed from depth map estimation.
 
-	Default: true
-	\note It is recommended to keep this parameter at true because saturated area can create false detection.
+	Default: false
 	 */
 	bool remove_saturated_areas;
 };
@@ -1962,6 +2048,12 @@ struct SL_CameraParameters {
 	\brief Real focal length in millimeters.
 	 */
 	float focal_length_metric;
+
+	/**
+	\brief Lens distortion model of these parameters.
+	\note Raw/unrectified parameters are RAD_TAN or FISHEYE, rectified parameters are PINHOLE.
+	 */
+	enum SL_LENS_DISTORTION_MODEL lens_distortion_model;
 };
 
 /**

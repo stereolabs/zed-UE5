@@ -1370,6 +1370,50 @@ extern "C" {
     INTERFACE_API struct SL_StreamingParameters* sl_get_streaming_parameters(int camera_id);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////// Encoded Stream Packet ///////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+    \brief Polls a single encoded H264/H265 packet from one of the Camera's
+    encoded sources (receiving / sending / recording).
+
+    Call after a successful \ref sl_grab(), same pattern as
+    \ref sl_retrieve_image(). The tap silently drops packets until it sees
+    the first natural IDR for the requested source, so the first packet
+    returned is always a keyframe and the byte stream from that point on is
+    self-contained (SPS/PPS — and VPS for HEVC — are inlined in front of
+    every IDR).
+
+    \param camera_id : Id of the camera instance.
+    \param source : Which encoded source to read from.
+    \param out_packet : Filled on success. \ref SL_EncodedStreamPacket::data
+            is SDK-owned and remains valid until the next call to this
+            function on the same source, or until the camera is closed.
+    \return SL_ERROR_CODE_SUCCESS on success.
+    \return SL_ERROR_CODE_INVALID_FUNCTION_CALL if the requested source is
+            not active (e.g. RECEIVING but the camera is not opened from a
+            stream, or RECORDING but the recording compression mode is
+            LOSSLESS).
+    \return SL_ERROR_CODE_FAILURE if the source is active but no new packet
+            is available yet (pre-IDR sync, dropped frame).
+    \return SL_ERROR_CODE_CAMERA_NOT_INITIALIZED if \ref sl_open_camera()
+            has not been called.
+     */
+    INTERFACE_API int sl_retrieve_encoded_stream_packet(int camera_id, enum SL_ENCODED_STREAM_SOURCE source, struct SL_EncodedStreamPacket* out_packet);
+
+    /**
+    \brief Returns one \ref SL_EncodedStreamInfo entry per encoded source
+    (always SL_ENCODED_STREAM_SOURCE_COUNT entries, in source-enum order).
+    Use the \ref SL_EncodedStreamInfo::active flag to know which sources
+    are producing packets right now.
+
+    \param camera_id : Id of the camera instance.
+    \param out_infos : Buffer of at least SL_ENCODED_STREAM_SOURCE_COUNT entries,
+            filled in order RECEIVING, SENDING, RECORDING.
+     */
+    INTERFACE_API void sl_get_encoded_streams_info(int camera_id, struct SL_EncodedStreamInfo out_infos[SL_ENCODED_STREAM_SOURCE_COUNT]);
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Save to File Utils ////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1549,6 +1593,23 @@ extern "C" {
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine, \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" otherwise.
    */
     INTERFACE_API int sl_ingest_custom_box_objects(int camera_id, int nb_objects, struct SL_CustomBoxObjectData* objects_in, unsigned int instance_id);
+
+    /**
+    \brief Feed the depth pipeline with your own externally computed disparity or depth map (requires \ref SL_DEPTH_MODE "SL_DEPTH_MODE_CUSTOM").
+
+    The expected sequence for each frame is: sl_read(), retrieve the rectified images, compute the map externally,
+    sl_ingest_custom_depth(), then sl_grab(). The map can be provided at any resolution, in CPU or GPU memory;
+    the data is consumed during the call.
+    \param camera_id : Id of the camera instance.
+    \param map_ptr : Pointer to an SL_MAT_TYPE_F32_C1 sl::Mat holding the disparity or depth map.
+    \param format : Content type of the map. See \ref SL_CUSTOM_DEPTH_FORMAT.
+    \param scale : Multiplier applied to each map value before interpretation (sign flip, normalized output, unit mismatch). Use 1 if none.
+    \param confidence_ptr : Optional pointer to an SL_MAT_TYPE_F32_C1 sl::Mat holding the confidence map (same resolution as the map). NULL if not available.
+    \param confidence_convention : Value convention of the confidence map. See \ref SL_CUSTOM_CONFIDENCE_CONVENTION. Ignored when confidence_ptr is NULL.
+    \param timestamp_ns : Timestamp (ns) of the frame the map was computed from. 0 disables the frame-mismatch check.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the map was ingested.
+   */
+    INTERFACE_API int sl_ingest_custom_depth(int camera_id, void* map_ptr, enum SL_CUSTOM_DEPTH_FORMAT format, float scale, void* confidence_ptr, enum SL_CUSTOM_CONFIDENCE_CONVENTION confidence_convention, unsigned long long timestamp_ns);
 
     /**
     \brief Feed the 3D Object tracking function with your own 2D bounding boxes with masks from your own detection algorithm.

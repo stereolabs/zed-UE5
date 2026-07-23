@@ -8,9 +8,6 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
 #include "SceneViewExtension.h"
-#include "HAL/PlatformApplicationMisc.h"
-
-DECLARE_CYCLE_STAT(TEXT("CalcSceneView"), STAT_CalcSceneView, STATGROUP_Engine);
 
 static TAutoConsoleVariable<int32> CVarViewportTest(
 	TEXT("r.Test.ConstrainedView"),
@@ -171,78 +168,4 @@ bool UZEDLocalPlayer::GetProjectionData(FViewport* Viewport,
 		ViewExt->SetupViewProjectionMatrix(ProjectionData);
 	};
 	return true;
-}
-
-FSceneView* UZEDLocalPlayer::CalcSceneView(class FSceneViewFamily* ViewFamily,
-	FVector& OutViewLocation,
-	FRotator& OutViewRotation,
-	FViewport* Viewport,
-	class FViewElementDrawer* ViewDrawer,
-	int32 StereoViewIndex)
-{
-	//SCOPE_CYCLE_COUNTER(STAT_CalcSceneView);
-
-	FSceneViewInitOptions ViewInitOptions;
-
-	if (!CalcSceneViewInitOptions(ViewInitOptions, Viewport, ViewDrawer, StereoViewIndex))
-	{
-		return nullptr;
-	}
-
-	// Get the viewpoint...technically doing this twice
-	// but it makes GetProjectionData better
-	FMinimalViewInfo ViewInfo;
-	GetViewPoint(ViewInfo);
-	OutViewLocation = ViewInfo.Location;
-	OutViewRotation = ViewInfo.Rotation;
-	ViewInitOptions.bUseFieldOfViewForLOD = ViewInfo.bUseFieldOfViewForLOD;
-
-	// Fill out the rest of the view init options
-	ViewInitOptions.ViewFamily = ViewFamily;
-
-		PlayerController->BuildHiddenComponentList(OutViewLocation,  ViewInitOptions.HiddenPrimitives);
-
-	//@TODO: SPLITSCREEN: This call will have an issue with splitscreen, as the show flags are shared across the view family
-	EngineShowFlagOrthographicOverride(ViewInitOptions.IsPerspectiveProjection(), ViewFamily->EngineShowFlags);
-
-	FSceneView* const View = new FSceneView(ViewInitOptions);
-
-	View->ViewLocation = OutViewLocation;
-	View->ViewRotation = OutViewRotation;
-
-	ViewFamily->Views.Add(View);
-
-	{
-		View->StartFinalPostprocessSettings(OutViewLocation);
-
-		// CameraAnim override
-		if (PlayerController->PlayerCameraManager)
-		{
-			TArray<FPostProcessSettings> const* CameraAnimPPSettings;
-			TArray<float> const* CameraAnimPPBlendWeights;
-			PlayerController->PlayerCameraManager->GetCachedPostProcessBlends(CameraAnimPPSettings, CameraAnimPPBlendWeights);
-
-			for (int32 PPIdx = 0; PPIdx < CameraAnimPPBlendWeights->Num(); ++PPIdx)
-			{
-				View->OverridePostProcessSettings((*CameraAnimPPSettings)[PPIdx], (*CameraAnimPPBlendWeights)[PPIdx]);
-			}
-		}
-
-		//	CAMERA OVERRIDE
-		//	NOTE: Matinee works through this channel
-		View->OverridePostProcessSettings(ViewInfo.PostProcessSettings, ViewInfo.PostProcessBlendWeight);
-
-		View->EndFinalPostprocessSettings(ViewInitOptions);
-	}
-
-	// Camera override
-	// PreZedEdit
-	//View->FinalCameraRenderingSettings = ViewInfo.CameraRenderingSettings;
-
-	for (int ViewExt = 0; ViewExt < ViewFamily->ViewExtensions.Num(); ViewExt++)
-	{
-		ViewFamily->ViewExtensions[ViewExt]->SetupView(*ViewFamily, *View);
-	}
-
-	return View;
 }

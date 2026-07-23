@@ -195,6 +195,9 @@ public:
     void disableStreaming();
 	SL_StreamingParameters* getStreamingParameters();
 
+    sl::ERROR_CODE retrieveEncodedStreamPacket(sl::ENCODED_STREAM_SOURCE source, SL_EncodedStreamPacket* out_packet);
+    void getEncodedStreamsInfo(SL_EncodedStreamInfo out_infos[SL_ENCODED_STREAM_SOURCE_COUNT]);
+
     /*****************************
      ****** Save fct utils ********
      ******************************/
@@ -217,6 +220,7 @@ public:
     sl::ERROR_CODE setCustomObjectDetectionRuntimeParameters(SL_CustomObjectDetectionRuntimeParameters custom_object_detection_params, unsigned int instance_id);
     sl::ERROR_CODE ingestCustomBoxObjectData(int nb_objects, SL_CustomBoxObjectData* objects_in, unsigned int instance_id);
     sl::ERROR_CODE ingestCustomMaskObjectData(int nb_objects, SL_CustomMaskObjectData* objects_in, unsigned int instance_id);
+    sl::ERROR_CODE ingestCustomDepth(sl::Mat* map_ptr, int format, float scale, sl::Mat* confidence_ptr, int confidence_convention, unsigned long long timestamp_ns);
     sl::ERROR_CODE retrieveObjectDetectionData(SL_ObjectDetectionRuntimeParameters* objruntimeparams, SL_Objects* data, unsigned int instance_id); 
     sl::ERROR_CODE retrieveObjectDetectionData(SL_Objects* data, unsigned int instance_id);
     sl::ERROR_CODE retrieveCustomObjectDetectionData(SL_CustomObjectDetectionRuntimeParameters* objruntimeparams, SL_Objects* data, unsigned int instance_id);
