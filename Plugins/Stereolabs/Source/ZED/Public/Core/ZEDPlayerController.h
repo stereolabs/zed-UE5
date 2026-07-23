@@ -87,8 +87,6 @@ public:
 
 	/*
 	 * Initialize controller
-	 * @param bOpenCamera      Open the camera automatically after controller initialized
-	 * @param bStereoRendering Enable the HMD for stereo rendering
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed")
 	void Init();

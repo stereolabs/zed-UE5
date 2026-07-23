@@ -64,6 +64,15 @@ FVector2D USlFunctionLibrary::GetOffCenterProjectionOffset(ESlEye Eye)
 
 	float Width = (float)CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution.X;
 	float Height = (float)CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution.Y;
+
+	// Calibration is not populated until the camera is connected. Guard against the divide-by-zero
+	// below (Width/Height == 0), which would otherwise produce a NaN offset and feed an invalid
+	// projection matrix to the renderer (triggers the CheckMatrixPrecision ensure on every frame).
+	if (Width <= 0.0f || Height <= 0.0f)
+	{
+		return FVector2D::ZeroVector;
+	}
+
 	float OpticalCenterX = (Eye == ESlEye::E_Left ? CameraInformation.CalibrationParameters.LeftCameraParameters.OpticalCenterX : CameraInformation.CalibrationParameters.RightCameraParameters.OpticalCenterX);
 	float OpticalCenterY = (Eye == ESlEye::E_Left ? CameraInformation.CalibrationParameters.LeftCameraParameters.OpticalCenterY : CameraInformation.CalibrationParameters.RightCameraParameters.OpticalCenterY);
 

@@ -818,26 +818,6 @@ namespace sl
 		}
 
 		/*
-		 * Convert from EStereoRenderingDeviceType to sl::mr::HMD_DEVICE_TYPE
-		 */
-		FORCEINLINE sl::mr::HMD_DEVICE_TYPE ToSlType(FName UnrealType)
-		{
-			if (UnrealType == TEXT("SteamVR"))
-			{
-				return sl::mr::HMD_DEVICE_TYPE::HMD_DEVICE_TYPE_HTC;
-			}
-			else if (UnrealType == TEXT("OculusHMD"))
-			{
-				return sl::mr::HMD_DEVICE_TYPE::HMD_DEVICE_TYPE_OCULUS;
-			}
-			else
-			{
-				ensureMsgf(false, TEXT("Unhandled HMD device type FName entry"));
-				return sl::mr::HMD_DEVICE_TYPE::HMD_DEVICE_TYPE_UNKNOWN;
-			}
-		}
-
-		/*
 		 * Convert from ESlErrorCode to sl::ERROR_CODE
 		 */
 		FORCEINLINE sl::ERROR_CODE ToSlType(ESlErrorCode UnrealType)

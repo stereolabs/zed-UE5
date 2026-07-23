@@ -17,16 +17,15 @@ DEFINE_LOG_CATEGORY(ZEDFunctionLibrary);
 
 AZEDPlayerController* UZEDFunctionLibrary::GetPlayerController(UObject* WorldContextObject)
 {
-	APlayerController* PlayerController = WorldContextObject->GetWorld()->GetFirstPlayerController();
-
-#if WITH_EDITOR
-	if(PlayerController)
+	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+	if (!World)
 	{
-		checkf(Cast<AZEDPlayerController>(PlayerController), TEXT("PlayerController must inherit from AZEDPlayerController"));
+		return nullptr;
 	}
-#endif
 
-	return Cast<AZEDPlayerController>(PlayerController);
+	// Returns nullptr when the current controller is not a ZED controller, e.g. Simulate-In-Editor
+	// or any world without the ZED game mode. Callers are expected to null-check the result.
+	return Cast<AZEDPlayerController>(World->GetFirstPlayerController());
 }
 
 AZEDCamera* UZEDFunctionLibrary::GetCameraActor(UObject* WorldContextObject)
