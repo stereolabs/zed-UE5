@@ -322,6 +322,7 @@ struct SL_IMUData {
 	\note Not available in SVO or STREAM mode.
 	*/
 	struct SL_Matrix3f linear_acceleration_convariance;
+	float effective_rate; /**< \brief Realtime data acquisition rate in hertz (Hz).*/
 };
 
 /**
@@ -332,6 +333,7 @@ struct SL_BarometerData {
 	uint64_t timestamp_ns; /**< \brief Data acquisition timestamp in nanoseconds.*/
 	float pressure; /**< \brief Ambient air pressure in hectopascal (hPa).*/
 	float relative_altitude; /**< \brief Relative altitude from first camera position (at \ref sl_open_camera() time).*/
+	float effective_rate; /**< \brief Realtime data acquisition rate in hertz (Hz).*/
 };
 
 /**
@@ -464,7 +466,7 @@ enum SL_ERROR_CODE {
 	SL_ERROR_CODE_CAMERA_NOT_INITIALIZED, /**< The ZED SDK is not initialized. Probably a missing call to \ref sl_open_camera().*/
 	SL_ERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE, /**< Your NVIDIA driver is too old and not compatible with your current CUDA version. */
 	SL_ERROR_CODE_INVALID_FUNCTION_CALL, /**< The call of the function is not valid in the current context. Could be a missing call of \ref sl_open_camera(). */
-	SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION, /**< The ZED SDK was not able to load its dependencies or some assets are missing. Reinstall the ZED SDK or check for missing dependencies (cuDNN, TensorRT). */
+	SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION, /**< The ZED SDK was not able to load its dependencies or some assets are missing. Reinstall the ZED SDK or check for missing dependencies (TensorRT). */
 	SL_ERROR_CODE_INCOMPATIBLE_SDK_VERSION, /**< The installed ZED SDK is incompatible with the one used to compile the program. */
 	SL_ERROR_CODE_INVALID_AREA_FILE, /**< The given area file does not exist. Check the path. */
 	SL_ERROR_CODE_INCOMPATIBLE_AREA_FILE, /**< The area file does not contain enough data to be used or the \ref SL_DEPTH_MODE used during the creation of the area file is different from the one currently set. */
@@ -566,6 +568,7 @@ enum SL_MODEL {
 	SL_MODEL_ZED_XONE_GS = 30, /**< ZED X One with global shutter AR0234 sensor */
 	SL_MODEL_ZED_XONE_UHD = 31, /**< ZED X One with 4K rolling shutter IMX678 sensor */
 	SL_MODEL_ZED_XONE_HDR = 32, /**< ZED X One HDR */
+	SL_MODEL_ZED_XONE_CORE = 33, /**< ZED X One Core with global shutter AR0234 sensor, direct MIPI connection */
 };
 
 /**
@@ -645,6 +648,7 @@ enum SL_REFERENCE_FRAME
 enum SL_TIME_REFERENCE {
 	SL_TIME_REFERENCE_IMAGE, /**< The requested timestamp or data will be at the time of the frame extraction. */
 	SL_TIME_REFERENCE_CURRENT, /**< The requested timestamp or data will be at the time of the function call. */
+	SL_TIME_REFERENCE_IMAGE_CENTER_OF_EXPOSURE, /**< The middle of the frame's exposure, instead of the start of the sensor readout returned by \ref SL_TIME_REFERENCE_IMAGE.\n Use it to align frames with other sensors (LiDAR, IMU, robot joints) that are timestamped at the instant they measure.\n \note Only meaningful for \ref sl_get_timestamp(). It is rejected by \ref sl_get_sensors_data() and \ref sl_get_imu_orientation().\n \note Requires a per-frame exposure, so it is available on ZED X, ZED X Mini, ZED X One GS and ZED X One 4K. It returns 0 on every other input: USB cameras, the HDR camera family (ZED X HDR / HDR Mini / HDR Max, ZED X One HDR), and any SVO or network stream carrying no per-frame sensor metadata. Always check for 0 before using the value.\n \note On the rolling-shutter ZED X One 4K it refers to the frame's first row. */
 };
 
 /**
@@ -940,6 +944,18 @@ enum SL_POSITIONAL_TRACKING_MODE {
 };
 
 /**
+\brief Lists how much GPU a module is allowed to use.
+\note The selected mode sets a floor that cannot be avoided: SL_POSITIONAL_TRACKING_MODE_GEN_1
+computes depth and therefore always uses the GPU. This preference only controls the work that is
+optional on top of that floor.
+*/
+enum SL_COMPUTE_PREFERENCE {
+	SL_COMPUTE_PREFERENCE_AUTO,        /**< Default. Let the SDK choose. For positional tracking, GEN_3 runs on the CPU and GEN_1 uses the GPU, since it computes depth. */
+	SL_COMPUTE_PREFERENCE_PREFER_CPU,  /**< Use no more GPU than the selected mode requires, leaving the GPU free for your own workloads. Tracking is slower than with GPU acceleration. */
+	SL_COMPUTE_PREFERENCE_PREFER_GPU   /**< Use GPU acceleration wherever it is available, which makes tracking faster and lowers the per-frame grab time. Falls back to the CPU by itself if the GPU cannot be used. */
+};
+
+/**
 \brief Report the status of the positional tracking fusion.
  */
 enum SL_POSITIONAL_TRACKING_FUSION_STATUS {
@@ -1045,6 +1061,14 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NEURAL, /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL_PLUS, /**< More accurate Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_CUSTOM /**< No internal depth computation. The depth (or disparity) is provided for each frame with sl_ingest_custom_depth(), between sl_read() and sl_grab(). */
+};
+
+/**
+\brief Lists the precisions available for neural depth inference.
+ */
+enum SL_DEPTH_PRECISION {
+	SL_DEPTH_PRECISION_FP16, /**< Half-precision neural depth (default). */
+	SL_DEPTH_PRECISION_INT8 /**< Explicit-quantization (Q/DQ) INT8 neural depth.\n Best-effort: falls back to FP16 if the selected \ref SL_DEPTH_MODE ships no INT8 model or the platform lacks fast INT8. */
 };
 
 /**
@@ -1170,7 +1194,9 @@ enum SL_OBJECT_DETECTION_MODEL {
 	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST, /**< Bounding box detector specialized in person heads particularly well suited for crowded environments. The person localization is also improved. */
 	SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE, /**< Bounding box detector specialized in person heads, particularly well suited for crowded environments. The person localization is also improved, more accurate but slower than the base model.*/
 	SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS, /**< For external inference, using your own custom model and/or frameworks. This mode disables the internal inference engine, the 2D bounding box detection must be provided. */
-	SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS /**< For internal inference using your own custom YOLO-like model. This mode requires a onnx file to be passed in the ObjectDetectionParameters. This model will be used for inference. */
+	SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS, /**< For internal inference using your own custom YOLO-like model. This mode requires a onnx file to be passed in the ObjectDetectionParameters. This model will be used for inference. */
+	SL_OBJECT_DETECTION_MODEL_CUSTOM_RFDETRLIKE_BOX_OBJECTS, /**< For internal inference using your own custom RF-DETR / DETR-like model (two outputs: boxes + class logits, NMS-free). Requires a onnx file. */
+	SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS_AUTODETECT /**< For internal inference using your own custom ONNX model, auto-detecting YOLO-like vs RF-DETR/DETR-like from the model outputs. Requires a onnx file. */
 };
 
 /**
@@ -1202,6 +1228,7 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_NEURAL_LIGHT_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_LIGHT*/
 	SL_AI_MODELS_NEURAL_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL*/
 	SL_AI_MODELS_NEURAL_PLUS_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_PLUS*/
+	SL_AI_MODELS_NEURAL_DEPTH_INT8, /**< Related to \ref SL_DEPTH_MODE_NEURAL with \ref SL_DEPTH_PRECISION_INT8. Separate artifact and engine from \ref SL_AI_MODELS_NEURAL_DEPTH.*/
 	SL_AI_MODELS_LAST
 };
 
@@ -1852,6 +1879,16 @@ struct SL_InitParameters
 	\note Must match the \ref SL_RecordingParameters::encryption_key used during recording.
 	 */
 	unsigned char svo_decryption_key[256];
+
+	/**
+	\brief \ref SL_DEPTH_PRECISION used for neural depth inference.
+
+	Only applies to the neural depth modes (\ref SL_DEPTH_MODE_NEURAL_LIGHT, \ref SL_DEPTH_MODE_NEURAL and \ref SL_DEPTH_MODE_NEURAL_PLUS).
+	\n Set it to \ref SL_DEPTH_PRECISION_INT8 to request explicit-quantization (Q/DQ) INT8 inference.
+	\n Default: \ref SL_DEPTH_PRECISION_FP16
+	\note Best-effort: the SDK silently falls back to FP16 if the selected depth mode ships no INT8 model or if the platform lacks fast INT8.
+	 */
+	enum SL_DEPTH_PRECISION depth_precision;
 };
 
 /**
@@ -2316,6 +2353,12 @@ struct SL_PositionalTrackingParameters
 	 * \brief Whether to enable the 2D ground mode.
 	 */
 	bool enable_2d_ground_mode;
+
+	/**
+	 * \brief How much GPU positional tracking is allowed to use.
+	 * \n default : SL_COMPUTE_PREFERENCE_AUTO
+	 */
+	enum SL_COMPUTE_PREFERENCE compute_preference;
 };
 
 /**
@@ -2444,6 +2487,15 @@ struct SL_RecordingStatus {
      \brief Average compression ratio (% of raw size) since beginning of recording.
 	 */
 	double average_compression_ratio;
+	/**
+	 \brief Number of frames handed to the recorder since the beginning of the recording.
+	 */
+	int number_frames_ingested;
+	/**
+	 \brief Number of frames actually written to the file since the beginning of the recording.
+	 \note A value below \ref number_frames_ingested means frames were dropped because the encoder could not keep up.
+	 */
+	int number_frames_encoded;
 };
 
 /**
@@ -3333,6 +3385,9 @@ struct SL_ObjectData
 	\brief Mask defining which pixels which belong to the object (in \ref bounding_box_2d and set to 255) and those of the background (set to 0).
 	\warning The mask information is only available for tracked objects (\ref SL_OBJECT_TRACKING_STATE_OK) that have a valid depth.
 	\warning Otherwise, the mask will not be initialized.
+	\note This is an sl::Mat handle allocated for you on every retrieve. It belongs to the caller:
+	release it with \ref sl_mat_free() once the frame is consumed, otherwise it leaks per detection
+	per frame.
 	*/
 	int* mask;
 	//int* mask; //IntPtr to an sl::Mat object.
@@ -3741,6 +3796,11 @@ struct SL_Objects
 	\note Therefore, there is a limitation of 75 objects in the image.
 	 */
 	struct SL_ObjectData object_list[MAX_NUMBER_OBJECT];
+	/**
+	\brief Name of the group these objects belong to when fused, as set in \ref SL_ObjectDetectionParameters.
+	\note Empty when the detector was not given a group name. Truncated to 127 characters.
+	 */
+	char fused_objects_group_name[128];
 };
 
 /**
@@ -3802,6 +3862,9 @@ struct SL_BodyData
 	\brief Mask defining which pixels which belong to the body/person (in \ref bounding_box_2d and set to 255) and those of the background (set to 0).
 	\warning The mask information is only available for tracked bodies (\ref SL_OBJECT_TRACKING_STATE_OK) that have a valid depth.
 	\warning Otherwise, the mask will not be initialized.
+	\note This is an sl::Mat handle allocated for you on every retrieve. It belongs to the caller:
+	release it with \ref sl_mat_free() once the frame is consumed, otherwise it leaks per detection
+	per frame.
 	*/
 	int* mask;
 	//int* mask; //IntPtr to an sl::Mat object.
@@ -4198,6 +4261,12 @@ struct SL_HealthStatus {
 	 * timestamp inconsistency, resonance frequencies, saturated sensors / very high acceleration or rotation, shocks
 	 */
 	bool low_motion_sensors_reliability;
+
+	/**
+	\brief This status indicates if current image is a duplicated image
+	 * This indicates the image may be duplicated, so not a new one even if the timestamp say so.
+	 */
+	bool duplicated_image;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////

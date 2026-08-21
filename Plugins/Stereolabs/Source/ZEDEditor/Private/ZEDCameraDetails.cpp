@@ -55,7 +55,7 @@ void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	}
 
 	CachedDetailBuilder = &DetailBuilder;
-	SelectedObjects = DetailBuilder.GetDetailsView()->GetSelectedObjects();
+	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("ZedControls");
 	

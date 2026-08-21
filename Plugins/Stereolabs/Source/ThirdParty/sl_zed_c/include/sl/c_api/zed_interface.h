@@ -30,6 +30,12 @@ extern "C" {
 #endif
 
 
+	/**
+	\brief Frees a buffer that the SDK allocated on the caller's behalf.
+	Use it on every pointer returned by a function whose documentation says the result belongs to
+	the caller.
+	\param ptr : The buffer to release. Passing NULL is a no-op.
+	*/
 	INTERFACE_API void sl_free(void* ptr);
 
     /**
@@ -163,6 +169,8 @@ extern "C" {
     It corresponds to the structure given as argument to the sl_open_camera() function.
     \param camera_id : Id of the camera instance.
     \return SL_InitParameters containing the parameters used to initialize the camera.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_InitParameters* sl_get_init_parameters(int camera_id);
 
@@ -172,6 +180,8 @@ extern "C" {
     It corresponds to the structure given as argument to the sl_grab() function.
     \param camera_id : id of the camera instance.
     \return SL_RuntimeParameters containing the parameters that define the behavior of the \ref sl_grab function.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_RuntimeParameters* sl_get_runtime_parameters(int camera_id);
 
@@ -181,6 +191,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_positional_tracking() method.
     \param camera_id : Id of the camera instance.
     \return \ref SL_PositionalTrackingParameters containing the parameters used for positional tracking initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_PositionalTrackingParameters* sl_get_positional_tracking_parameters(int camera_id);
 
@@ -313,6 +325,8 @@ extern "C" {
     /**
     \brief Get the recording information.
     \return The recording state structure. For more details, see \ref SL_RecordingStatus.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_RecordingStatus* sl_get_recording_status(int camera_id);
     /**
@@ -327,6 +341,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_recording() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_RecordingParameters containing the parameters used for recording initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_RecordingParameters* sl_get_recording_parameters(int camera_id);
 
@@ -510,6 +526,8 @@ extern "C" {
     \param res_width : You can specify a size different from default image size to get the scaled camera information.
     \param res_height : You can specify a size different from default image size to get the scaled camera information.
     \return SL_CameraInformation containing the calibration parameters of the ZED, as well as serial number and firmware version.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_CameraInformation* sl_get_camera_information(int camera_id, int res_width, int res_height);
 
@@ -526,6 +544,8 @@ extern "C" {
     \param camera_id : id of the camera instance.
     \param r_params : if true, returns Intrinsic and Extrinsic stereo parameters for original images (unrectified/distorded), else returns parameters for rectified/undistorded images.
     \return Structure containing Intrinsic and Extrinsic stereo parameters
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_CalibrationParameters* sl_get_calibration_parameters(int camera_id, bool raw_params);
 
@@ -533,6 +553,8 @@ extern "C" {
     \brief Gets the Sensors configuration.
     \param camera_id : id of the camera instance.
     \return Structure containing information about all the sensors available in the current device.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_SensorsConfiguration* sl_get_sensors_configuration(int camera_id);
 
@@ -601,6 +623,17 @@ extern "C" {
     \return The current timestamp.
      */
     INTERFACE_API unsigned long long sl_get_current_timestamp(int camera_id);
+
+    /**
+    \brief Get a timestamp at the given time reference.
+
+    \note It should be called after a sl_grab() when using \ref SL_TIME_REFERENCE_IMAGE or
+    \ref SL_TIME_REFERENCE_IMAGE_CENTER_OF_EXPOSURE.
+    \param camera_id : Id of the camera instance.
+    \param time_reference : The desired \ref SL_TIME_REFERENCE.
+    \return The timestamp, or 0 if the requested reference is not available on this input.
+     */
+    INTERFACE_API unsigned long long sl_get_timestamp(int camera_id, enum SL_TIME_REFERENCE time_reference);
 
     /**
     \brief Sets the clock source used for all timestamps produced by the ZED SDK.
@@ -790,11 +823,29 @@ extern "C" {
 	* \brief Gets the current status of the camera.
 	* \param camera_id : Id of the camera instance.
 	* \return HealthStatus Structure containing the self diagnostic results of the image/depth/sensors
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
 	INTERFACE_API struct SL_HealthStatus* sl_get_health_status(int camera_id);
 
+    /**
+    \brief Returns the resolution at which sl_retrieve_image() outputs, for a requested resolution.
+    \param camera_id : Id of the camera instance.
+    \param res : The requested resolution. Pass 0x0 for the default.
+    \return The resolution actually used.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
+    */
     INTERFACE_API struct SL_Resolution* sl_get_retrieve_image_resolution(int camera_id, struct SL_Resolution* res);
 
+    /**
+    \brief Returns the resolution at which sl_retrieve_measure() outputs, for a requested resolution.
+    \param camera_id : Id of the camera instance.
+    \param res : The requested resolution. Pass 0x0 for the default.
+    \return The resolution actually used.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
+    */
     INTERFACE_API struct SL_Resolution* sl_get_retrieve_measure_resolution(int camera_id, struct SL_Resolution* res);
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Motion tracking ///////////////////////////////////////////////////////////////////////
@@ -865,6 +916,8 @@ extern "C" {
     /**
      \brief Return the current status of positional tracking module.
      \return SL_POSITIONAL_TRACKING_STATUS current status of positional tracking module.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_PositionalTrackingStatus* sl_get_positional_tracking_status(int camera_id);
 
@@ -936,8 +989,11 @@ extern "C" {
     INTERFACE_API int sl_get_sensors_data_batch_count(int camera_id, int* count);
     /**
     \brief Retrieves all SL_SensorsData associated to most recent grabbed frame in the specified \ref COORDINATE_SYSTEM of InitParameters.
-	\note sl_get_sensors_data_batch needs to be called before this function to retrieve the size of the imu batch array.
-    \param [out] data : The SensorsData array to store the data.
+	\note sl_get_sensors_data_batch_count() must be called first: it fills the batch and reports how
+	many elements this call will return.
+    \param [out] data : Receives a newly allocated array of that many SL_SensorsData.
+	\note The array belongs to the caller: release it with \ref sl_free(). It is set to NULL
+	when the batch is empty.
     \param camera_id : Id of the camera instance.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if sensors data have been extracted.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SENSORS_NOT_AVAILABLE" if the camera model is a \ref SL_MODEL "SL_MODEL_ZED".
@@ -988,6 +1044,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_spatial_mapping() method.
     \param camera_id : Id of the camera instance.
     \return \ref SL_SpatialMappingParameters containing the parameters used for spatial mapping initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_SpatialMappingParameters* sl_get_spatial_mapping_parameters(int camera_id);
     /**
@@ -1366,6 +1424,8 @@ extern "C" {
     
     It corresponds to the structure given as argument to the \ref sl_enable_streaming() function.
     \return \ref SL_StreamingParameters containing the parameters used for streaming initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_StreamingParameters* sl_get_streaming_parameters(int camera_id);
 
@@ -1455,6 +1515,8 @@ extern "C" {
         \param model : AI model to check.
         \param gpu_id : ID of the gpu.
         \return The status of the given model for the specified GPU.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_AI_Model_status* sl_check_AI_model_status(enum SL_AI_MODELS model, int gpu_id);
 
@@ -1495,6 +1557,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_object_detection() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_ObjectDetectionParameters containing the parameters used for object detection initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_ObjectDetectionParameters* sl_get_object_detection_parameters(int camera_id);
 
@@ -1551,6 +1615,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_body_tracking() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_BodyTrackingParameters containing the parameters used for body tracking initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_BodyTrackingParameters* sl_get_body_tracking_parameters(int camera_id);
 

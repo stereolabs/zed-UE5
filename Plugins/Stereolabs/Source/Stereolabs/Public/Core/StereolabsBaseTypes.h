@@ -178,6 +178,17 @@ enum class ESlDepthMode : uint8
 };
 
 /*
+ * Precision used for neural depth inference.
+ * see sl::DEPTH_PRECISION
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlDepthPrecision : uint8
+{
+	DP_FP16					 UMETA(DisplayName = "FP16 (default)"),
+	DP_INT8					 UMETA(DisplayName = "INT8 (faster, slightly less accurate)")
+};
+
+/*
  * Units used for measures.
  * For performance concern, only centimeter natively used by UE is available
  * see sl::UNIT
@@ -524,7 +535,11 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlTimeReference : uint8
 {
 	TR_Image				UMETA(DisplayName = "Image"),
-	TR_Current				UMETA(DisplayName = "Current")
+	TR_Current				UMETA(DisplayName = "Current"),
+	/** Middle of the frame's exposure instead of the start of the sensor readout.
+	 *  Only valid for GetTimestamp(); rejected by GetIMUData()/sensors retrieval.
+	 *  Returns 0 on inputs with no per-frame exposure (USB and HDR models). */
+	TR_ImageCenterOfExposure UMETA(DisplayName = "Image center of exposure")
 };
 
 /*
@@ -581,6 +596,20 @@ enum class ESlPositionalTrackingMode : uint8
 	PTM_Gen_1		UMETA(DisplayName = "GEN 1"),
 	PTM_Gen_2		UMETA(DisplayName = "GEN 2"),
 	PTM_Gen_3		UMETA(DisplayName = "GEN 3")
+};
+
+/*
+* Lists how much GPU a module is allowed to use.
+* The selected mode sets a floor that cannot be avoided: GEN 1 computes depth and therefore
+* always uses the GPU. This preference only controls the work that is optional on top of it.
+* see sl::COMPUTE_PREFERENCE
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlComputePreference : uint8
+{
+	CP_Auto			UMETA(DisplayName = "Auto"),
+	CP_PreferCPU	UMETA(DisplayName = "Prefer CPU"),
+	CP_PreferGPU	UMETA(DisplayName = "Prefer GPU")
 };
 
 /*
@@ -642,7 +671,9 @@ enum class ESlObjectDetectionModel : uint8
 	ODM_PersonHeadBoxFast			UMETA(DisplayName = "Person head box fast"),
 	ODM_PersonHeadAccurateBox		UMETA(DisplayName = "Person head accurate box"),
 	ODM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
-	ODM_CustomYoloLikeBoxObjects	UMETA(DisplayName = "Custom Yolo like box objects")
+	ODM_CustomYoloLikeBoxObjects	UMETA(DisplayName = "Custom Yolo like box objects"),
+	ODM_CustomRFDetrLikeBoxObjects	UMETA(DisplayName = "Custom RF-DETR like box objects"),
+	ODM_CustomBoxObjectsAutodetect	UMETA(DisplayName = "Custom box objects (auto-detect model type)")
 };
 
 /*
@@ -682,7 +713,8 @@ enum class ESlAIModels : uint8
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
 	AIM_NeuralLightDepth				UMETA(DisplayName = "Neural Light Depth"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
-	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth")
+	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth"),
+	AIM_NeuralDepthInt8					UMETA(DisplayName = "Neural Depth INT8")
 };
 
 /*
@@ -1558,6 +1590,52 @@ struct STEREOLABS_API FSlPlaneDetectionParameters
 };
 
 /*
+ * Self-diagnostic results of the camera (image, depth and sensor health).
+ * Requires FSlInitParameters::bEnableImageValidityCheck (on by default).
+ * see sl::HealthStatus
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Types")
+struct STEREOLABS_API FSlHealthStatus
+{
+	GENERATED_BODY()
+
+	FSlHealthStatus()
+		:
+		bEnabled(false),
+		bLowImageQuality(false),
+		bLowLighting(false),
+		bLowDepthReliability(false),
+		bLowMotionSensorsReliability(false),
+		bDuplicatedImage(false)
+	{
+	}
+
+	/** Whether the health check is enabled. */
+	UPROPERTY(BlueprintReadOnly)
+	bool bEnabled;
+
+	/** Poor image quality detected (hardware issue, occlusion, blur, incorrect settings). */
+	UPROPERTY(BlueprintReadOnly)
+	bool bLowImageQuality;
+
+	/** Low-light conditions detected. */
+	UPROPERTY(BlueprintReadOnly)
+	bool bLowLighting;
+
+	/** Low depth map reliability (obstructed optics, heavy fog). */
+	UPROPERTY(BlueprintReadOnly)
+	bool bLowDepthReliability;
+
+	/** Motion sensor reliability issue (corrupted stream, saturated sensors, shocks). */
+	UPROPERTY(BlueprintReadOnly)
+	bool bLowMotionSensorsReliability;
+
+	/** Current image is a duplicate: not a new frame even if the timestamp says so. */
+	UPROPERTY(BlueprintReadOnly)
+	bool bDuplicatedImage;
+};
+
+/*
  * SDK recording state
  * see sl::RecordingState
  */
@@ -2182,7 +2260,8 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bSetGravityAsOrigin(true),
 		Mode(ESlPositionalTrackingMode::PTM_Gen_3),
 		bEnableLocalizationOnly(false),
-		bEnable2DGroundMode(false)
+		bEnable2DGroundMode(false),
+		ComputePreference(ESlComputePreference::CP_Auto)
 	{
 	}
 
@@ -2291,17 +2370,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	}
 
 	/*
-	 * Initial position.
-	 * If using HMD tracking origin, this is the HMD location.
-	 * If not using HMD tracking origin, this is an offset from origin added to the tracking.
+	 * Initial position, an offset from origin added to the tracking.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector Location;
 
 	/*
-	 * Initial rotation.
-	 * If using HMD tracking origin, this is the HMD rotation.
-	 * If not using HMD tracking origin, this is an offset from origin added to the tracking.
+	 * Initial rotation, an offset from origin added to the tracking.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FRotator Rotation;
@@ -2358,6 +2433,15 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	/** Whether to enable 2D ground mode for tracking. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bEnable2DGroundMode;
+
+	/**
+	 * How much GPU positional tracking is allowed to use.
+	 * GEN 3 runs on the CPU by default, so it does not compete with your own GPU workloads.
+	 * Set Prefer GPU to make tracking faster and lower the per-frame Grab() cost, at the cost of
+	 * using the GPU. GEN 1 computes depth and therefore uses the GPU whatever this is set to.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlComputePreference ComputePreference;
 };
 
 /*
@@ -2490,6 +2574,7 @@ struct STEREOLABS_API FSlInitParameters
 		Resolution(ESlResolution::R_AUTO),
 		FPS(-1),
 		DepthMode(ESlDepthMode::DM_Neural),
+		DepthPrecision(ESlDepthPrecision::DP_FP16),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
 		GPUID(-1.0f),
@@ -2913,7 +2998,7 @@ struct STEREOLABS_API FSlInitParameters
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int StreamPort;
 
-	/** Resolution of the camera (720p if used with HMD) */
+	/** Resolution of the camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlResolution Resolution;
 
@@ -2924,6 +3009,16 @@ struct STEREOLABS_API FSlInitParameters
 	/** Disparity */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ESlDepthMode DepthMode;
+
+	/**
+	 * Precision used for neural depth inference.
+	 * INT8 trades a small amount of accuracy for a faster depth runtime and a lower memory
+	 * footprint, and is currently supported by the Neural depth mode only. Always safe to set:
+	 * the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does
+	 * not support INT8.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESlDepthPrecision DepthPrecision;
 
 	/** Minimum distance for depth */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -3653,66 +3748,6 @@ struct STEREOLABS_API FSlSVOData
 	}
 };
 
-
-/*
- * Rendering parameters
- */
-USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlRenderingParameters
-{
-	GENERATED_BODY()
-
-	const TCHAR* Section = TEXT("Rendering");
-
-	FSlRenderingParameters()
-		:
-		PerceptionDistance(100.0f),
-		SRemapEnable(false)
-	{
-	}
-
-	FORCEINLINE void Load(const FString& Path)
-	{
-		GConfig->GetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-		);
-
-		GConfig->GetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	FORCEINLINE void Save(const FString& Path) const
-	{
-		GConfig->SetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-		);
-
-		GConfig->SetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	/** Distance in cm at which real object perfectly match their real size, between 75 and 300. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "75", ClampMax = "3000"))
-	float PerceptionDistance;
-
-	/** ! Experimental ! : enable SRemap. */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool SRemapEnable;
-};
 
 /** Environmental lighting settings */
 USTRUCT(BlueprintType)

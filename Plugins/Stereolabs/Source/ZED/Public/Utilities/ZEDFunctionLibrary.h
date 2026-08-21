@@ -652,12 +652,6 @@ public:
 	static bool ProjectWorldToScreen(AZEDPlayerController const* Player, const FVector& WorldPosition, FVector2D& ScreenPosition);
 
 	/*
-	* Add latency corrector offset
-	*/
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "AddLatencyOffset"), Category = "Stereolabs|Latency")
-	static void LatencyCorrectorAddOffset(const int offset);
-
-	/*
 	 * Get the index corresponding to the enum value
 	* @param ESlBodyPartsVal The body part value
 	*/

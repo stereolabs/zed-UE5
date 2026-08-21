@@ -541,11 +541,24 @@ namespace sl
 				return ESlModel::M_Zed2;
 			case sl::MODEL::ZED2i:
 				return ESlModel::M_Zed2i;
+			case sl::MODEL::ZED_X:
+				return ESlModel::M_ZedX;
+			case sl::MODEL::ZED_XM:
+				return ESlModel::M_ZedXM;
+			case sl::MODEL::ZED_X_HDR:
+				return ESlModel::M_ZedXHDR;
+			case sl::MODEL::ZED_X_HDR_MINI:
+				return ESlModel::M_ZedXMiniHDR;
+			case sl::MODEL::ZED_X_NANO:
+				return ESlModel::M_ZedXNano;
+			case sl::MODEL::VIRTUAL_ZED_X:
+				return ESlModel::M_VirtualZedX;
 			default:
 			{
-				ensureMsgf(false, TEXT("Unhandled sl::MODEL entry %u"), (uint32)SlType);
-
-				return (ESlModel)0;
+				// Includes the mono ZED X One models, which this stereo-only plugin does not expose,
+				// and ZED_X_HDR_MAX. Reported as Unknown rather than asserting: this used to fire an
+				// ensure on every ZED X camera.
+				return ESlModel::M_Unknown;
 			}
 			}
 		}
@@ -2072,7 +2085,7 @@ namespace sl
 
 		FORCEINLINE SL_ObjectDetectionParameters ToSlType(const FSlObjectDetectionParameters& UnrealData)
 		{
-			struct SL_ObjectDetectionParameters ODParameters;
+			struct SL_ObjectDetectionParameters ODParameters = {};
 
 			ODParameters.instance_module_id = 0;
 			ODParameters.enable_tracking = UnrealData.bEnableTracking;
@@ -2087,7 +2100,7 @@ namespace sl
 			res.height = UnrealData.CustomOnnxDynamicInputShape.Y;
 			ODParameters.custom_onnx_dynamic_input_shape = res;
 
-			SL_BatchParameters batchParameters;
+			SL_BatchParameters batchParameters = {};
 			batchParameters.enable = UnrealData.BatchParameters.bEnable;
 			if (batchParameters.enable) {
 				batchParameters.id_retention_time = UnrealData.BatchParameters.IdRetentionTime;
@@ -2104,7 +2117,7 @@ namespace sl
 
 		FORCEINLINE SL_ObjectDetectionRuntimeParameters ToSlType(const FSlObjectDetectionRuntimeParameters& UnrealData)
 		{
-			struct SL_ObjectDetectionRuntimeParameters ODParameters;
+			struct SL_ObjectDetectionRuntimeParameters ODParameters = {};
 			ODParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 
 			for (auto& value : UnrealData.ObjectClassFilter) {
@@ -2115,12 +2128,13 @@ namespace sl
 				ODParameters.object_confidence_threshold[(int)conf.Key] = conf.Value;
 			}
 
-			struct SL_ObjectTrackingParameters trackingParameters;
+			struct SL_ObjectTrackingParameters trackingParameters = {};
 			trackingParameters.object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)UnrealData.ObjectTrackingParameters.ObjectAccelerationPreset;
 			trackingParameters.min_confirmation_time_s = UnrealData.ObjectTrackingParameters.MinConfirmationTime_s;
 			trackingParameters.min_velocity_threshold = UnrealData.ObjectTrackingParameters.MinVelocityThreshold;
 			trackingParameters.prediction_timeout_s = UnrealData.ObjectTrackingParameters.PredictionTimeout_s;
 			trackingParameters.velocity_smoothing_factor = UnrealData.ObjectTrackingParameters.VelocitySmoothingFactor;
+			ODParameters.object_tracking_parameters = trackingParameters;
 
 			for (auto& value : UnrealData.ObjectClassTrackingParameters) {
 				ODParameters.object_class_tracking_parameters[(int)value.Key].object_acceleration_preset = (SL_OBJECT_ACCELERATION_PRESET)value.Value.ObjectAccelerationPreset;
@@ -2135,7 +2149,7 @@ namespace sl
 
 		FORCEINLINE SL_BodyTrackingParameters ToSlType(const FSlBodyTrackingParameters& UnrealData)
 		{
-			struct SL_BodyTrackingParameters BTParameters;
+			struct SL_BodyTrackingParameters BTParameters = {};
 
 			BTParameters.enable_tracking = UnrealData.bEnableTracking;
 			BTParameters.enable_segmentation = UnrealData.bEnableSegmentation;
@@ -2153,7 +2167,7 @@ namespace sl
 
 		FORCEINLINE SL_BodyTrackingRuntimeParameters ToSlType(const FSlBodyTrackingRuntimeParameters& UnrealData)
 		{
-			struct SL_BodyTrackingRuntimeParameters BTParameters;
+			struct SL_BodyTrackingRuntimeParameters BTParameters = {};
 			BTParameters.detection_confidence_threshold = UnrealData.DetectionConfidenceThreshold;
 			BTParameters.minimum_keypoints_threshold = UnrealData.MinimumKeypointsThreshold;
 			BTParameters.skeleton_smoothing = UnrealData.SkeletonSmoothing;
@@ -2166,7 +2180,7 @@ namespace sl
 		 */
 		FORCEINLINE SL_RuntimeParameters ToSlType(const FSlRuntimeParameters& UnrealData)
 		{
-			struct SL_RuntimeParameters RuntimeParameters;
+			struct SL_RuntimeParameters RuntimeParameters = {};
 
 			RuntimeParameters.enable_depth = UnrealData.bEnableDepth;
 			RuntimeParameters.confidence_threshold = UnrealData.ConfidenceThreshold;
@@ -2222,7 +2236,7 @@ namespace sl
 
 		FORCEINLINE SL_SpatialMappingParameters ToSlType(const FSlSpatialMappingParameters& UnrealData)
 		{
-			struct SL_SpatialMappingParameters SpatialMappingParameters;
+			struct SL_SpatialMappingParameters SpatialMappingParameters = {};
 
 			SpatialMappingParameters.max_memory_usage = UnrealData.MaxMemoryUsage;
 			SpatialMappingParameters.save_texture = UnrealData.bSaveTexture;
@@ -2252,7 +2266,7 @@ namespace sl
 	 */
 		FORCEINLINE SL_PlaneDetectionParameters ToSlType(const FSlPlaneDetectionParameters& UnrealData)
 		{
-			struct SL_PlaneDetectionParameters PlaneDetectionParameters;
+			struct SL_PlaneDetectionParameters PlaneDetectionParameters = {};
 
 			PlaneDetectionParameters.max_distance_threshold = UnrealData.MaxDistanceThreshold;
 			PlaneDetectionParameters.normal_similarity_threshold = UnrealData.NormalSimilarityThreshold;
@@ -2368,8 +2382,8 @@ namespace sl
 		FORCEINLINE SL_SVOData ToSlType(const FSlSVOData& UnrealData)
 		{
 			auto sld = SL_SVOData();
-			strcpy(sld.key, TCHAR_TO_ANSI(*UnrealData.Key));
-			strcpy(sld.content, TCHAR_TO_ANSI(*UnrealData.Content));
+			strcpy_s(sld.key, sizeof(sld.key), TCHAR_TO_ANSI(*UnrealData.Key));
+			strcpy_s(sld.content, sizeof(sld.content), TCHAR_TO_ANSI(*UnrealData.Content));
 			sld.content_size = UnrealData.Content.Len();
 			sld.timestamp_ns = FCString::Strtoui64(*UnrealData.TimestampNano, NULL, 10);
 
@@ -2386,7 +2400,7 @@ namespace sl
 			sld.Key = FString(slData->key);
 
 			char temp[21];
-			sprintf(temp, "%llu", slData->timestamp_ns);
+			sprintf_s(temp, sizeof(temp), "%llu", slData->timestamp_ns);
 			sld.TimestampNano = temp;
 			return sld;
 		}

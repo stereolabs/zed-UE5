@@ -17,33 +17,6 @@ enum TRACKING_TYPE {
 
 static std::mutex globalmutex;
 
-inline struct SL_Resolution* convertResolution(const sl::Resolution& res)
-{
-	struct SL_Resolution* res_ = new SL_Resolution();
-	res_->width = res.width;
-	res_->height = res.height;
-	return res_;
-}
-
-inline struct SL_Vector3* convertVector3(const sl::float3& vector)
-{
-	struct SL_Vector3* vector_ = new SL_Vector3();
-	vector_->x = vector.x;
-	vector_->y = vector.y;
-	vector_->z = vector.z;
-	return vector_;
-}
-
-inline struct SL_Quaternion* convertQuaternion(const sl::float4& vector)
-{
-	struct SL_Quaternion* quat_ = new SL_Quaternion();
-    quat_->x = vector.x;
-    quat_->y = vector.y;
-    quat_->z = vector.z;
-    quat_->w = vector.w;
-	return quat_;
-}
-
 class ZEDController {
 public:
     ZEDController(int i);
@@ -271,6 +244,8 @@ private:
 
     std::map<sl::Timestamp, sl::SVOData> currentSVOData;
     bool isSVODataReady = false;
+
+
 
     int input_type;
     unsigned int width;

@@ -14,12 +14,6 @@
 
 DEFINE_LOG_CATEGORY(ZEDPlayerController);
 
-#define MONO_NOISE_OFFSET 0.85f
-
-#define ADD_FVECTOR_2D(Vector, Value)\
-	Vector.X += Value;\
-	Vector.Y += Value;\
-
 #define SHOW_ZED_MESSAGE(Canvas, Font, TextItem, Position, RowHeight)\
 	if (Font && Font->ImportOptions.bUseDistanceFieldAlpha)\
 	{\
@@ -256,8 +250,6 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			ZedCamera->OnTrackingDataUpdated.RemoveDynamic(ZedPawn, &AZEDPawn::ZedCameraTrackingUpdated);
 		}
 	}
-
-	GetWorldTimerManager().ClearTimer(NoiseTimerHandle);
 }
 
 UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
@@ -539,32 +531,6 @@ void AZEDPlayerController::ZedSVOIsSetBackInTime()
 	{
 		ZedCamera->Batch->Reset();
 	}
-}
-
-void AZEDPlayerController::UpdateNoise()
-{
-	int value = sl_get_camera_settings(GSlCameraProxy->GetCameraID(), SL_VIDEO_SETTINGS_GAIN, &value);
-	FZEDNoiseFactors NoiseFactors = sl::unreal::ToUnrealType(sl::mr::computeNoiseFactors(value));
-
-	ADD_FVECTOR_2D(NoiseFactors.R, MONO_NOISE_OFFSET);
-	ADD_FVECTOR_2D(NoiseFactors.G, MONO_NOISE_OFFSET);
-	ADD_FVECTOR_2D(NoiseFactors.B, MONO_NOISE_OFFSET);
-
-	if (NoiseFactors.R == LastNoiseFactors.R)
-	{
-		return;
-	}
-
-	LastNoiseFactors = NoiseFactors;
-	
-	FLinearColor Red(NoiseFactors.R.X, NoiseFactors.R.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("RedFactors", Red);
-
-	FLinearColor Green(NoiseFactors.G.X, NoiseFactors.G.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("GreenFactors", Green);
-
-	FLinearColor Blue(NoiseFactors.B.X, NoiseFactors.B.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("BlueFactors", Blue);
 }
 
 void AZEDPlayerController::Fading(float FadingFactor)

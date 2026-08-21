@@ -34,11 +34,11 @@ struct ZED_API FZEDTrackingData
 	UPROPERTY(BlueprintReadWrite)
 	FSlTimestamp Timestamp;
 
-	/**	Zed world space transform relative to the head with anti drift if using an HMD */
+	/**	Zed world space transform with offset */
 	UPROPERTY(BlueprintReadWrite)
 	FTransform OffsetZedWorldTransform;
 
-	/** Zed world space transform with anti drift if using an HMD */
+	/** Zed world space transform */
 	UPROPERTY(BlueprintReadWrite)
 	FTransform ZedWorldTransform;
 
@@ -117,39 +117,6 @@ struct ZED_API FZEDHitResult
 	/** True if the normal is valid */
 	UPROPERTY(BlueprintReadWrite)
 	bool bNormalValid = false;
-};
-
-/*
- * RGB noise factors
- */
-struct ZED_API FZEDNoiseFactors
-{
-	FZEDNoiseFactors()
-		:
-		R(FVector2D::ZeroVector),
-		G(FVector2D::ZeroVector),
-		B(FVector2D::ZeroVector)
-	{
-	}
-
-	FZEDNoiseFactors(const FVector2D& R,
-		const FVector2D& G, 
-		const FVector2D& B)
-		:
-		R(R),
-		G(G),
-		B(B)
-	{
-	}
-
-	bool IsZeroed()
-	{
-		return R == FVector2D::ZeroVector && G == FVector2D::ZeroVector && B == FVector2D::ZeroVector;
-	}
-
-	FVector2D R;
-	FVector2D G;
-	FVector2D B;
 };
 
 /*

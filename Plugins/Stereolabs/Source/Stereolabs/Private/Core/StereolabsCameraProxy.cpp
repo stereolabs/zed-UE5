@@ -18,6 +18,53 @@ DEFINE_STAT(STAT_RetrieveMeasure)
 DEFINE_STAT(STAT_RetrieveImage)
 
 DEFINE_LOG_CATEGORY(SlCameraProxy);
+
+namespace
+{
+	/*
+	 * The C API allocates one sl::Mat per masked detection on every retrieve and the caller owns
+	 * it. Release them once the data has been converted, and clear the copies that were handed to
+	 * the Unreal structs so nothing keeps a freed pointer.
+	 */
+	template <typename TNativeList, typename TUnrealList>
+	void SlReleaseMasks(TNativeList& NativeList, int32 NativeCount, TUnrealList& UnrealList)
+	{
+		const int32 Count = FMath::Min<int32>(NativeCount, MAX_NUMBER_OBJECT);
+		for (int32 i = 0; i < Count; i++)
+		{
+			if (NativeList[i].mask != nullptr)
+			{
+				sl_mat_free(NativeList[i].mask, SL_MEM_CPU);
+				NativeList[i].mask = nullptr;
+			}
+			if (UnrealList.IsValidIndex(i))
+			{
+				UnrealList[i].Mask = FSlMat();
+			}
+		}
+	}
+}
+
+namespace
+{
+	/*
+	 * The sl_get_*() struct getters allocate a buffer for the caller. Copy the value out and
+	 * release it, so a per-call leak cannot creep back in at any of the call sites below.
+	 */
+	template <typename T>
+	T SlCopyAndFree(T* Ptr)
+	{
+		T Out = {};
+		if (Ptr)
+		{
+			Out = *Ptr;
+			sl_free(Ptr);
+		}
+		return Out;
+	}
+}
+
+
 #define SL_CAMERA_PROXY_LOG(Format, ...) SL_LOG(SlCameraProxy, Format, ##__VA_ARGS__)
 #define SL_CAMERA_PROXY_LOG_W(Format, ...) SL_LOG_W(SlCameraProxy, Format, ##__VA_ARGS__)
 #define SL_CAMERA_PROXY_LOG_E(Format, ...) SL_LOG_E(SlCameraProxy, Format, ##__VA_ARGS__)
@@ -215,7 +262,10 @@ void USlCameraProxy::BeginDestroy()
 
 FString USlCameraProxy::GetSDKVersion()
 {
-	return FString(sl_get_sdk_version());
+	char* Version = sl_get_sdk_version();
+	FString Out = FString(Version);
+	sl_free(Version);
+	return Out;
 }
 
 void USlCameraProxy::OpenCamera(const FSlInitParameters& InitParameters)
@@ -255,6 +305,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	sl_init_parameters.depth_minimum_distance = InitParameters.DepthMinimumDistance;
 	sl_init_parameters.depth_maximum_distance = InitParameters.DepthMaximumDistance;
 	sl_init_parameters.depth_mode = (SL_DEPTH_MODE)InitParameters.DepthMode;
+	sl_init_parameters.depth_precision = (SL_DEPTH_PRECISION)InitParameters.DepthPrecision;
 	sl_init_parameters.enable_right_side_measure = InitParameters.bEnableRightSideMeasure;
 	sl_init_parameters.sdk_gpu_id = FMath::FloorToInt(InitParameters.GPUID);
 	sl_init_parameters.sdk_verbose = InitParameters.Verbose;
@@ -326,9 +377,9 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 			bSVOPlaybackEnabled = true;
 		}
 
-		SlCameraInformation = sl_get_camera_information(CameraID, 0, 0);
-		CameraInformation = sl::unreal::ToUnrealType(*SlCameraInformation);
-		SL_CameraParameters leftCameraParameters = sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)->camera_configuration.calibration_parameters.left_cam;
+		SlCameraInformation = SlCopyAndFree(sl_get_camera_information(CameraID, 0, 0));
+		CameraInformation = sl::unreal::ToUnrealType(SlCameraInformation);
+		SL_CameraParameters leftCameraParameters = SlCopyAndFree(sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)).camera_configuration.calibration_parameters.left_cam;
 		RetrieveLeftCameraParameters = sl::unreal::ToUnrealType(leftCameraParameters);
 
 		OpenCameraAsyncTask->EnsureCompletion(false);
@@ -445,7 +496,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	SL_ERROR_CODE ErrorCode = SL_ERROR_CODE_FAILURE;
 	SL_ERROR_CODE IMUDataErrorCode = SL_ERROR_CODE_FAILURE;
 
-	SL_PositionalTrackingParameters sl_positional_tracking_parameters;
+	SL_PositionalTrackingParameters sl_positional_tracking_parameters = {};
 
 	sl_positional_tracking_parameters.enable_area_memory = NewTrackingParameters.bEnableAreaMemory;
 	sl_positional_tracking_parameters.enable_imu_fusion = NewTrackingParameters.bEnableImuFusion;
@@ -456,6 +507,10 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	sl_positional_tracking_parameters.set_floor_as_origin = NewTrackingParameters.bSetFloorAsOrigin;
 	sl_positional_tracking_parameters.set_gravity_as_origin = NewTrackingParameters.bSetGravityAsOrigin;
 	sl_positional_tracking_parameters.mode = (SL_POSITIONAL_TRACKING_MODE)NewTrackingParameters.Mode;
+	sl_positional_tracking_parameters.compute_preference = (SL_COMPUTE_PREFERENCE)NewTrackingParameters.ComputePreference;
+	sl_positional_tracking_parameters.depth_min_range = NewTrackingParameters.DepthMinRange;
+	sl_positional_tracking_parameters.enable_localization_only = NewTrackingParameters.bEnableLocalizationOnly;
+	sl_positional_tracking_parameters.enable_2d_ground_mode = NewTrackingParameters.bEnable2DGroundMode;
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		ErrorCode = (SL_ERROR_CODE)sl_enable_positional_tracking(CameraID, &sl_positional_tracking_parameters, TCHAR_TO_UTF8(*NewTrackingParameters.AreaFilePath));
@@ -611,17 +666,11 @@ ESlErrorCode USlCameraProxy::GetRegionOfInterest(FSlMat& Mat, FIntPoint& resolut
 
 ESlErrorCode USlCameraProxy::StartRegionOfInterestAutoDetection(const FSlRegionOfInterestParameters& roiParams)
 {
-	SL_RegionOfInterestParameters params;
+	SL_RegionOfInterestParameters params = {};
 
-	TArray<bool> modules_array;
-	modules_array.Init(false, SL_MODULE_LAST);
-
-	for (int i = 0; i < SL_MODULE_ALL; i++)
+	for (int i = 0; i < SL_MODULE_LAST; i++)
 	{
-		if (roiParams.autoApplyModule.Contains((ESlModule)i))
-		{
-			params.auto_apply_module[i] = true;
-		}
+		params.auto_apply_module[i] = roiParams.autoApplyModule.Contains((ESlModule)i);
 	}
 
 	params.depth_far_threshold_meters = roiParams.depthFarThresholdMeters;
@@ -638,6 +687,12 @@ ESlRegionOfInterestAutoDetectionState USlCameraProxy::GetRegionOfInterestAutoDet
 
 ESlErrorCode USlCameraProxy::GetIMUData(FSlIMUData& IMUData, ESlTimeReference TimeReference)
 {
+	// Center of exposure only applies to image timestamps; the sensors retrieval rejects it.
+	if (TimeReference == ESlTimeReference::TR_ImageCenterOfExposure)
+	{
+		TimeReference = ESlTimeReference::TR_Image;
+	}
+
 	SL_ERROR_CODE ErrorCode = SL_ERROR_CODE_FAILURE;
 	SL_SCOPE_LOCK(Lock, GrabSection)
 		ErrorCode = (SL_ERROR_CODE)sl_get_sensors_data(CameraID, &CurrentSensorsData, (SL_TIME_REFERENCE)TimeReference);
@@ -725,7 +780,7 @@ FSlCameraInformation USlCameraProxy::GetCameraInformation(const FIntPoint& Custo
 	}
 	else
 	{
-		return sl::unreal::ToUnrealType(*sl_get_camera_information(CameraID, CustomResolution.X, CustomResolution.Y));
+		return sl::unreal::ToUnrealType(SlCopyAndFree(sl_get_camera_information(CameraID, CustomResolution.X, CustomResolution.Y)));
 	}
 }
 
@@ -761,9 +816,9 @@ SL_POSITIONAL_TRACKING_STATE USlCameraProxy::GetCameraPosition(SL_PoseData* pose
 		return SL_POSITIONAL_TRACKING_STATE_OFF;
 }
 
-SL_PositionalTrackingStatus* USlCameraProxy::GetPositionalTrackingStatus()
+SL_PositionalTrackingStatus USlCameraProxy::GetPositionalTrackingStatus()
 {
-	return sl_get_positional_tracking_status(CameraID);
+	return SlCopyAndFree(sl_get_positional_tracking_status(CameraID));
 }
 
 SL_ERROR_CODE USlCameraProxy::GetCameraIMURotationAtImage(sl::Rotation& pose)
@@ -828,8 +883,8 @@ void USlCameraProxy::Grab()
 		SL_SCOPE_LOCK(Lock, SVOSection)
 			if (bSVORecordingEnabled && bSVORecordingFrames)
 			{
-				SlRecordingStatus = sl_get_recording_status(CameraID);
-				if (!SlRecordingStatus->status)
+				SlRecordingStatus = SlCopyAndFree(sl_get_recording_status(CameraID));
+				if (!SlRecordingStatus.status)
 				{
 					SL_CAMERA_PROXY_LOG_E("Can't record current frame");
 				}
@@ -1155,14 +1210,34 @@ void USlCameraProxy::SetCameraSettings(FSlVideoSettings& NewCameraSettings)
 
 FSlTimestamp USlCameraProxy::GetTimestamp(ESlTimeReference TimeReference)
 {
-	if (TimeReference == ESlTimeReference::TR_Image)
+	if (TimeReference == ESlTimeReference::TR_Current)
 	{
-		SL_SCOPE_LOCK(Lock, GrabSection)
-			return FSlTimestamp(sl_get_image_timestamp(CameraID));
-		SL_SCOPE_UNLOCK
+		return FSlTimestamp(sl_get_timestamp(CameraID, SL_TIME_REFERENCE_CURRENT));
 	}
 
-	return FSlTimestamp(sl_get_current_timestamp(CameraID));
+	// TR_Image and TR_ImageCenterOfExposure both refer to the last grabbed frame.
+	uint64 Timestamp = 0;
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		Timestamp = sl_get_timestamp(CameraID, (SL_TIME_REFERENCE)TimeReference);
+	SL_SCOPE_UNLOCK
+
+	return FSlTimestamp(Timestamp);
+}
+
+FSlHealthStatus USlCameraProxy::GetHealthStatus()
+{
+	FSlHealthStatus HealthStatus;
+
+	const SL_HealthStatus SlHealthStatus = SlCopyAndFree(sl_get_health_status(CameraID));
+
+	HealthStatus.bEnabled = SlHealthStatus.enabled;
+	HealthStatus.bLowImageQuality = SlHealthStatus.low_image_quality;
+	HealthStatus.bLowLighting = SlHealthStatus.low_lighting;
+	HealthStatus.bLowDepthReliability = SlHealthStatus.low_depth_reliability;
+	HealthStatus.bLowMotionSensorsReliability = SlHealthStatus.low_motion_sensors_reliability;
+	HealthStatus.bDuplicatedImage = SlHealthStatus.duplicated_image;
+
+	return HealthStatus;
 }
 
 void USlCameraProxy::EnableGrabThread(bool bEnable)
@@ -1254,9 +1329,9 @@ void USlCameraProxy::EnableBodyTrackingThread(bool bEnable)
 
 bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel)
 {
-	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0);
+	const SL_AI_Model_status ai_model_status = SlCopyAndFree(sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0));
 
-	if (!ai_model_status->optimized)
+	if (!ai_model_status.optimized)
 	{
 		//SL_CAMERA_PROXY_LOG_E("Detection model : %i is not downloaded/optimized", AiModel);
 		return false;
@@ -1333,11 +1408,11 @@ float USlCameraProxy::GetDepth(const FSlViewportHelper& ViewportHelper, const FI
 	{
 		if (FMath::IsNaN(Depth) || Depth > 0.0f)
 		{
-			Depth = sl_get_init_parameters(CameraID)->depth_maximum_distance;
+			Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_maximum_distance;
 		}
 		else
 		{
-			Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
+			Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_minimum_distance;
 		}
 	}
 
@@ -1358,11 +1433,11 @@ TArray<float> USlCameraProxy::GetDepths(const FSlViewportHelper& ViewportHelper,
 		{
 			if (FMath::IsNaN(Depth) || Depth > 0.0f)
 			{
-				Depth = sl_get_init_parameters(CameraID)->depth_maximum_distance;
+				Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_maximum_distance;
 			}
 			else
 			{
-				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
+				Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_minimum_distance;
 			}
 		}
 	}
@@ -1416,11 +1491,11 @@ void USlCameraProxy::GetDepthAndNormal(const FSlViewportHelper& ViewportHelper, 
 	{
 		if (FMath::IsNaN(Depth) || Depth > 0.0f)
 		{
-			Depth = sl_get_init_parameters(CameraID)->depth_maximum_distance;
+			Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_maximum_distance;
 		}
 		else
 		{
-			Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
+			Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_minimum_distance;
 		}
 	}
 
@@ -1449,11 +1524,11 @@ void USlCameraProxy::GetDepthsAndNormals(const FSlViewportHelper& ViewportHelper
 		{
 			if (FMath::IsNaN(Depth) || Depth > 0.0f)
 			{
-				Depth = sl_get_init_parameters(CameraID)->depth_maximum_distance;
+				Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_maximum_distance;
 			}
 			else
 			{
-				Depth = sl_get_init_parameters(CameraID)->depth_minimum_distance;
+				Depth = SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_minimum_distance;
 			}
 		}
 		Depths.Add(Depth);
@@ -1538,9 +1613,9 @@ void USlCameraProxy::EnableBodyTracking(const FSlBodyTrackingParameters& BTParam
 	BodyTrackingParameters = BTParameters;
 	SL_AI_MODELS ai_model = sl::unreal::cvtDetection((SL_BODY_TRACKING_MODEL)BodyTrackingParameters.DetectionModel, (SL_BODY_FORMAT)BodyTrackingParameters.BodyFormat);
 
-	SL_AI_Model_status* ai_model_status = sl_check_AI_model_status(ai_model, 0);
+	const SL_AI_Model_status ai_model_status = SlCopyAndFree(sl_check_AI_model_status(ai_model, 0));
 
-	if (!ai_model_status->optimized)
+	if (!ai_model_status.optimized)
 	{
 		OptimizeAIModel((ESlAIModels)ai_model, ESlAIType::AIT_BodyTracking);
 
@@ -1602,6 +1677,7 @@ bool USlCameraProxy::RetrieveObjects()
 	SL_ObjectDetectionRuntimeParameters od_rt_params = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &od_rt_params, &sl_objects, 0);
 	objects = sl::unreal::ToUnrealType(sl_objects);
+	SlReleaseMasks(sl_objects.object_list, sl_objects.nb_objects, objects.ObjectList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1622,6 +1698,7 @@ bool USlCameraProxy::RetrieveBodies()
 	SL_BodyTrackingRuntimeParameters bt_rt_params = sl::unreal::ToSlType(BodyTrackingRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &bt_rt_params, &sl_bodies, 0);
 	bodies = sl::unreal::ToUnrealType(sl_bodies, BodyTrackingParameters.BodyFormat);
+	SlReleaseMasks(sl_bodies.body_list, sl_bodies.nb_bodies, bodies.BodyList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1824,7 +1901,7 @@ int USlCameraProxy::RetrieveSVOData(const FString& key, TArray<FSlSVOData>& resS
 	uint64 tse = FCString::Strtoui64(*ts_nano_end, NULL, 10);
 	auto ckey = std::make_unique<char[]>(128);
 
-	strcpy(ckey.get(), TCHAR_TO_ANSI(*key));
+	strcpy_s(ckey.get(), sizeof(ckey.get()), TCHAR_TO_ANSI(*key));
 
 	resSVOData.Empty();
 
@@ -1927,7 +2004,7 @@ void USlCameraProxy::SetSVORecordFrames(bool bRecord)
 FSlRecordingState USlCameraProxy::GetSVORecordingState()
 {
 	SL_SCOPE_LOCK(Lock, SVOSection)
-		return sl::unreal::ToUnrealType(*SlRecordingStatus);
+		return sl::unreal::ToUnrealType(SlRecordingStatus);
 	SL_SCOPE_UNLOCK
 }
 
@@ -1944,7 +2021,7 @@ void USlCameraProxy::PopCudaContext()
 
 int32 USlCameraProxy::GetConfidenceThreshold()
 {
-	return sl_get_runtime_parameters(CameraID)->confidence_threshold;
+	return SlCopyAndFree(sl_get_runtime_parameters(CameraID)).confidence_threshold;
 }
 
 void USlCameraProxy::SetConfidenceThreshold(int32 NewConfidenceThreshold)
@@ -1956,17 +2033,17 @@ void USlCameraProxy::SetConfidenceThreshold(int32 NewConfidenceThreshold)
 
 float USlCameraProxy::GetDepthMaxRangeValue()
 {
-	return sl_get_init_parameters(CameraID)->depth_maximum_distance;
+	return SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_maximum_distance;
 }
 
 float USlCameraProxy::GetDepthMinRangeValue()
 {
-	return sl_get_init_parameters(CameraID)->depth_minimum_distance;
+	return SlCopyAndFree(sl_get_init_parameters(CameraID)).depth_minimum_distance;
 }
 
 float USlCameraProxy::GetCameraFPS()
 {
-	return sl_get_camera_information(CameraID, 0, 0)->camera_configuration.fps;
+	return SlCopyAndFree(sl_get_camera_information(CameraID, 0, 0)).camera_configuration.fps;
 }
 
 

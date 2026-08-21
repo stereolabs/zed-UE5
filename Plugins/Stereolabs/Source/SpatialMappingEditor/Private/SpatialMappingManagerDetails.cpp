@@ -22,7 +22,7 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 	}
 
 	CachedDetailBuilder = &DetailBuilder;
-	SelectedObjects = DetailBuilder.GetDetailsView()->GetSelectedObjects();
+	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Spatial Mapping Controls");
 

@@ -145,7 +145,6 @@ void AZEDInitializer::LoadParameters()
 
 		TrackingParameters.Load(Path);
 		RuntimeParameters.Load(Path);
-		RenderingParameters.Load(Path);
 		RecordingParameters.Load(Path);
 	}
 }
@@ -189,7 +188,6 @@ void AZEDInitializer::SaveParameters()
 	InitParameters.Save(Path);
 	TrackingParameters.Save(Path);
 	RuntimeParameters.Save(Path);
-	RenderingParameters.Save(Path);
 	RecordingParameters.Save(Path);
 
 	GConfig->Flush(false, *Path);
@@ -218,7 +216,6 @@ void AZEDInitializer::ResetParameters()
 
 	TrackingParameters = FSlPositionalTrackingParameters();
 	RuntimeParameters = FSlRuntimeParameters();
-	RenderingParameters = FSlRenderingParameters();
 
 	ObjectDetectionParameters = FSlObjectDetectionParameters();
 	ObjectDetectionRuntimeParameters = FSlObjectDetectionRuntimeParameters();

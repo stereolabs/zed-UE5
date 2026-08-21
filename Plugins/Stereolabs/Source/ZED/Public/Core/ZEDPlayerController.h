@@ -10,7 +10,6 @@
 
 #include "Components/TimelineComponent.h"
 
-#include <sl_mr_core/Rendering.hpp>
 
 #include "ZEDPlayerController.generated.h"
 
@@ -224,11 +223,6 @@ private:
 	void Internal_ZedCameraDisconnected();
 
 	/*
-	 * Update noise in post process
-	 */
-	void UpdateNoise();
-
-	/*
 	 * Initialize controller
 	 */
 	void Internal_Init();
@@ -282,12 +276,6 @@ public:
 
 private:
 
-	/** Previous noise factors */
-	FZEDNoiseFactors LastNoiseFactors;
-
-	/** Timer handle for the noise */
-	FTimerHandle NoiseTimerHandle;
-
 	/** Fade function */
 	FOnTimelineFloat FadeFunction;
 
@@ -308,12 +296,6 @@ private:
 
 	/** Fade out to game timer handle */
 	FTimerHandle FadeOutTimerHandle;
-
-	/** Reset HMD tracking origin timer handle */
-	FTimerHandle ResetHMDTrackingOriginTimerHandle;
-
-	/** Open the Zed camera after HMD enabled timer handle */
-	FTimerHandle OpenZedCameraTimerHandle;
 
 	/** Close the Zed camera after fade */
 	FTimerHandle CloseZedCameraTimerHandle;

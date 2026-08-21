@@ -3,7 +3,6 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 #include "StereolabsPrivatePCH.h"
 
-#include <sl_mr_core/latency.hpp>
 #include <sl_mr_core/Rendering.hpp>
 
 #include <iostream>
@@ -43,15 +42,10 @@ FVector2D USlFunctionLibrary::GetRenderPlaneSize(const FIntPoint& ImageResolutio
 	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSize(sl::unreal::ToSlMrType2(ImageResolution), VerticalFOV, PlaneDistance));
 }
 
-FVector2D USlFunctionLibrary::GetRenderPlaneSizeWithGamma(UObject* WorldContextObject, const FIntPoint& ImageResolution, float PerceptionDistance, float ZedFocal, float PlaneDistance)
-{
-	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSizeWithGamma(sl::unreal::ToSlMrType2(ImageResolution), PerceptionDistance, 0.0f, PlaneDistance, 0.0f, ZedFocal));
-}
-
 FVector4 USlFunctionLibrary::GetOpticalCentersOffsets(const FIntPoint& ImageResolution, float Distance)
 {
 	if (GSlCameraProxy->IsCameraOpened()) {
-		return sl::unreal::ToUnrealType(sl::mr::computeOpticalCentersOffsets(sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation->camera_configuration.calibration_parameters.left_cam), sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation->camera_configuration.calibration_parameters.right_cam), sl::unreal::ToSlMrType2(ImageResolution), Distance));
+		return sl::unreal::ToUnrealType(sl::mr::computeOpticalCentersOffsets(sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation.camera_configuration.calibration_parameters.left_cam), sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation.camera_configuration.calibration_parameters.right_cam), sl::unreal::ToSlMrType2(ImageResolution), Distance));
 	}
 	else
 		return FVector4::Zero();

@@ -6,7 +6,6 @@
 #include "ZEDInitializer.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTexture.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTextureBatch.h"
-#include "../../../ThirdParty/MixedReality/include/sl_mr_core/defines.hpp"
 #include "ImageUtils.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SceneCaptureComponent2D.h"
@@ -251,10 +250,6 @@ public:
 
 	// ------------------------------------------------------------------
 
-	/** Config rendering parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	FSlRenderingParameters RenderingParameters;
-
 	/**  Render distance of the ZED planes */
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
 	float CameraRenderPlaneDistance;
@@ -333,9 +328,6 @@ private:
 	/** Update section if grab is threaded */
 	FCriticalSection TrackingUpdateSection;
 
-	/** Plane anti drift timer handle */
-	FTimerHandle PlanesAntiDriftTimerHandle;
-
 	/** Current depth texture quality preset */
 	int32 CurrentDepthTextureQualityPreset;
 
@@ -366,7 +358,6 @@ private:
 
 		void ToggleComponents(bool enable);
 		void SetupComponents();
-		void SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance);
 		void SetPlaneSize(UStaticMeshComponent* plane, float planeDistance);
 
 		void AddOrUpdatePostProcessCpp(UMaterialInterface* NewPostProcess, float NewWeight);

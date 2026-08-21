@@ -487,7 +487,6 @@ void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer)
 	TrackingParameters = ZedInitializer->TrackingParameters;
 	InitParameters = ZedInitializer->InitParameters;
 	RuntimeParameters = ZedInitializer->RuntimeParameters;
-	RenderingParameters = ZedInitializer->RenderingParameters;
 	CameraSettings = ZedInitializer->CameraSettings;
 	RecordingParameters = ZedInitializer->RecordingParameters;
 	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
@@ -616,14 +615,6 @@ void AZEDCamera::SetupComponents()
 	// Set camera projection matrix
 	LeftCamera->bUseCustomProjectionMatrix = true;
 	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(LeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
-}
-
-void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
-{
-	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-
-	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSizeWithGamma(this, cameraParam.Resolution, RenderingParameters.PerceptionDistance, cameraParam.HFocal, planeDistance/100.0f); // because plane is already of side 100
-	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
 }
 
 void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)

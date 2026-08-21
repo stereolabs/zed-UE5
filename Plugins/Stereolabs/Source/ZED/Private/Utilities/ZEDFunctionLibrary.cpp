@@ -7,10 +7,6 @@
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 
-#include <sl_mr_core/latency.hpp>
-
-#include <sl_mr_core/Rendering.hpp>
-
 DEFINE_LOG_CATEGORY(ZEDFunctionLibrary);
 
 #define PLANE_THRESHOLD 0.75f
@@ -1007,10 +1003,5 @@ bool UZEDFunctionLibrary::ProjectWorldToScreen(AZEDPlayerController const* Playe
 
 	ScreenPosition = FVector2D::ZeroVector;
 	return false;
-}
-
-void UZEDFunctionLibrary::LatencyCorrectorAddOffset(const int offset)
-{
-	sl::mr::latencyCorrectorAdjOffset(offset);
 }
 

@@ -22,7 +22,7 @@ void FZEDInitializerDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 	const FText ResetSettingsText    = FText::FromString("Reset settings");
 
 	// Cache set of selected things
-	SelectedObjects = DetailBuilder.GetDetailsView()->GetSelectedObjects();
+	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
 
 	Category.AddCustomRow(FilterString, false)
 		.NameContent()

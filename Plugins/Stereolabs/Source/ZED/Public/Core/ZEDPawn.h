@@ -33,11 +33,6 @@ private:
 	UFUNCTION()
 	void ZedCameraTrackingUpdated(const FZEDTrackingData& NewTrackingData, const float & DeltaSeconds);
 
-	/*
-	* Initialisation
-	*/
-	void InitRemap(FName HMDname, sl::RESOLUTION camRes, float dp);
-
 public:
 	/** Custom spring arm that offset the camera */
 	UPROPERTY()
