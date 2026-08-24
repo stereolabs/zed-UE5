@@ -33,7 +33,7 @@ public:
 	/*
 	 * Lock the section
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Critical Section")
 	void Lock()
 	{
 		CriticalSection.Lock();
@@ -44,7 +44,7 @@ public:
 	 * Try to lock the section
 	 * @return True if locked
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Critical Section")
 	bool TryLock()
 	{
 		bIsLocked = CriticalSection.TryLock();
@@ -54,7 +54,7 @@ public:
 	/*
 	 * Unlock the section
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Critical Section")
 	void Unlock()
 	{
 		CriticalSection.Unlock();
@@ -64,7 +64,7 @@ public:
 	/*
 	 * @return True if locked
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Critical Section")
 	bool IsLocked()
 	{
 		return bIsLocked;

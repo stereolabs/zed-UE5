@@ -4,6 +4,7 @@
 #include "SpatialMappingEditor/Private/SpatialMappingEditorPrivatePCH.h"
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 #include "DesktopPlatformModule.h"
+#include "Misc/EngineVersionComparison.h"
 
 #define LOCTEXT_NAMESPACE "FSpatialMappingManagerDetails"
 
@@ -22,7 +23,12 @@ void FSpatialMappingManagerDetails::CustomizeDetails(IDetailLayoutBuilder& Detai
 	}
 
 	CachedDetailBuilder = &DetailBuilder;
+
+#if UE_VERSION_NEWER_THAN(5, 7, 0)
 	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
+#else
+	SelectedObjects = DetailBuilder.GetDetailsView()->GetSelectedObjects();
+#endif
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Spatial Mapping Controls");
 

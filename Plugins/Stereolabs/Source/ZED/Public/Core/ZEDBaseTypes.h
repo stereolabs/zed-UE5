@@ -27,27 +27,27 @@ struct ZED_API FZEDTrackingData
 	}
 
 	/** Tracking state */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	ESlTrackingState TrackingState;
 
 	/** Timestamp */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FSlTimestamp Timestamp;
 
 	/**	Zed world space transform with offset */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FTransform OffsetZedWorldTransform;
 
 	/** Zed world space transform */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FTransform ZedWorldTransform;
 
 	/** Raw path transform from tracking origin */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FTransform ZedPathTransform;	
 
 	/** IMU rotation */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FRotator IMURotator;
 };
 
@@ -85,37 +85,37 @@ struct ZED_API FZEDHitResult
 	}
 
 	/** Location of the hit in world space */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FVector Location = FVector::ZeroVector;
 
 	/** Location of the actual contact point. Equal the tested world location. */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FVector ImpactPoint = FVector::ZeroVector;
 
 	/** Normal of the hit in world space */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	FVector Normal = FVector::ZeroVector;
 
 	/** The depth of the hit */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	float Depth = -1.0f;
 
 	/** The distance from the hit location to the player */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	float Distance = 0.0f;
 
 	/** True if the location is visible by the player */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	bool bIsVisible = false;
 
 	/* True if the ImpactPoint is behind real.
 	 * Always false if hit test "bHitIfBehind" set to false.
 	 */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	bool bIsBehind = false;
 
 	/** True if the normal is valid */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "ZED|Struct")
 	bool bNormalValid = false;
 };
 

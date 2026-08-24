@@ -22,24 +22,19 @@ DEFINE_LOG_CATEGORY(SlCameraProxy);
 namespace
 {
 	/*
-	 * The C API allocates one sl::Mat per masked detection on every retrieve and the caller owns
-	 * it. Release them once the data has been converted, and clear the copies that were handed to
-	 * the Unreal structs so nothing keeps a freed pointer.
+	 * The C API allocates one sl::Mat per masked detection on every retrieve and hands ownership to
+	 * us. Release the previous frame's masks just before the results are replaced, so callers can
+	 * use a mask for the whole frame it belongs to.
 	 */
-	template <typename TNativeList, typename TUnrealList>
-	void SlReleaseMasks(TNativeList& NativeList, int32 NativeCount, TUnrealList& UnrealList)
+	template <typename TList>
+	void SlFreePreviousMasks(TList& PreviousList)
 	{
-		const int32 Count = FMath::Min<int32>(NativeCount, MAX_NUMBER_OBJECT);
-		for (int32 i = 0; i < Count; i++)
+		for (int32 i = 0; i < PreviousList.Num(); i++)
 		{
-			if (NativeList[i].mask != nullptr)
+			if (PreviousList[i].Mask.Mat != nullptr)
 			{
-				sl_mat_free(NativeList[i].mask, SL_MEM_CPU);
-				NativeList[i].mask = nullptr;
-			}
-			if (UnrealList.IsValidIndex(i))
-			{
-				UnrealList[i].Mask = FSlMat();
+				sl_mat_free(PreviousList[i].Mask.Mat, SL_MEM_CPU);
+				PreviousList[i].Mask = nullptr;
 			}
 		}
 	}
@@ -1676,8 +1671,8 @@ bool USlCameraProxy::RetrieveObjects()
 	SL_Objects sl_objects;
 	SL_ObjectDetectionRuntimeParameters od_rt_params = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &od_rt_params, &sl_objects, 0);
+	SlFreePreviousMasks(objects.ObjectList);
 	objects = sl::unreal::ToUnrealType(sl_objects);
-	SlReleaseMasks(sl_objects.object_list, sl_objects.nb_objects, objects.ObjectList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1697,8 +1692,8 @@ bool USlCameraProxy::RetrieveBodies()
 	SL_Bodies sl_bodies;
 	SL_BodyTrackingRuntimeParameters bt_rt_params = sl::unreal::ToSlType(BodyTrackingRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &bt_rt_params, &sl_bodies, 0);
+	SlFreePreviousMasks(bodies.BodyList);
 	bodies = sl::unreal::ToUnrealType(sl_bodies, BodyTrackingParameters.BodyFormat);
-	SlReleaseMasks(sl_bodies.body_list, sl_bodies.nb_bodies, bodies.BodyList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{

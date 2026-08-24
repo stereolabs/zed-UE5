@@ -118,7 +118,7 @@ public:
 	 * @param ErrorCode The grab error code
 	 * @param Timestamp Image timestamp
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zed")
 	void GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp);
 };
 

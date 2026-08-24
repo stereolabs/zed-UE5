@@ -46,11 +46,11 @@ private:
 
 public:
 	/** Fade timeline */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "Zed")
 	UTimelineComponent* FadeTimeline;
 
 	/** Fade timeline curve */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "Zed")
 	UCurveFloat* FadeTimelineCurve;
 
 	/** Fade function */

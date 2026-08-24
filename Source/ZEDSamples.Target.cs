@@ -15,10 +15,5 @@ public class ZEDSamplesTarget : TargetRules
 
         // Fixes compilation error with ue5.6.
         GlobalDefinitions.Add("UE_ENABLE_INCLUDE_ORDER_DEPRECATED_IN_5_7=0");
-
-        if (bBuildEditor)
-        {
-            ExtraModuleNames.AddRange(new string[] { "ZEDSamplesEditor" });
-        }
     }
 }

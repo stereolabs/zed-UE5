@@ -39,30 +39,30 @@ public:
 	USceneComponent* SpringArm;
 
 	/** Main camera */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	UCineCameraComponent* Camera;
 
 	/** Should enable lerp with specified alpha*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	bool EnableLerp;
 
 	/** Lerp Speed value*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	float LerpIntensity;
 
 	/** Transform used during Lerp smoothing*/
 	FTransform LerpTransform;
 
 	/** Boolean used as toggle to enable/disable freezing the virtual camera to reposition the real camera*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	bool ToggleFreeze;
 
 	/** Save the rotation of the camera when freezing, and apply offset to the camera after unfreezing.*/
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	bool UseRotationOffset;
 
 	/** Has the camera been frozen by the toggle freeze*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stereolabs|Zed")
 	bool IsFrozen;
 
 	/** Set the location offset, i.e. when starting the level */
@@ -83,7 +83,7 @@ public:
 	/** From Previous to current location given by the slcamera*/
 	FVector PreviousToCurrentLocation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	FVector TranslationMultiplier;
 
 	FVector RealTranslationToVirtualTranslation(const FVector& realTranslation);
@@ -114,10 +114,10 @@ private:
 	UMaterial* ZedWidgetSourceMaterial;
 
 	/** Transform offset used to reposition the camera, taking into account movement multipliers or offsetters*/
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Zed")
 	FTransform TransformOffset;
 
 	/** Real camera position and rotation, to manipulate the camera with multiipliers or lerp or anything else.*/
-	// UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stereolabs|Zed")
 	FTransform RealCameraTransform;
 };

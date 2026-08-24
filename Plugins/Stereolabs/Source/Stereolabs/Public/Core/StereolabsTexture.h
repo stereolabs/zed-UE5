@@ -111,23 +111,23 @@ protected:
 
 public:
 	/** Unreal texture if GPU */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	UTexture2D* Texture;
 
 	/** Width of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	int32 Width;
 
 	/** Height of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	int32 Height;
 
 	/** Mat holding resources from SDK */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "Stereolabs|Texture")
 	FSlMat Mat;
 
 	/** Name of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	FName Name;
 
 protected:
@@ -195,11 +195,11 @@ private:
 
 public:
 	/** Texture view type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
+	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType", Category = "Stereolabs|Texture")
 	ESlView ViewType;
 
 	/** Texture view type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
+	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType", Category = "Stereolabs|Texture")
 	ESlViewFormat ViewFormat;
 };
 
@@ -252,6 +252,6 @@ private:
 
 public:
 	/** Texture measure type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "MeasureType")
+	UPROPERTY(BlueprintReadOnly, DisplayName = "MeasureType", Category = "Stereolabs|Texture")
 	ESlMeasure MeasureType;
 };
