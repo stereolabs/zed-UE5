@@ -12,6 +12,27 @@
 
 DEFINE_LOG_CATEGORY(ZEDCamera);
 
+#if WITH_EDITOR
+#define ZED_CONFIG_FILE_PATH			FPaths::Combine(*FPaths::ProjectDir(), *FString("Saved/Config/ZED/ZED.ini"))
+#define ZED_CAMERA_CONFIG_FILE_PATH     FPaths::Combine(*FPaths::ProjectDir(), *FString("Saved/Config/ZED/Camera.ini"))
+#define DEFAULT_VERBOSE_FILE_PATH       FPaths::Combine(*FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()), *FString("Binaries/Win64/ZedLog.txt"))
+#else
+#define ZED_CONFIG_FILE_PATH			FPaths::Combine(*FPaths::ConvertRelativePathToFull("../../"), *FString("Saved/Config/ZED/ZED.ini"))
+#define ZED_CAMERA_CONFIG_FILE_PATH     FPaths::Combine(*FPaths::ConvertRelativePathToFull("../../"), *FString("Saved/Config/ZED/Camera.ini"))
+#define DEFAULT_VERBOSE_FILE_PATH       FPaths::Combine(*FPaths::ConvertRelativePathToFull("."),      *FString("ZedLog.txt"))
+#endif
+
+static bool IsGConfigAvailable()
+{
+	if (!GConfig)
+	{
+		SL_LOG_E(ZEDCamera, "GConfig not available");
+		return false;
+	}
+
+	return true;
+}
+
 #define ZED_CAMERA_LOG(Format, ...) SL_LOG(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_W(Format, ...) SL_LOG_W(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_E(Format, ...) SL_LOG_E(ZEDCamera, Format, ##__VA_ARGS__)
@@ -36,6 +57,9 @@ AZEDCamera::AZEDCamera()
 	ImageView( ESlView::V_Left ),
 	CameraRenderPlaneDistance( 0.f ),
 	ZedLeftEyeMaterialInstanceDynamic( nullptr ),
+	bShowZedImage( true ),
+	bLoadParametersFromConfigFile( false ),
+	bLoadCameraSettingsFromConfigFile( false ),
 	bDepthOcclusion( true ),
 	DepthClampThreshold( 0.f ),
 	Batch( nullptr ),
@@ -43,11 +67,17 @@ AZEDCamera::AZEDCamera()
 	CurrentDepthTextureQualityPreset( 2 ),
 	bCurrentDepthEnabled( false ),
 	bInit( false ),
-	bShowZedImage( true ),
 	LeftRoot( nullptr ),
 	LeftCamera( nullptr ),
 	LeftPlane( nullptr )
 {
+	if (InitParameters.VerboseFilePath.IsEmpty())
+	{
+		InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+	}
+
+	DepthClampThreshold = InitParameters.DepthMaximumDistance;
+
 	// Controller tick the camera to make it the first actor to tick
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -97,13 +127,26 @@ AZEDCamera::AZEDCamera()
 	LeftCamera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
 	// Set light channels
 	LeftPlane->LightingChannels.bChannel0 = false;
+
+	// Hidden while the camera is not opened, so a level-placed camera does not show a bare plane.
+	// Rendering re-enables it through InitializeRenderingCpp.
+	LeftPlane->SetVisibility(false);
 }
 
 void AZEDCamera::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+	// A level-placed camera can exist in a world without a ZED game instance (no camera proxy)
+	if (GSlCameraProxy)
+	{
+		GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+	}
+	else
+	{
+		ZED_CAMERA_LOG_E("No camera proxy available: the game instance must inherit from UZEDGameInstance");
+	}
+
 	CameraRenderPlaneDistance = GNearClippingPlane +0.001;
 }
 
@@ -163,11 +206,64 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 {
 	FName PropertyName = InProperty->GetFName();
 
+	// Design time (level editor, no camera session): authoring rules
 	if (!GSlCameraProxy)
 	{
-		return false;
+		if (InProperty->GetOwnerStruct())
+		{
+			FString StructName = InProperty->GetOwnerStruct()->GetName();
+
+			if (StructName == FString("SlCameraSettings"))
+			{
+				return !(InitParameters.InputType == ESlInputType::IT_SVO);
+			}
+
+			if (StructName == FString("SlRuntimeParameters"))
+			{
+				if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRuntimeParameters, ReferenceFrame))
+				{
+					return false;
+				}
+
+				return true;
+			}
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, Resolution) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlRecordingParameters, VideoFilename) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlRecordingParameters, CompressionMode)
+			)
+		{
+			return !(InitParameters.InputType == ESlInputType::IT_SVO);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, SvoPath) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bRealTime) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
+		{
+			return (InitParameters.InputType == ESlInputType::IT_SVO);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, StreamIP) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, StreamPort))
+		{
+			return (InitParameters.InputType == ESlInputType::IT_STREAM);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, DepthMode))
+		{
+			return RuntimeParameters.bEnableDepth;
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, bEnablePoseSmoothing))
+		{
+			return TrackingParameters.bEnableAreaMemory;
+		}
+
+		return Super::CanEditChange(InProperty);
 	}
 
+	// Runtime (camera session live)
 	if (InProperty->GetOwnerStruct())
 	{
 		if (InProperty->GetOwnerStruct()->GetName() == FString("SlCameraSettings"))
@@ -482,28 +578,138 @@ void AZEDCamera::SaveSpatialMemoryArea()
 	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath);
 }
 
-void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer)
+void AZEDCamera::PrepareForOpening()
 {
-	TrackingParameters = ZedInitializer->TrackingParameters;
-	InitParameters = ZedInitializer->InitParameters;
-	RuntimeParameters = ZedInitializer->RuntimeParameters;
-	CameraSettings = ZedInitializer->CameraSettings;
-	RecordingParameters = ZedInitializer->RecordingParameters;
-	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
-	bShowZedImage = ZedInitializer->bShowZedImage;
-	ImageView = ZedInitializer->ImageView;
-
-	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
-	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
-
-	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
-	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
-
-	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
-
 	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
 
 	checkf(RuntimeParameters.ReferenceFrame == ESlReferenceFrame::RF_World, TEXT("Reference frame must be World when using the ZEDCamera"));
+}
+
+void AZEDCamera::LoadParametersAndSettings()
+{
+	if (bLoadParametersFromConfigFile)
+	{
+		LoadParameters();
+	}
+	if (bLoadCameraSettingsFromConfigFile)
+	{
+		LoadCameraSettings();
+	}
+}
+
+void AZEDCamera::LoadParameters()
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	FString Path = ZED_CONFIG_FILE_PATH;
+	FConfigFile* ConfigFile = GConfig->Find(Path);
+
+	if (!ConfigFile)
+	{
+		SaveParameters();
+	}
+	else
+	{
+		InitParameters.Load(Path);
+		if (InitParameters.VerboseFilePath.IsEmpty())
+		{
+			InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+		}
+
+		TrackingParameters.Load(Path);
+		RuntimeParameters.Load(Path);
+		RecordingParameters.Load(Path);
+	}
+}
+
+void AZEDCamera::LoadCameraSettings()
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	FString Path = ZED_CAMERA_CONFIG_FILE_PATH;
+	FConfigFile* ConfigFile = GConfig->Find(Path);
+
+	if (!ConfigFile)
+	{
+		SaveCameraSettings();
+	}
+	else
+	{
+		CameraSettings.Load(Path);
+	}
+}
+
+void AZEDCamera::SaveParameters()
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	FString Path = ZED_CONFIG_FILE_PATH;
+
+#if WITH_EDITOR
+	if (InitParameters.VerboseFilePath == DEFAULT_VERBOSE_FILE_PATH)
+	{
+		InitParameters.VerboseFilePath.Empty();
+	}
+#endif
+
+	InitParameters.Save(Path);
+	TrackingParameters.Save(Path);
+	RuntimeParameters.Save(Path);
+	RecordingParameters.Save(Path);
+
+	GConfig->Flush(false, *Path);
+}
+
+void AZEDCamera::SaveCameraSettings()
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	FString Path = ZED_CAMERA_CONFIG_FILE_PATH;
+	CameraSettings.Save(Path);
+
+	GConfig->Flush(false, *Path);
+}
+
+void AZEDCamera::ResetParameters()
+{
+	InitParameters = FSlInitParameters();
+	if (InitParameters.VerboseFilePath.IsEmpty())
+	{
+		InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+	}
+
+	TrackingParameters = FSlPositionalTrackingParameters();
+	RuntimeParameters = FSlRuntimeParameters();
+
+	ObjectDetectionParameters = FSlObjectDetectionParameters();
+	ObjectDetectionRuntimeParameters = FSlObjectDetectionRuntimeParameters();
+
+	BodyTrackingParameters = FSlBodyTrackingParameters();
+	BodyTrackingRuntimeParameters = FSlBodyTrackingRuntimeParameters();
+
+	bDepthOcclusion = true;
+	DepthClampThreshold = InitParameters.DepthMaximumDistance;
+
+	ImageView = ESlView::V_Left;
+
+	bShowZedImage = true;
+}
+
+void AZEDCamera::ResetSettings()
+{
+	CameraSettings = FSlVideoSettings();
 }
 
 void AZEDCamera::Init()

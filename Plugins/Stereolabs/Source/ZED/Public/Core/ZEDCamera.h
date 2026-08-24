@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include "GameFramework/Actor.h"
 #include "ZEDBaseTypes.h"
-#include "ZEDInitializer.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTexture.h"
 #include "../../../Stereolabs/Public/Core/StereolabsTextureBatch.h"
 #include "ImageUtils.h"
@@ -170,10 +170,51 @@ public:
 	void SetSVOPlaybackLooping(bool bLooping);
 
 	/*
-	 * Initialize parameters
-	 * @param ZedInitializer The initializer
+	 * Load all parameters and settings from the config files, if the load flags are set
 	 */
-	void InitializeParameters(AZEDInitializer* ZedInitializer);
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void LoadParametersAndSettings();
+
+	/*
+	 * Load config parameters
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void LoadParameters();
+
+	/*
+	 * Load camera settings
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void LoadCameraSettings();
+
+	/*
+	 * Save config parameters
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void SaveParameters();
+
+	/*
+	 * Save camera settings
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void SaveCameraSettings();
+
+	/*
+	 * Reset parameters
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void ResetParameters();
+
+	/*
+	 * Reset camera settings
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void ResetSettings();
+
+	/*
+	 * Validate parameters right before the camera is opened
+	 */
+	void PrepareForOpening();
 
 	/*
 	 * Initialize actor
@@ -231,6 +272,10 @@ public:
 	/** Render target left eye */
 	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
 	UTextureRenderTarget2D* LeftEyeRenderTarget;
+
+	/** Init parameters (resolution, depth mode, input type, SVO/stream source) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	FSlInitParameters InitParameters;
 
 	/** Type of view displayed on the scene.
 	* Default is ESlView::LEFT.
@@ -297,7 +342,25 @@ public:
 	FSlRecordingParameters RecordingParameters;
 
 	// ------------------------------------------------------------------
-	
+
+	/** True to render the real camera image, false to keep the virtual scene only */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	bool bShowZedImage;
+
+	/** Actors that will be attached to the pawn at startup. Actor's Transform will be local, and body weld. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	TArray<AActor*> ChildActors;
+
+	/** Load parameters at runtime from config file and override preset */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	bool bLoadParametersFromConfigFile;
+
+	/** Load camera settings at runtime from config file and override preset  */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
+	bool bLoadCameraSettingsFromConfigFile;
+
+	// ------------------------------------------------------------------
+
 	/** When enabled, the real world can occlude (cover up) virtual objects that are behind it. Otherwise, virtual objects will appear in front. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
 	bool bDepthOcclusion;
@@ -311,9 +374,6 @@ private:
 	/** Current batch */
 	UPROPERTY()
 	USlTextureBatch* Batch;
-
-	/** Init parameters */
-	FSlInitParameters InitParameters;
 
 	/** Zed material resource */
 	UPROPERTY()
@@ -336,8 +396,6 @@ private:
 
 	/** True if initialized */
 	bool bInit;
-
-	bool bShowZedImage;
 
 	/************************ Section from old blueprint **********************/
 

@@ -1,9 +1,9 @@
 <h1 align="center">
-ZED UE5.4 Plugin
+ZED UE5 Plugin
   <br>
 </h1>
 
-This plugin requires using **UE5.4**.
+This plugin is compatible with **UE5.4** to **UE5.8**.
 
 <p align="center">
 
@@ -30,7 +30,7 @@ This repository contains Unreal examples projects that demonstrate how to create
 
 ## Getting started
 
-This version of the plugin is compatible with Unreal Engine **5.4** to **5.6**, and requires the [**ZED SDK 5.1**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
+This version of the plugin is compatible with Unreal Engine **5.4** to **5.8**, and requires the [**ZED SDK 5.5**](https://www.stereolabs.com/docs/get-started-with-zed/#download-and-install-the-zed-sdk) and a **Windows setup**, because for now we are only compatible with the DirectX API.
 
 - To see our implementation of Live Link with the ZED, go here : [ZED Live Link Plugin](https://github.com/stereolabs/zed-LiveLink-plugin)
 
@@ -42,9 +42,87 @@ This version of the plugin is compatible with Unreal Engine **5.4** to **5.6**, 
 
 You can now start the project with a double click on *ZEDSamples.uproject*.
 
+All the sample levels live inside the plugin, under `/Stereolabs/Samples/Levels` (enable *Show Plugin Content* in the Content Browser filters to see them).
+
 > Troubleshooting and known issues:
 > - **GPU Crashed or D3D Device Removed.** when playing a level: This is a DirectX 12 issue. Please change the RHI of your project to DirectX 11.
 > - **Error when trying to package to Shipping build**: There is currently a bug preventing from building to "Shipping" build. Please use a "Development" build instead.
+
+### Using the plugin in your own project
+
+The plugin is fully self-contained: all the C++ modules, the sample levels and the assets they use live under `Plugins/Stereolabs`. You still need the **ZED SDK** and **CUDA** installed on the machine.
+
+**C++ project**
+
+1. Copy the `Plugins/Stereolabs` folder into your project's `Plugins/` directory.
+2. Build and open your project. The plugin is enabled by default; on first build it copies default camera settings (`ZED.ini`, `Camera.ini`) into `Saved/Config/ZED/`.
+3. Open any map from `/Stereolabs/Samples/Levels`. The sample maps embed the ZED GameMode, so they run in PIE as is.
+
+**Setting up your own level**
+
+Place a `BP_ZEDCamera` actor (Plugin Content, `Stereolabs Content/ZED/Blueprints`) in your level and author all the camera parameters directly on it: resolution, depth mode, SVO/stream input, tracking, object detection, body tracking, and so on. The actor's transform defines the initial camera pose in the virtual world. The `Load/Save/Reset parameters` buttons in its details panel read and write `Saved/Config/ZED/ZED.ini` and `Camera.ini`.
+
+If no camera actor is placed, the ZED player controller spawns a default one at the world origin. A custom camera Blueprint can be used by setting `CameraClass` on the controller.
+
+**Config to merge by hand**
+
+The plugin ships its recommended project settings in `Plugins/Stereolabs/Source/ZED/Defaults/*.ini`; they are copied into your `Config/` automatically only if the corresponding file does not exist yet. Since your project probably already has these files, merge the following into them:
+
+`Config/DefaultEngine.ini`
+```ini
+[/Script/EngineSettings.GameMapsSettings]
+GlobalDefaultGameMode=/Stereolabs/ZED/Blueprints/GameMode/BP_ZED_GameMode.BP_ZED_GameMode_C
+GameInstanceClass=/Script/ZED.ZEDGameInstance
+
+[/Script/Engine.Engine]
+; Without ZEDLocalPlayer the virtual camera projection does not match the real camera optical center.
+LocalPlayerClassName=/Script/ZED.ZEDLocalPlayer
+NearClipPlane=1.000000
+
+[/Script/Engine.RendererSettings]
+; The ZED passthrough plane renders with custom depth + stencil.
+r.CustomDepth=3
+; Keep post-processing off the real camera image.
+r.DefaultFeature.AutoExposure=False
+r.DefaultFeature.MotionBlur=0
+r.DefaultFeature.Bloom=False
+r.DefaultFeature.LensFlare=0
+
+[ConsoleVariables]
+; The point cloud Niagara system must tick after the camera texture update.
+fx.Niagara.ForceLastTickGroup=1
+
+[/Script/NavigationSystem.RecastNavMesh]
+; Only needed by the SpatialMapping NPC sample (navmesh built at runtime on the scanned mesh).
+RuntimeGeneration=Dynamic
+bForceRebuildOnLoad=True
+```
+
+`Config/DefaultInput.ini` (used by the sample interactions)
+```ini
+[/Script/Engine.InputSettings]
++ActionMappings=(ActionName="Jump",Key=SpaceBar)
++ActionMappings=(ActionName="MouseLeftClick",Key=LeftMouseButton)
++ActionMappings=(ActionName="Shoot",Key=LeftMouseButton)
+```
+
+`Config/DefaultGame.ini` (only needed to package the sample maps with your game)
+```ini
+[/Script/UnrealEd.ProjectPackagingSettings]
++DirectoriesToAlwaysCook=(Path="/Stereolabs/Samples")
+; Maps are not picked up by DirectoriesToAlwaysCook, list each sample map you ship:
++MapsToCook=(FilePath="/Stereolabs/Samples/Levels/L_PointCloud")
+```
+
+**Blueprint-only project**
+
+A Blueprint-only project cannot compile the plugin from source. Build a prebuilt version first, on a machine with the SDK installed:
+
+```
+RunUAT.bat BuildPlugin -Plugin="<repo>/Plugins/Stereolabs/Stereolabs.uplugin" -Package="C:/Temp/StereolabsPlugin" -TargetPlatforms=Win64
+```
+
+Use a short package path (Windows path length limit), and note that the prebuilt binaries only work with the exact engine version they were built for. Copy the packaged folder into your project's `Plugins/`, then merge the config as described above.
 
 ### Documentation
 

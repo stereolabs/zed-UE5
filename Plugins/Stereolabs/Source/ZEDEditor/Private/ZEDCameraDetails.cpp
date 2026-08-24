@@ -3,6 +3,7 @@
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 #include "ZED/Public/Core/ZEDCamera.h"
 #include "DesktopPlatformModule.h"
+#include "Misc/EngineVersionComparison.h"
 
 #define LOCTEXT_NAMESPACE "FZEDCameraDetails"
 
@@ -49,13 +50,97 @@ TSharedRef<IDetailCustomization> FZEDCameraDetails::MakeInstance()
 
 void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
+	CachedDetailBuilder = &DetailBuilder;
+
+#if UE_VERSION_NEWER_THAN(5, 7, 0)
+	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
+#else
+	SelectedObjects = DetailBuilder.GetDetailsView()->GetSelectedObjects();
+#endif
+
+	// Config IO buttons: available at design time (no camera session needed)
+	{
+		IDetailCategoryBuilder& ZedCategory = DetailBuilder.EditCategory("Zed");
+
+		const FText ConfigFilterString = FText::FromString("parameters settings");
+
+		auto MakeConfigButton = [this](const FText& Text, const FText& ToolTip, FReply(FZEDCameraDetails::* Handler)())
+		{
+			return SNew(SButton)
+				.VAlign(VAlign_Center)
+				.ToolTipText(ToolTip)
+				.OnClicked(this, Handler)
+				.IsEnabled(this, &FZEDCameraDetails::IsConfigIOEnabled)
+				.Content()
+				[
+					SNew(STextBlock)
+					.Justification(ETextJustify::Center)
+					.Text(Text)
+				];
+		};
+
+		ZedCategory.AddCustomRow(ConfigFilterString, false)
+			.NameContent()
+			[
+				SNullWidget::NullWidget
+			]
+			.ValueContent()
+			.VAlign(VAlign_Center)
+			.MaxDesiredWidth(350)
+			[
+				SNew(SBox)
+				.MinDesiredWidth(350)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Load parameters"), FText::FromString("Load parameters from config file"), &FZEDCameraDetails::OnClickLoadParameters)
+					]
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Save parameters"), FText::FromString("Save parameters to config file"), &FZEDCameraDetails::OnClickSaveParameters)
+					]
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Reset parameters"), FText::FromString("Reset parameters"), &FZEDCameraDetails::OnClickResetParameters)
+					]
+				]
+			];
+
+		ZedCategory.AddCustomRow(ConfigFilterString, false)
+			.NameContent()
+			[
+				SNullWidget::NullWidget
+			]
+			.ValueContent()
+			.VAlign(VAlign_Center)
+			.MaxDesiredWidth(350)
+			[
+				SNew(SBox)
+				.MinDesiredWidth(350)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Load settings"), FText::FromString("Load camera settings from config file"), &FZEDCameraDetails::OnClickLoadSettings)
+					]
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Save settings"), FText::FromString("Save camera settings to config file"), &FZEDCameraDetails::OnClickSaveSettings)
+					]
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+					[
+						MakeConfigButton(FText::FromString("Reset settings"), FText::FromString("Reset camera settings"), &FZEDCameraDetails::OnClickResetSettings)
+					]
+				]
+			];
+	}
+
+	// Runtime controls need a live camera session
 	if (!GSlCameraProxy)
 	{
 		return;
 	}
-
-	CachedDetailBuilder = &DetailBuilder;
-	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("ZedControls");
 	
@@ -585,6 +670,64 @@ FReply FZEDCameraDetails::OnClickSaveTrackingArea()
 	{
 		SL_LOG_W(ZEDCamera, "Area file not saved");
 	}
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickLoadParameters()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->Modify();
+	ZedCameraActor->LoadParameters();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickSaveParameters()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->SaveParameters();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickResetParameters()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->Modify();
+	ZedCameraActor->ResetParameters();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickLoadSettings()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->Modify();
+	ZedCameraActor->LoadCameraSettings();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickSaveSettings()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->SaveCameraSettings();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickResetSettings()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	ZedCameraActor->Modify();
+	ZedCameraActor->ResetSettings();
 
 	return FReply::Handled();
 }

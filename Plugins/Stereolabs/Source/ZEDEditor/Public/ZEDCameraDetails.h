@@ -83,6 +83,27 @@ public:
 	/** Clicking the save tracking area button */
 	FReply OnClickSaveTrackingArea();
 
+	/** Config IO buttons enabled (design time authoring) */
+	bool IsConfigIOEnabled() const { return SelectedObjects.Num() == 1 && SelectedObjects[0].IsValid(); }
+
+	/** Clicking the load parameters button */
+	FReply OnClickLoadParameters();
+
+	/** Clicking the save parameters button */
+	FReply OnClickSaveParameters();
+
+	/** Clicking the reset parameters button */
+	FReply OnClickResetParameters();
+
+	/** Clicking the load camera settings button */
+	FReply OnClickLoadSettings();
+
+	/** Clicking the save camera settings button */
+	FReply OnClickSaveSettings();
+
+	/** Clicking the reset camera settings button */
+	FReply OnClickResetSettings();
+
 private:
 	void OnMouseCaptureSVOPlaybackSlider();
 	void OnMouseCaptureEndSVOPlaybackSlider();
