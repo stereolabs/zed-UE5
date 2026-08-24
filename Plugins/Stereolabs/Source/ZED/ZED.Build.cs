@@ -38,7 +38,6 @@ public class ZED : ModuleRules
             new string[]
             {
                  "Stereolabs",
-                 "MixedReality",
                  "Niagara",
                  "UMG",
                  "Slate",

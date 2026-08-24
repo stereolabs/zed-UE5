@@ -3749,19 +3749,3 @@ struct STEREOLABS_API FSlSVOData
 };
 
 
-/** Environmental lighting settings */
-USTRUCT(BlueprintType)
-struct FEnvironmentalLightingSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** Image exposure */
-	UPROPERTY(BlueprintReadOnly, Category = Exposure)
-	float Exposure;
-
-	FEnvironmentalLightingSettings()
-		:
-		Exposure(1)
-	{
-	}
-};

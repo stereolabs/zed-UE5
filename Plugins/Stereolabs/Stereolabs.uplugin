@@ -51,14 +51,6 @@
 			"AdditionalDependencies": [
 				"AnimGraph"
 			]
-		},
-		{
-			"Name": "EnvironmentalLighting",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"WhitelistPlatforms": [
-				"Win64"
-			]
 		}
 	],
 	"Plugins": [

@@ -35,7 +35,7 @@ public class Stereolabs : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "MixedReality", "Core"
+                "Core"
 
                 // ... add other public dependencies that you statically link with here ...
 			}
