@@ -9,6 +9,7 @@
 #include "ImageUtils.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "Camera/CameraComponent.h"
 
 #include "ZEDCamera.generated.h"
 
@@ -47,6 +48,36 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual bool CanEditChange(const FProperty* InProperty) const override;
+
+	/*
+	 * Check that the parameters allow a camera session outside of play, without asserting
+	 * @param OutError Reason the session can't be started
+	 */
+	bool ValidateForEditorSession(FString& OutError) const;
+
+	/*
+	 * Prepare the actor for a camera session driven by the editor instead of the player controller.
+	 * Editor equivalent of BeginPlay, to call before opening the camera
+	 */
+	void BeginEditorSession();
+
+	/*
+	 * Release everything BeginEditorSession and Init set up and restore the placed components
+	 */
+	void EndEditorSession();
+
+	/** Apply EditorPreviewPlaneDistance, resizing the plane when a session is already running */
+	void SetEditorPreviewPlaneDistance();
+#endif
+
+#if WITH_EDITORONLY_DATA
+	/*
+	 * How far in front of the camera the preview plane is placed for a session started in the editor.
+	 * The plane is scaled to cover the camera field of view at that distance, so a larger value
+	 * gives a larger preview. Play always uses the near clipping plane instead
+	 */
+	UPROPERTY(EditAnywhere, Category = "Zed|Editor", meta = (ClampMin = "1.0", UIMin = "1.0", UIMax = "500.0"))
+	float EditorPreviewPlaneDistance = 100.0f;
 #endif
 
 public:
@@ -247,6 +278,15 @@ private:
 	 * @param bCeateColorTexture True to create color texture
 	 */
 	void CreateLeftTextures(bool bCreateColorTexture = true);
+
+	/** Copy the left image into ColorOutput, resizing it first if it does not match */
+	void UpdateColorOutput();
+
+	/** Blank the output targets, so a closed camera does not leave its last frame driving them */
+	void ClearOutputs();
+
+	/** Copy the depth texture into DepthOutput, resizing it first if it does not match */
+	void UpdateDepthOutput();
 	
 	// ------------------------------------------------------------------
 
@@ -262,16 +302,34 @@ public:
 	// ------------------------------------------------------------------
 
 	/** Left eye image texture */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Zed|Textures")
 	USlTexture* LeftEyeColor;
 
 	/** Left eye depth texture  */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Textures")
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Zed|Textures")
 	USlTexture* LeftEyeDepth;
 
 	/** Render target left eye */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Textures")
+	UPROPERTY(BlueprintReadWrite, Transient, Category = "Zed|Textures")
 	UTextureRenderTarget2D* LeftEyeRenderTarget;
+
+	/*
+	 * Optional render target the left image is copied into every frame, so it can be picked as an
+	 * asset where a transient texture cannot be, such as a Composite plate layer.
+	 * Red and blue arrive swapped and the consumer has to reorder them: CUDA interop only maps
+	 * RGBA ordered formats while the SDK writes BGRA bytes
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Output")
+	UTextureRenderTarget2D* ColorOutput;
+
+	/*
+	 * Optional render target the metric depth is copied into every frame. The retrieved depth lives in
+	 * a transient texture that no asset picker can list, so this is how it reaches anything that takes
+	 * a texture asset, such as the Composite plugin depth mesh. Values are centimeters.
+	 * Reconfigured to the depth texture size and R32f when it does not already match
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Output")
+	UTextureRenderTarget2D* DepthOutput;
 
 	/** Init parameters (resolution, depth mode, input type, SVO/stream source) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
@@ -302,7 +360,7 @@ public:
 	// ------------------------------------------------------------------
 
 	/** The current tracking data */
-	UPROPERTY(BlueprintReadOnly, Category = "Zed|Tracking")
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Zed|Tracking")
 	FZEDTrackingData TrackingData;
 
 	/** Tracking parameters */
@@ -312,7 +370,7 @@ public:
 	// ------------------------------------------------------------------
 
 	/** Dynamic left Zed eye material */
-	UPROPERTY(BlueprintReadWrite, Category = "Zed|Rendering")
+	UPROPERTY(BlueprintReadWrite, Transient, Category = "Zed|Rendering")
 	UMaterialInstanceDynamic* ZedLeftEyeMaterialInstanceDynamic;
 
 	// ------------------------------------------------------------------
@@ -372,7 +430,7 @@ public:
 private:
 
 	/** Current batch */
-	UPROPERTY()
+	UPROPERTY(Transient)
 	USlTextureBatch* Batch;
 
 	/** Zed material resource */
@@ -411,6 +469,13 @@ private:
 		/** Intermediate left plane on which Zed left image is displayed */
 		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
 		UStaticMeshComponent* LeftPlane;
+
+		/*
+		 * Matches the real camera field of view once it is opened, so anything that composites
+		 * through a camera actor can just point at this actor
+		 */
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Components")
+		UCameraComponent* ViewCamera;
 
 	private:
 

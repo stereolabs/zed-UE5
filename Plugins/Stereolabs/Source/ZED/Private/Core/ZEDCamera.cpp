@@ -9,6 +9,7 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 DEFINE_LOG_CATEGORY(ZEDCamera);
 
@@ -69,7 +70,8 @@ AZEDCamera::AZEDCamera()
 	bInit( false ),
 	LeftRoot( nullptr ),
 	LeftCamera( nullptr ),
-	LeftPlane( nullptr )
+	LeftPlane( nullptr ),
+	ViewCamera( nullptr )
 {
 	if (InitParameters.VerboseFilePath.IsEmpty())
 	{
@@ -89,9 +91,15 @@ AZEDCamera::AZEDCamera()
 	LeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LeftRoot"));
 	LeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LeftCamera"));
 	LeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftPlane"));
+	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 
+	// The capture sits at the actor origin, the plane root is pushed in front of it
 	LeftRoot->SetupAttachment(RootComponent);
+	LeftCamera->SetupAttachment(RootComponent);
 	LeftPlane->SetupAttachment(LeftRoot);
+
+	// The optical origin is the actor origin, not the offset render plane root
+	ViewCamera->SetupAttachment(RootComponent);
 
 	// Initial camera setup
 	LeftCamera->bCaptureEveryFrame = true;
@@ -171,11 +179,12 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 		return;
 	}
 
-	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	const FProperty* Property = PropertyChangedEvent.Property;
+	FName PropertyName = Property ? Property->GetFName() : NAME_None;
 
-	if (PropertyChangedEvent.Property->GetOwnerStruct())
+	if (Property && Property->GetOwnerStruct())
 	{
-		FString StructName = PropertyChangedEvent.Property->GetOwnerStruct()->GetName();
+		FString StructName = Property->GetOwnerStruct()->GetName();
 		if (StructName == FString("SlVideoSettings"))
 		{
 			SetCameraSettings(CameraSettings);
@@ -199,11 +208,21 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 		SetDepthOcclusion(bDepthOcclusion);
 	}
 
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, EditorPreviewPlaneDistance) && bInit)
+	{
+		SetEditorPreviewPlaneDistance();
+	}
+
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 {
+	if (!InProperty)
+	{
+		return Super::CanEditChange(InProperty);
+	}
+
 	FName PropertyName = InProperty->GetFName();
 
 	// Design time (level editor, no camera session): authoring rules
@@ -310,11 +329,85 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 
 	return Super::CanEditChange(InProperty);
 }
+
+bool AZEDCamera::ValidateForEditorSession(FString& OutError) const
+{
+	if (RuntimeParameters.ReferenceFrame != ESlReferenceFrame::RF_World)
+	{
+		OutError = TEXT("Reference frame must be World");
+		return false;
+	}
+
+	// Init() binds the depth texture to the material, and CreateLeftTextures only creates it when depth is on
+	if (!RuntimeParameters.bEnableDepth)
+	{
+		OutError = TEXT("Depth must be enabled in the runtime parameters");
+		return false;
+	}
+
+	return true;
+}
+
+void AZEDCamera::BeginEditorSession()
+{
+	check(GSlCameraProxy);
+
+	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+
+	SetEditorPreviewPlaneDistance();
+
+	LoadParametersAndSettings();
+	PrepareForOpening();
+}
+
+void AZEDCamera::SetEditorPreviewPlaneDistance()
+{
+	// In game the plane sits on the near clipping plane so it covers the whole view. Viewed from
+	// outside in the level editor that is a centimeter wide speck, so the preview is pushed further out
+	CameraRenderPlaneDistance = FMath::Max<float>(GNearClippingPlane + 0.001f, EditorPreviewPlaneDistance);
+
+	if (bInit)
+	{
+		LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
+		SetPlaneSize(LeftPlane, CameraRenderPlaneDistance);
+	}
+}
+
+void AZEDCamera::EndEditorSession()
+{
+	if (GSlCameraProxy)
+	{
+		DisableObjectDetection();
+		GSlCameraProxy->OnCameraClosed.RemoveDynamic(this, &AZEDCamera::CameraClosed);
+		GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
+	}
+
+	DisableRenderingCpp();
+	ClearOutputs();
+
+	// Leave the placed actor as the constructor built it, nothing of the session may end up saved in the level
+	LeftCamera->TextureTarget = nullptr;
+	LeftEyeRenderTarget = nullptr;
+	LeftPlane->SetMaterial(0, nullptr);
+	ZedLeftEyeMaterialInstanceDynamic = nullptr;
+
+	// Undo the render plane layout SetupComponents computed from the camera calibration
+	LeftRoot->SetRelativeLocation(FVector::ZeroVector);
+	LeftPlane->SetWorldScale3D(FVector::OneVector);
+	CameraRenderPlaneDistance = 0.f;
+
+	bInit = false;
+}
 #endif
 
 void AZEDCamera::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (!GSlCameraProxy || !bInit || !Batch)
+	{
+		return;
+	}
 
 	bool bUpdateTracking = false;
 	SL_SCOPE_LOCK(Lock, TrackingUpdateSection)
@@ -334,6 +427,10 @@ void AZEDCamera::Tick(float DeltaSeconds)
 
 	// Always tick to retrieve last images
 	bool bNewImage = Batch->Tick();
+
+	// Enqueued after the batch, so they run on the render thread once the textures hold this frame
+	UpdateColorOutput();
+	UpdateDepthOutput();
 
 	TrackingData.ZedWorldTransform		 = TrackingData.ZedPathTransform;
 	TrackingData.OffsetZedWorldTransform = TrackingData.ZedWorldTransform;
@@ -384,7 +481,7 @@ void AZEDCamera::Tick(float DeltaSeconds)
 				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
 
 				Batch->RemoveTexture(LeftEyeDepth);
-				delete LeftEyeDepth;
+				LeftEyeDepth->ConditionalBeginDestroy();
 				LeftEyeDepth = nullptr;
 			}
 			else
@@ -463,6 +560,115 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 
 		LeftEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_Depth, true, ESlTextureFormat::TF_R32_FLOAT);
 	}
+}
+
+namespace
+{
+	/** Resize and reformat an output target so a straight copy from a ZED texture is possible */
+	bool ConformRenderTarget(UTextureRenderTarget2D* Target, int32 Width, int32 Height, EPixelFormat Format, bool bLinearGamma)
+	{
+		if (Target->SizeX == Width && Target->SizeY == Height && Target->GetFormat() == Format && Target->bForceLinearGamma == bLinearGamma)
+		{
+			return false;
+		}
+
+		// OverrideFormat takes precedence over RenderTargetFormat and InitAutoFormat leaves it alone.
+		// With it set, IsSRGB is just !bForceLinearGamma
+		Target->OverrideFormat = Format;
+		Target->bForceLinearGamma = bLinearGamma;
+		Target->ClearColor = FLinearColor::Black;
+
+		// Recreates the resource itself
+		Target->InitAutoFormat(Width, Height);
+
+		return true;
+	}
+
+	void CopyTextureToRenderTarget(UTexture2D* Source, UTextureRenderTarget2D* Target)
+	{
+		FTextureResource* SourceResource = Source->GetResource();
+
+		// GetRenderTargetResource asserts on the rendering thread
+		FTextureRenderTargetResource* TargetResource = Target->GameThread_GetRenderTargetResource();
+
+		if (!SourceResource || !TargetResource)
+		{
+			return;
+		}
+
+		ENQUEUE_RENDER_COMMAND(ZEDCopyToRenderTarget)(
+			[SourceResource, TargetResource](FRHICommandListImmediate& RHICmdList)
+			{
+				FRHITexture* SourceRHI = SourceResource->TextureRHI;
+				FRHITexture* TargetRHI = TargetResource->GetRenderTargetTexture();
+
+				if (!SourceRHI || !TargetRHI ||
+					SourceRHI->GetDesc().Extent != TargetRHI->GetDesc().Extent ||
+					SourceRHI->GetDesc().Format != TargetRHI->GetDesc().Format)
+				{
+					return;
+				}
+
+				RHICmdList.Transition(FRHITransitionInfo(SourceRHI, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+				RHICmdList.Transition(FRHITransitionInfo(TargetRHI, ERHIAccess::Unknown, ERHIAccess::CopyDest));
+
+				RHICmdList.CopyTexture(SourceRHI, TargetRHI, FRHICopyTextureInfo());
+
+				RHICmdList.Transition(FRHITransitionInfo(TargetRHI, ERHIAccess::CopyDest, ERHIAccess::SRVMask));
+			});
+	}
+}
+
+void AZEDCamera::ClearOutputs()
+{
+	// Depth 0 is what the composite depth mesh treats as no sample, so its mask drops those vertices
+	if (ColorOutput)
+	{
+		UKismetRenderingLibrary::ClearRenderTarget2D(this, ColorOutput, FLinearColor::Black);
+	}
+
+	if (DepthOutput)
+	{
+		UKismetRenderingLibrary::ClearRenderTarget2D(this, DepthOutput, FLinearColor::Black);
+	}
+}
+
+void AZEDCamera::UpdateColorOutput()
+{
+	if (!ColorOutput)
+	{
+		return;
+	}
+
+	if (!LeftEyeColor || !LeftEyeColor->Texture)
+	{
+		return;
+	}
+
+	// Matches the source texture, so a consumer can reuse the passthrough material's own decode
+	if (ConformRenderTarget(ColorOutput, LeftEyeColor->Width, LeftEyeColor->Height, PF_R8G8B8A8_SNORM, true))
+	{
+		ZED_CAMERA_LOG_W("Color output %s set to %dx%d RGBA8 SNORM, decode as M_ZED_Mono does",
+			*ColorOutput->GetName(), LeftEyeColor->Width, LeftEyeColor->Height);
+	}
+
+	CopyTextureToRenderTarget(LeftEyeColor->Texture, ColorOutput);
+}
+
+void AZEDCamera::UpdateDepthOutput()
+{
+	if (!DepthOutput || !LeftEyeDepth || !LeftEyeDepth->Texture)
+	{
+		return;
+	}
+
+	if (ConformRenderTarget(DepthOutput, LeftEyeDepth->Width, LeftEyeDepth->Height, PF_R32_FLOAT, true))
+	{
+		ZED_CAMERA_LOG_W("Depth output %s set to %dx%d R32F to match the depth texture",
+			*DepthOutput->GetName(), LeftEyeDepth->Width, LeftEyeDepth->Height);
+	}
+
+	CopyTextureToRenderTarget(LeftEyeDepth->Texture, DepthOutput);
 }
 
 void AZEDCamera::EnableMultiThreadedRenderingMode(const bool EnableMTR)
@@ -739,7 +945,10 @@ void AZEDCamera::Init()
 
 	CreateLeftTextures();
 	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Color", LeftEyeColor->Texture);
-	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+	if (LeftEyeDepth)
+	{
+		ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+	}
 
 	Batch->AddTexture(LeftEyeColor);
 
@@ -770,10 +979,15 @@ void AZEDCamera::CameraClosed()
 	if (Batch) Batch->Clear();
 	if (LeftEyeColor) {
 		LeftEyeColor->ConditionalBeginDestroy();
+		LeftEyeColor = nullptr;
 	}
 	if (LeftEyeDepth) {
 		LeftEyeDepth->ConditionalBeginDestroy();
+		LeftEyeDepth = nullptr;
 	}
+
+	ClearOutputs();
+
 	bInit = false;
 }
 
@@ -795,7 +1009,11 @@ void AZEDCamera::SetSVOPlaybackLooping(bool bLooping)
 void AZEDCamera::ToggleComponents(bool enable)
 {
 	LeftPlane->SetVisibility(enable);
-	LeftCamera->SetActive(enable);
+
+	// The scene capture renders the whole scene every frame into LeftEyeRenderTarget, which only
+	// gameplay ever reads. An editor session shows the plane without paying for it
+	const UWorld* World = GetWorld();
+	LeftCamera->SetActive(enable && World && World->IsGameWorld());
 }
 
 void AZEDCamera::SetupComponents()
@@ -810,6 +1028,10 @@ void AZEDCamera::SetupComponents()
 
 	// Set camera FOV
 	LeftCamera->FOVAngle = cameraParam.HFOV;
+
+	ViewCamera->SetFieldOfView(cameraParam.HFOV);
+	ViewCamera->SetAspectRatio((float)cameraParam.Resolution.X / (float)cameraParam.Resolution.Y);
+	ViewCamera->bConstrainAspectRatio = true;
 	
 	LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
 	// Set plane size

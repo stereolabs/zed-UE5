@@ -2,6 +2,7 @@
 #include "ZEDEditor/Private/ZEDEditorPrivatePCH.h"
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 #include "ZED/Public/Core/ZEDCamera.h"
+#include "ZEDEditor/Public/ZEDEditorCameraSession.h"
 #include "DesktopPlatformModule.h"
 #include "Misc/EngineVersionComparison.h"
 
@@ -34,17 +35,10 @@ public:
 	bool bUpdateSVOPlaybackSlider = true;
 };
 
-FZEDCameraDetailsGrabCallback* GrabCallback = nullptr;
-
-FZEDCameraDetails::~FZEDCameraDetails()
-{
-	delete GrabCallback;
-	GrabCallback = nullptr;
-}
+FZEDCameraDetails::~FZEDCameraDetails() = default;
 
 TSharedRef<IDetailCustomization> FZEDCameraDetails::MakeInstance()
 {
-	GrabCallback = new FZEDCameraDetailsGrabCallback;
 	return MakeShareable(new FZEDCameraDetails);
 }
 
@@ -63,6 +57,51 @@ void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		IDetailCategoryBuilder& ZedCategory = DetailBuilder.EditCategory("Zed");
 
 		const FText ConfigFilterString = FText::FromString("parameters settings");
+
+		ZedCategory.AddCustomRow(FText::FromString("zed editor camera session"), false)
+			.NameContent()
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("EditorSession", "Camera"))
+			]
+			.ValueContent()
+			.VAlign(VAlign_Center)
+			.MaxDesiredWidth(350)
+			[
+				SNew(SBox)
+				.MinDesiredWidth(350)
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f)
+					[
+						SNew(SButton)
+						.VAlign(VAlign_Center)
+						.ToolTipText(FText::FromString("Open the camera in the editor, without playing"))
+						.OnClicked(this, &FZEDCameraDetails::OnClickStartEditorSession)
+						.IsEnabled(this, &FZEDCameraDetails::CanStartEditorSession)
+						.Content()
+						[
+							SNew(STextBlock)
+							.Justification(ETextJustify::Center)
+							.Text(FText::FromString("Start camera"))
+						]
+					]
+					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f)
+					[
+						SNew(SButton)
+						.VAlign(VAlign_Center)
+						.ToolTipText(FText::FromString("Close the camera opened in the editor"))
+						.OnClicked(this, &FZEDCameraDetails::OnClickStopEditorSession)
+						.IsEnabled(this, &FZEDCameraDetails::CanStopEditorSession)
+						.Content()
+						[
+							SNew(STextBlock)
+							.Justification(ETextJustify::Center)
+							.Text(FText::FromString("Stop camera"))
+						]
+					]
+				]
+			];
 
 		auto MakeConfigButton = [this](const FText& Text, const FText& ToolTip, FReply(FZEDCameraDetails::* Handler)())
 		{
@@ -141,6 +180,8 @@ void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	{
 		return;
 	}
+
+	GrabCallback = MakeUnique<FZEDCameraDetailsGrabCallback>();
 
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("ZedControls");
 	
@@ -674,6 +715,48 @@ FReply FZEDCameraDetails::OnClickSaveTrackingArea()
 	return FReply::Handled();
 }
 
+bool FZEDCameraDetails::CanStartEditorSession() const
+{
+	const UZEDEditorCameraSession* Session = UZEDEditorCameraSession::Get();
+
+	return IsConfigIOEnabled() && Session && !Session->IsRunning();
+}
+
+bool FZEDCameraDetails::CanStopEditorSession() const
+{
+	const UZEDEditorCameraSession* Session = UZEDEditorCameraSession::Get();
+
+	return IsConfigIOEnabled() && Session && Session->IsRunning() && Session->GetCamera() == SelectedObjects[0].Get();
+}
+
+FReply FZEDCameraDetails::OnClickStartEditorSession()
+{
+	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+
+	FString Error;
+	if (!UZEDEditorCameraSession::Get()->Start(ZedCameraActor, Error))
+	{
+		SL_LOG_E(ZEDCamera, "Can't open the camera in the editor: %s", *Error);
+
+		return FReply::Handled();
+	}
+
+	// Destroys this customization, the runtime controls become available
+	CachedDetailBuilder->ForceRefreshDetails();
+
+	return FReply::Handled();
+}
+
+FReply FZEDCameraDetails::OnClickStopEditorSession()
+{
+	UZEDEditorCameraSession::Get()->Stop();
+
+	// Destroys this customization
+	CachedDetailBuilder->ForceRefreshDetails();
+
+	return FReply::Handled();
+}
+
 FReply FZEDCameraDetails::OnClickLoadParameters()
 {
 	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
@@ -814,27 +897,40 @@ void FZEDCameraDetailsGrabCallback::Init()
 
 void FZEDCameraDetailsGrabCallback::GrabCallback(ESlErrorCode ErrorCode)
 {
-	SL_SCOPE_LOCK(Lock, Section)
-		int MaxValue = GSlCameraProxy->GetSVONumberOfFrames() - 1;
+	// Runs on the grab thread, where Slate must not be touched at all
+	const int MaxValue = GSlCameraProxy->GetSVONumberOfFrames() - 1;
 
-		if (SVOPlaybackSpinBox->GetMaxValue() == 0)
-		{
-			SVOPlaybackSpinBox->SetMaxSliderValue(MaxValue);
-			SVOPlaybackSpinBox->SetMaxValue(MaxValue);
-		}
-	
+	TSharedPtr<SSpinBox<int>> SpinBox;
+	TSharedPtr<SSlider> Slider;
+	TSharedPtr<STextBlock> TextBox;
+	int SVOPosition = INDEX_NONE;
+
+	SL_SCOPE_LOCK(Lock, Section)
+		SpinBox = SVOPlaybackSpinBox;
+
 		if (bUpdateSVOPlaybackSlider)
 		{
-			int SVOPosition = GSlCameraProxy->GetSVOPlaybackPosition() - 1;
-
-			AsyncTask(ENamedThreads::GameThread, [this, SVOPosition, MaxValue]()
-				{
-					SVOPlaybackSlider->SetValue((float)SVOPosition / (float)MaxValue);
-					SetSVOPlaybackTextBoxValue(SVOPosition);
-				});
-
+			Slider = SVOPlaybackSlider;
+			TextBox = SVOPlaybackTextBox;
+			SVOPosition = GSlCameraProxy->GetSVOPlaybackPosition() - 1;
 		}
 	SL_SCOPE_UNLOCK
+
+	// The widgets are held by value, so a details panel closing before this runs is harmless
+	AsyncTask(ENamedThreads::GameThread, [SpinBox, Slider, TextBox, SVOPosition, MaxValue]()
+	{
+		if (MaxValue > 0 && SpinBox.IsValid() && SpinBox->GetMaxValue() == 0)
+		{
+			SpinBox->SetMaxSliderValue(MaxValue);
+			SpinBox->SetMaxValue(MaxValue);
+		}
+
+		if (MaxValue > 0 && SVOPosition != INDEX_NONE && Slider.IsValid() && TextBox.IsValid())
+		{
+			Slider->SetValue((float)SVOPosition / (float)MaxValue);
+			TextBox->SetText(FText::FromString(FString::FromInt(SVOPosition)));
+		}
+	});
 }
 
 #undef  LOCTEXT_NAMESPACE

@@ -1,6 +1,7 @@
 #include "ZEDEditorPlugin.h"
 #include "ZEDEditorPrivatePCH.h"
 #include "ZEDEditor/Public/ZEDCameraDetails.h"
+#include "ZEDEditor/Public/ZEDEditorCameraSession.h"
 #include "ZED/Public/Core/ZEDCamera.h"
 
 #define LOCTEXT_NAMESPACE "FStereolabsZEDEditor"
@@ -17,6 +18,8 @@ void FStereolabsZEDEditor::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+
+	UZEDEditorCameraSession::Destroy();
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.UnregisterCustomClassLayout(AZEDCamera::StaticClass()->GetFName());
