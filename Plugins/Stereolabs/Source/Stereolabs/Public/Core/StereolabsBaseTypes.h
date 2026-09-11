@@ -59,10 +59,10 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlTextureFormat : uint8
 {
 	TF_R32_FLOAT			UMETA(DisplayName = "R32 Float (depth/disparity)"),
-	TF_R8G8B8A8_SNORM		UMETA(DisplayName = "RGBA8 SNORM (Color)"),
 	TF_R8G8B8A8_UINT		UMETA(DisplayName = "RGBA8 UINT (Point Cloud)"),
 	TF_A32B32G32R32F		UMETA(DisplayName = "ABGR32 Float (normals)"),
 	TF_R8_UNORM				UMETA(DisplayName = "R8 UNORM (Color grayscale)"),
+	TF_R8G8B8A8_UNORM		UMETA(DisplayName = "RGBA8 UNORM (Color)"),
 	TF_Unkown				UMETA(Hidden, DisplayName = "Unknown")
 };
 
@@ -276,13 +276,6 @@ enum class ESlView : uint8
 	V_Normals				 UMETA(DisplayName = "Normals"),
 	V_DepthRight			 UMETA(DisplayName = "Depth right"),
 	V_NormalsRight		     UMETA(DisplayName = "Normals right")
-};
-
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlViewFormat : uint8
-{
-	VF_Signed					 UMETA(DisplayName = "Signed"), //  Each pixel contains 4 signed char
-	VF_Unsigned					 UMETA(DisplayName = "Unsigned"), //  Each pixel contains 4 unsigned char
 };
 
 /*

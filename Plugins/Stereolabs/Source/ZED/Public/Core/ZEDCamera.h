@@ -316,8 +316,8 @@ public:
 	/*
 	 * Optional render target the left image is copied into every frame, so it can be picked as an
 	 * asset where a transient texture cannot be, such as a Composite plate layer.
-	 * Red and blue arrive swapped and the consumer has to reorder them: CUDA interop only maps
-	 * RGBA ordered formats while the SDK writes BGRA bytes
+	 * Reconfigured to the image size and RGBA8 sRGB when it does not already match, so it samples
+	 * like any other color texture
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Output")
 	UTextureRenderTarget2D* ColorOutput;

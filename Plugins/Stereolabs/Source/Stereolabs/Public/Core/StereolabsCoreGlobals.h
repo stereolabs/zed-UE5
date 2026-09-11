@@ -66,9 +66,8 @@ FORCEINLINE EPixelFormat GetPixelFormatFromSlTextureFormat(ESlTextureFormat Text
 	{
 	case ESlTextureFormat::TF_R32_FLOAT:
 		return EPixelFormat::PF_R32_FLOAT;
-	case ESlTextureFormat::TF_R8G8B8A8_SNORM:
-		//return EPixelFormat::PF_B8G8R8A8_UNORM; // PreZedEdit
-		return EPixelFormat::PF_R8G8B8A8_SNORM;
+	case ESlTextureFormat::TF_R8G8B8A8_UNORM:
+		return EPixelFormat::PF_R8G8B8A8;
 	case ESlTextureFormat::TF_R8G8B8A8_UINT:
 		return EPixelFormat::PF_R8G8B8A8_UINT;
 	case ESlTextureFormat::TF_A32B32G32R32F:
@@ -328,14 +327,14 @@ namespace sl
 			case SL_VIEW_NORMALS:
 			case SL_VIEW_DEPTH_RIGHT:
 			case SL_VIEW_NORMALS_RIGHT:
-				return SL_MAT_TYPE_S8_C4;
+				return SL_MAT_TYPE_U8_C4;
 			case SL_VIEW_LEFT_GRAY:
 			case SL_VIEW_RIGHT_GRAY:
 			case SL_VIEW_LEFT_UNRECTIFIED_GRAY:
 			case SL_VIEW_RIGHT_UNRECTIFIED_GRAY:
 				return SL_MAT_TYPE_U8_C1;
 			default:
-				return SL_MAT_TYPE_S8_C4;
+				return SL_MAT_TYPE_U8_C4;
 			}
 		}
 
@@ -488,15 +487,15 @@ namespace sl
 			{
 			case ESlTextureFormat::TF_R32_FLOAT:
 				return SL_MAT_TYPE_F32_C1;
-			case ESlTextureFormat::TF_R8G8B8A8_SNORM:
-				return SL_MAT_TYPE_S8_C4;
+			case ESlTextureFormat::TF_R8G8B8A8_UNORM:
+				return SL_MAT_TYPE_U8_C4;
 			case ESlTextureFormat::TF_A32B32G32R32F:
 				return SL_MAT_TYPE_F32_C4;
 			case ESlTextureFormat::TF_R8_UNORM:
 				return SL_MAT_TYPE_U8_C1;
 			}
 
-			return SL_MAT_TYPE_S8_C4;
+			return SL_MAT_TYPE_U8_C4;
 		}
 
 		/*

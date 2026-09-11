@@ -551,7 +551,7 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 	{
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution;
 
-		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ImageView, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ImageView, true, ESlTextureFormat::TF_R8G8B8A8_UNORM);
 	}
 
 	if (RuntimeParameters.bEnableDepth)
@@ -645,10 +645,10 @@ void AZEDCamera::UpdateColorOutput()
 		return;
 	}
 
-	// Matches the source texture, so a consumer can reuse the passthrough material's own decode
-	if (ConformRenderTarget(ColorOutput, LeftEyeColor->Width, LeftEyeColor->Height, PF_R8G8B8A8_SNORM, true))
+	// Matches the source texture so the copy is a straight blit, sRGB so it samples like any color texture
+	if (ConformRenderTarget(ColorOutput, LeftEyeColor->Width, LeftEyeColor->Height, PF_R8G8B8A8, false))
 	{
-		ZED_CAMERA_LOG_W("Color output %s set to %dx%d RGBA8 SNORM, decode as M_ZED_Mono does",
+		ZED_CAMERA_LOG_W("Color output %s set to %dx%d RGBA8 sRGB",
 			*ColorOutput->GetName(), LeftEyeColor->Width, LeftEyeColor->Height);
 	}
 

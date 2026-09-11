@@ -219,8 +219,6 @@ void USlCameraProxy::BeginDestroy()
 		GrabWorker->EnsureCompletion();
 		delete GrabWorker;
 		GrabWorker = nullptr;
-
-		if (UnsignedLeftImage != nullptr) sl_mat_free(UnsignedLeftImage, SL_MEM_GPU);
 	}
 
 	// Disable measures thread
@@ -1067,18 +1065,18 @@ bool USlCameraProxy::RetrieveTexture(USlTexture* Texture)
 	return (
 		Texture->IsTypeOf(ESlTextureType::TT_Measure) ?
 		RetrieveMeasure(Texture->Mat, static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height)) :
-		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height), static_cast<USlViewTexture*>(Texture)->ViewFormat)
+		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height))
 	);
 }
 
-bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
+bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
 {
 	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(ViewType));
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(MemoryType));
 	}
 
-	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution, ViewFormat);
+	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution);
 }
 
 bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
@@ -1090,13 +1088,13 @@ bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMem
 	return RetrieveMeasure(Mat.Mat, MeasureType, MemoryType, Resolution);
 }
 
-bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
+bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveImage);
 
-	if (UnsignedLeftImage == nullptr) UnsignedLeftImage = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
+	const SL_MEM Memory = sl::unreal::ToSlType(MemoryType);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, sl::unreal::ToSlType(ViewType), SL_MEM_GPU, Resolution.X, Resolution.Y, 0);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, Mat, sl::unreal::ToSlType(ViewType), Memory, Resolution.X, Resolution.Y, 0);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1105,25 +1103,18 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		return false;
 	}
 
-	if (ViewFormat == ESlViewFormat::VF_Unsigned)
+	// The SDK writes BGRA, CUDA interop only maps RGBA ordered formats. Gray views are single
+	// channel and the swap does not apply to them
+	if (sl_mat_get_channels(Mat) == 4)
 	{
-		Mat = UnsignedLeftImage;
-	}
-	else
-	{
-		ErrorCode = (SL_ERROR_CODE)sl_convert_image(UnsignedLeftImage, Mat, 0);
-	}
+		ErrorCode = (SL_ERROR_CODE)sl_mat_convert_color(Mat, Memory, true, 0);
 
-	if (MemoryType == ESlMemoryType::MT_CPU)
-	{
-		sl_mat_update_cpu_from_gpu(Mat);
-	}
+		if (ErrorCode > SL_ERROR_CODE_SUCCESS)
+		{
+			SL_CAMERA_PROXY_LOG_E("Error while swapping the image color channels : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 
-	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
-	{
-		SL_CAMERA_PROXY_LOG_E("Error while converting texture image format : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
-
-		return false;
+			return false;
+		}
 	}
 
 	return true;
