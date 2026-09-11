@@ -673,8 +673,14 @@ namespace sl
 		{
 			switch (UnrealType)
 			{
+			case ESlResolution::R_HD4K:
+				return SL_RESOLUTION_HD4K;
+			case ESlResolution::R_QHDPLUS:
+				return SL_RESOLUTION_QHDPLUS;
 			case ESlResolution::R_HD2K:
 				return SL_RESOLUTION_HD2K;
+			case ESlResolution::R_HD1536:
+				return SL_RESOLUTION_HD1536;
 			case ESlResolution::R_HD1200:
 				return SL_RESOLUTION_HD1200;
 			case ESlResolution::R_HD1080:

@@ -114,8 +114,8 @@ bool UZEDEditorCameraSession::Start(AZEDCamera* InCamera, FString& OutError)
 
 	Camera = InCamera;
 	bSessionActive = true;
-	AuthoredRotation = InCamera->GetActorRotation();
-	bAppliedStartRotation = false;
+	AuthoredTransform = InCamera->GetActorTransform();
+	bMovedActor = false;
 	bWasPackageDirty = InCamera->GetOutermost()->IsDirty();
 
 	CreateSlCameraProxyInstance();
@@ -123,6 +123,9 @@ bool UZEDEditorCameraSession::Start(AZEDCamera* InCamera, FString& OutError)
 	GSlCameraProxy->OnCameraOpened.AddDynamic(this, &UZEDEditorCameraSession::CameraOpened);
 
 	InCamera->BeginEditorSession();
+
+	// After BeginEditorSession, which loads the config files, so ZED.ini cannot clobber the placed pose
+	SeedTrackingOrigin();
 
 	ESlAIModels DepthAIModel;
 	if (GetDepthAIModel(InCamera->InitParameters.DepthMode, DepthAIModel) && !GSlCameraProxy->CheckAIModelOptimization(DepthAIModel))
@@ -140,9 +143,29 @@ bool UZEDEditorCameraSession::Start(AZEDCamera* InCamera, FString& OutError)
 	return true;
 }
 
+void UZEDEditorCameraSession::SeedTrackingOrigin()
+{
+	FSlPositionalTrackingParameters& Parameters = Camera->TrackingParameters;
+
+	AuthoredTrackingOriginLocation = Parameters.Location;
+	AuthoredTrackingOriginRotation = Parameters.Rotation;
+	bSeededTrackingOrigin = true;
+
+	// The details panel reads these back for its Enable and Reset Tracking Origin buttons,
+	// so the placed pose has to live on the actor and not just in the parameters passed to the SDK
+	Parameters.Location = AuthoredTransform.GetLocation();
+	Parameters.Rotation = AuthoredTransform.GetRotation().Rotator();
+}
+
 void UZEDEditorCameraSession::ApplyStartRotation()
 {
-	if (bAppliedStartRotation)
+	if (bMovedActor)
+	{
+		return;
+	}
+
+	// Tracking reports a gravity referenced pose of its own, this is the fallback without it
+	if (Camera->TrackingParameters.bEnableTracking)
 	{
 		return;
 	}
@@ -156,9 +179,28 @@ void UZEDEditorCameraSession::ApplyStartRotation()
 
 	// The IMU is gravity referenced, so pitch and roll are absolute but yaw has no world
 	// reference. Play seeds its tracking origin from the placed actor, which comes to the same thing
-	Camera->SetActorRotation(FRotator(Imu.Pitch, AuthoredRotation.Yaw, Imu.Roll));
+	Camera->SetActorRotation(FRotator(Imu.Pitch, AuthoredTransform.GetRotation().Rotator().Yaw, Imu.Roll));
 
-	bAppliedStartRotation = true;
+	bMovedActor = true;
+}
+
+void UZEDEditorCameraSession::TrackingDataUpdated(const FZEDTrackingData& NewTrackingData, const float& DeltaSeconds)
+{
+	if (!Camera.IsValid())
+	{
+		return;
+	}
+
+	const FTransform& Pose = NewTrackingData.OffsetZedWorldTransform;
+	if (!Pose.IsValid())
+	{
+		return;
+	}
+
+	// Location and rotation only, the pose scale is always one and a placed actor may be scaled
+	Camera->SetActorLocationAndRotation(Pose.GetLocation(), Pose.GetRotation());
+
+	bMovedActor = true;
 }
 
 void UZEDEditorCameraSession::OpenCamera()
@@ -185,6 +227,15 @@ void UZEDEditorCameraSession::CameraOpened()
 
 	Camera->Init();
 
+	// Stands in for the binding AZEDPlayerController makes to the pawn. Bound whatever the
+	// parameter says, so the details panel Enable button also moves the actor
+	Camera->OnTrackingDataUpdated.AddDynamic(this, &UZEDEditorCameraSession::TrackingDataUpdated);
+
+	if (Camera->TrackingParameters.bEnableTracking)
+	{
+		Camera->EnableTracking();
+	}
+
 	// Init mutates the actor components, that is session state and not something to save
 	if (!bWasPackageDirty)
 	{
@@ -206,6 +257,11 @@ void UZEDEditorCameraSession::Stop()
 	AZEDCamera* SessionCamera = Camera.Get();
 	Camera = nullptr;
 
+	if (SessionCamera)
+	{
+		SessionCamera->OnTrackingDataUpdated.RemoveDynamic(this, &UZEDEditorCameraSession::TrackingDataUpdated);
+	}
+
 	if (GSlCameraProxy)
 	{
 		GSlCameraProxy->OnCameraOpened.RemoveDynamic(this, &UZEDEditorCameraSession::CameraOpened);
@@ -217,14 +273,22 @@ void UZEDEditorCameraSession::Stop()
 
 	if (SessionCamera)
 	{
-		if (bAppliedStartRotation)
+		if (bMovedActor)
 		{
-			SessionCamera->SetActorRotation(AuthoredRotation);
-			bAppliedStartRotation = false;
+			SessionCamera->SetActorLocationAndRotation(AuthoredTransform.GetLocation(), AuthoredTransform.GetRotation());
+			bMovedActor = false;
+		}
+
+		if (bSeededTrackingOrigin)
+		{
+			SessionCamera->TrackingParameters.Location = AuthoredTrackingOriginLocation;
+			SessionCamera->TrackingParameters.Rotation = AuthoredTrackingOriginRotation;
 		}
 
 		SessionCamera->EndEditorSession();
 	}
+
+	bSeededTrackingOrigin = false;
 
 	FreeSlCameraProxyInstance();
 

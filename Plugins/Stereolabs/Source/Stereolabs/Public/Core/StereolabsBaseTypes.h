@@ -143,22 +143,42 @@ ENUM_CLASS_FLAGS(ESlMemoryType)
 /*
  * SDK Video resolutions
  * see sl::RESOLUTION
+ * Sizes are per eye, the side by side output is twice the width.
+ * Tagged with the bus that takes them, which is the part that is knowable up front: it matches the
+ * InputType set on the same init parameters, USB for ZED / Mini / 2 / 2i and GMSL2 for the ZED X
+ * family. An untagged entry works on both. Which model on a bus takes which resolution is finer
+ * grained than that and the SDK cannot list it, so AUTO is the choice that always works. Anything
+ * else falls back to it when the camera refuses
  */
-	UENUM(BlueprintType, Category = "Stereolabs|Enum")
-	enum class ESlResolution : uint8
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlResolution : uint8
 {
-	R_HD4K			   		 UMETA(DisplayName = "HD 4K"),
-	R_QHDPLUS		   		 UMETA(DisplayName = "QHD+"),
-	R_HD2K			   		 UMETA(DisplayName = "HD 2K"),
-	R_HD1536		   		 UMETA(DisplayName = "HD 1536p"),
-	R_HD1080		   		 UMETA(DisplayName = "HD 1080p"),
-	R_HD1200			     UMETA(DisplayName = "HD 1200p (ZED X only)"),
-	R_HD720		   			 UMETA(DisplayName = "HD 720p"),
-	R_SVGA			   		 UMETA(DisplayName = "SVGA (ZED X only)"),
-	R_VGA			   		 UMETA(DisplayName = "VGA"),
-	R_XVGA			   		 UMETA(DisplayName = "XVGA (ZED-X HDR lineup only)"),
-	R_TXGA			   		 UMETA(DisplayName = "TXGA (ZED-X HDR lineup only)"),
-	R_AUTO = 11			     UMETA(DisplayName = "AUTO, 1200p for ZEDX and 720 otherwise")
+	R_HD4K			UMETA(DisplayName = "4K - 3856x2180 (GMSL2)"),
+	R_QHDPLUS		UMETA(DisplayName = "QHD+ - 3800x1800 (GMSL2)"),
+	R_HD2K			UMETA(DisplayName = "HD 2K - 2208x1242 (USB)"),
+	R_HD1536		UMETA(DisplayName = "HD 1536p - 1920x1536 (GMSL2)"),
+	R_HD1080		UMETA(DisplayName = "HD 1080p - 1920x1080"),
+	R_HD1200		UMETA(DisplayName = "HD 1200p - 1920x1200 (GMSL2)"),
+	R_HD720			UMETA(DisplayName = "HD 720p - 1280x720 (USB)"),
+	R_SVGA			UMETA(DisplayName = "SVGA - 960x600 (GMSL2)"),
+	R_VGA			UMETA(DisplayName = "VGA - 672x376 (USB)"),
+	R_XVGA			UMETA(DisplayName = "XVGA - 960x768 (GMSL2)"),
+	R_TXGA			UMETA(DisplayName = "TXGA - 640x512 (GMSL2)"),
+	R_AUTO = 11		UMETA(DisplayName = "AUTO - HD 720p on USB, HD 1200p on GMSL2")
+};
+
+/*
+ * Resolution a measure is retrieved at, as a fraction of the image resolution.
+ * Relative rather than absolute because a retrieve size is not a camera mode: any size works,
+ * and the image resolution is only known once the camera is open
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlDepthResolution : uint8
+{
+	DR_Full			UMETA(DisplayName = "Full - same as the image"),
+	DR_Half			UMETA(DisplayName = "Half"),
+	DR_Quarter		UMETA(DisplayName = "Quarter"),
+	DR_Eighth		UMETA(DisplayName = "Eighth")
 };
 
 /*

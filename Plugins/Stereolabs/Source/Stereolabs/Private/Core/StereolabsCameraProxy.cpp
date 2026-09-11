@@ -324,6 +324,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	bool IsCameraCreated = sl_create_camera(CameraID);
 
 	SL_ERROR_CODE ErrorCode;
+	bool bFellBackToAutoResolution = false;
 	do
 	{
 		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath),
@@ -335,8 +336,23 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 		if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 		{
 			SL_CAMERA_PROXY_LOG_E("Error during initialization: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
-			
-			if (ErrorCode != SL_ERROR_CODE_CAMERA_NOT_DETECTED &&
+
+			// No model supports every resolution and the SDK cannot list what a given camera can do,
+			// so a refused mode is only discoverable here. Retry at AUTO rather than leaving the camera
+			// closed over a resolution picked before anyone knew which model would be plugged in
+			const bool bResolutionRefused =
+				ErrorCode == SL_ERROR_CODE_INVALID_RESOLUTION ||
+				ErrorCode == SL_ERROR_CODE_CAMERA_FAILED_TO_SETUP ||
+				ErrorCode == SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH;
+
+			if (bResolutionRefused && sl_init_parameters.resolution != SL_RESOLUTION_AUTO)
+			{
+				SL_CAMERA_PROXY_LOG_W("The camera refused %s, retrying at AUTO", *EnumToString(InitParameters.Resolution));
+
+				sl_init_parameters.resolution = SL_RESOLUTION_AUTO;
+				bFellBackToAutoResolution = true;
+			}
+			else if (ErrorCode != SL_ERROR_CODE_CAMERA_NOT_DETECTED &&
 				ErrorCode != SL_ERROR_CODE_SENSORS_NOT_AVAILABLE)
 			{
 				bAbandonOpenTask = true;
@@ -358,7 +374,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 
 	SetOpenCameraErrorCode(sl::unreal::ToUnrealType(ErrorCode));
 
-	AsyncTask(ENamedThreads::GameThread, [this, InitParameters]()
+	AsyncTask(ENamedThreads::GameThread, [this, InitParameters, bFellBackToAutoResolution]()
 	{
 		if (!GSlCameraProxy)
 		{
@@ -372,6 +388,15 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 
 		SlCameraInformation = SlCopyAndFree(sl_get_camera_information(CameraID, 0, 0));
 		CameraInformation = sl::unreal::ToUnrealType(SlCameraInformation);
+
+		// Only now is the model known, so this is the first point the fallback can say what happened
+		if (bFellBackToAutoResolution)
+		{
+			SL_CAMERA_PROXY_LOG_W("%s is not supported by the %s that opened, running at %dx%d instead",
+				*EnumToString(InitParameters.Resolution), *EnumToString(CameraInformation.CameraModel),
+				CameraInformation.Resolution.X, CameraInformation.Resolution.Y);
+		}
+
 		SL_CameraParameters leftCameraParameters = SlCopyAndFree(sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)).camera_configuration.calibration_parameters.left_cam;
 		RetrieveLeftCameraParameters = sl::unreal::ToUnrealType(leftCameraParameters);
 
@@ -536,7 +561,9 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 
 	AsyncTask(ENamedThreads::GameThread, [this, ErrorCode, NewTrackingParameters, IMURotation] ()
 	{
-		if (!GSlCameraProxy)
+		// CloseCamera completes and clears the task, so a session stopped while the enable was
+		// in flight gets here with nothing left to wait on
+		if (!GSlCameraProxy || !EnableTrackingAsyncTask)
 		{
 			return;
 		}

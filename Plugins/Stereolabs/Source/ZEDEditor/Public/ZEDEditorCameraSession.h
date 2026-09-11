@@ -6,6 +6,7 @@
 #include "TickableEditorObject.h"
 #include "UObject/Object.h"
 #include "UObject/WeakObjectPtr.h"
+#include "ZED/Public/Core/ZEDBaseTypes.h"
 
 #include "ZEDEditorCameraSession.generated.h"
 
@@ -62,15 +63,28 @@ private:
 	void OnPreBeginPIE(bool bIsSimulating);
 	void OnMapOpened(const FString& Filename, bool bAsTemplate);
 
+	/** Start tracking from where the actor is placed, the way play starts from its tracking origin */
+	void SeedTrackingOrigin();
+
 	/** Level the actor to the real camera once the IMU has reported, keeping the authored yaw */
 	void ApplyStartRotation();
+
+	/** Move the actor to the tracked pose, what AZEDPawn does for the play session */
+	UFUNCTION()
+	void TrackingDataUpdated(const FZEDTrackingData& NewTrackingData, const float& DeltaSeconds);
 
 	TWeakObjectPtr<AZEDCamera> Camera;
 
 	/** Restored on stop, so a session never leaves a modified transform behind */
-	FRotator AuthoredRotation = FRotator::ZeroRotator;
+	FTransform AuthoredTransform = FTransform::Identity;
 
-	bool bAppliedStartRotation = false;
+	/** Seeding the tracking origin writes to the level actor, so the authored values are put back on stop */
+	FVector AuthoredTrackingOriginLocation = FVector::ZeroVector;
+	FRotator AuthoredTrackingOriginRotation = FRotator::ZeroRotator;
+	bool bSeededTrackingOrigin = false;
+
+	/** Set by the levelling or by the tracked pose, either way the transform has to be restored */
+	bool bMovedActor = false;
 
 	/** True between Start and Stop, so Stop can never close a camera this session does not own */
 	bool bSessionActive = false;

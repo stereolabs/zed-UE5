@@ -39,22 +39,13 @@ static bool IsGConfigAvailable()
 #define ZED_CAMERA_LOG_E(Format, ...) SL_LOG_E(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_F(Format, ...) SL_LOG_F(ZEDCamera, Format, ##__VA_ARGS__)
 
-/** Preset for depth texture quality */
-static TAutoConsoleVariable<int32> CVarZEDDepthTextureQualityPreset(
-	TEXT("r.ZED.DepthTextureQualityPreset"),
-	1,
-	TEXT("Set the quality of the ZED depth texture.")
-	TEXT("	0: low (default)")
-	TEXT("	1: medium")
-	TEXT("	2: high"),
-	ECVF_RenderThreadSafe
-	);
-
 AZEDCamera::AZEDCamera()
 	:
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
 	LeftEyeRenderTarget(nullptr),
+	DepthResolution( ESlDepthResolution::DR_Half ),
+	DepthResolutionInPixels( ForceInit ),
 	ImageView( ESlView::V_Left ),
 	CameraRenderPlaneDistance( 0.f ),
 	ZedLeftEyeMaterialInstanceDynamic( nullptr ),
@@ -65,7 +56,6 @@ AZEDCamera::AZEDCamera()
 	DepthClampThreshold( 0.f ),
 	Batch( nullptr ),
 	ZedSourceMaterial( nullptr ),
-	CurrentDepthTextureQualityPreset( 2 ),
 	bCurrentDepthEnabled( false ),
 	bInit( false ),
 	LeftRoot( nullptr ),
@@ -449,49 +439,43 @@ void AZEDCamera::Tick(float DeltaSeconds)
 		OnTrackingDataUpdated.Broadcast(TrackingData, DeltaSeconds);
 	}
 
-	// Depth texture quality, normals will have the same size for performance purpose
-	int32 GDepthTextureSizePreset = CVarZEDDepthTextureQualityPreset.GetValueOnGameThread();
-	if (CurrentDepthTextureQualityPreset != GDepthTextureSizePreset)
+	// Depth retrieve toggle
+	if (bCurrentDepthEnabled != RuntimeParameters.bEnableDepth)
 	{
-		CurrentDepthTextureQualityPreset = GDepthTextureSizePreset;
+		bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
 
-		if (bCurrentDepthEnabled)
+		if (!bCurrentDepthEnabled)
 		{
-			FVector2D DepthSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
+			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
 
-			// Left depth
+			Batch->RemoveTexture(LeftEyeDepth);
+			LeftEyeDepth->ConditionalBeginDestroy();
+			LeftEyeDepth = nullptr;
+
+			DepthResolutionInPixels = FIntPoint::ZeroValue;
+		}
+		else
+		{
+			CreateLeftTextures(false);
+
+			Batch->AddTexture(LeftEyeDepth);
+
+			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+		}
+	}
+	// Depth texture resolution, normals will have the same size for performance purpose
+	else if (bCurrentDepthEnabled)
+	{
+		const FIntPoint DepthSize = GetDepthTextureSize();
+		if (DepthSize.X != LeftEyeDepth->Width || DepthSize.Y != LeftEyeDepth->Height)
+		{
 			Batch->RemoveTexture(LeftEyeDepth);
 			LeftEyeDepth->Resize(DepthSize.X, DepthSize.Y);
 			Batch->AddTexture(LeftEyeDepth);
 
 			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-		}
-		else
-		{
-			ZED_CAMERA_LOG_E("Resizing depth and normal without depth enabled in runtime parameters");
-		}
 
-		// Depth retrieve toggle
-		if (bCurrentDepthEnabled != RuntimeParameters.bEnableDepth)
-		{
-			bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
-
-			if (!bCurrentDepthEnabled)
-			{
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
-
-				Batch->RemoveTexture(LeftEyeDepth);
-				LeftEyeDepth->ConditionalBeginDestroy();
-				LeftEyeDepth = nullptr;
-			}
-			else
-			{
-				CreateLeftTextures(false);
-
-				Batch->AddTexture(LeftEyeDepth);
-
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-			}
+			DepthResolutionInPixels = DepthSize;
 		}
 	}
 }
@@ -511,13 +495,33 @@ void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timest
 		CurrentFrameTrackingData.TrackingState = (ESlTrackingState)TrackingState;
 		CurrentFrameTrackingData.Timestamp = Timestamp;
 
-		if (TrackingState == SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW)
+		// Logged on change, this runs at grab rate. The states that do not reach the pose update
+		// below leave the actor standing still, so they cannot stay silent
+		if ((int32)TrackingState != LastLoggedTrackingState)
 		{
-			ZED_CAMERA_LOG_W("FPS too low for good tracking.");
-		}
-		else if (TrackingState == SL_POSITIONAL_TRACKING_STATE_SEARCHING)
-		{
-			ZED_CAMERA_LOG_W("Tracking trying to relocate.");
+			LastLoggedTrackingState = (int32)TrackingState;
+
+			switch (TrackingState)
+			{
+				case SL_POSITIONAL_TRACKING_STATE_OK:
+					ZED_CAMERA_LOG("Positional tracking OK");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW:
+					ZED_CAMERA_LOG_W("FPS too low for good tracking");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_SEARCHING_FLOOR_PLANE:
+					ZED_CAMERA_LOG_W("Searching the floor plane, the pose holds until it is found");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_UNAVAILABLE:
+					ZED_CAMERA_LOG_W("Tracking could not follow the previous frame, the pose holds");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_OFF:
+					ZED_CAMERA_LOG_W("Positional tracking is off");
+					break;
+				default:
+					ZED_CAMERA_LOG_W("Positional tracking state %d", (int32)TrackingState);
+					break;
+			}
 		}
 
 		// Get the IMU rotation
@@ -556,10 +560,24 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 
 	if (RuntimeParameters.bEnableDepth)
 	{
-		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
+		const FIntPoint TextureSize = GetDepthTextureSize();
 
 		LeftEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_Depth, true, ESlTextureFormat::TF_R32_FLOAT);
+
+		DepthResolutionInPixels = TextureSize;
 	}
+}
+
+FIntPoint AZEDCamera::GetDepthTextureSize() const
+{
+	static_assert((int32)ESlDepthResolution::DR_Full == 0 && (int32)ESlDepthResolution::DR_Eighth == 3,
+		"ESlDepthResolution is used as a power of two divisor, so its order carries the meaning");
+
+	const FIntPoint ImageSize = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution;
+	const int32 Shift = (int32)DepthResolution;
+
+	// A power of two divisor keeps the image aspect ratio and never rounds to zero on a valid image
+	return FIntPoint(FMath::Max(ImageSize.X >> Shift, 1), FMath::Max(ImageSize.Y >> Shift, 1));
 }
 
 namespace
@@ -925,6 +943,9 @@ void AZEDCamera::Init()
 		return;
 	}
 
+	// So a new session logs its first tracking state even when it matches the previous one
+	LastLoggedTrackingState = -1;
+
 	Batch = USlGPUTextureBatch::CreateGPUTextureBatch(FName("ZedCameraBatch"));
 
 	if (InitParameters.bLoop)
@@ -985,6 +1006,8 @@ void AZEDCamera::CameraClosed()
 		LeftEyeDepth->ConditionalBeginDestroy();
 		LeftEyeDepth = nullptr;
 	}
+
+	DepthResolutionInPixels = FIntPoint::ZeroValue;
 
 	ClearOutputs();
 

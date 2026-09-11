@@ -279,6 +279,9 @@ private:
 	 */
 	void CreateLeftTextures(bool bCreateColorTexture = true);
 
+	/** Image resolution scaled down by DepthResolution */
+	FIntPoint GetDepthTextureSize() const;
+
 	/** Copy the left image into ColorOutput, resizing it first if it does not match */
 	void UpdateColorOutput();
 
@@ -330,6 +333,17 @@ public:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Output")
 	UTextureRenderTarget2D* DepthOutput;
+
+	/*
+	 * Resolution the depth is retrieved at, as a fraction of the image. Sets the size of the depth
+	 * texture and of DepthOutput. Can be changed while the camera runs
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed|Output")
+	ESlDepthResolution DepthResolution;
+
+	/** Size the depth is actually retrieved at, once DepthResolution is capped to the image */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Transient, Category = "Zed|Output")
+	FIntPoint DepthResolutionInPixels;
 
 	/** Init parameters (resolution, depth mode, input type, SVO/stream source) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
@@ -440,14 +454,14 @@ private:
 	/** The tracking data of the current grab frame */
 	FZEDTrackingData CurrentFrameTrackingData;
 
+	/** SL_POSITIONAL_TRACKING_STATE last written to the log, so the state is only logged on change */
+	int32 LastLoggedTrackingState = -1;
+
 	/** The grab delegate handle */
 	FDelegateHandle GrabDelegateHandle;
 
 	/** Update section if grab is threaded */
 	FCriticalSection TrackingUpdateSection;
-
-	/** Current depth texture quality preset */
-	int32 CurrentDepthTextureQualityPreset;
 
 	/** True if depth enabled */
 	bool bCurrentDepthEnabled;
