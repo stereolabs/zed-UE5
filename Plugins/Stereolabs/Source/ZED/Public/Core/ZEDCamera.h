@@ -26,6 +26,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FZEDTrackingDataUpdatedDelegate, co
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FZEDCameraActorInitializedDelegate);
 
 /*
+ * A set of parameters that can be loaded, saved and reset on its own
+ */
+UENUM(BlueprintType)
+enum class EZEDParameterGroup : uint8
+{
+	PG_Init            UMETA(DisplayName = "Init parameters"),
+	PG_Tracking        UMETA(DisplayName = "Tracking parameters"),
+	PG_Runtime         UMETA(DisplayName = "Runtime parameters"),
+	PG_Recording       UMETA(DisplayName = "Recording parameters"),
+	PG_CameraSettings  UMETA(DisplayName = "Camera settings"),
+};
+
+/*
  * Engine representation of the ZED. Spawnable in a level
  */
 UCLASS(Category = "Stereolabs|Zed")
@@ -211,6 +224,24 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Zed")
 	void LoadParameters();
+
+	/*
+	 * Load one group of parameters from its config file
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void LoadParameterGroup(EZEDParameterGroup Group);
+
+	/*
+	 * Save one group of parameters to its config file
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void SaveParameterGroup(EZEDParameterGroup Group);
+
+	/*
+	 * Reset one group of parameters to its defaults
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Zed")
+	void ResetParameterGroup(EZEDParameterGroup Group);
 
 	/*
 	 * Load camera settings

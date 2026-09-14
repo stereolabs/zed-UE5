@@ -34,6 +34,11 @@ static bool IsGConfigAvailable()
 	return true;
 }
 
+static FString GetParameterGroupConfigPath(EZEDParameterGroup Group)
+{
+	return Group == EZEDParameterGroup::PG_CameraSettings ? ZED_CAMERA_CONFIG_FILE_PATH : ZED_CONFIG_FILE_PATH;
+}
+
 #define ZED_CAMERA_LOG(Format, ...) SL_LOG(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_W(Format, ...) SL_LOG_W(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_E(Format, ...) SL_LOG_E(ZEDCamera, Format, ##__VA_ARGS__)
@@ -185,6 +190,23 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 			SetRuntimeParameters(RuntimeParameters);
 		}
 	}
+	// A whole struct is replaced at once by the load, reset and undo of a parameter group
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, CameraSettings))
+	{
+		SetCameraSettings(CameraSettings);
+	}
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, RuntimeParameters))
+	{
+		SetRuntimeParameters(RuntimeParameters);
+	}
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, InitParameters))
+	{
+		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
+		SetDepthClampThreshold(DepthClampThreshold);
+	}
+
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
 	{
 		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
@@ -823,99 +845,151 @@ void AZEDCamera::LoadParametersAndSettings()
 
 void AZEDCamera::LoadParameters()
 {
-	if (!IsGConfigAvailable())
-	{
-		return;
-	}
-
-	FString Path = ZED_CONFIG_FILE_PATH;
-	FConfigFile* ConfigFile = GConfig->Find(Path);
-
-	if (!ConfigFile)
-	{
-		SaveParameters();
-	}
-	else
-	{
-		InitParameters.Load(Path);
-		if (InitParameters.VerboseFilePath.IsEmpty())
-		{
-			InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
-		}
-
-		TrackingParameters.Load(Path);
-		RuntimeParameters.Load(Path);
-		RecordingParameters.Load(Path);
-	}
+	LoadParameterGroup(EZEDParameterGroup::PG_Init);
+	LoadParameterGroup(EZEDParameterGroup::PG_Tracking);
+	LoadParameterGroup(EZEDParameterGroup::PG_Runtime);
+	LoadParameterGroup(EZEDParameterGroup::PG_Recording);
 }
 
 void AZEDCamera::LoadCameraSettings()
 {
-	if (!IsGConfigAvailable())
-	{
-		return;
-	}
-
-	FString Path = ZED_CAMERA_CONFIG_FILE_PATH;
-	FConfigFile* ConfigFile = GConfig->Find(Path);
-
-	if (!ConfigFile)
-	{
-		SaveCameraSettings();
-	}
-	else
-	{
-		CameraSettings.Load(Path);
-	}
+	LoadParameterGroup(EZEDParameterGroup::PG_CameraSettings);
 }
 
 void AZEDCamera::SaveParameters()
 {
-	if (!IsGConfigAvailable())
-	{
-		return;
-	}
-
-	FString Path = ZED_CONFIG_FILE_PATH;
-
-#if WITH_EDITOR
-	if (InitParameters.VerboseFilePath == DEFAULT_VERBOSE_FILE_PATH)
-	{
-		InitParameters.VerboseFilePath.Empty();
-	}
-#endif
-
-	InitParameters.Save(Path);
-	TrackingParameters.Save(Path);
-	RuntimeParameters.Save(Path);
-	RecordingParameters.Save(Path);
-
-	GConfig->Flush(false, *Path);
+	SaveParameterGroup(EZEDParameterGroup::PG_Init);
+	SaveParameterGroup(EZEDParameterGroup::PG_Tracking);
+	SaveParameterGroup(EZEDParameterGroup::PG_Runtime);
+	SaveParameterGroup(EZEDParameterGroup::PG_Recording);
 }
 
 void AZEDCamera::SaveCameraSettings()
 {
+	SaveParameterGroup(EZEDParameterGroup::PG_CameraSettings);
+}
+
+void AZEDCamera::LoadParameterGroup(EZEDParameterGroup Group)
+{
 	if (!IsGConfigAvailable())
 	{
 		return;
 	}
 
-	FString Path = ZED_CAMERA_CONFIG_FILE_PATH;
-	CameraSettings.Save(Path);
+	const FString Path = GetParameterGroupConfigPath(Group);
+
+	// Write out every group sharing that file, so the next load finds all of them
+	if (!GConfig->Find(Path))
+	{
+		if (Group == EZEDParameterGroup::PG_CameraSettings)
+		{
+			SaveParameterGroup(EZEDParameterGroup::PG_CameraSettings);
+		}
+		else
+		{
+			SaveParameterGroup(EZEDParameterGroup::PG_Init);
+			SaveParameterGroup(EZEDParameterGroup::PG_Tracking);
+			SaveParameterGroup(EZEDParameterGroup::PG_Runtime);
+			SaveParameterGroup(EZEDParameterGroup::PG_Recording);
+		}
+
+		return;
+	}
+
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+			InitParameters.Load(Path);
+			if (InitParameters.VerboseFilePath.IsEmpty())
+			{
+				InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+			}
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings.Load(Path);
+			break;
+	}
+}
+
+void AZEDCamera::SaveParameterGroup(EZEDParameterGroup Group)
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	const FString Path = GetParameterGroupConfigPath(Group);
+
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+#if WITH_EDITOR
+			// An empty path means "use the default", don't bake the machine specific one into the config
+			if (InitParameters.VerboseFilePath == DEFAULT_VERBOSE_FILE_PATH)
+			{
+				InitParameters.VerboseFilePath.Empty();
+			}
+#endif
+			InitParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings.Save(Path);
+			break;
+	}
 
 	GConfig->Flush(false, *Path);
 }
 
+void AZEDCamera::ResetParameterGroup(EZEDParameterGroup Group)
+{
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+			InitParameters = FSlInitParameters();
+			if (InitParameters.VerboseFilePath.IsEmpty())
+			{
+				InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+			}
+			DepthClampThreshold = InitParameters.DepthMaximumDistance;
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters = FSlPositionalTrackingParameters();
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters = FSlRuntimeParameters();
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters = FSlRecordingParameters();
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings = FSlVideoSettings();
+			break;
+	}
+}
+
 void AZEDCamera::ResetParameters()
 {
-	InitParameters = FSlInitParameters();
-	if (InitParameters.VerboseFilePath.IsEmpty())
-	{
-		InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
-	}
-
-	TrackingParameters = FSlPositionalTrackingParameters();
-	RuntimeParameters = FSlRuntimeParameters();
+	ResetParameterGroup(EZEDParameterGroup::PG_Init);
+	ResetParameterGroup(EZEDParameterGroup::PG_Tracking);
+	ResetParameterGroup(EZEDParameterGroup::PG_Runtime);
 
 	ObjectDetectionParameters = FSlObjectDetectionParameters();
 	ObjectDetectionRuntimeParameters = FSlObjectDetectionRuntimeParameters();
@@ -924,7 +998,6 @@ void AZEDCamera::ResetParameters()
 	BodyTrackingRuntimeParameters = FSlBodyTrackingRuntimeParameters();
 
 	bDepthOcclusion = true;
-	DepthClampThreshold = InitParameters.DepthMaximumDistance;
 
 	ImageView = ESlView::V_Left;
 
@@ -933,7 +1006,7 @@ void AZEDCamera::ResetParameters()
 
 void AZEDCamera::ResetSettings()
 {
-	CameraSettings = FSlVideoSettings();
+	ResetParameterGroup(EZEDParameterGroup::PG_CameraSettings);
 }
 
 void AZEDCamera::Init()

@@ -4,6 +4,8 @@
 #include "ZED/Public/Core/ZEDCamera.h"
 #include "ZEDEditor/Public/ZEDEditorCameraSession.h"
 #include "DesktopPlatformModule.h"
+#include "ScopedTransaction.h"
+#include "PropertyHandle.h"
 #include "Misc/EngineVersionComparison.h"
 
 #define LOCTEXT_NAMESPACE "FZEDCameraDetails"
@@ -103,12 +105,12 @@ void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				]
 			];
 
-		auto MakeConfigButton = [this](const FText& Text, const FText& ToolTip, FReply(FZEDCameraDetails::* Handler)())
+		auto MakeConfigButton = [this](const FText& Text, const FText& ToolTip, FOnClicked OnClicked)
 		{
 			return SNew(SButton)
 				.VAlign(VAlign_Center)
 				.ToolTipText(ToolTip)
-				.OnClicked(this, Handler)
+				.OnClicked(OnClicked)
 				.IsEnabled(this, &FZEDCameraDetails::IsConfigIOEnabled)
 				.Content()
 				[
@@ -118,61 +120,55 @@ void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				];
 		};
 
-		ZedCategory.AddCustomRow(ConfigFilterString, false)
-			.NameContent()
-			[
-				SNullWidget::NullWidget
-			]
-			.ValueContent()
-			.VAlign(VAlign_Center)
-			.MaxDesiredWidth(350)
-			[
-				SNew(SBox)
-				.MinDesiredWidth(350)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Load parameters"), FText::FromString("Load parameters from config file"), &FZEDCameraDetails::OnClickLoadParameters)
-					]
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Save parameters"), FText::FromString("Save parameters to config file"), &FZEDCameraDetails::OnClickSaveParameters)
-					]
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Reset parameters"), FText::FromString("Reset parameters"), &FZEDCameraDetails::OnClickResetParameters)
-					]
-				]
-			];
+		// Each group of parameters is followed by the buttons acting on that group only
+		const TPair<FName, EZEDParameterGroup> ParameterGroups[] =
+		{
+			{ GET_MEMBER_NAME_CHECKED(AZEDCamera, InitParameters),      EZEDParameterGroup::PG_Init           },
+			{ GET_MEMBER_NAME_CHECKED(AZEDCamera, TrackingParameters),  EZEDParameterGroup::PG_Tracking       },
+			{ GET_MEMBER_NAME_CHECKED(AZEDCamera, RuntimeParameters),   EZEDParameterGroup::PG_Runtime        },
+			{ GET_MEMBER_NAME_CHECKED(AZEDCamera, RecordingParameters), EZEDParameterGroup::PG_Recording      },
+			{ GET_MEMBER_NAME_CHECKED(AZEDCamera, CameraSettings),      EZEDParameterGroup::PG_CameraSettings },
+		};
 
-		ZedCategory.AddCustomRow(ConfigFilterString, false)
-			.NameContent()
-			[
-				SNullWidget::NullWidget
-			]
-			.ValueContent()
-			.VAlign(VAlign_Center)
-			.MaxDesiredWidth(350)
-			[
-				SNew(SBox)
-				.MinDesiredWidth(350)
+		for (const TPair<FName, EZEDParameterGroup>& ParameterGroup : ParameterGroups)
+		{
+			const TSharedRef<IPropertyHandle> Handle = DetailBuilder.GetProperty(ParameterGroup.Key);
+			const EZEDParameterGroup Group = ParameterGroup.Value;
+
+			// Adding the property explicitly moves it, and the row below, ahead of the properties left to the default layout
+			ZedCategory.AddProperty(Handle);
+
+			ZedCategory.AddCustomRow(ConfigFilterString, false)
+				.NameContent()
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Load settings"), FText::FromString("Load camera settings from config file"), &FZEDCameraDetails::OnClickLoadSettings)
-					]
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Save settings"), FText::FromString("Save camera settings to config file"), &FZEDCameraDetails::OnClickSaveSettings)
-					]
-					+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
-					[
-						MakeConfigButton(FText::FromString("Reset settings"), FText::FromString("Reset camera settings"), &FZEDCameraDetails::OnClickResetSettings)
-					]
+					SNullWidget::NullWidget
 				]
-			];
+				.ValueContent()
+				.VAlign(VAlign_Center)
+				.MaxDesiredWidth(350)
+				[
+					SNew(SBox)
+					.MinDesiredWidth(350)
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+						[
+							MakeConfigButton(FText::FromString("Load"), FText::FromString("Load these parameters from the config file"),
+								FOnClicked::CreateSP(this, &FZEDCameraDetails::OnClickConfigAction, EZEDConfigAction::Load, Group, TSharedPtr<IPropertyHandle>(Handle)))
+						]
+						+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+						[
+							MakeConfigButton(FText::FromString("Save"), FText::FromString("Save these parameters to the config file"),
+								FOnClicked::CreateSP(this, &FZEDCameraDetails::OnClickConfigAction, EZEDConfigAction::Save, Group, TSharedPtr<IPropertyHandle>(Handle)))
+						]
+						+ SHorizontalBox::Slot().VAlign(VAlign_Center).Padding(2.0f).MaxWidth(150)
+						[
+							MakeConfigButton(FText::FromString("Reset"), FText::FromString("Reset these parameters to their defaults"),
+								FOnClicked::CreateSP(this, &FZEDCameraDetails::OnClickConfigAction, EZEDConfigAction::Reset, Group, TSharedPtr<IPropertyHandle>(Handle)))
+						]
+					]
+				];
+		}
 	}
 
 	// Runtime controls need a live camera session
@@ -757,60 +753,41 @@ FReply FZEDCameraDetails::OnClickStopEditorSession()
 	return FReply::Handled();
 }
 
-FReply FZEDCameraDetails::OnClickLoadParameters()
+FReply FZEDCameraDetails::OnClickConfigAction(EZEDConfigAction Action, EZEDParameterGroup Group, TSharedPtr<IPropertyHandle> Handle)
 {
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+	AZEDCamera* ZedCameraActor = Cast<AZEDCamera>(SelectedObjects[0].Get());
+	if (!ZedCameraActor || !Handle.IsValid() || !Handle->IsValidHandle())
+	{
+		return FReply::Handled();
+	}
+
+	if (Action == EZEDConfigAction::Save)
+	{
+		ZedCameraActor->SaveParameterGroup(Group);
+
+		return FReply::Handled();
+	}
+
+	// Going through the property handle keeps undo, the dirty flag and the panel refresh working
+	const FScopedTransaction Transaction(Action == EZEDConfigAction::Load
+		? LOCTEXT("LoadParameterGroup", "Load ZED parameters")
+		: LOCTEXT("ResetParameterGroup", "Reset ZED parameters"));
 
 	ZedCameraActor->Modify();
-	ZedCameraActor->LoadParameters();
 
-	return FReply::Handled();
-}
+	Handle->NotifyPreChange();
 
-FReply FZEDCameraDetails::OnClickSaveParameters()
-{
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
+	if (Action == EZEDConfigAction::Load)
+	{
+		ZedCameraActor->LoadParameterGroup(Group);
+	}
+	else
+	{
+		ZedCameraActor->ResetParameterGroup(Group);
+	}
 
-	ZedCameraActor->SaveParameters();
-
-	return FReply::Handled();
-}
-
-FReply FZEDCameraDetails::OnClickResetParameters()
-{
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
-
-	ZedCameraActor->Modify();
-	ZedCameraActor->ResetParameters();
-
-	return FReply::Handled();
-}
-
-FReply FZEDCameraDetails::OnClickLoadSettings()
-{
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
-
-	ZedCameraActor->Modify();
-	ZedCameraActor->LoadCameraSettings();
-
-	return FReply::Handled();
-}
-
-FReply FZEDCameraDetails::OnClickSaveSettings()
-{
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
-
-	ZedCameraActor->SaveCameraSettings();
-
-	return FReply::Handled();
-}
-
-FReply FZEDCameraDetails::OnClickResetSettings()
-{
-	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
-
-	ZedCameraActor->Modify();
-	ZedCameraActor->ResetSettings();
+	Handle->NotifyPostChange(EPropertyChangeType::ValueSet);
+	Handle->NotifyFinishedChangingProperties();
 
 	return FReply::Handled();
 }

@@ -6,8 +6,18 @@
 #include "IDetailCustomization.h"
 #include "DetailLayoutBuilder.h"
 #include "Templates/UniquePtr.h"
+#include "ZED/Public/Core/ZEDCamera.h"
 
 struct FZEDCameraDetailsGrabCallback;
+class IPropertyHandle;
+
+/** What a config button does to its group of parameters */
+enum class EZEDConfigAction : uint8
+{
+	Load,
+	Save,
+	Reset
+};
 
 class FZEDCameraDetails : public IDetailCustomization
 {
@@ -101,23 +111,8 @@ public:
 	/** Clicking the stop camera button */
 	FReply OnClickStopEditorSession();
 
-	/** Clicking the load parameters button */
-	FReply OnClickLoadParameters();
-
-	/** Clicking the save parameters button */
-	FReply OnClickSaveParameters();
-
-	/** Clicking the reset parameters button */
-	FReply OnClickResetParameters();
-
-	/** Clicking the load camera settings button */
-	FReply OnClickLoadSettings();
-
-	/** Clicking the save camera settings button */
-	FReply OnClickSaveSettings();
-
-	/** Clicking the reset camera settings button */
-	FReply OnClickResetSettings();
+	/** Clicking one of the load/save/reset buttons of a group of parameters */
+	FReply OnClickConfigAction(EZEDConfigAction Action, EZEDParameterGroup Group, TSharedPtr<IPropertyHandle> Handle);
 
 private:
 	void OnMouseCaptureSVOPlaybackSlider();
