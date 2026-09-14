@@ -433,7 +433,7 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 		ZedCamera->TrackingParameters.Location = LastPoseLocation;
 		ZedCamera->TrackingParameters.Rotation = LastPoseRotation;
 	}
-	else if (bCameraWasPlaced || bPawnWasPlaced)
+	else if ((bCameraWasPlaced || bPawnWasPlaced) && !ZedCamera->TrackingParameters.bOverrideTrackingOrigin)
 	{
 		ZedCamera->TrackingParameters.Location = TrackingOriginPose.GetLocation();
 		ZedCamera->TrackingParameters.Rotation = TrackingOriginPose.GetRotation().Rotator();

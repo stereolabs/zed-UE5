@@ -2260,6 +2260,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 
 	FSlPositionalTrackingParameters()
 		:
+		bOverrideTrackingOrigin(false),
 		Location(FVector::ZeroVector),
 		Rotation(FRotator::ZeroRotator),
 		bEnableTracking(true),
@@ -2315,6 +2316,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			*Path
 		);
 
+		GConfig->GetBool(
+			Section,
+			TEXT("bOverrideTrackingOrigin"),
+			bOverrideTrackingOrigin,
+			*Path
+		);
+
 		GConfig->GetVector(
 			Section,
 			TEXT("Location"),
@@ -2367,6 +2375,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			*Path
 		);
 
+		GConfig->SetBool(
+			Section,
+			TEXT("bOverrideTrackingOrigin"),
+			bOverrideTrackingOrigin,
+			*Path
+		);
+
 		GConfig->SetVector(
 			Section,
 			TEXT("Location"),
@@ -2383,15 +2398,22 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	}
 
 	/*
-	 * Initial position, an offset from origin added to the tracking.
+	 * Use Location and Rotation as the tracking origin instead of the transform of the camera actor
+	 * placed in the level. With Set Gravity As Origin enabled, only the yaw of Rotation is kept.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	bool bOverrideTrackingOrigin;
+
+	/*
+	 * Position of the tracking origin in the world.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (EditCondition = "bOverrideTrackingOrigin"))
 	FVector Location;
 
 	/*
-	 * Initial rotation, an offset from origin added to the tracking.
+	 * Rotation of the tracking origin in the world.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (EditCondition = "bOverrideTrackingOrigin"))
 	FRotator Rotation;
 
 	/** Enable positional tracking */

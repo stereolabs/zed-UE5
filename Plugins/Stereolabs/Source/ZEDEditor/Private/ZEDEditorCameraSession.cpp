@@ -147,6 +147,12 @@ void UZEDEditorCameraSession::SeedTrackingOrigin()
 {
 	FSlPositionalTrackingParameters& Parameters = Camera->TrackingParameters;
 
+	// An explicit origin is the user asking for something other than where the actor sits
+	if (Parameters.bOverrideTrackingOrigin)
+	{
+		return;
+	}
+
 	AuthoredTrackingOriginLocation = Parameters.Location;
 	AuthoredTrackingOriginRotation = Parameters.Rotation;
 	bSeededTrackingOrigin = true;
