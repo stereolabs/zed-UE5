@@ -111,23 +111,23 @@ protected:
 
 public:
 	/** Unreal texture if GPU */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	UTexture2D* Texture;
 
 	/** Width of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	int32 Width;
 
 	/** Height of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	int32 Height;
 
 	/** Mat holding resources from SDK */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, Category = "Stereolabs|Texture")
 	FSlMat Mat;
 
 	/** Name of the texture */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Texture")
 	FName Name;
 
 protected:
@@ -166,7 +166,7 @@ public:
 	 * @return				    The view texture
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Texture")
-	static USlViewTexture* CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D = true, ESlTextureFormat TextureFormat = ESlTextureFormat::TF_R8G8B8A8_SNORM, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
+	static USlViewTexture* CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D = true, ESlTextureFormat TextureFormat = ESlTextureFormat::TF_R8G8B8A8_UNORM);
 
 	/*
 	 * Create a CPU view texture
@@ -177,7 +177,7 @@ public:
 	 * @return				    The view texture
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stereolabs|Texture")
-	static USlViewTexture* CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
+	static USlViewTexture* CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType);
 
 private:
 	/* 
@@ -191,16 +191,13 @@ private:
 	 * @param TextureFormat	    The format of the texture
 	 * @return				    The view texture
 	 */
-	static USlViewTexture* CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat, ESlViewFormat ViewFormat = ESlViewFormat::VF_Signed);
+	static USlViewTexture* CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat);
 
 public:
 	/** Texture view type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
+	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType", Category = "Stereolabs|Texture")
 	ESlView ViewType;
 
-	/** Texture view type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "ViewType")
-	ESlViewFormat ViewFormat;
 };
 
 /*
@@ -252,6 +249,6 @@ private:
 
 public:
 	/** Texture measure type */
-	UPROPERTY(BlueprintReadOnly, DisplayName = "MeasureType")
+	UPROPERTY(BlueprintReadOnly, DisplayName = "MeasureType", Category = "Stereolabs|Texture")
 	ESlMeasure MeasureType;
 };

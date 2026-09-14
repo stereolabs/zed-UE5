@@ -587,7 +587,9 @@ enum SL_MEM
 enum SL_BUS_TYPE {
 	SL_BUS_TYPE_USB,  /**< USB input mode */
 	SL_BUS_TYPE_GMSL, /**< GMSL input mode \note Only on NVIDIA Jetson. */
-	SL_BUS_TYPE_AUTO /**< Automatically select the input type.\n Trying first for available USB cameras, then GMSL. */
+	SL_BUS_TYPE_AUTO, /**< Automatically select the input type.\n Trying first for available USB cameras, then GMSL, then MIPI. */
+	SL_BUS_TYPE_MIPI, /**< MIPI input mode, for a camera connected directly to a MIPI capture card. \note Only on NVIDIA Jetson. */
+	SL_BUS_TYPE_HOLOSCAN /**< Holoscan Camera-over-Ethernet input mode, for a camera behind a Holoscan sensor bridge. \note Only on NVIDIA Jetson. */
 };
 
 /**
@@ -630,7 +632,9 @@ enum SL_INPUT_TYPE {
 	SL_INPUT_TYPE_USB, /**< USB input mode */
 	SL_INPUT_TYPE_SVO, /**<  SVO file input mode */
 	SL_INPUT_TYPE_STREAM, /**< STREAM input mode (requires to use sl_enable_streaming() / sl_disable_streaming() on the "sender" side) */
-	SL_INPUT_TYPE_GMSL /**< GMSL input mode (only on NVIDIA Jetson) */
+	SL_INPUT_TYPE_GMSL, /**< GMSL input mode (only on NVIDIA Jetson) */
+	SL_INPUT_TYPE_MIPI, /**< MIPI input mode, for a camera connected directly to a MIPI capture card (only on NVIDIA Jetson) */
+	SL_INPUT_TYPE_HOLOSCAN /**< Holoscan Camera-over-Ethernet input mode, through a Holoscan sensor bridge (only on NVIDIA Jetson) */
 };
 
 /**
@@ -699,7 +703,7 @@ struct SL_EncodedStreamPacket {
 /**
 \brief Describes one encoded video source exposed by the Camera.
 
-Returned by \ref sl_get_encoded_streams_info() — one entry per source,
+Returned by \ref sl_get_encoded_streams_info(): one entry per source,
 whether currently active or not. Use this to discover which sources are
 producing data and at what codec/bitrate before calling
 \ref sl_retrieve_encoded_stream_packet().
@@ -1067,8 +1071,9 @@ enum SL_DEPTH_MODE {
 \brief Lists the precisions available for neural depth inference.
  */
 enum SL_DEPTH_PRECISION {
-	SL_DEPTH_PRECISION_FP16, /**< Half-precision neural depth (default). */
-	SL_DEPTH_PRECISION_INT8 /**< Explicit-quantization (Q/DQ) INT8 neural depth.\n Best-effort: falls back to FP16 if the selected \ref SL_DEPTH_MODE ships no INT8 model or the platform lacks fast INT8. */
+	SL_DEPTH_PRECISION_FP16, /**< Half-precision neural depth inference (default). */
+	SL_DEPTH_PRECISION_INT8, /**< INT8 neural depth inference: faster and with a lower memory footprint, for a small accuracy cost.\n Only \ref SL_DEPTH_MODE_NEURAL provides an INT8 model, the other depth modes always run in FP16.\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. */
+	SL_DEPTH_PRECISION_LAST /**< Neither of the above.\n Only ever returned by sl_get_init_parameters(), never set by the user: the depth engine runs at a precision that has no \ref SL_DEPTH_PRECISION value. */
 };
 
 /**
@@ -1207,6 +1212,25 @@ enum SL_BODY_TRACKING_MODEL
 	SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST, /**< Keypoints based, specific to human skeleton, real time performance even on Jetson or low end GPU cards. */
 	SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM, /**< Keypoints based, specific to human skeleton, compromise between accuracy and speed. */
 	SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE, /**< Keypoints based, specific to human skeleton, state of the art accuracy, requires powerful GPU. */
+};
+
+/**
+\brief Lists the generations of neural network available for the body tracking module.
+
+A generation is only available for some combinations of \ref SL_BODY_TRACKING_MODEL and \ref SL_BODY_FORMAT: when the requested one has no
+network for it, the ZED SDK falls back to the most recent generation it does have.
+*/
+enum SL_BODY_TRACKING_MODEL_GENERATION
+{
+	SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT = 0, /**< Use the generation the ZED SDK defaults to. Value of a zero-initialized structure, so a
+	                                                    caller that does not set the field keeps following the SDK default. */
+	SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 = 1, /**< Network used up to ZED SDK 5.4. Only generation available for \ref SL_BODY_FORMAT_BODY_38. */
+	SL_BODY_TRACKING_MODEL_GENERATION_GEN_2 = 2, /**< Bottom-up network introduced in ZED SDK 5.5, more robust in crowded scenes and to unusual
+	                                                  poses. Available for \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM and
+	                                                  \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE with \ref SL_BODY_FORMAT_BODY_18 or
+	                                                  \ref SL_BODY_FORMAT_BODY_34. \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST and
+	                                                  \ref SL_BODY_FORMAT_BODY_38 have GEN_1 only, and fall back to it. Current
+	                                                  \ref SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT. */
 };
 
 /**
@@ -1883,12 +1907,21 @@ struct SL_InitParameters
 	/**
 	\brief \ref SL_DEPTH_PRECISION used for neural depth inference.
 
-	Only applies to the neural depth modes (\ref SL_DEPTH_MODE_NEURAL_LIGHT, \ref SL_DEPTH_MODE_NEURAL and \ref SL_DEPTH_MODE_NEURAL_PLUS).
-	\n Set it to \ref SL_DEPTH_PRECISION_INT8 to request explicit-quantization (Q/DQ) INT8 inference.
-	\n Default: \ref SL_DEPTH_PRECISION_FP16
-	\note Best-effort: the SDK silently falls back to FP16 if the selected depth mode ships no INT8 model or if the platform lacks fast INT8.
+	Default: \ref SL_DEPTH_PRECISION_FP16
+	\n Set it to \ref SL_DEPTH_PRECISION_INT8 to request INT8 inference, which is faster and uses less memory for a small accuracy cost. Only \ref SL_DEPTH_MODE_NEURAL provides an INT8 model, the other depth modes always run in FP16.
+	\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. sl_get_init_parameters() reports the precision actually in use, which may differ from the one requested here.
 	 */
 	enum SL_DEPTH_PRECISION depth_precision;
+
+	/**
+	\brief Allows the ZED SDK to use a CUDA Graph to run the depth computation.
+
+	When enabled, the depth computation is recorded once and replayed on every sl_grab() call, which lowers the CPU cost of launching it. The depth output is unchanged. The gain is most visible on embedded platforms, where the launch overhead is a larger share of the frame time.
+	\n This is a permission, not a guarantee: it only applies to the \ref SL_DEPTH_MODE NEURAL family, and if the recording cannot be performed the ZED SDK reverts to the regular computation for the rest of the session. sl_grab() keeps working either way.
+
+	Default: false (disabled)
+	 */
+	bool allow_depth_cuda_graph;
 };
 
 /**
@@ -2900,9 +2933,8 @@ struct SL_ObjectDetectionParameters
 	The resulting optimized model will be saved for re-use in the future.
 
 	\attention - The model must be a YOLO-like model.
-	\attention - The caching uses the `custom_onnx_file` string along with your GPU specs to decide whether to use the cached optmized model or to optimize the passed onnx model.
-		If you want to use a different model (i.e. an onnx with different weights), you must use a different `custom_onnx_file` string or delete the cached optimized model in
-		<ZED Installation path>/resources.
+	\attention - The caching uses the content of `custom_onnx_file` along with your GPU specs to decide whether to use the cached optimized model or to optimize
+		the passed onnx model. If you change the weights of the onnx file and pass the same path, the ZED SDK will detect the difference and optimize the new model.
 
 	\note This parameter is useless when detection_model is not \ref OBJECT_DETECTION_MODEL::CUSTOM_YOLOLIKE_BOX_OBJECTS.
 	*/
@@ -3290,8 +3322,21 @@ struct SL_BodyTrackingParameters {
 	\note This setting allow int8 precision which can speed up by another x2 factor (compared to fp16, or x4 compared to fp32) and half the fp16 memory usage, however some accuracy could be lost.
 	\note The accuracy loss should not exceed 1-2% on the compatible models.
 	\note The current compatible models are all [SL_AI_MODELS_HUMAN_BODY_XXXX](\ref SL_AI_MODELS).
+	\note This setting applies to \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 only: GEN_2 always runs in FP16 and ignores it.
 	 */
 	bool allow_reduced_precision_inference;
+
+	/**
+	\brief \ref SL_BODY_TRACKING_MODEL_GENERATION to run for the selected \ref detection_model.
+
+	Default: \ref SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT (currently \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_2)
+	\n Set it to \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 to keep the network used up to ZED SDK 5.4, for instance to preserve the behavior
+	of an integration tuned against it.
+	\note The ZED SDK falls back to the most recent generation available when the requested one has no network for the selected
+	\ref detection_model and \ref body_format. \ref SL_BODY_FORMAT_BODY_38 only has \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1.
+	\note The `ZED_SDK_BODY_TRACKING_MODEL_GENERATION` environment variable, when set, overrides this parameter.
+	 */
+	enum SL_BODY_TRACKING_MODEL_GENERATION model_generation;
 };
 
 /**

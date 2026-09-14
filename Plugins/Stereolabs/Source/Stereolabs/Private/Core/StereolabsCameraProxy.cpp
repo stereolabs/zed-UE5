@@ -22,24 +22,19 @@ DEFINE_LOG_CATEGORY(SlCameraProxy);
 namespace
 {
 	/*
-	 * The C API allocates one sl::Mat per masked detection on every retrieve and the caller owns
-	 * it. Release them once the data has been converted, and clear the copies that were handed to
-	 * the Unreal structs so nothing keeps a freed pointer.
+	 * The C API allocates one sl::Mat per masked detection on every retrieve and hands ownership to
+	 * us. Release the previous frame's masks just before the results are replaced, so callers can
+	 * use a mask for the whole frame it belongs to.
 	 */
-	template <typename TNativeList, typename TUnrealList>
-	void SlReleaseMasks(TNativeList& NativeList, int32 NativeCount, TUnrealList& UnrealList)
+	template <typename TList>
+	void SlFreePreviousMasks(TList& PreviousList)
 	{
-		const int32 Count = FMath::Min<int32>(NativeCount, MAX_NUMBER_OBJECT);
-		for (int32 i = 0; i < Count; i++)
+		for (int32 i = 0; i < PreviousList.Num(); i++)
 		{
-			if (NativeList[i].mask != nullptr)
+			if (PreviousList[i].Mask.Mat != nullptr)
 			{
-				sl_mat_free(NativeList[i].mask, SL_MEM_CPU);
-				NativeList[i].mask = nullptr;
-			}
-			if (UnrealList.IsValidIndex(i))
-			{
-				UnrealList[i].Mask = FSlMat();
+				sl_mat_free(PreviousList[i].Mask.Mat, SL_MEM_CPU);
+				PreviousList[i].Mask = nullptr;
 			}
 		}
 	}
@@ -224,8 +219,6 @@ void USlCameraProxy::BeginDestroy()
 		GrabWorker->EnsureCompletion();
 		delete GrabWorker;
 		GrabWorker = nullptr;
-
-		if (UnsignedLeftImage != nullptr) sl_mat_free(UnsignedLeftImage, SL_MEM_GPU);
 	}
 
 	// Disable measures thread
@@ -331,6 +324,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	bool IsCameraCreated = sl_create_camera(CameraID);
 
 	SL_ERROR_CODE ErrorCode;
+	bool bFellBackToAutoResolution = false;
 	do
 	{
 		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath),
@@ -342,8 +336,23 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 		if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 		{
 			SL_CAMERA_PROXY_LOG_E("Error during initialization: \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
-			
-			if (ErrorCode != SL_ERROR_CODE_CAMERA_NOT_DETECTED &&
+
+			// No model supports every resolution and the SDK cannot list what a given camera can do,
+			// so a refused mode is only discoverable here. Retry at AUTO rather than leaving the camera
+			// closed over a resolution picked before anyone knew which model would be plugged in
+			const bool bResolutionRefused =
+				ErrorCode == SL_ERROR_CODE_INVALID_RESOLUTION ||
+				ErrorCode == SL_ERROR_CODE_CAMERA_FAILED_TO_SETUP ||
+				ErrorCode == SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH;
+
+			if (bResolutionRefused && sl_init_parameters.resolution != SL_RESOLUTION_AUTO)
+			{
+				SL_CAMERA_PROXY_LOG_W("The camera refused %s, retrying at AUTO", *EnumToString(InitParameters.Resolution));
+
+				sl_init_parameters.resolution = SL_RESOLUTION_AUTO;
+				bFellBackToAutoResolution = true;
+			}
+			else if (ErrorCode != SL_ERROR_CODE_CAMERA_NOT_DETECTED &&
 				ErrorCode != SL_ERROR_CODE_SENSORS_NOT_AVAILABLE)
 			{
 				bAbandonOpenTask = true;
@@ -365,7 +374,7 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 
 	SetOpenCameraErrorCode(sl::unreal::ToUnrealType(ErrorCode));
 
-	AsyncTask(ENamedThreads::GameThread, [this, InitParameters]()
+	AsyncTask(ENamedThreads::GameThread, [this, InitParameters, bFellBackToAutoResolution]()
 	{
 		if (!GSlCameraProxy)
 		{
@@ -379,6 +388,15 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 
 		SlCameraInformation = SlCopyAndFree(sl_get_camera_information(CameraID, 0, 0));
 		CameraInformation = sl::unreal::ToUnrealType(SlCameraInformation);
+
+		// Only now is the model known, so this is the first point the fallback can say what happened
+		if (bFellBackToAutoResolution)
+		{
+			SL_CAMERA_PROXY_LOG_W("%s is not supported by the %s that opened, running at %dx%d instead",
+				*EnumToString(InitParameters.Resolution), *EnumToString(CameraInformation.CameraModel),
+				CameraInformation.Resolution.X, CameraInformation.Resolution.Y);
+		}
+
 		SL_CameraParameters leftCameraParameters = SlCopyAndFree(sl_get_camera_information(CameraID, RetrieveMatSize.X, RetrieveMatSize.Y)).camera_configuration.calibration_parameters.left_cam;
 		RetrieveLeftCameraParameters = sl::unreal::ToUnrealType(leftCameraParameters);
 
@@ -543,7 +561,9 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 
 	AsyncTask(ENamedThreads::GameThread, [this, ErrorCode, NewTrackingParameters, IMURotation] ()
 	{
-		if (!GSlCameraProxy)
+		// CloseCamera completes and clears the task, so a session stopped while the enable was
+		// in flight gets here with nothing left to wait on
+		if (!GSlCameraProxy || !EnableTrackingAsyncTask)
 		{
 			return;
 		}
@@ -1072,18 +1092,18 @@ bool USlCameraProxy::RetrieveTexture(USlTexture* Texture)
 	return (
 		Texture->IsTypeOf(ESlTextureType::TT_Measure) ?
 		RetrieveMeasure(Texture->Mat, static_cast<USlMeasureTexture*>(Texture)->MeasureType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height)) :
-		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height), static_cast<USlViewTexture*>(Texture)->ViewFormat)
+		RetrieveImage(Texture->Mat, static_cast<USlViewTexture*>(Texture)->ViewType, Texture->GetMemoryType(), FIntPoint(Texture->Width, Texture->Height))
 	);
 }
 
-bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
+bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
 {
 	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(ViewType));
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(MemoryType));
 	}
 
-	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution, ViewFormat);
+	return (bool)RetrieveImage(Mat.Mat, ViewType, MemoryType, Resolution);
 }
 
 bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
@@ -1095,13 +1115,13 @@ bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMem
 	return RetrieveMeasure(Mat.Mat, MeasureType, MemoryType, Resolution);
 }
 
-bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat)
+bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
 {
 	SCOPE_CYCLE_COUNTER(STAT_RetrieveImage);
 
-	if (UnsignedLeftImage == nullptr) UnsignedLeftImage = sl_mat_create_new(Resolution.X, Resolution.Y, SL_MAT_TYPE_U8_C4, SL_MEM_GPU);
+	const SL_MEM Memory = sl::unreal::ToSlType(MemoryType);
 
-	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, UnsignedLeftImage, sl::unreal::ToSlType(ViewType), SL_MEM_GPU, Resolution.X, Resolution.Y, 0);
+	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_image(CameraID, Mat, sl::unreal::ToSlType(ViewType), Memory, Resolution.X, Resolution.Y, 0);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1110,25 +1130,18 @@ bool USlCameraProxy::RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType Me
 		return false;
 	}
 
-	if (ViewFormat == ESlViewFormat::VF_Unsigned)
+	// The SDK writes BGRA, CUDA interop only maps RGBA ordered formats. Gray views are single
+	// channel and the swap does not apply to them
+	if (sl_mat_get_channels(Mat) == 4)
 	{
-		Mat = UnsignedLeftImage;
-	}
-	else
-	{
-		ErrorCode = (SL_ERROR_CODE)sl_convert_image(UnsignedLeftImage, Mat, 0);
-	}
+		ErrorCode = (SL_ERROR_CODE)sl_mat_convert_color(Mat, Memory, true, 0);
 
-	if (MemoryType == ESlMemoryType::MT_CPU)
-	{
-		sl_mat_update_cpu_from_gpu(Mat);
-	}
+		if (ErrorCode > SL_ERROR_CODE_SUCCESS)
+		{
+			SL_CAMERA_PROXY_LOG_E("Error while swapping the image color channels : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
 
-	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
-	{
-		SL_CAMERA_PROXY_LOG_E("Error while converting texture image format : \"%s\"", *EnumToString(sl::unreal::ToUnrealType(ErrorCode)));
-
-		return false;
+			return false;
+		}
 	}
 
 	return true;
@@ -1676,8 +1689,8 @@ bool USlCameraProxy::RetrieveObjects()
 	SL_Objects sl_objects;
 	SL_ObjectDetectionRuntimeParameters od_rt_params = sl::unreal::ToSlType(ObjectDetectionRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_objects(CameraID, &od_rt_params, &sl_objects, 0);
+	SlFreePreviousMasks(objects.ObjectList);
 	objects = sl::unreal::ToUnrealType(sl_objects);
-	SlReleaseMasks(sl_objects.object_list, sl_objects.nb_objects, objects.ObjectList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{
@@ -1697,8 +1710,8 @@ bool USlCameraProxy::RetrieveBodies()
 	SL_Bodies sl_bodies;
 	SL_BodyTrackingRuntimeParameters bt_rt_params = sl::unreal::ToSlType(BodyTrackingRuntimeParameters);
 	SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_retrieve_bodies(CameraID, &bt_rt_params, &sl_bodies, 0);
+	SlFreePreviousMasks(bodies.BodyList);
 	bodies = sl::unreal::ToUnrealType(sl_bodies, BodyTrackingParameters.BodyFormat);
-	SlReleaseMasks(sl_bodies.body_list, sl_bodies.nb_bodies, bodies.BodyList);
 
 	if (ErrorCode > SL_ERROR_CODE_SUCCESS)
 	{

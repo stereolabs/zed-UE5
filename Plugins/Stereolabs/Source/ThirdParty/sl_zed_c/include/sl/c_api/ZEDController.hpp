@@ -50,7 +50,9 @@ public:
     int initFromUSB(SL_InitParameters *params, const unsigned int serial_number, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromSVO(SL_InitParameters *params, const char* pathSVO, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromStream(SL_InitParameters *params, const char* ip, int port, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
-    int initFromGMSL(SL_InitParameters* params, const unsigned int serial_number, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromGMSL(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromMIPI(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromHoloscan(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromLive(SL_InitParameters* params, const unsigned int serial_number, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
     sl::POSITIONAL_TRACKING_STATE getPoseArray(float* pose, int mat_type);
@@ -224,6 +226,8 @@ public:
     sl::Camera zed;
 
 private:
+
+    int initFromBus(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path, sl::BUS_TYPE bus_type);
 
 #if WITH_OBJECT_DETECTION
     template <typename SL_ObjectDetectionRuntimeParameters_t>

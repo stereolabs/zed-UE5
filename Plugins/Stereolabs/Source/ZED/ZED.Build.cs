@@ -27,8 +27,10 @@ public class ZED : ModuleRules
 
 #if UE_5_6_OR_LATER
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
-#else
+#elif UE_5_5_OR_LATER
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
+        bEnableUndefinedIdentifierWarnings = true;
 #endif
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
@@ -38,7 +40,6 @@ public class ZED : ModuleRules
             new string[]
             {
                  "Stereolabs",
-                 "MixedReality",
                  "Niagara",
                  "UMG",
                  "Slate",
@@ -71,21 +72,23 @@ public class ZED : ModuleRules
 
         string ZedConfigFileName = "ZED.ini";
         string CameraConfigFileName = "Camera.ini";
-        string DefaultEngineConfigFileName = "DefaultEngine.ini";
 
         string ZedConfigFilePath = ProjectSavedConfigPathDirectory + ZedConfigFileName;
         string CameraConfigFilePath = ProjectSavedConfigPathDirectory + CameraConfigFileName;
-        string DefaultEngineConfigFilePath = ProjectConfigPathDirectory + DefaultEngineConfigFileName;
 
-        // Set default engine settings
+        // Set default project settings (engine, input mappings used by the sample content, cook settings)
         if (!Directory.Exists(ProjectConfigPathDirectory))
         {
             Directory.CreateDirectory(ProjectConfigPathDirectory);
         }
 
-        if (!File.Exists(DefaultEngineConfigFilePath))
+        foreach (string ProjectConfigFileName in new string[] { "DefaultEngine.ini", "DefaultInput.ini", "DefaultGame.ini" })
         {
-            File.Copy(Path.Combine(ModulePath, "Defaults", DefaultEngineConfigFileName), DefaultEngineConfigFilePath, true);
+            string ProjectConfigFilePath = ProjectConfigPathDirectory + ProjectConfigFileName;
+            if (!File.Exists(ProjectConfigFilePath))
+            {
+                File.Copy(Path.Combine(ModulePath, "Defaults", ProjectConfigFileName), ProjectConfigFilePath, true);
+            }
         }
 
         // Set default SDK settings

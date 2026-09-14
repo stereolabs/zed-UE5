@@ -15,7 +15,6 @@
 SL_HANDLE_DEFINE(Core)
 SL_HANDLE_DEFINE(Zed)
 SL_HANDLE_DEFINE(Nvd3dumx)
-SL_HANDLE_DEFINE(MRCore)
 SL_HANDLE_DEFINE(ZedCApi)
 
 void FStereolabs::StartupModule()
@@ -29,16 +28,9 @@ void FStereolabs::StartupModule()
 	SL_IMPORT(Nvd3dumx, "nvd3dumx.dll");
 
 #if WITH_EDITOR
-	FString MixedRealityBinPath = FPaths::Combine(*FPaths::ConvertRelativePathToFull(*FPaths::ProjectPluginsDir()), TEXT("Stereolabs/Source/ThirdParty/MixedReality/bin/"));
-
-	FString CoreFilePath = FPaths::Combine(*MixedRealityBinPath, TEXT("sl_mr_core64.dll"));
-	SL_IMPORT_STRING(MRCore, *CoreFilePath);
-
 	FString zedCApiLibraryPath = FPaths::Combine(*FPaths::ConvertRelativePathToFull(*FPaths::ProjectPluginsDir()), TEXT("Stereolabs/Source/ThirdParty/sl_zed_c/bin/"));
 	SL_IMPORT_STRING(ZedCApi, *FPaths::Combine(zedCApiLibraryPath, TEXT("sl_zed_c.dll")));
 #else
-	SL_IMPORT_STRING(MRCore, TEXT("../../Plugins/Stereolabs/Binaries/Win64/sl_mr_core64.dll"));
-
 	SL_IMPORT_STRING(ZedCApi, TEXT("../../Plugins/Stereolabs/Binaries/Win64/sl_zed_c.dll"));
 #endif
 }
@@ -51,7 +43,6 @@ void FStereolabs::ShutdownModule()
 	SL_FREE(Core);
 	SL_FREE(Zed);
 	SL_FREE(Nvd3dumx);
-	SL_FREE(MRCore);
 	SL_FREE(ZedCApi);
 }
 

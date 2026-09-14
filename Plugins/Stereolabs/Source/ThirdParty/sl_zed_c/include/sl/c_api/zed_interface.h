@@ -79,7 +79,7 @@ extern "C" {
     \param path_svo : Filename of the svo to read (for SVO input).
     \param ip : IP of the camera to open (for Stream input).
     \param stream_port : Port of the camera to open (for Stream input).
-    \param gmsl_port : GMSL port number for camera selection (only used when input_type is GMSL). Default: -1 (do nothing).
+    \param bus_port : Physical port the camera is plugged into, on whichever bus \ref input_type selects: the GMSL port or the port of the MIPI capture card. Default: -1 (do nothing).
 	\param bus_type : Whether the camera is a USB or a GMSL camera (when opening with camera ID).
     \param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
     \param opt_settings_path[optional] : Settings path.
@@ -88,7 +88,7 @@ extern "C" {
     \return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
     INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, 
-        int stream_port, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+        int stream_port, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
     /**
 	\brief Opens the ZED camera from the provided SL_InitParameters using its  camera ID.
@@ -776,6 +776,7 @@ extern "C" {
     /**
     \brief Returns the version of the currently installed ZED SDK.
     \return The ZED SDK version installed.
+    \note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
      */
     INTERFACE_API char* sl_get_sdk_version();
 
@@ -808,7 +809,10 @@ extern "C" {
     *  \param camera_id : Id of the camera instance.
     * \param timestamp The target timestamp for which the frame index is to be determined.
     * \return The frame index within the SVO file that aligns with the given timestamp.
-    *         Returns -1 if the timestamp falls outside the bounds of the SVO file.
+    *         When no frame carries the timestamp exactly, the closest frame at or before it
+    *         is returned, never the frame after it. A timestamp outside the range the SVO
+    *         covers gives its first or its last frame rather than an error. Returns -1 only
+    *         when the input is not an SVO file or none of its frames can be read.
     */
     INTERFACE_API int sl_get_svo_position_at_timestamp(int camera_id, unsigned long long timestamp);
 
@@ -1441,7 +1445,7 @@ extern "C" {
     \ref sl_retrieve_image(). The tap silently drops packets until it sees
     the first natural IDR for the requested source, so the first packet
     returned is always a keyframe and the byte stream from that point on is
-    self-contained (SPS/PPS — and VPS for HEVC — are inlined in front of
+    self-contained (SPS/PPS, and VPS for HEVC, are inlined in front of
     every IDR).
 
     \param camera_id : Id of the camera instance.
@@ -1527,6 +1531,21 @@ extern "C" {
     \return SUCCESS if the model is well optimized.
     */
     INTERFACE_API int sl_optimize_AI_model(enum SL_AI_MODELS model, int gpu_id);
+
+    /**
+    \brief Optimize a custom object detection ONNX model ahead of time, so that \ref sl_enable_object_detection() can start using it right away.
+
+    This optimizes the given ONNX file exactly as \ref sl_enable_object_detection() does when SL_ObjectDetectionParameters.detection_model is set to
+    SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS, SL_OBJECT_DETECTION_MODEL_CUSTOM_RFDETRLIKE_BOX_OBJECTS or
+    SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS_AUTODETECT, and saves the result for re-use. Optimizing a model can take several minutes, so this is
+    meant to be called once when installing or deploying your application, rather than on its critical path.
+    \param custom_onnx_file : Path to the ONNX file to optimize. Use the same value as SL_ObjectDetectionParameters.custom_onnx_file.
+    \param custom_onnx_dynamic_input_shape : Input resolution to optimize the model for. Use the same value as SL_ObjectDetectionParameters.custom_onnx_dynamic_input_shape, otherwise the optimized model cannot be re-used and the model is optimized again at runtime.
+    \param gpu_id : ID of the gpu on which the model will run. The optimized model is specific to it.
+    \return SUCCESS if the model is optimized and ready to be used, INVALID_FUNCTION_PARAMETERS if no ONNX file was given or if it cannot be found.
+    \note A model with a fixed input resolution keeps its own: \a custom_onnx_dynamic_input_shape is then only used to identify the optimized model.
+    */
+    INTERFACE_API int sl_optimize_custom_AI_model(const char* custom_onnx_file, struct SL_Resolution custom_onnx_dynamic_input_shape, int gpu_id);
 
     /**
     \brief Initializes and starts object detection module.
@@ -2343,7 +2362,7 @@ extern "C" {
     /**
     \brief Reads an image from a file.
     
-    Supports .png and .jpeg. Only works if matrix has access to \ref SL_MEM_CPU.
+    Supports .png, .jpeg and .exr (OpenEXR, for float data). Only works if matrix has access to \ref SL_MEM_CPU.
     \param ptr : Pointer of the matrix.
     \param file_path : Path of the file to read from (including the name and extension).
     \return \ref SL_ERROR_CODE_SUCCESS if everything went well, \ref SL_ERROR_CODE_FAILURE otherwise.
@@ -2351,6 +2370,10 @@ extern "C" {
     INTERFACE_API int sl_mat_read(void* ptr, const char* file_path);
     /**
     \brief Writes the Mat into a file as an image. Only works if Mat has access to MEM_CPU.
+
+    Supports .png and .jpeg for 8-bit images, and .exr (OpenEXR) for float images, which keeps every
+    value exactly as it is, NaN and infinity included. OpenEXR is a floating-point format: an .exr
+    path with an 8- or 16-bit image returns \ref SL_ERROR_CODE_FAILURE.
     \param ptr : Pointer of the matrix.
     \param file_path : Path of the file to write (including the name and extension).
     \return \ref SL_ERROR_CODE_SUCCESS if everything went well, \ref SL_ERROR_CODE_FAILURE otherwise.

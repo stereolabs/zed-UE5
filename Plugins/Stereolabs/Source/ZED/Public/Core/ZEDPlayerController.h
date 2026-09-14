@@ -242,6 +242,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
 	TSubclassOf<AZEDPawn> PawnClass;
 
+	/** The camera class to adopt from the level, or to spawn if the level has none */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Zed")
+	TSubclassOf<AZEDCamera> CameraClass;
+
 	/** Pawn spawned delegate */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FZEDPlayerControllerDelegate OnPawnSpawned;
@@ -267,11 +271,11 @@ public:
 	bool bOpenZedCameraAtInit;
 
 	/** True if player 1 */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Zed")
 	bool bIsFirstPlayer;
 
 	/** Viewport helper */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Zed")
 	FSlViewportHelper ViewportHelper;
 
 private:
@@ -299,6 +303,22 @@ private:
 
 	/** Close the Zed camera after fade */
 	FTimerHandle CloseZedCameraTimerHandle;
+
+	/** True if the pawn was found placed in the level instead of spawned */
+	bool bPawnWasPlaced;
+
+	/** True if the camera actor was found placed in the level instead of spawned */
+	bool bCameraWasPlaced;
+
+	/** World transform of the placed camera actor, captured before it is attached to the pawn */
+	FTransform PlacedCameraTransform;
+
+	/** Start pose fed into the tracking parameters when the camera or pawn is level-placed */
+	FTransform TrackingOriginPose;
+
+	/** Last tracked pose, restored after a camera reconnection */
+	FVector LastPoseLocation;
+	FRotator LastPoseRotation;
 
 	/** Current FPS timer */
 	float ZEDFPS;

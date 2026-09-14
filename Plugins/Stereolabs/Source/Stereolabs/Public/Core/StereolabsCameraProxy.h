@@ -118,7 +118,7 @@ public:
 	 * @param ErrorCode The grab error code
 	 * @param Timestamp Image timestamp
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zed")
 	void GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp);
 };
 
@@ -399,7 +399,7 @@ public:
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "retrieve zed image"), Category = "Zed|Rendering")
-	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
+	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
 
 	/*
 	* Retrieve a measure mat
@@ -422,7 +422,7 @@ public:
 	 * @param Name		 The name of the mat
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
-	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
+	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
 
 	/*
 	 * Retrieve a measure mat
@@ -1090,9 +1090,6 @@ private:
 	/** Camera informations needed if camera disconnected. Held by value, same reason as
 	    SlRecordingStatus. */
 	SL_CameraInformation SlCameraInformation = {};
-
-	/** Pointer to image grabbed. Used internally.*/
-	void* UnsignedLeftImage;
 
 private:
 	/** Underlying Zed camera */

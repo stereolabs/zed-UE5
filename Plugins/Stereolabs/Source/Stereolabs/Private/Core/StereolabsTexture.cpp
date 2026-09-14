@@ -164,17 +164,17 @@ bool USlTexture::Resize(int32 NewWidth, int32 NewHeight)
 	return true;
 }
 
-USlViewTexture* USlViewTexture::CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D/* = true*/, ESlTextureFormat TextureFormat/* = ESlTextureFormat::TF_B8G8R8A8_UNORM*/, ESlViewFormat TextureViewFormat /*= ESlViewFormat::VF_Signed*/)
+USlViewTexture* USlViewTexture::CreateGPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, bool bCreateTexture2D/* = true*/, ESlTextureFormat TextureFormat/* = ESlTextureFormat::TF_R8G8B8A8_UNORM*/)
 {
 	return USlViewTexture::CreateViewTexture(TextureName, TextureWidth, TextureHeight, TextureViewType, ESlMemoryType::MT_GPU, bCreateTexture2D, TextureFormat);
 }
 
-USlViewTexture* USlViewTexture::CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlViewFormat TextureViewFormat)
+USlViewTexture* USlViewTexture::CreateCPUViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType)
 {
-	return USlViewTexture::CreateViewTexture(TextureName, TextureWidth, TextureHeight, TextureViewType, ESlMemoryType::MT_CPU, false, ESlTextureFormat::TF_Unkown, TextureViewFormat);
+	return USlViewTexture::CreateViewTexture(TextureName, TextureWidth, TextureHeight, TextureViewType, ESlMemoryType::MT_CPU, false, ESlTextureFormat::TF_Unkown);
 }
 
-USlViewTexture* USlViewTexture::CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat, ESlViewFormat TextureViewFormat)
+USlViewTexture* USlViewTexture::CreateViewTexture(const FName& TextureName, int32 TextureWidth, int32 TextureHeight, ESlView TextureViewType, ESlMemoryType TextureMemoryType, bool bCreateTexture2D, ESlTextureFormat TextureFormat)
 {
 	if (TextureWidth <= 0 || TextureHeight <= 0)
 	{
@@ -191,7 +191,6 @@ USlViewTexture* USlViewTexture::CreateViewTexture(const FName& TextureName, int3
 	ViewTexture->MemoryType = TextureMemoryType;
 	ViewTexture->TextureType = ESlTextureType::TT_View;
 	ViewTexture->TextureFormat = TextureFormat;
-	ViewTexture->ViewFormat = TextureViewFormat;
 
 	if (TextureMemoryType == ESlMemoryType::MT_GPU && bCreateTexture2D)
 	{
