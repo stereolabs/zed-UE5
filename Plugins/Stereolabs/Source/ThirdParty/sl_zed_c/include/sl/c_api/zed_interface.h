@@ -708,6 +708,9 @@ extern "C" {
     \param reset : Cancel the manual ROI and reset it to the full image.
     \return \ref SL_ERROR_CODE to indicate if the function was successful.
     \note The function works only if the camera is open in LIVE or STREAM mode.
+    \note A ROI larger than the image, or smaller than the minimum size the camera accepts, is rejected and the previously set ROI stays in use.
+    Check this function's return code to know whether the ROI was applied: sl_get_roi_for_aec_agc() reports the still-active ROI with
+    \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" and so cannot confirm it.
      */
     INTERFACE_API enum SL_ERROR_CODE sl_set_roi_for_aec_agc(int camera_id, enum SL_SIDE side, struct SL_Rect* roi, bool reset);
 
@@ -738,9 +741,11 @@ extern "C" {
     \param camera_id : Id of the camera instance.
     \param side : \ref SL_SIDE on which to get the ROI from.
     \param roi [Out] : Region of interest.
-    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if ROI has been applied. Other \ref SL_ERROR_CODE otherwise.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the ROI could be read. Other \ref SL_ERROR_CODE otherwise.
     \note The function works only if the camera is open in LIVE or STREAM mode.
     \note Settings are not exported in the SVO file format.
+    \note The ROI reported is the one currently used by AEC/AGC, which is the last one accepted, not necessarily the last one requested.
+    A rejected sl_set_roi_for_aec_agc() leaves the previous ROI in use, and this function then returns that ROI with \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS".
      */
     INTERFACE_API enum SL_ERROR_CODE sl_get_roi_for_aec_agc(int id, enum SL_SIDE side, struct SL_Rect* roi);
 
@@ -2376,9 +2381,11 @@ extern "C" {
     path with an 8- or 16-bit image returns \ref SL_ERROR_CODE_FAILURE.
     \param ptr : Pointer of the matrix.
     \param file_path : Path of the file to write (including the name and extension).
+    \param compression_level : Compression level, in [0, 100]. A higher value means a smaller file. Pass -1 for
+    the format default. Ignored for .exr, which is lossless.
     \return \ref SL_ERROR_CODE_SUCCESS if everything went well, \ref SL_ERROR_CODE_FAILURE otherwise.
      */
-    INTERFACE_API int sl_mat_write(void* ptr, const char* file_path);
+    INTERFACE_API int sl_mat_write(void* ptr, const char* file_path, int compression_level);
     /**
     \brief Returns the width of the matrix.
     \param ptr : Pointer of the matrix.

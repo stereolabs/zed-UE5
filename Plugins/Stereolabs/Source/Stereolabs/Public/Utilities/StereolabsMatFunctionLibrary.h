@@ -114,10 +114,11 @@ public:
 
 	/*
 	 * Reads an image from a file (only if  MEM_CPU is available on the current  Mat).
-	 * Supported input files format are PNG and JPEG
+	 * Supported input files format are PNG and JPEG for 8 bit images, and EXR for float images
 	 * @param Path File path including the name and extension
 	 * @return     EC_Success if everything went well,  EC_Failure otherwise
-	 * @note Supported ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4
+	 * @note Supported ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4 for PNG and JPEG,
+	 *       and  MT_32F_C1,  MT_32F_C3 and  MT_32F_C4 for EXR
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat read"), Category = "Stereolabs|Mat")
 	static ESlErrorCode Read(UPARAM(ref) FSlMat& Mat, const FString& Path)
@@ -127,15 +128,18 @@ public:
 
 	/*
 	 * Writes the  Mat (only if  MEM_CPU is available) into a file as an image
-	 * Supported output files format are PNG and JPEG
+	 * Supported output files format are PNG and JPEG for 8 bit images, and EXR for float images
 	 * @param Path File path including the name and extension
+	 * @param CompressionLevel Compression level in [0, 100]. A higher value means a smaller file. Pass -1 for the
+	 *                         format default. Ignored for EXR, which is lossless.
 	 * @return	   EC_Success if everything went well,  EC_Failure otherwise
-	 * @note Supported  ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4
+	 * @note Supported  ESlMatType are : MT_8U_C1,  MT_8U_C3 and  MT_8U_C4 for PNG and JPEG,
+	 *       and  MT_32F_C1,  MT_32F_C3 and  MT_32F_C4 for EXR
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "mat write"), Category = "Stereolabs|Mat")
-	static ESlErrorCode Write(UPARAM(ref) FSlMat& Mat, const FString& Path)
+	static ESlErrorCode Write(UPARAM(ref) FSlMat& Mat, const FString& Path, int32 CompressionLevel = -1)
 	{
-		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path))));
+		return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_mat_write(Mat.Mat, (TCHAR_TO_UTF8(*Path)), CompressionLevel));
 	}
 
 	/*

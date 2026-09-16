@@ -1653,7 +1653,7 @@ namespace sl
 			ObjectData.Position = ToUnrealType(SlData.position);
 			ObjectData.Velocity = ToUnrealType(SlData.velocity);
 			ObjectData.Dimensions = ToUnrealType(SlData.dimensions);
-			ObjectData.PositionCovariance.SetNumUninitialized(6);
+			ObjectData.PositionCovariance.Reset(6);
 			ObjectData.PositionCovariance.Append(&SlData.position_covariance[0], 6);
 
 			for (int i = 0; i < 4; i++)
@@ -1707,7 +1707,7 @@ namespace sl
 			BodyData.Position = ToUnrealType(SlData.position);
 			BodyData.Velocity = ToUnrealType(SlData.velocity);
 			BodyData.Dimensions = ToUnrealType(SlData.dimensions);
-			BodyData.PositionCovariance.SetNumUninitialized(6);
+			BodyData.PositionCovariance.Reset(6);
 			BodyData.PositionCovariance.Append(&SlData.position_covariance[0], 6);
 
 			for (int i = 0; i < 4; i++)
@@ -2009,6 +2009,7 @@ namespace sl
 			struct SL_RuntimeParameters RuntimeParameters = {};
 
 			RuntimeParameters.enable_depth = UnrealData.bEnableDepth;
+			RuntimeParameters.enable_fill_mode = UnrealData.bEnableFillMode;
 			RuntimeParameters.confidence_threshold = UnrealData.ConfidenceThreshold;
 			RuntimeParameters.texture_confidence_threshold = UnrealData.TextureConfidenceThreshold;
 			RuntimeParameters.reference_frame = (SL_REFERENCE_FRAME)UnrealData.ReferenceFrame;
@@ -2045,13 +2046,13 @@ namespace sl
 			float resolution = 0.05f;
 			switch (mapping_resolution) {
 			case ESlSpatialMappingResolution::SMR_Low:
-				resolution = 0.02f;
+				resolution = 0.08f;
 				break;
 			case ESlSpatialMappingResolution::SMR_Medium:
 				resolution = 0.05f;
 				break;
 			case ESlSpatialMappingResolution::SMR_High:
-				resolution = 0.08f;
+				resolution = 0.02f;
 				break;
 			default:
 				resolution = 0.05f;
@@ -2142,7 +2143,13 @@ namespace sl
 			case SL_OBJECT_DETECTION_MODEL_MULTI_CLASS_BOX_FAST:          m_out = SL_AI_MODELS_MULTI_CLASS_DETECTION; break;
 			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_FAST:          m_out = SL_AI_MODELS_PERSON_HEAD_DETECTION; break;
 			case SL_OBJECT_DETECTION_MODEL_PERSON_HEAD_BOX_ACCURATE: m_out = SL_AI_MODELS_PERSON_HEAD_ACCURATE_DETECTION; break;
-			case SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:break;
+			// The custom models run the user's own ONNX, so there is no built-in engine to
+			// check or optimize and SL_AI_MODELS_LAST is the correct answer for all of them.
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS:
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS:
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_RFDETRLIKE_BOX_OBJECTS:
+			case SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS_AUTODETECT:
+			default: break;
 			}
 			return m_out;
 		}

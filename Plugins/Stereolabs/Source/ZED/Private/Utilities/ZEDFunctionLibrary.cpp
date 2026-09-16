@@ -859,6 +859,10 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 
 	FVector2D ImagePosition = PlayerController->ViewportHelper.ConvertScreenSpaceToImageSpace(ScreenPosition);
 	SL_PlaneData* planeData = sl_find_plane_at_hit(CameraID, sl::unreal::ToSlType(ImagePosition), &sdk_params, true);
+	if (!planeData) {
+		UE_LOG(LogTemp, Warning, TEXT("Plane detection is unavailable, the camera is not open"));
+		return false;
+	}
 
 	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {
@@ -910,6 +914,10 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
 	prior_translation.x = 0; prior_translation.y = 0; prior_translation.z = 0;
 
 	SL_PlaneData* planeData = sl_find_floor_plane(CameraID, &reset_quaternion, &reset_translation, prior_rotation, prior_translation);
+	if (!planeData) {
+		UE_LOG(LogTemp, Warning, TEXT("Floor plane detection is unavailable, the camera is not open"));
+		return false;
+	}
 
 	ESlErrorCode ErrorCode = sl::unreal::ToUnrealType((SL_ERROR_CODE)planeData->error_code);
 	if (ErrorCode != ESlErrorCode::EC_Success) {

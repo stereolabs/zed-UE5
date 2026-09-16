@@ -194,7 +194,8 @@ enum class ESlDepthMode : uint8
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
 	DM_NeuralLight			 UMETA(DisplayName = "Neural Light"),
 	DM_Neural				 UMETA(DisplayName = "Neural"),
-	DM_NeuralPlus			 UMETA(DisplayName = "Neural+")
+	DM_NeuralPlus			 UMETA(DisplayName = "Neural+"),
+	DM_Custom				 UMETA(DisplayName = "Custom")
 };
 
 /*
@@ -240,7 +241,9 @@ enum class ESlInputType : uint8
 	IT_USB   			 UMETA(DisplayName = "USB input mode"),
 	IT_SVO   			 UMETA(DisplayName = "SVO input mode"),
 	IT_STREAM   		 UMETA(DisplayName = "Stream input mode"),
-	IT_GMSL				 UMETA(DisplayName = "GMSL")
+	IT_GMSL				 UMETA(DisplayName = "GMSL"),
+	IT_MIPI				 UMETA(DisplayName = "MIPI"),
+	IT_Holoscan			 UMETA(DisplayName = "Holoscan")
 };
 
 /*
@@ -265,7 +268,8 @@ enum class ESlTrackingState : uint8
 	TS_TrackingOk            UMETA(DisplayName = "Operates normally"),
 	TS_TrackingOff           UMETA(DisplayName = "Disabled"),
 	TS_FpsTooLow			 UMETA(DisplayName = "FPS too low"),
-	TS_SeachingFloorPlane    UMETA(DisplayName = "Searching floor plane")
+	TS_SeachingFloorPlane    UMETA(DisplayName = "Searching floor plane"),
+	TS_Unavailable			 UMETA(DisplayName = "Unavailable")
 };
 
 /*
@@ -519,12 +523,14 @@ enum class ESlModel : uint8
 	M_ZedXM					UMETA(DisplayName = "ZED X Mini"),
 	M_ZedXHDR				UMETA(DisplayName = "ZED X HDR"),
 	M_ZedXMiniHDR			UMETA(DisplayName = "ZED X Mini HDR"),
+	M_ZedXHDRMax = 8		UMETA(DisplayName = "ZED X HDR Max"),
 	M_ZedXNano = 9			UMETA(DisplayName = "ZED X Nano"),
 	M_VirtualZedX = 11		UMETA(DisplayName = "Virtual ZED X"),
 	M_ZedXOneGS = 30		UMETA(DisplayName = "ZED X One GS"),
 	M_ZedXOneUHD = 31		UMETA(DisplayName = "ZED X One UHD"),
 	M_ZedXOneHDR = 32		UMETA(DisplayName = "ZED X One HDR"),
-	M_Unknown				UMETA(DisplayName = "Unknown")
+	M_ZedXOneCore = 33		UMETA(DisplayName = "ZED X One Core"),
+	M_Unknown = 255			UMETA(DisplayName = "Unknown")
 };
 
 /*
@@ -2629,7 +2635,7 @@ struct STEREOLABS_API FSlInitParameters
 		OpenTimeoutSec(5.0f),
 		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
-		bEnableImageValidityCheck(false),
+		bEnableImageValidityCheck(true),
 		MaximumWorkingResolution(FIntPoint(0, 0)),
 		SvoDecryptionKey("")
 	{
@@ -3150,7 +3156,7 @@ struct STEREOLABS_API FSlInitParameters
 	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
 	 If an issue is found, the grab function will output a warning as sl::ERROR_CODE::CORRUPTED_FRAME.
 	 This version doesn't detect frame tearing currently.
-	 \n default: disabled
+	 \n default: enabled
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableImageValidityCheck;

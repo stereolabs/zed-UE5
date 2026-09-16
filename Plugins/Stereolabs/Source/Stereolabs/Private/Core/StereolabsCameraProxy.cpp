@@ -1108,7 +1108,7 @@ bool USlCameraProxy::RetrieveImage(FSlMat& Mat, ESlView ViewType, ESlMemoryType 
 
 bool USlCameraProxy::RetrieveMeasure(FSlMat& Mat, ESlMeasure MeasureType, ESlMemoryType MemoryType, const FIntPoint& Resolution)
 {
-	SL_MAT_TYPE MatType = sl::unreal::ViewToMatType((SL_VIEW)(MeasureType));
+	SL_MAT_TYPE MatType = sl::unreal::MeasureToMatType((SL_MEASURE)(MeasureType));
 	if (!Mat.Mat) {
 		Mat.Mat = sl_mat_create_new(Resolution.X, Resolution.Y, MatType, sl::unreal::ToSlType(MemoryType));
 	}
@@ -1584,7 +1584,10 @@ void USlCameraProxy::EnableObjectDetection(const FSlObjectDetectionParameters& O
 {
 	ObjectDetectionParameters = ODParameters;
 
-	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects && ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomYoloLikeBoxObjects)
+	if (ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjects
+		&& ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomYoloLikeBoxObjects
+		&& ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomRFDetrLikeBoxObjects
+		&& ODParameters.DetectionModel != ESlObjectDetectionModel::ODM_CustomBoxObjectsAutodetect)
 	{
 		if (!GSlCameraProxy->CheckAIModelOptimization((ESlAIModels)sl::unreal::cvtDetection((SL_OBJECT_DETECTION_MODEL)ODParameters.DetectionModel)))
 		{

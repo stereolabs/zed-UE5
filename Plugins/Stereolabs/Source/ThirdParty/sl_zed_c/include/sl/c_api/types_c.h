@@ -1220,17 +1220,17 @@ enum SL_BODY_TRACKING_MODEL
 A generation is only available for some combinations of \ref SL_BODY_TRACKING_MODEL and \ref SL_BODY_FORMAT: when the requested one has no
 network for it, the ZED SDK falls back to the most recent generation it does have.
 */
-enum SL_BODY_TRACKING_MODEL_GENERATION
+enum SL_BODY_TRACKING_MODEL_GEN
 {
-	SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT = 0, /**< Use the generation the ZED SDK defaults to. Value of a zero-initialized structure, so a
-	                                                    caller that does not set the field keeps following the SDK default. */
-	SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 = 1, /**< Network used up to ZED SDK 5.4. Only generation available for \ref SL_BODY_FORMAT_BODY_38. */
-	SL_BODY_TRACKING_MODEL_GENERATION_GEN_2 = 2, /**< Bottom-up network introduced in ZED SDK 5.5, more robust in crowded scenes and to unusual
-	                                                  poses. Available for \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM and
-	                                                  \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE with \ref SL_BODY_FORMAT_BODY_18 or
-	                                                  \ref SL_BODY_FORMAT_BODY_34. \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST and
-	                                                  \ref SL_BODY_FORMAT_BODY_38 have GEN_1 only, and fall back to it. Current
-	                                                  \ref SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT. */
+	SL_BODY_TRACKING_MODEL_GEN_DEFAULT = 0, /**< Use the generation the ZED SDK defaults to. Value of a zero-initialized structure, so a
+	                                             caller that does not set the field keeps following the SDK default. */
+	SL_BODY_TRACKING_MODEL_GEN_GEN_1 = 1, /**< Network used up to ZED SDK 5.4. Only generation available for \ref SL_BODY_FORMAT_BODY_38. */
+	SL_BODY_TRACKING_MODEL_GEN_GEN_2 = 2, /**< Bottom-up network introduced in ZED SDK 5.5, more robust in crowded scenes and to unusual
+	                                           poses. Available for \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_MEDIUM and
+	                                           \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_ACCURATE with \ref SL_BODY_FORMAT_BODY_18 or
+	                                           \ref SL_BODY_FORMAT_BODY_34. \ref SL_BODY_TRACKING_MODEL_HUMAN_BODY_FAST and
+	                                           \ref SL_BODY_FORMAT_BODY_38 have GEN_1 only, and fall back to it. Current
+	                                           \ref SL_BODY_TRACKING_MODEL_GEN_DEFAULT. */
 };
 
 /**
@@ -1878,9 +1878,11 @@ struct SL_InitParameters
 	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
 	 If an issue is found, the grab function will output a warning as sl_ERROR_CODE_CORRUPTED_FRAME.
 	 This version doesn't detect frame tearing currently.
-	 \n default: enabled
+	 \n Higher values run more checks: 2 and above compare the left and right images, above 2 adds blur
+	 detection and above 3 adds edge comparison. Each level costs more computation than the previous one.
+	 \n default: 1 (enabled)
 	 */
-	bool enable_image_validity_check;
+	int enable_image_validity_check;
 
 	/**
 	\brief Set a maximum size for all SDK output, like retrieveImage and retrieveMeasure functions.
@@ -1916,7 +1918,8 @@ struct SL_InitParameters
 	/**
 	\brief Allows the ZED SDK to use a CUDA Graph to run the depth computation.
 
-	When enabled, the depth computation is recorded once and replayed on every sl_grab() call, which lowers the CPU cost of launching it. The depth output is unchanged. The gain is most visible on embedded platforms, where the launch overhead is a larger share of the frame time.
+	When enabled, the depth computation is recorded once and replayed on every sl_grab() call, which lowers the CPU cost of launching it and shortens the depth runtime itself. The depth output is unchanged. The gain is most visible on embedded platforms, where the launch overhead is a larger share of the frame time.
+	\n It is disabled by default because it is a trade-off, not a free gain. Replaying the whole computation as a single unit gives the ZED SDK a larger share of the GPU, so anything else running on the same GPU, your own code included, tends to get slower. Depth gets faster, the rest of the board often does not. Enable it when depth is what matters most on that GPU, and measure your whole application rather than the depth runtime alone.
 	\n This is a permission, not a guarantee: it only applies to the \ref SL_DEPTH_MODE NEURAL family, and if the recording cannot be performed the ZED SDK reverts to the regular computation for the rest of the session. sl_grab() keeps working either way.
 
 	Default: false (disabled)
@@ -3322,21 +3325,21 @@ struct SL_BodyTrackingParameters {
 	\note This setting allow int8 precision which can speed up by another x2 factor (compared to fp16, or x4 compared to fp32) and half the fp16 memory usage, however some accuracy could be lost.
 	\note The accuracy loss should not exceed 1-2% on the compatible models.
 	\note The current compatible models are all [SL_AI_MODELS_HUMAN_BODY_XXXX](\ref SL_AI_MODELS).
-	\note This setting applies to \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 only: GEN_2 always runs in FP16 and ignores it.
+	\note This setting applies to \ref SL_BODY_TRACKING_MODEL_GEN_GEN_1 only: GEN_2 always runs in FP16 and ignores it.
 	 */
 	bool allow_reduced_precision_inference;
 
 	/**
-	\brief \ref SL_BODY_TRACKING_MODEL_GENERATION to run for the selected \ref detection_model.
+	\brief \ref SL_BODY_TRACKING_MODEL_GEN to run for the selected \ref detection_model.
 
-	Default: \ref SL_BODY_TRACKING_MODEL_GENERATION_DEFAULT (currently \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_2)
-	\n Set it to \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1 to keep the network used up to ZED SDK 5.4, for instance to preserve the behavior
+	Default: \ref SL_BODY_TRACKING_MODEL_GEN_DEFAULT (currently \ref SL_BODY_TRACKING_MODEL_GEN_GEN_2)
+	\n Set it to \ref SL_BODY_TRACKING_MODEL_GEN_GEN_1 to keep the network used up to ZED SDK 5.4, for instance to preserve the behavior
 	of an integration tuned against it.
 	\note The ZED SDK falls back to the most recent generation available when the requested one has no network for the selected
-	\ref detection_model and \ref body_format. \ref SL_BODY_FORMAT_BODY_38 only has \ref SL_BODY_TRACKING_MODEL_GENERATION_GEN_1.
+	\ref detection_model and \ref body_format. \ref SL_BODY_FORMAT_BODY_38 only has \ref SL_BODY_TRACKING_MODEL_GEN_GEN_1.
 	\note The `ZED_SDK_BODY_TRACKING_MODEL_GENERATION` environment variable, when set, overrides this parameter.
 	 */
-	enum SL_BODY_TRACKING_MODEL_GENERATION model_generation;
+	enum SL_BODY_TRACKING_MODEL_GEN model_gen;
 };
 
 /**

@@ -144,6 +144,7 @@ bool USlMesh::Load(const FString& FilePath, bool bUpdateChunksOnly/* = false*/)
 	UVs.SetNum(NbVertices * 2);
 	Triangles.SetNum(NbTriangles * 3);
 	Colors.SetNum(NbVertices * 3);
+	Texture.SetNum(TextureSize[0] * TextureSize[1] * 4);
 
 	(SL_ERROR_CODE)sl_retrieve_whole_mesh(GSlCameraProxy->GetCameraID(), Vertices.GetData(), Triangles.GetData(), Colors.GetData(), UVs.GetData(), Texture.GetData());
 
