@@ -466,7 +466,7 @@ FReply FSpatialMappingManagerDetails::OnClickLoadMesh()
 {
 	ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 
-	FString CurrentPath = SpatialMappingManager->MeshLoadingPath;
+	FString CurrentPath = SpatialMappingManager->MeshLoadingPath.FilePath;
 	FString Path;
 	FString FileName;
 
@@ -489,7 +489,7 @@ FReply FSpatialMappingManagerDetails::OnClickLoadMesh()
 	if (FDesktopPlatformModule::Get()->OpenFileDialog(nullptr, TEXT("Loading mesh"), Path, FileName, TEXT("Mesh|*.obj|Poly|*.ply"), EFileDialogFlags::Type::None, SelectedFile))
 	{
 		FString FullPath = FPaths::ConvertRelativePathToFull(SelectedFile[0]);
-		SpatialMappingManager->MeshLoadingPath = SelectedFile[0];
+		SpatialMappingManager->MeshLoadingPath.FilePath = SelectedFile[0];
 		SpatialMappingManager->LoadMesh();
 
 		SL_LOG_W(SpatialMappingManagerDetails, "Mesh loaded : %s", *FullPath);
@@ -506,7 +506,7 @@ FReply FSpatialMappingManagerDetails::OnClickSaveMesh()
 {
 	ASpatialMappingManager* SpatialMappingManager = static_cast<ASpatialMappingManager*>(SelectedObjects[0].Get());
 
-	FString CurrentPath = SpatialMappingManager->MeshSavingPath;
+	FString CurrentPath = SpatialMappingManager->MeshSavingPath.FilePath;
 	FString Path;
 	FString FileName;
 
@@ -529,7 +529,7 @@ FReply FSpatialMappingManagerDetails::OnClickSaveMesh()
 	if (FDesktopPlatformModule::Get()->SaveFileDialog(nullptr, TEXT("Saving mesh"), Path, FileName, TEXT("Mesh|*.obj|Poly|*.ply"), EFileDialogFlags::Type::None, SelectedFile))
 	{
 		FString FullPath = FPaths::ConvertRelativePathToFull(SelectedFile[0]);
-		SpatialMappingManager->MeshSavingPath = SelectedFile[0];
+		SpatialMappingManager->MeshSavingPath.FilePath = SelectedFile[0];
 		SpatialMappingManager->SaveMesh();
 
 		SL_LOG_W(SpatialMappingManagerDetails, "Mesh saved : %s", *FullPath);

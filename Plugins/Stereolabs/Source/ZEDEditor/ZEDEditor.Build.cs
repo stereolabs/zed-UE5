@@ -35,6 +35,7 @@ namespace UnrealBuildTool.Rules
                     "Engine",
                     "UnrealEd",
                     "DesktopPlatform",
+                    "DesktopWidgets",
                     "InputCore",
                     "AnimGraph",
                     "BlueprintGraph",

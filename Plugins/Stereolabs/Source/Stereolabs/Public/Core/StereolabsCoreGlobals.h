@@ -1900,7 +1900,7 @@ namespace sl
 		{
 			sl::PositionalTrackingParameters TrackingParameters;
 
-			TrackingParameters.area_file_path = TCHAR_TO_UTF8(*UnrealData.AreaFilePath);
+			TrackingParameters.area_file_path = TCHAR_TO_UTF8(*UnrealData.AreaFilePath.FilePath);
 			TrackingParameters.enable_area_memory = UnrealData.bEnableAreaMemory;
 			TrackingParameters.enable_pose_smoothing = UnrealData.bEnablePoseSmoothing;
 			TrackingParameters.initial_world_transform = sl::unreal::ToSlType(FTransform(UnrealData.Rotation, UnrealData.Location));
@@ -1918,7 +1918,7 @@ namespace sl
 			ODParameters.enable_segmentation = UnrealData.bEnableSegmentation;
 			ODParameters.max_range = UnrealData.MaxRange;
 			ODParameters.detection_model = (SL_OBJECT_DETECTION_MODEL)UnrealData.DetectionModel;
-			ODParameters.custom_onnx_file = TCHAR_TO_UTF8(*UnrealData.CustomOnnxFile);
+			ODParameters.custom_onnx_file = TCHAR_TO_UTF8(*UnrealData.CustomOnnxFile.FilePath);
 			ODParameters.fused_objects_group_name = TCHAR_TO_UTF8(*UnrealData.FusionObjectsGroupName);
 
 			struct SL_Resolution res;

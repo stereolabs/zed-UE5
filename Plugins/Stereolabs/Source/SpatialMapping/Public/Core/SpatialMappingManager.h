@@ -209,12 +209,12 @@ public:
 	ESlMeshFileFormat MeshFileFormat;
 
 	/** Absolute mesh loading path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	FString MeshLoadingPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed", meta = (FilePathFilter = "Mesh file|*.ply;*.obj"))
+	FFilePath MeshLoadingPath;
 
 	/** Absolute mesh saving path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed")
-	FString MeshSavingPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zed", meta = (FilePathFilter = "Mesh file|*.ply;*.obj"))
+	FFilePath MeshSavingPath;
 
 	/** The mesh being used for spatial memory. Not thread safe to access if SpatialMapping enable, use delegate instead. */
 	UPROPERTY(BlueprintReadOnly, Category = "Zed|SpatialMapping")

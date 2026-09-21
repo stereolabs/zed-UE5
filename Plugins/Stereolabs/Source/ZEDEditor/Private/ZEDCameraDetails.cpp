@@ -3,9 +3,11 @@
 #include "Stereolabs/Public/Core/StereolabsCoreUtilities.h"
 #include "ZED/Public/Core/ZEDCamera.h"
 #include "ZEDEditor/Public/ZEDEditorCameraSession.h"
+#include "ZEDEditor/Private/ZEDFilePathCustomization.h"
 #include "DesktopPlatformModule.h"
 #include "ScopedTransaction.h"
 #include "PropertyHandle.h"
+#include "PropertyEditorDelegates.h"
 #include "Misc/EngineVersionComparison.h"
 
 #define LOCTEXT_NAMESPACE "FZEDCameraDetails"
@@ -47,6 +49,12 @@ TSharedRef<IDetailCustomization> FZEDCameraDetails::MakeInstance()
 void FZEDCameraDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	CachedDetailBuilder = &DetailBuilder;
+
+	// The engine FFilePath picker ignores CanEditChange, so the SVO and recording paths would stay editable
+	DetailBuilder.RegisterInstancedCustomPropertyTypeLayout(
+		FFilePath::StaticStruct()->GetFName(),
+		FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FZEDFilePathCustomization::MakeInstance)
+	);
 
 #if UE_VERSION_NEWER_THAN(5, 7, 0)
 	SelectedObjects = DetailBuilder.GetDetailsViewSharedPtr()->GetSelectedObjects();
@@ -676,7 +684,7 @@ FReply FZEDCameraDetails::OnClickSaveTrackingArea()
 {
 	AZEDCamera* ZedCameraActor = static_cast<AZEDCamera*>(SelectedObjects[0].Get());
 
-	FString CurrentPath = ZedCameraActor->TrackingParameters.AreaFilePath;
+	FString CurrentPath = ZedCameraActor->TrackingParameters.AreaFilePath.FilePath;
 	FString Path;
 	FString FileName;
 

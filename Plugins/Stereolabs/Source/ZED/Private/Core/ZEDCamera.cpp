@@ -68,9 +68,9 @@ AZEDCamera::AZEDCamera()
 	LeftPlane( nullptr ),
 	ViewCamera( nullptr )
 {
-	if (InitParameters.VerboseFilePath.IsEmpty())
+	if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
 	{
-		InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+		InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
 	}
 
 	DepthClampThreshold = InitParameters.DepthMaximumDistance;
@@ -821,7 +821,7 @@ void AZEDCamera::ResetTrackingOrigin()
 
 void AZEDCamera::SaveSpatialMemoryArea()
 {
-	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath);
+	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath.FilePath);
 }
 
 void AZEDCamera::PrepareForOpening()
@@ -900,9 +900,9 @@ void AZEDCamera::LoadParameterGroup(EZEDParameterGroup Group)
 	{
 		case EZEDParameterGroup::PG_Init:
 			InitParameters.Load(Path);
-			if (InitParameters.VerboseFilePath.IsEmpty())
+			if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
 			{
-				InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+				InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
 			}
 			break;
 		case EZEDParameterGroup::PG_Tracking:
@@ -934,9 +934,9 @@ void AZEDCamera::SaveParameterGroup(EZEDParameterGroup Group)
 		case EZEDParameterGroup::PG_Init:
 #if WITH_EDITOR
 			// An empty path means "use the default", don't bake the machine specific one into the config
-			if (InitParameters.VerboseFilePath == DEFAULT_VERBOSE_FILE_PATH)
+			if (InitParameters.VerboseFilePath.FilePath == DEFAULT_VERBOSE_FILE_PATH)
 			{
-				InitParameters.VerboseFilePath.Empty();
+				InitParameters.VerboseFilePath.FilePath.Empty();
 			}
 #endif
 			InitParameters.Save(Path);
@@ -964,9 +964,9 @@ void AZEDCamera::ResetParameterGroup(EZEDParameterGroup Group)
 	{
 		case EZEDParameterGroup::PG_Init:
 			InitParameters = FSlInitParameters();
-			if (InitParameters.VerboseFilePath.IsEmpty())
+			if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
 			{
-				InitParameters.VerboseFilePath = DEFAULT_VERBOSE_FILE_PATH;
+				InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
 			}
 			DepthClampThreshold = InitParameters.DepthMaximumDistance;
 			break;

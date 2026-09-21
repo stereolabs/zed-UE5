@@ -327,9 +327,9 @@ void USlCameraProxy::Internal_OpenCamera(const FSlInitParameters& InitParameters
 	bool bFellBackToAutoResolution = false;
 	do
 	{
-		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath),
-			TCHAR_TO_UTF8(*InitParameters.StreamIP), InitParameters.StreamPort, InitParameters.GmslPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath),
-			TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath),	TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile));
+		ErrorCode = (SL_ERROR_CODE)sl_open_camera(CameraID, &sl_init_parameters, InitParameters.SerialNumber, TCHAR_TO_UTF8(*InitParameters.SvoPath.FilePath),
+			TCHAR_TO_UTF8(*InitParameters.StreamIP), InitParameters.StreamPort, InitParameters.GmslPort, TCHAR_TO_UTF8(*InitParameters.VerboseFilePath.FilePath),
+			TCHAR_TO_UTF8(*InitParameters.OptionalSettingPath.Path),	TCHAR_TO_UTF8(*InitParameters.OptionalOpencvCalibrationFile.FilePath));
 
 		SetOpenCameraErrorCode(sl::unreal::ToUnrealType(ErrorCode));
 
@@ -531,7 +531,7 @@ void USlCameraProxy::Internal_EnableTracking(const FSlPositionalTrackingParamete
 	sl_positional_tracking_parameters.enable_2d_ground_mode = NewTrackingParameters.bEnable2DGroundMode;
 
 	SL_SCOPE_LOCK(Lock, GrabSection)
-		ErrorCode = (SL_ERROR_CODE)sl_enable_positional_tracking(CameraID, &sl_positional_tracking_parameters, TCHAR_TO_UTF8(*NewTrackingParameters.AreaFilePath));
+		ErrorCode = (SL_ERROR_CODE)sl_enable_positional_tracking(CameraID, &sl_positional_tracking_parameters, TCHAR_TO_UTF8(*NewTrackingParameters.AreaFilePath.FilePath));
 
 		IMUDataErrorCode = (SL_ERROR_CODE)sl_get_sensors_data(CameraID, &CurrentSensorsData, SL_TIME_REFERENCE_CURRENT);
 	SL_SCOPE_UNLOCK
@@ -1867,7 +1867,7 @@ ESlErrorCode USlCameraProxy::EnableSVORecording(FSlRecordingParameters Recording
 			const SIZE_T KeyLen = FMath::Min<SIZE_T>(KeyAnsi.Length(), sizeof(EncryptionKey) - 1);
 			FMemory::Memcpy(EncryptionKey, KeyAnsi.Get(), KeyLen);
 		}
-		SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_enable_recording(CameraID, TCHAR_TO_UTF8(*RecordingParameters.VideoFilename), (SL_SVO_COMPRESSION_MODE)RecordingParameters.CompressionMode,
+		SL_ERROR_CODE ErrorCode = (SL_ERROR_CODE)sl_enable_recording(CameraID, TCHAR_TO_UTF8(*RecordingParameters.VideoFilename.FilePath), (SL_SVO_COMPRESSION_MODE)RecordingParameters.CompressionMode,
 			RecordingParameters.Bitrate, RecordingParameters.TargetFramerate, RecordingParameters.bTranscodeStreamingInput,
 			EncryptionKey, (SL_SVO_ENCODING_PRESET)RecordingParameters.EncodingPreset);
 

@@ -2132,7 +2132,6 @@ struct STEREOLABS_API FSlRecordingParameters
 	GENERATED_BODY()
 
 	FSlRecordingParameters() :
-		VideoFilename(""),
 		CompressionMode(ESlSVOCompressionMode::SCM_H264),
 		TargetFramerate(0),
 		Bitrate(0),
@@ -2155,7 +2154,7 @@ struct STEREOLABS_API FSlRecordingParameters
 		GConfig->GetString(
 			Section,
 			TEXT("VideoFilename"),
-			VideoFilename,
+			VideoFilename.FilePath,
 			*Path
 		);
 
@@ -2193,7 +2192,7 @@ struct STEREOLABS_API FSlRecordingParameters
 		GConfig->SetString(
 			Section,
 			TEXT("VideoFilename"),
-			*VideoFilename,
+			*VideoFilename.FilePath,
 			*Path
 		);
 
@@ -2222,8 +2221,8 @@ struct STEREOLABS_API FSlRecordingParameters
 
 	const TCHAR* Section = TEXT("Recording");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString VideoFilename;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "SVO file|*.svo2;*.svo"))
+	FFilePath VideoFilename;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlSVOCompressionMode CompressionMode;
@@ -2273,7 +2272,6 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		bEnableAreaMemory(false),
 		bEnablePoseSmoothing(true),
 		bSetFloorAsOrigin(true),
-		AreaFilePath(""),
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
@@ -2290,7 +2288,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		GConfig->GetString(
 			Section,
 			TEXT("AreaFilePath"),
-			AreaFilePath,
+			AreaFilePath.FilePath,
 			*Path
 		);
 
@@ -2349,7 +2347,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		GConfig->SetString(
 			Section,
 			TEXT("AreaFilePath"),
-			*AreaFilePath,
+			*AreaFilePath.FilePath,
 			*Path
 		);
 
@@ -2438,8 +2436,8 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	bool bSetFloorAsOrigin;
 
 	/** Path to the area file */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString AreaFilePath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "ZED area file|*.area"))
+	FFilePath AreaFilePath;
 
 	/* This setting allows you to enable or disable IMU fusion. When set to false, only the optical odometry will be used. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
@@ -2607,7 +2605,6 @@ struct STEREOLABS_API FSlInitParameters
 		:
 		InputType(ESlInputType::IT_USB),
 		SerialNumber(0),
-		SvoPath(""),
 		GmslPort(-1),
 		bLoop(false),
 		StreamIP(""),
@@ -2628,12 +2625,9 @@ struct STEREOLABS_API FSlInitParameters
 		bEnableRightSideMeasure(false),
 		DepthStabilization(1),
 		bAsyncGrabCameraRecovery(false),
-		OptionalSettingPath(""),
-		OptionalOpencvCalibrationFile(""),
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
 		bEnableImageValidityCheck(true),
 		MaximumWorkingResolution(FIntPoint(0, 0)),
@@ -2749,7 +2743,7 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->GetString(
 			Section,
 			TEXT("SvoPath"),
-			SvoPath,
+			SvoPath.FilePath,
 			*Path
 		);
 
@@ -2784,7 +2778,7 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->GetString(
 			Section,
 			TEXT("VerboseFilePath"),
-			VerboseFilePath,
+			VerboseFilePath.FilePath,
 			*Path
 		);
 
@@ -2957,14 +2951,14 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->SetString(
 			Section,
 			TEXT("SvoPath"),
-			*SvoPath,
+			*SvoPath.FilePath,
 			*Path
 		);
 
 		GConfig->SetString(
 			Section,
 			TEXT("VerboseFilePath"),
-			*VerboseFilePath,
+			*VerboseFilePath.FilePath,
 			*Path
 		);
 
@@ -3020,8 +3014,8 @@ struct STEREOLABS_API FSlInitParameters
 	int32 SerialNumber;
 
 	/** Path to a SVO file if inputType is set to SVO */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString SvoPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "SVO file|*.svo2;*.svo"))
+	FFilePath SvoPath;
 
 	/* Gmsl port of the camera (default : -1)*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
@@ -3119,11 +3113,11 @@ struct STEREOLABS_API FSlInitParameters
 
 	/* Set the optional path where the SDK has to search for the settings file (SN<XXXX>.conf file). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString OptionalSettingPath;
+	FDirectoryPath OptionalSettingPath;
 
 	/* Set an optional file path where the SDK can find a file containing the calibration information of the camera computed by OpenCV. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString OptionalOpencvCalibrationFile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "OpenCV calibration file|*.yml;*.yaml;*.xml"))
+	FFilePath OptionalOpencvCalibrationFile;
 
 	/* Force the motion sensors opening of the ZED 2 / ZED-M to open the camera. default : false.*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
@@ -3138,8 +3132,8 @@ struct STEREOLABS_API FSlInitParameters
 	float OpenTimeoutSec;
 
 	/** Verbose file path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString VerboseFilePath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "Log file|*.txt;*.log"))
+	FFilePath VerboseFilePath;
 
 	/**
 	 Define a computation upper limit to the grab frequency.
@@ -3239,8 +3233,8 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	FString FusionObjectsGroupName;
 
 	/*  Path to the YOLO-like onnx file for custom object detection ran in the ZED SDK. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
-	FString CustomOnnxFile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "onnx"))
+	FFilePath CustomOnnxFile;
 
 	/*  Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only.
 	The batch and channel dimensions are automatically handled, it assumes it's color images like default YOLO models. */
@@ -3280,7 +3274,6 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 		bEnableSegmentation(false),
 		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxAccurate),
 		FusionObjectsGroupName(""),
-		CustomOnnxFile(""),
 		CustomOnnxDynamicInputShape(FIntPoint(512, 512)),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
