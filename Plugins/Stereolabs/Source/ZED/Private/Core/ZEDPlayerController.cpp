@@ -3,7 +3,6 @@
 #include "ZED/Public/Core/ZEDPlayerController.h"
 #include "ZEDPrivatePCH.h"
 #include "ZED/Public/Utilities/ZEDFunctionLibrary.h"
-#include "ZED/Public/Core/ZEDInitializer.h"
 #include "ZED/Classes/ZEDGameInstance.h"
 #include "Stereolabs/Public/Core/StereolabsCoreGlobals.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
@@ -13,12 +12,6 @@
 #include "Engine/Engine.h"
 
 DEFINE_LOG_CATEGORY(ZEDPlayerController);
-
-#define MONO_NOISE_OFFSET 0.85f
-
-#define ADD_FVECTOR_2D(Vector, Value)\
-	Vector.X += Value;\
-	Vector.Y += Value;\
 
 #define SHOW_ZED_MESSAGE(Canvas, Font, TextItem, Position, RowHeight)\
 	if (Font && Font->ImportOptions.bUseDistanceFieldAlpha)\
@@ -51,11 +44,14 @@ static TAutoConsoleVariable<int32> CVarZEDShowFPS(
 AZEDPlayerController::AZEDPlayerController()
 	:
 	PawnClass(AZEDPawn::StaticClass()),
+	CameraClass(AZEDCamera::StaticClass()),
 	ZedPawn(nullptr),
 	ZedCamera(nullptr),
 	bUseDefaultBeginPlay(true),
 	bOpenZedCameraAtInit(true),
 	bIsFirstPlayer(false),
+	bPawnWasPlaced(false),
+	bCameraWasPlaced(false),
 	CurrentFPSTimerBadFPS(0.0f),
 	CurrentFPSTimerGoodFPS(0.0f),
 	CurrentCameraFPSTimerBadFPS(0.0f),
@@ -128,7 +124,7 @@ void AZEDPlayerController::Tick(float DeltaSeconds)
 {
 	//ZedPawn->SetActorScale3D(FVector(1, 1, 1));
 
-	if (bTickZedCamera)
+	if (bTickZedCamera && IsValid(ZedCamera))
 	{
 		ZedCamera->Tick(DeltaSeconds);
 	}
@@ -256,8 +252,6 @@ void AZEDPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			ZedCamera->OnTrackingDataUpdated.RemoveDynamic(ZedPawn, &AZEDPawn::ZedCameraTrackingUpdated);
 		}
 	}
-
-	GetWorldTimerManager().ClearTimer(NoiseTimerHandle);
 }
 
 UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
@@ -269,9 +263,10 @@ UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), NewPawnClass, ActorsToFind);
 	}
 
-	if (ActorsToFind.Num() > 0) 
+	if (ActorsToFind.Num() > 0)
 	{
 		ZedPawn = Cast<AZEDPawn>(ActorsToFind[0]);
+		bPawnWasPlaced = true;
 		//World->SetNewWorldOrigin(FIntVector(ZedPawn->GetActorTransform().GetLocation().X, ZedPawn->GetActorTransform().GetLocation().Y, 0.0f) + World->OriginLocation);
 		//ZedPawn->SetStartOffsetLocation(ZedPawn->GetActorTransform().GetLocation());
 	}
@@ -295,7 +290,37 @@ UObject* AZEDPlayerController::SpawnPawn(UClass* NewPawnClass, bool bPossess)
 
 void AZEDPlayerController::SpawnZedCameraActor()
 {
-	ZedCamera = GetWorld()->SpawnActor<AZEDCamera>();
+	UClass* NewCameraClass = CameraClass ? *CameraClass : AZEDCamera::StaticClass();
+
+	// Adopt a level-placed camera if there is one, mirror of SpawnPawn
+	TArray<AActor*> ActorsToFind;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), NewCameraClass, ActorsToFind);
+
+	if (ActorsToFind.Num() > 0)
+	{
+		ZedCamera = Cast<AZEDCamera>(ActorsToFind[0]);
+		bCameraWasPlaced = true;
+
+		// Captured before the attach to the pawn overwrites it
+		PlacedCameraTransform = ZedCamera->GetActorTransform();
+
+		if (ActorsToFind.Num() > 1)
+		{
+			SL_LOG_W(ZEDPlayerController, "Several ZED camera actors are placed in the level, only %s is used", *ZedCamera->GetName());
+		}
+	}
+	else
+	{
+		ZedCamera = GetWorld()->SpawnActor<AZEDCamera>(NewCameraClass);
+
+		// A camera of another class placed in the level would silently be ignored, warn instead
+		TArray<AActor*> OtherCameras;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AZEDCamera::StaticClass(), OtherCameras);
+		if (OtherCameras.Num() > 1)
+		{
+			SL_LOG_W(ZEDPlayerController, "A ZED camera actor is placed in the level but does not derive from the controller's CameraClass, it is ignored");
+		}
+	}
 }
 
 void AZEDPlayerController::Init()
@@ -305,8 +330,20 @@ void AZEDPlayerController::Init()
 		return;
 	}
 
-	// Attach Zed camera actor to pawn
-	ZedCamera->AttachToComponent(ZedPawn->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, false));
+	// A placed camera defines the start pose; a placed pawn wins over it (its transform is already the start pose)
+	if (bCameraWasPlaced && !bPawnWasPlaced)
+	{
+		ZedPawn->SetActorLocationAndRotation(PlacedCameraTransform.GetLocation(), PlacedCameraTransform.GetRotation());
+	}
+	else if (bCameraWasPlaced && bPawnWasPlaced)
+	{
+		SL_LOG_W(ZEDPlayerController, "Both a ZED pawn and a ZED camera actor are placed in the level: the pawn transform defines the start pose");
+	}
+
+	TrackingOriginPose = FTransform(ZedPawn->GetActorRotation(), ZedPawn->GetActorLocation());
+
+	// Attach Zed camera actor to pawn. The render planes require the camera at relative identity to the pawn root.
+	ZedCamera->AttachToComponent(ZedPawn->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	// Create dynamic post process
 	PostProcessFadeMaterialInstanceDynamic = UMaterialInstanceDynamic::Create(PostProcessFadeSourceMaterial, nullptr);
@@ -387,48 +424,48 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 	ZedPawn->ZedErrorWidget->WidgetComponent->SetGeometryMode(EWidgetGeometryMode::Plane);
 	ZedPawn->ZedErrorWidget->SetWorldScale3D(FVector(0.3f));
 
-	// Get Zed initializer object
-	TArray<AActor*> ZedInitializer;
-	UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
+	// The camera actor owns all parameters, optionally overridden from the config files
+	ZedCamera->LoadParametersAndSettings();
 
-	if (!ZedInitializer.Num())
+	// Apply the start pose after the config load so neither the placed transform nor the reconnect pose can be clobbered by ZED.ini
+	if (bZedCameraDisconnected)
 	{
-		SL_LOG_E(ZEDPlayerController, "BP_ZED_Initializer must be placed in the world");
-		return;
+		ZedCamera->TrackingParameters.Location = LastPoseLocation;
+		ZedCamera->TrackingParameters.Rotation = LastPoseRotation;
 	}
-
-	AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
-
-	// Load
-	Initializer->LoadParametersAndSettings();
+	else if ((bCameraWasPlaced || bPawnWasPlaced) && !ZedCamera->TrackingParameters.bOverrideTrackingOrigin)
+	{
+		ZedCamera->TrackingParameters.Location = TrackingOriginPose.GetLocation();
+		ZedCamera->TrackingParameters.Rotation = TrackingOriginPose.GetRotation().Rotator();
+	}
 
 	// Do some work before Zed actor initialization
 	OnPreZedCameraOpening.Broadcast();
 
-	for (auto ChildrenIt = Initializer->ChildActors.CreateConstIterator(); ChildrenIt; ++ChildrenIt)
+	for (auto ChildrenIt = ZedCamera->ChildActors.CreateConstIterator(); ChildrenIt; ++ChildrenIt)
 	{
 		(*ChildrenIt)->AttachToActor(ZedPawn, FAttachmentTransformRules(EAttachmentRule::KeepRelative, true));
 	}
 
-	// Set parameters
-	ZedCamera->InitializeParameters(Initializer);
+	// Validate parameters
+	ZedCamera->PrepareForOpening();
 
-	if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
+	if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
 
 		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth, ESlAIType::AIT_Depth);
 		UpdateHUDOptimizingAIModel();
 	}
-	else if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_NeuralPlus && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralPlusDepth))
+	else if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_NeuralPlus && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralPlusDepth))
 	{
 		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralPlusDepth, ESlAIType::AIT_Depth);
 		UpdateHUDOptimizingAIModel();
 	}
-	else if (Initializer->InitParameters.DepthMode == ESlDepthMode::DM_NeuralLight && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralLightDepth))
+	else if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_NeuralLight && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralLightDepth))
 	{
-		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralPlusDepth, ESlAIType::AIT_Depth);
+		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralLightDepth, ESlAIType::AIT_Depth);
 		UpdateHUDOptimizingAIModel();
 	}
-	else 
+	else
 	{
 		ZedReady();
 	}
@@ -447,6 +484,8 @@ void AZEDPlayerController::ZedReady()
 void AZEDPlayerController::ZedCameraOpened()
 {
 	GetWorldTimerManager().ClearTimer(CameraOpeningTimerHandle);
+
+	bZedCameraDisconnected = false;
 
 	// Set fade post process
 	ZedPawn->Camera->AddOrUpdateBlendable(PostProcessFadeMaterialInstanceDynamic, 1.0f);
@@ -541,32 +580,6 @@ void AZEDPlayerController::ZedSVOIsSetBackInTime()
 	}
 }
 
-void AZEDPlayerController::UpdateNoise()
-{
-	int value = sl_get_camera_settings(GSlCameraProxy->GetCameraID(), SL_VIDEO_SETTINGS_GAIN, &value);
-	FZEDNoiseFactors NoiseFactors = sl::unreal::ToUnrealType(sl::mr::computeNoiseFactors(value));
-
-	ADD_FVECTOR_2D(NoiseFactors.R, MONO_NOISE_OFFSET);
-	ADD_FVECTOR_2D(NoiseFactors.G, MONO_NOISE_OFFSET);
-	ADD_FVECTOR_2D(NoiseFactors.B, MONO_NOISE_OFFSET);
-
-	if (NoiseFactors.R == LastNoiseFactors.R)
-	{
-		return;
-	}
-
-	LastNoiseFactors = NoiseFactors;
-	
-	FLinearColor Red(NoiseFactors.R.X, NoiseFactors.R.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("RedFactors", Red);
-
-	FLinearColor Green(NoiseFactors.G.X, NoiseFactors.G.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("GreenFactors", Green);
-
-	FLinearColor Blue(NoiseFactors.B.X, NoiseFactors.B.Y, 0.0f);
-	PostProcessZedMaterialInstanceDynamic->SetVectorParameterValue("BlueFactors", Blue);
-}
-
 void AZEDPlayerController::Fading(float FadingFactor)
 {
 	PostProcessFadeMaterialInstanceDynamic->SetScalarParameterValue("FadingFactor", FadingFactor);
@@ -614,13 +627,9 @@ void AZEDPlayerController::Internal_ZedCameraDisconnected()
 
 	FadeOut();
 
-	// Apply last known transform to the initializer in case of a reconnection
-	TArray<AActor*> ZedInitializer;
-	UGameplayStatics::GetAllActorsOfClass(this, AZEDInitializer::StaticClass(), ZedInitializer);
-	AZEDInitializer* Initializer = static_cast<AZEDInitializer*>(ZedInitializer[0]);
-	Initializer->LoadParametersAndSettings();
-	Initializer->TrackingParameters.Location = ZedCamera->TrackingData.ZedWorldTransform.GetLocation();
-	Initializer->TrackingParameters.Rotation = ZedCamera->TrackingData.ZedWorldTransform.GetRotation().Rotator();
+	// Keep the last known pose so the reconnection restores it (applied after the config load in Internal_OpenZedCamera)
+	LastPoseLocation = ZedCamera->TrackingData.ZedWorldTransform.GetLocation();
+	LastPoseRotation = ZedCamera->TrackingData.ZedWorldTransform.GetRotation().Rotator();
 
 	// Search for reconnection
 	OpenZedCamera();

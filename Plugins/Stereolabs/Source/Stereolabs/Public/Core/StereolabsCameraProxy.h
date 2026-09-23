@@ -118,7 +118,7 @@ public:
 	 * @param ErrorCode The grab error code
 	 * @param Timestamp Image timestamp
 	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Zed")
 	void GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timestamp);
 };
 
@@ -217,6 +217,16 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed current settings"), Category = "Zed|Camera")
 	FSlTimestamp GetTimestamp(ESlTimeReference TimeReference);
+
+	/*
+	 * Get the camera self-diagnostic results (image, depth and sensor health).
+	 * Requires FSlInitParameters::bEnableImageValidityCheck (on by default).
+	 * Deliberately not BlueprintPure: pure nodes are re-evaluated once per consumer, and this
+	 * queries the SDK each time.
+	 * @return The current health status
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "get zed camera health status"), Category = "Zed|Camera")
+	FSlHealthStatus GetHealthStatus();
 
 	/*
 	 * Set the runtime parameters
@@ -389,7 +399,7 @@ public:
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
 	UFUNCTION(BlueprintCallable, meta = (Keywords = "retrieve zed image"), Category = "Zed|Rendering")
-	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
+	bool RetrieveImage(UPARAM(ref) FSlMat& Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
 
 	/*
 	* Retrieve a measure mat
@@ -412,7 +422,7 @@ public:
 	 * @param Name		 The name of the mat
 	 * @return True if the retrieve returned sl::SUCCESS
 	 */
-	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution, ESlViewFormat ViewFormat);
+	bool RetrieveImage(void* Mat, ESlView ViewType, ESlMemoryType MemoryType, const FIntPoint& Resolution);
 
 	/*
 	 * Retrieve a measure mat
@@ -789,7 +799,7 @@ public:
 	/// Returns the current status of positional tracking module. 
 	/// </summary>
 	/// <returns>The SL_PositionalTrackingStatus of the camera.</returns>
-	SL_PositionalTrackingStatus* GetPositionalTrackingStatus();
+	SL_PositionalTrackingStatus GetPositionalTrackingStatus();
 
 	/*
 	* Easy access to IMU pose
@@ -1073,14 +1083,13 @@ private:
 	/** Current frame in SVO playback */
 	int CurrentSVOPlaybackPosition;
 
-	/** Recording state */
-	SL_RecordingStatus* SlRecordingStatus;
+	/** Recording state. Held by value: the C API returns a pointer to storage it reuses on the
+	    next call, so caching the pointer would later show another call's data. */
+	SL_RecordingStatus SlRecordingStatus = {};
 
-	/** Camera informations needed if camera disconnected */
-	SL_CameraInformation* SlCameraInformation;
-
-	/** Pointer to image grabbed. Used internally.*/
-	void* UnsignedLeftImage;
+	/** Camera informations needed if camera disconnected. Held by value, same reason as
+	    SlRecordingStatus. */
+	SL_CameraInformation SlCameraInformation = {};
 
 private:
 	/** Underlying Zed camera */

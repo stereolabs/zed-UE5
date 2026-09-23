@@ -17,33 +17,6 @@ enum TRACKING_TYPE {
 
 static std::mutex globalmutex;
 
-inline struct SL_Resolution* convertResolution(const sl::Resolution& res)
-{
-	struct SL_Resolution* res_ = new SL_Resolution();
-	res_->width = res.width;
-	res_->height = res.height;
-	return res_;
-}
-
-inline struct SL_Vector3* convertVector3(const sl::float3& vector)
-{
-	struct SL_Vector3* vector_ = new SL_Vector3();
-	vector_->x = vector.x;
-	vector_->y = vector.y;
-	vector_->z = vector.z;
-	return vector_;
-}
-
-inline struct SL_Quaternion* convertQuaternion(const sl::float4& vector)
-{
-	struct SL_Quaternion* quat_ = new SL_Quaternion();
-    quat_->x = vector.x;
-    quat_->y = vector.y;
-    quat_->z = vector.z;
-    quat_->w = vector.w;
-	return quat_;
-}
-
 class ZEDController {
 public:
     ZEDController(int i);
@@ -77,7 +50,9 @@ public:
     int initFromUSB(SL_InitParameters *params, const unsigned int serial_number, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromSVO(SL_InitParameters *params, const char* pathSVO, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromStream(SL_InitParameters *params, const char* ip, int port, const char* outputFile, const char* opt_settings_path, const char* opencv_calib_path);
-    int initFromGMSL(SL_InitParameters* params, const unsigned int serial_number, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromGMSL(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromMIPI(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+    int initFromHoloscan(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
     int initFromLive(SL_InitParameters* params, const unsigned int serial_number, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
     sl::POSITIONAL_TRACKING_STATE getPoseArray(float* pose, int mat_type);
@@ -252,6 +227,8 @@ public:
 
 private:
 
+    int initFromBus(SL_InitParameters* params, const unsigned int serial_number, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path, sl::BUS_TYPE bus_type);
+
 #if WITH_OBJECT_DETECTION
     template <typename SL_ObjectDetectionRuntimeParameters_t>
     sl::ERROR_CODE retrieveObjectsGeneric(SL_ObjectDetectionRuntimeParameters_t* runtimeParams, SL_Objects* data, unsigned int instance_id);
@@ -271,6 +248,8 @@ private:
 
     std::map<sl::Timestamp, sl::SVOData> currentSVOData;
     bool isSVODataReady = false;
+
+
 
     int input_type;
     unsigned int width;

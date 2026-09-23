@@ -3,9 +3,6 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 #include "StereolabsPrivatePCH.h"
 
-#include <sl_mr_core/latency.hpp>
-#include <sl_mr_core/Rendering.hpp>
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -40,22 +37,30 @@ float USlFunctionLibrary::ConvertCustomDepthToDistance(const FSlCameraParameters
 
 FVector2D USlFunctionLibrary::GetRenderPlaneSize(const FIntPoint& ImageResolution, float VerticalFOV, float PlaneDistance)
 {
-	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSize(sl::unreal::ToSlMrType2(ImageResolution), VerticalFOV, PlaneDistance));
-}
+	float Height = FMath::Tan(FMath::DegreesToRadians(VerticalFOV) * 0.5f) * 2.0f * PlaneDistance;
 
-FVector2D USlFunctionLibrary::GetRenderPlaneSizeWithGamma(UObject* WorldContextObject, const FIntPoint& ImageResolution, float PerceptionDistance, float ZedFocal, float PlaneDistance)
-{
-	return sl::unreal::ToUnrealType(sl::mr::computeRenderPlaneSizeWithGamma(sl::unreal::ToSlMrType2(ImageResolution), PerceptionDistance, 0.0f, PlaneDistance, 0.0f, ZedFocal));
+	return FVector2D(Height * (float)ImageResolution.X / (float)ImageResolution.Y, Height);
 }
 
 FVector4 USlFunctionLibrary::GetOpticalCentersOffsets(const FIntPoint& ImageResolution, float Distance)
 {
-	if (GSlCameraProxy->IsCameraOpened()) {
-		return sl::unreal::ToUnrealType(sl::mr::computeOpticalCentersOffsets(sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation->camera_configuration.calibration_parameters.left_cam), sl::unreal::ToSlMrType(GSlCameraProxy->SlCameraInformation->camera_configuration.calibration_parameters.right_cam), sl::unreal::ToSlMrType2(ImageResolution), Distance));
-	}
-	else
+	if (!GSlCameraProxy->IsCameraOpened())
+	{
 		return FVector4::Zero();
-}																																																	               
+	}
+
+	const FSlCameraParameters& Left = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters;
+	const FSlCameraParameters& Right = GSlCameraProxy->CameraInformation.CalibrationParameters.RightCameraParameters;
+
+	float Width = (float)ImageResolution.X;
+	float Height = (float)ImageResolution.Y;
+
+	return FVector4(
+		(Width  * 0.5f - Left.OpticalCenterX)  * (Distance / Left.HFocal),
+		(Height * 0.5f - Left.OpticalCenterY)  * (Distance / Left.VFocal),
+		(Width  * 0.5f - Right.OpticalCenterX) * (Distance / Right.HFocal),
+		(Height * 0.5f - Right.OpticalCenterY) * (Distance / Right.VFocal));
+}
 
 FVector2D USlFunctionLibrary::GetOffCenterProjectionOffset(ESlEye Eye)
 {

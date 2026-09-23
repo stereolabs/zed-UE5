@@ -15,8 +15,10 @@ namespace UnrealBuildTool.Rules
 
 #if UE_5_6_OR_LATER
             CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#elif UE_5_5_OR_LATER
+            UndefinedIdentifierWarningLevel = WarningLevel.Error;
 #else
-        UndefinedIdentifierWarningLevel = WarningLevel.Error;
+            bEnableUndefinedIdentifierWarnings = true;
 #endif
             PrivateDependencyModuleNames.AddRange(new string[]
                 {"Slate",

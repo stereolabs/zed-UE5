@@ -74,7 +74,7 @@ public:
 	UTextureRenderTargetCube* TextureTarget;
 
 	/** Camera used to capture the cubemap */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Zed|Cubemap")
 	USceneCaptureComponentCube* Camera;
 
 private:

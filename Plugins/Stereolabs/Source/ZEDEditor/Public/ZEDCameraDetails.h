@@ -5,6 +5,19 @@
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "IDetailCustomization.h"
 #include "DetailLayoutBuilder.h"
+#include "Templates/UniquePtr.h"
+#include "ZED/Public/Core/ZEDCamera.h"
+
+struct FZEDCameraDetailsGrabCallback;
+class IPropertyHandle;
+
+/** What a config button does to its group of parameters */
+enum class EZEDConfigAction : uint8
+{
+	Load,
+	Save,
+	Reset
+};
 
 class FZEDCameraDetails : public IDetailCustomization
 {
@@ -83,6 +96,24 @@ public:
 	/** Clicking the save tracking area button */
 	FReply OnClickSaveTrackingArea();
 
+	/** Config IO buttons enabled (design time authoring) */
+	bool IsConfigIOEnabled() const { return SelectedObjects.Num() == 1 && SelectedObjects[0].IsValid(); }
+
+	/** Button enabled */
+	bool CanStartEditorSession() const;
+
+	/** Button enabled */
+	bool CanStopEditorSession() const;
+
+	/** Clicking the start camera button */
+	FReply OnClickStartEditorSession();
+
+	/** Clicking the stop camera button */
+	FReply OnClickStopEditorSession();
+
+	/** Clicking one of the load/save/reset buttons of a group of parameters */
+	FReply OnClickConfigAction(EZEDConfigAction Action, EZEDParameterGroup Group, TSharedPtr<IPropertyHandle> Handle);
+
 private:
 	void OnMouseCaptureSVOPlaybackSlider();
 	void OnMouseCaptureEndSVOPlaybackSlider();
@@ -97,6 +128,9 @@ private:
 
 	/** Detail builder used to draw */
 	IDetailLayoutBuilder* CachedDetailBuilder;
+
+	/** Owned per customization instance: a details refresh builds the new one before destroying the old */
+	TUniquePtr<FZEDCameraDetailsGrabCallback> GrabCallback;
 
 	bool bIsSVOplaybackPaused;
 

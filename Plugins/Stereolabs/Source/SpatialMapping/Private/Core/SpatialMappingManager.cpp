@@ -250,7 +250,7 @@ void ASpatialMappingManager::LoadMesh()
 
 	StopSpatialMapping();
 
-	SpatialMappingWorker->SetLoadMeshData(MeshLoadingPath);
+	SpatialMappingWorker->SetLoadMeshData(MeshLoadingPath.FilePath);
 	SetStep(ESpatialMappingStep::SS_Load);
 }
 
@@ -263,7 +263,7 @@ void ASpatialMappingManager::SaveMesh()
 
 	PauseSpatialMapping(true);
 
-	SpatialMappingWorker->SetSaveMeshData(MeshSavingPath, MeshFileFormat);
+	SpatialMappingWorker->SetSaveMeshData(MeshSavingPath.FilePath, MeshFileFormat);
 	SetStep(ESpatialMappingStep::SS_Save);
 }
 

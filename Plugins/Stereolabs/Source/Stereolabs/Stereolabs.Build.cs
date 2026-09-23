@@ -22,8 +22,10 @@ public class Stereolabs : ModuleRules
 
 #if UE_5_6_OR_LATER
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
-#else
+#elif UE_5_5_OR_LATER
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
+        bEnableUndefinedIdentifierWarnings = true;
 #endif
 
         string CudaSDKPath = System.Environment.GetEnvironmentVariable("CUDA_PATH", EnvironmentVariableTarget.Machine);
@@ -35,7 +37,7 @@ public class Stereolabs : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "MixedReality", "Core"
+                "Core"
 
                 // ... add other public dependencies that you statically link with here ...
 			}
@@ -84,7 +86,7 @@ public class Stereolabs : ModuleRules
             // Check SDK version
             string DefinesHeaderFilePath = Path.Combine(DirPath, "include\\sl\\Camera.hpp");
             string Major = "5";
-            string Minor = "4";
+            string Minor = "5";
             //string Patch = "0";
 
             // Find SDK major and minor version and compare
@@ -182,38 +184,31 @@ public class Stereolabs : ModuleRules
 
             PublicIncludePaths.Add(Path.Combine(DirPath, "include"));
 
-            if (Target.Type != TargetRules.TargetType.Editor)
+            if (!Directory.Exists(ProjectBinariesPathDirectory))
             {
-                if (!Directory.Exists(ProjectBinariesPathDirectory))
-                {
-                    Directory.CreateDirectory(ProjectBinariesPathDirectory);
-                }
-
-                // Copy to the project binary folder
-                File.Copy(DLLPath, Path.Combine(ProjectBinariesPathDirectory, DLLName), true);
-
-                // Add library to the packaged binary folder
-                RuntimeDependencies.Add(ProjectBinariesPathDirectory + DLLName, StagedFileType.NonUFS);
+                Directory.CreateDirectory(ProjectBinariesPathDirectory);
             }
-            // Remove the library if it already exist in the binary folder
-            else
+
+            // Copy to the project binary folder. Skip when already up to date, and do not fail
+            // the build if an up-to-date copy is locked by a running process (editor, UAT, cook).
+            string DLLDestPath = Path.Combine(ProjectBinariesPathDirectory, DLLName);
+            FileInfo Source = new FileInfo(DLLPath);
+            FileInfo Dest = new FileInfo(DLLDestPath);
+            bool bUpToDate = Dest.Exists && Dest.Length == Source.Length && Dest.LastWriteTimeUtc == Source.LastWriteTimeUtc;
+            if (!bUpToDate)
             {
-                if (Directory.Exists(ProjectBinariesPathDirectory) && File.Exists(Path.Combine(ProjectBinariesPathDirectory, DLLName)))
+                try
                 {
-                    File.Delete(Path.Combine(ProjectBinariesPathDirectory, DLLName));
+                    File.Copy(DLLPath, DLLDestPath, true);
                 }
-
-                if (!Directory.Exists(ProjectBinariesPathDirectory))
+                catch (IOException) when (Dest.Exists)
                 {
-                    Directory.CreateDirectory(ProjectBinariesPathDirectory);
+                    System.Console.WriteLine("Warning: could not refresh locked " + DLLDestPath + ", keeping existing copy");
                 }
-
-                // Copy to the project binary folder
-                File.Copy(DLLPath, Path.Combine(ProjectBinariesPathDirectory, DLLName), true);
-
-                // Add library to the packaged binary folder
-                RuntimeDependencies.Add(ProjectBinariesPathDirectory + DLLName, StagedFileType.NonUFS);
             }
+
+            // Add library to the packaged binary folder
+            RuntimeDependencies.Add(ProjectBinariesPathDirectory + DLLName, StagedFileType.NonUFS);
         }
     }
 }

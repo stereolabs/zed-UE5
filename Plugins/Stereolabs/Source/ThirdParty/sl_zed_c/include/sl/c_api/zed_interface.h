@@ -30,6 +30,12 @@ extern "C" {
 #endif
 
 
+	/**
+	\brief Frees a buffer that the SDK allocated on the caller's behalf.
+	Use it on every pointer returned by a function whose documentation says the result belongs to
+	the caller.
+	\param ptr : The buffer to release. Passing NULL is a no-op.
+	*/
 	INTERFACE_API void sl_free(void* ptr);
 
     /**
@@ -73,7 +79,7 @@ extern "C" {
     \param path_svo : Filename of the svo to read (for SVO input).
     \param ip : IP of the camera to open (for Stream input).
     \param stream_port : Port of the camera to open (for Stream input).
-    \param gmsl_port : GMSL port number for camera selection (only used when input_type is GMSL). Default: -1 (do nothing).
+    \param bus_port : Physical port the camera is plugged into, on whichever bus \ref input_type selects: the GMSL port or the port of the MIPI capture card. Default: -1 (do nothing).
 	\param bus_type : Whether the camera is a USB or a GMSL camera (when opening with camera ID).
     \param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
     \param opt_settings_path[optional] : Settings path.
@@ -82,7 +88,7 @@ extern "C" {
     \return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
     INTERFACE_API int sl_open_camera(int camera_id, struct SL_InitParameters* init_parameters, const unsigned int serial_number,  const char* path_svo, const char* ip, 
-        int stream_port, int gmsl_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
+        int stream_port, int bus_port, const char* output_file, const char* opt_settings_path, const char* opencv_calib_path);
 
     /**
 	\brief Opens the ZED camera from the provided SL_InitParameters using its  camera ID.
@@ -163,6 +169,8 @@ extern "C" {
     It corresponds to the structure given as argument to the sl_open_camera() function.
     \param camera_id : Id of the camera instance.
     \return SL_InitParameters containing the parameters used to initialize the camera.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_InitParameters* sl_get_init_parameters(int camera_id);
 
@@ -172,6 +180,8 @@ extern "C" {
     It corresponds to the structure given as argument to the sl_grab() function.
     \param camera_id : id of the camera instance.
     \return SL_RuntimeParameters containing the parameters that define the behavior of the \ref sl_grab function.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_RuntimeParameters* sl_get_runtime_parameters(int camera_id);
 
@@ -181,6 +191,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_positional_tracking() method.
     \param camera_id : Id of the camera instance.
     \return \ref SL_PositionalTrackingParameters containing the parameters used for positional tracking initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_PositionalTrackingParameters* sl_get_positional_tracking_parameters(int camera_id);
 
@@ -313,6 +325,8 @@ extern "C" {
     /**
     \brief Get the recording information.
     \return The recording state structure. For more details, see \ref SL_RecordingStatus.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_RecordingStatus* sl_get_recording_status(int camera_id);
     /**
@@ -327,6 +341,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_recording() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_RecordingParameters containing the parameters used for recording initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_RecordingParameters* sl_get_recording_parameters(int camera_id);
 
@@ -510,6 +526,8 @@ extern "C" {
     \param res_width : You can specify a size different from default image size to get the scaled camera information.
     \param res_height : You can specify a size different from default image size to get the scaled camera information.
     \return SL_CameraInformation containing the calibration parameters of the ZED, as well as serial number and firmware version.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_CameraInformation* sl_get_camera_information(int camera_id, int res_width, int res_height);
 
@@ -526,6 +544,8 @@ extern "C" {
     \param camera_id : id of the camera instance.
     \param r_params : if true, returns Intrinsic and Extrinsic stereo parameters for original images (unrectified/distorded), else returns parameters for rectified/undistorded images.
     \return Structure containing Intrinsic and Extrinsic stereo parameters
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_CalibrationParameters* sl_get_calibration_parameters(int camera_id, bool raw_params);
 
@@ -533,6 +553,8 @@ extern "C" {
     \brief Gets the Sensors configuration.
     \param camera_id : id of the camera instance.
     \return Structure containing information about all the sensors available in the current device.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_SensorsConfiguration* sl_get_sensors_configuration(int camera_id);
 
@@ -601,6 +623,17 @@ extern "C" {
     \return The current timestamp.
      */
     INTERFACE_API unsigned long long sl_get_current_timestamp(int camera_id);
+
+    /**
+    \brief Get a timestamp at the given time reference.
+
+    \note It should be called after a sl_grab() when using \ref SL_TIME_REFERENCE_IMAGE or
+    \ref SL_TIME_REFERENCE_IMAGE_CENTER_OF_EXPOSURE.
+    \param camera_id : Id of the camera instance.
+    \param time_reference : The desired \ref SL_TIME_REFERENCE.
+    \return The timestamp, or 0 if the requested reference is not available on this input.
+     */
+    INTERFACE_API unsigned long long sl_get_timestamp(int camera_id, enum SL_TIME_REFERENCE time_reference);
 
     /**
     \brief Sets the clock source used for all timestamps produced by the ZED SDK.
@@ -675,6 +708,9 @@ extern "C" {
     \param reset : Cancel the manual ROI and reset it to the full image.
     \return \ref SL_ERROR_CODE to indicate if the function was successful.
     \note The function works only if the camera is open in LIVE or STREAM mode.
+    \note A ROI larger than the image, or smaller than the minimum size the camera accepts, is rejected and the previously set ROI stays in use.
+    Check this function's return code to know whether the ROI was applied: sl_get_roi_for_aec_agc() reports the still-active ROI with
+    \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" and so cannot confirm it.
      */
     INTERFACE_API enum SL_ERROR_CODE sl_set_roi_for_aec_agc(int camera_id, enum SL_SIDE side, struct SL_Rect* roi, bool reset);
 
@@ -705,9 +741,11 @@ extern "C" {
     \param camera_id : Id of the camera instance.
     \param side : \ref SL_SIDE on which to get the ROI from.
     \param roi [Out] : Region of interest.
-    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if ROI has been applied. Other \ref SL_ERROR_CODE otherwise.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the ROI could be read. Other \ref SL_ERROR_CODE otherwise.
     \note The function works only if the camera is open in LIVE or STREAM mode.
     \note Settings are not exported in the SVO file format.
+    \note The ROI reported is the one currently used by AEC/AGC, which is the last one accepted, not necessarily the last one requested.
+    A rejected sl_set_roi_for_aec_agc() leaves the previous ROI in use, and this function then returns that ROI with \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS".
      */
     INTERFACE_API enum SL_ERROR_CODE sl_get_roi_for_aec_agc(int id, enum SL_SIDE side, struct SL_Rect* roi);
 
@@ -743,6 +781,7 @@ extern "C" {
     /**
     \brief Returns the version of the currently installed ZED SDK.
     \return The ZED SDK version installed.
+    \note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
      */
     INTERFACE_API char* sl_get_sdk_version();
 
@@ -775,7 +814,10 @@ extern "C" {
     *  \param camera_id : Id of the camera instance.
     * \param timestamp The target timestamp for which the frame index is to be determined.
     * \return The frame index within the SVO file that aligns with the given timestamp.
-    *         Returns -1 if the timestamp falls outside the bounds of the SVO file.
+    *         When no frame carries the timestamp exactly, the closest frame at or before it
+    *         is returned, never the frame after it. A timestamp outside the range the SVO
+    *         covers gives its first or its last frame rather than an error. Returns -1 only
+    *         when the input is not an SVO file or none of its frames can be read.
     */
     INTERFACE_API int sl_get_svo_position_at_timestamp(int camera_id, unsigned long long timestamp);
 
@@ -790,11 +832,29 @@ extern "C" {
 	* \brief Gets the current status of the camera.
 	* \param camera_id : Id of the camera instance.
 	* \return HealthStatus Structure containing the self diagnostic results of the image/depth/sensors
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
 	INTERFACE_API struct SL_HealthStatus* sl_get_health_status(int camera_id);
 
+    /**
+    \brief Returns the resolution at which sl_retrieve_image() outputs, for a requested resolution.
+    \param camera_id : Id of the camera instance.
+    \param res : The requested resolution. Pass 0x0 for the default.
+    \return The resolution actually used.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
+    */
     INTERFACE_API struct SL_Resolution* sl_get_retrieve_image_resolution(int camera_id, struct SL_Resolution* res);
 
+    /**
+    \brief Returns the resolution at which sl_retrieve_measure() outputs, for a requested resolution.
+    \param camera_id : Id of the camera instance.
+    \param res : The requested resolution. Pass 0x0 for the default.
+    \return The resolution actually used.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
+    */
     INTERFACE_API struct SL_Resolution* sl_get_retrieve_measure_resolution(int camera_id, struct SL_Resolution* res);
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////// Motion tracking ///////////////////////////////////////////////////////////////////////
@@ -865,6 +925,8 @@ extern "C" {
     /**
      \brief Return the current status of positional tracking module.
      \return SL_POSITIONAL_TRACKING_STATUS current status of positional tracking module.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_PositionalTrackingStatus* sl_get_positional_tracking_status(int camera_id);
 
@@ -936,8 +998,11 @@ extern "C" {
     INTERFACE_API int sl_get_sensors_data_batch_count(int camera_id, int* count);
     /**
     \brief Retrieves all SL_SensorsData associated to most recent grabbed frame in the specified \ref COORDINATE_SYSTEM of InitParameters.
-	\note sl_get_sensors_data_batch needs to be called before this function to retrieve the size of the imu batch array.
-    \param [out] data : The SensorsData array to store the data.
+	\note sl_get_sensors_data_batch_count() must be called first: it fills the batch and reports how
+	many elements this call will return.
+    \param [out] data : Receives a newly allocated array of that many SL_SensorsData.
+	\note The array belongs to the caller: release it with \ref sl_free(). It is set to NULL
+	when the batch is empty.
     \param camera_id : Id of the camera instance.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if sensors data have been extracted.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SENSORS_NOT_AVAILABLE" if the camera model is a \ref SL_MODEL "SL_MODEL_ZED".
@@ -988,6 +1053,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_spatial_mapping() method.
     \param camera_id : Id of the camera instance.
     \return \ref SL_SpatialMappingParameters containing the parameters used for spatial mapping initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_SpatialMappingParameters* sl_get_spatial_mapping_parameters(int camera_id);
     /**
@@ -1366,6 +1433,8 @@ extern "C" {
     
     It corresponds to the structure given as argument to the \ref sl_enable_streaming() function.
     \return \ref SL_StreamingParameters containing the parameters used for streaming initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_StreamingParameters* sl_get_streaming_parameters(int camera_id);
 
@@ -1381,7 +1450,7 @@ extern "C" {
     \ref sl_retrieve_image(). The tap silently drops packets until it sees
     the first natural IDR for the requested source, so the first packet
     returned is always a keyframe and the byte stream from that point on is
-    self-contained (SPS/PPS — and VPS for HEVC — are inlined in front of
+    self-contained (SPS/PPS, and VPS for HEVC, are inlined in front of
     every IDR).
 
     \param camera_id : Id of the camera instance.
@@ -1455,6 +1524,8 @@ extern "C" {
         \param model : AI model to check.
         \param gpu_id : ID of the gpu.
         \return The status of the given model for the specified GPU.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
     */
     INTERFACE_API struct SL_AI_Model_status* sl_check_AI_model_status(enum SL_AI_MODELS model, int gpu_id);
 
@@ -1465,6 +1536,21 @@ extern "C" {
     \return SUCCESS if the model is well optimized.
     */
     INTERFACE_API int sl_optimize_AI_model(enum SL_AI_MODELS model, int gpu_id);
+
+    /**
+    \brief Optimize a custom object detection ONNX model ahead of time, so that \ref sl_enable_object_detection() can start using it right away.
+
+    This optimizes the given ONNX file exactly as \ref sl_enable_object_detection() does when SL_ObjectDetectionParameters.detection_model is set to
+    SL_OBJECT_DETECTION_MODEL_CUSTOM_YOLOLIKE_BOX_OBJECTS, SL_OBJECT_DETECTION_MODEL_CUSTOM_RFDETRLIKE_BOX_OBJECTS or
+    SL_OBJECT_DETECTION_MODEL_CUSTOM_BOX_OBJECTS_AUTODETECT, and saves the result for re-use. Optimizing a model can take several minutes, so this is
+    meant to be called once when installing or deploying your application, rather than on its critical path.
+    \param custom_onnx_file : Path to the ONNX file to optimize. Use the same value as SL_ObjectDetectionParameters.custom_onnx_file.
+    \param custom_onnx_dynamic_input_shape : Input resolution to optimize the model for. Use the same value as SL_ObjectDetectionParameters.custom_onnx_dynamic_input_shape, otherwise the optimized model cannot be re-used and the model is optimized again at runtime.
+    \param gpu_id : ID of the gpu on which the model will run. The optimized model is specific to it.
+    \return SUCCESS if the model is optimized and ready to be used, INVALID_FUNCTION_PARAMETERS if no ONNX file was given or if it cannot be found.
+    \note A model with a fixed input resolution keeps its own: \a custom_onnx_dynamic_input_shape is then only used to identify the optimized model.
+    */
+    INTERFACE_API int sl_optimize_custom_AI_model(const char* custom_onnx_file, struct SL_Resolution custom_onnx_dynamic_input_shape, int gpu_id);
 
     /**
     \brief Initializes and starts object detection module.
@@ -1495,6 +1581,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_object_detection() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_ObjectDetectionParameters containing the parameters used for object detection initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_ObjectDetectionParameters* sl_get_object_detection_parameters(int camera_id);
 
@@ -1551,6 +1639,8 @@ extern "C" {
     It corresponds to the structure given as argument to the \ref sl_enable_body_tracking() function.
     \param camera_id : Id of the camera instance.
     \return \ref SL_BodyTrackingParameters containing the parameters used for body tracking initialization.
+	\note The returned buffer belongs to the caller: release it with \ref sl_free() when done.
+	Not doing so leaks it.
      */
     INTERFACE_API struct SL_BodyTrackingParameters* sl_get_body_tracking_parameters(int camera_id);
 
@@ -2277,7 +2367,7 @@ extern "C" {
     /**
     \brief Reads an image from a file.
     
-    Supports .png and .jpeg. Only works if matrix has access to \ref SL_MEM_CPU.
+    Supports .png, .jpeg and .exr (OpenEXR, for float data). Only works if matrix has access to \ref SL_MEM_CPU.
     \param ptr : Pointer of the matrix.
     \param file_path : Path of the file to read from (including the name and extension).
     \return \ref SL_ERROR_CODE_SUCCESS if everything went well, \ref SL_ERROR_CODE_FAILURE otherwise.
@@ -2285,11 +2375,17 @@ extern "C" {
     INTERFACE_API int sl_mat_read(void* ptr, const char* file_path);
     /**
     \brief Writes the Mat into a file as an image. Only works if Mat has access to MEM_CPU.
+
+    Supports .png and .jpeg for 8-bit images, and .exr (OpenEXR) for float images, which keeps every
+    value exactly as it is, NaN and infinity included. OpenEXR is a floating-point format: an .exr
+    path with an 8- or 16-bit image returns \ref SL_ERROR_CODE_FAILURE.
     \param ptr : Pointer of the matrix.
     \param file_path : Path of the file to write (including the name and extension).
+    \param compression_level : Compression level, in [0, 100]. A higher value means a smaller file. Pass -1 for
+    the format default. Ignored for .exr, which is lossless.
     \return \ref SL_ERROR_CODE_SUCCESS if everything went well, \ref SL_ERROR_CODE_FAILURE otherwise.
      */
-    INTERFACE_API int sl_mat_write(void* ptr, const char* file_path);
+    INTERFACE_API int sl_mat_write(void* ptr, const char* file_path, int compression_level);
     /**
     \brief Returns the width of the matrix.
     \param ptr : Pointer of the matrix.

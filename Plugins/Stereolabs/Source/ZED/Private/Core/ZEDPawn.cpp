@@ -6,8 +6,6 @@
 #include "UMG.h"
 #include "Math/UnrealMathUtility.h"
 
-#include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
-
 AZEDPawn::AZEDPawn()
 	:
 	SpringArm(nullptr),

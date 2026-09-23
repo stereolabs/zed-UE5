@@ -48,8 +48,8 @@ FString EnumToString(const T EnumValue)
  */
 enum class ESlCameraState : uint8
 {
-	CS_Available			UMETA(DisplayName = "Available"),
-	CS_NotAvailable			UMETA(DisplayName = "Not available")
+	CS_Available,
+	CS_NotAvailable
 };
 
 /*
@@ -59,10 +59,10 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlTextureFormat : uint8
 {
 	TF_R32_FLOAT			UMETA(DisplayName = "R32 Float (depth/disparity)"),
-	TF_R8G8B8A8_SNORM		UMETA(DisplayName = "RGBA8 SNORM (Color)"),
 	TF_R8G8B8A8_UINT		UMETA(DisplayName = "RGBA8 UINT (Point Cloud)"),
 	TF_A32B32G32R32F		UMETA(DisplayName = "ABGR32 Float (normals)"),
 	TF_R8_UNORM				UMETA(DisplayName = "R8 UNORM (Color grayscale)"),
+	TF_R8G8B8A8_UNORM		UMETA(DisplayName = "RGBA8 UNORM (Color)"),
 	TF_Unkown				UMETA(Hidden, DisplayName = "Unknown")
 };
 
@@ -143,22 +143,42 @@ ENUM_CLASS_FLAGS(ESlMemoryType)
 /*
  * SDK Video resolutions
  * see sl::RESOLUTION
+ * Sizes are per eye, the side by side output is twice the width.
+ * Tagged with the bus that takes them, which is the part that is knowable up front: it matches the
+ * InputType set on the same init parameters, USB for ZED / Mini / 2 / 2i and GMSL2 for the ZED X
+ * family. An untagged entry works on both. Which model on a bus takes which resolution is finer
+ * grained than that and the SDK cannot list it, so AUTO is the choice that always works. Anything
+ * else falls back to it when the camera refuses
  */
-	UENUM(BlueprintType, Category = "Stereolabs|Enum")
-	enum class ESlResolution : uint8
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlResolution : uint8
 {
-	R_HD4K			   		 UMETA(DisplayName = "HD 4K"),
-	R_QHDPLUS		   		 UMETA(DisplayName = "QHD+"),
-	R_HD2K			   		 UMETA(DisplayName = "HD 2K"),
-	R_HD1536		   		 UMETA(DisplayName = "HD 1536p"),
-	R_HD1080		   		 UMETA(DisplayName = "HD 1080p"),
-	R_HD1200			     UMETA(DisplayName = "HD 1200p (ZED X only)"),
-	R_HD720		   			 UMETA(DisplayName = "HD 720p"),
-	R_SVGA			   		 UMETA(DisplayName = "SVGA (ZED X only)"),
-	R_VGA			   		 UMETA(DisplayName = "VGA"),
-	R_XVGA			   		 UMETA(DisplayName = "XVGA (ZED-X HDR lineup only)"),
-	R_TXGA			   		 UMETA(DisplayName = "TXGA (ZED-X HDR lineup only)"),
-	R_AUTO = 11			     UMETA(DisplayName = "AUTO, 1200p for ZEDX and 720 otherwise")
+	R_HD4K			UMETA(DisplayName = "4K - 3856x2180 (GMSL2)"),
+	R_QHDPLUS		UMETA(DisplayName = "QHD+ - 3800x1800 (GMSL2)"),
+	R_HD2K			UMETA(DisplayName = "HD 2K - 2208x1242 (USB)"),
+	R_HD1536		UMETA(DisplayName = "HD 1536p - 1920x1536 (GMSL2)"),
+	R_HD1080		UMETA(DisplayName = "HD 1080p - 1920x1080"),
+	R_HD1200		UMETA(DisplayName = "HD 1200p - 1920x1200 (GMSL2)"),
+	R_HD720			UMETA(DisplayName = "HD 720p - 1280x720 (USB)"),
+	R_SVGA			UMETA(DisplayName = "SVGA - 960x600 (GMSL2)"),
+	R_VGA			UMETA(DisplayName = "VGA - 672x376 (USB)"),
+	R_XVGA			UMETA(DisplayName = "XVGA - 960x768 (GMSL2)"),
+	R_TXGA			UMETA(DisplayName = "TXGA - 640x512 (GMSL2)"),
+	R_AUTO = 11		UMETA(DisplayName = "AUTO - HD 720p on USB, HD 1200p on GMSL2")
+};
+
+/*
+ * Resolution a measure is retrieved at, as a fraction of the image resolution.
+ * Relative rather than absolute because a retrieve size is not a camera mode: any size works,
+ * and the image resolution is only known once the camera is open
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlDepthResolution : uint8
+{
+	DR_Full			UMETA(DisplayName = "Full - same as the image"),
+	DR_Half			UMETA(DisplayName = "Half"),
+	DR_Quarter		UMETA(DisplayName = "Quarter"),
+	DR_Eighth		UMETA(DisplayName = "Eighth")
 };
 
 /*
@@ -174,7 +194,19 @@ enum class ESlDepthMode : uint8
 	DM_Ultra				 UMETA(DisplayName = "Ultra"),
 	DM_NeuralLight			 UMETA(DisplayName = "Neural Light"),
 	DM_Neural				 UMETA(DisplayName = "Neural"),
-	DM_NeuralPlus			 UMETA(DisplayName = "Neural+")
+	DM_NeuralPlus			 UMETA(DisplayName = "Neural+"),
+	DM_Custom				 UMETA(DisplayName = "Custom")
+};
+
+/*
+ * Precision used for neural depth inference.
+ * see sl::DEPTH_PRECISION
+ */
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlDepthPrecision : uint8
+{
+	DP_FP16					 UMETA(DisplayName = "FP16 (default)"),
+	DP_INT8					 UMETA(DisplayName = "INT8 (faster, slightly less accurate)")
 };
 
 /*
@@ -209,7 +241,9 @@ enum class ESlInputType : uint8
 	IT_USB   			 UMETA(DisplayName = "USB input mode"),
 	IT_SVO   			 UMETA(DisplayName = "SVO input mode"),
 	IT_STREAM   		 UMETA(DisplayName = "Stream input mode"),
-	IT_GMSL				 UMETA(DisplayName = "GMSL")
+	IT_GMSL				 UMETA(DisplayName = "GMSL"),
+	IT_MIPI				 UMETA(DisplayName = "MIPI"),
+	IT_Holoscan			 UMETA(DisplayName = "Holoscan")
 };
 
 /*
@@ -234,7 +268,8 @@ enum class ESlTrackingState : uint8
 	TS_TrackingOk            UMETA(DisplayName = "Operates normally"),
 	TS_TrackingOff           UMETA(DisplayName = "Disabled"),
 	TS_FpsTooLow			 UMETA(DisplayName = "FPS too low"),
-	TS_SeachingFloorPlane    UMETA(DisplayName = "Searching floor plane")
+	TS_SeachingFloorPlane    UMETA(DisplayName = "Searching floor plane"),
+	TS_Unavailable			 UMETA(DisplayName = "Unavailable")
 };
 
 /*
@@ -265,13 +300,6 @@ enum class ESlView : uint8
 	V_Normals				 UMETA(DisplayName = "Normals"),
 	V_DepthRight			 UMETA(DisplayName = "Depth right"),
 	V_NormalsRight		     UMETA(DisplayName = "Normals right")
-};
-
-UENUM(BlueprintType, Category = "Stereolabs|Enum")
-enum class ESlViewFormat : uint8
-{
-	VF_Signed					 UMETA(DisplayName = "Signed"), //  Each pixel contains 4 signed char
-	VF_Unsigned					 UMETA(DisplayName = "Unsigned"), //  Each pixel contains 4 unsigned char
 };
 
 /*
@@ -495,12 +523,14 @@ enum class ESlModel : uint8
 	M_ZedXM					UMETA(DisplayName = "ZED X Mini"),
 	M_ZedXHDR				UMETA(DisplayName = "ZED X HDR"),
 	M_ZedXMiniHDR			UMETA(DisplayName = "ZED X Mini HDR"),
+	M_ZedXHDRMax = 8		UMETA(DisplayName = "ZED X HDR Max"),
 	M_ZedXNano = 9			UMETA(DisplayName = "ZED X Nano"),
 	M_VirtualZedX = 11		UMETA(DisplayName = "Virtual ZED X"),
 	M_ZedXOneGS = 30		UMETA(DisplayName = "ZED X One GS"),
 	M_ZedXOneUHD = 31		UMETA(DisplayName = "ZED X One UHD"),
 	M_ZedXOneHDR = 32		UMETA(DisplayName = "ZED X One HDR"),
-	M_Unknown				UMETA(DisplayName = "Unknown")
+	M_ZedXOneCore = 33		UMETA(DisplayName = "ZED X One Core"),
+	M_Unknown = 255			UMETA(DisplayName = "Unknown")
 };
 
 /*
@@ -524,7 +554,11 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlTimeReference : uint8
 {
 	TR_Image				UMETA(DisplayName = "Image"),
-	TR_Current				UMETA(DisplayName = "Current")
+	TR_Current				UMETA(DisplayName = "Current"),
+	/** Middle of the frame's exposure instead of the start of the sensor readout.
+	 *  Only valid for GetTimestamp(); rejected by GetIMUData()/sensors retrieval.
+	 *  Returns 0 on inputs with no per-frame exposure (USB and HDR models). */
+	TR_ImageCenterOfExposure UMETA(DisplayName = "Image center of exposure")
 };
 
 /*
@@ -581,6 +615,20 @@ enum class ESlPositionalTrackingMode : uint8
 	PTM_Gen_1		UMETA(DisplayName = "GEN 1"),
 	PTM_Gen_2		UMETA(DisplayName = "GEN 2"),
 	PTM_Gen_3		UMETA(DisplayName = "GEN 3")
+};
+
+/*
+* Lists how much GPU a module is allowed to use.
+* The selected mode sets a floor that cannot be avoided: GEN 1 computes depth and therefore
+* always uses the GPU. This preference only controls the work that is optional on top of it.
+* see sl::COMPUTE_PREFERENCE
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlComputePreference : uint8
+{
+	CP_Auto			UMETA(DisplayName = "Auto"),
+	CP_PreferCPU	UMETA(DisplayName = "Prefer CPU"),
+	CP_PreferGPU	UMETA(DisplayName = "Prefer GPU")
 };
 
 /*
@@ -642,7 +690,9 @@ enum class ESlObjectDetectionModel : uint8
 	ODM_PersonHeadBoxFast			UMETA(DisplayName = "Person head box fast"),
 	ODM_PersonHeadAccurateBox		UMETA(DisplayName = "Person head accurate box"),
 	ODM_CustomBoxObjects			UMETA(DisplayName = "Custom box objects"),
-	ODM_CustomYoloLikeBoxObjects	UMETA(DisplayName = "Custom Yolo like box objects")
+	ODM_CustomYoloLikeBoxObjects	UMETA(DisplayName = "Custom Yolo like box objects"),
+	ODM_CustomRFDetrLikeBoxObjects	UMETA(DisplayName = "Custom RF-DETR like box objects"),
+	ODM_CustomBoxObjectsAutodetect	UMETA(DisplayName = "Custom box objects (auto-detect model type)")
 };
 
 /*
@@ -682,7 +732,8 @@ enum class ESlAIModels : uint8
 	AIM_REIDAssociation					UMETA(DisplayName = "REID Association"),
 	AIM_NeuralLightDepth				UMETA(DisplayName = "Neural Light Depth"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
-	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth")
+	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth"),
+	AIM_NeuralDepthInt8					UMETA(DisplayName = "Neural Depth INT8")
 };
 
 /*
@@ -1039,11 +1090,11 @@ struct STEREOLABS_API FSlBody18Bone
 	};
 
 	/** First end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody18Parts FirstEnd;
 
 	/** Second end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody18Parts SecondEnd;
 };
 
@@ -1072,11 +1123,11 @@ struct STEREOLABS_API FSlBody34Bone
 	};
 
 	/** First end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody34Parts FirstEnd;
 
 	/** Second end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody34Parts SecondEnd;
 };
 
@@ -1104,11 +1155,11 @@ struct STEREOLABS_API FSlBody38Bone
 	};
 
 	/** First end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody38Parts FirstEnd;
 
 	/** Second end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody38Parts SecondEnd;
 };
 
@@ -1138,11 +1189,11 @@ struct STEREOLABS_API FSlBody70Bone
 	}
 
 	/** First end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody70Parts FirstEnd;
 
 	/** Second end of the bone */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlBody70Parts SecondEnd;
 };
 
@@ -1206,39 +1257,39 @@ struct STEREOLABS_API FSlCameraParameters
 	}
 
 	/** Distortion factor : [ k1, k2, p1, p2, k3 ]. Radial (k1,k2,k3) and Tangential (p1,p2) distortion. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	TArray<float> Disto;
 
 	/** Resolution of images */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FIntPoint Resolution;
 
 	/** Horizontal field of view */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float HFOV;
 
 	/** Vertical field of view */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float VFOV;
 
 	/** Horizontal focal */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float HFocal;
 
 	/** Vertical focal */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float VFocal;
 
 	/** Horizontal position of the optical center in pixels */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float OpticalCenterX;
 
 	/** Vertical position of the optical center in pixels */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float OpticalCenterY;
 
 	/**  Real focal length in millimeters */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float FocalLengthMetric;
 };
 
@@ -1259,19 +1310,19 @@ struct STEREOLABS_API FSlCalibrationParameters
 	}
 
 	/** Intrinsic parameters of the left camera */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FSlCameraParameters LeftCameraParameters;
 
 	/** Intrinsic parameters of the left camera */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FSlCameraParameters RightCameraParameters;
 
 	/** Rotation (using Rodrigues' transformation) between the two sensors. Defined as 'tilt', 'convergence' and 'roll' */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FVector Rotation;
 
 	/** Translation between the two sensors. T.x is the distance between the two cameras (baseline) in the sl::UNIT */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FVector Translation;
 };
 
@@ -1296,35 +1347,35 @@ struct STEREOLABS_API FSlCameraInformation
 	}
 
 	/** Intrinsic and Extrinsic stereo parameters for rectified images (default) */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FSlCalibrationParameters CalibrationParameters;
 
 	/** Intrinsic and Extrinsic stereo parameters for original images (unrectified) */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FSlCalibrationParameters CalibrationParametersRaw;
 
 	/** Half baseline in selected unit */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float HalfBaseline;
 
 	/** camera dependent serial number */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	int32 SerialNumber;
 
 	/** current firmware version of the camera */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	int32 CameraFirmwareVersion;
 
 	/** current firmware version of the camera */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	int32 SensorsFirmwareVersion;
 
 	/** camera model (ZED or ZED-M) */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	ESlModel CameraModel;
 
 	/* Resolution of the camera */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	FIntPoint Resolution;
 };
 
@@ -1361,23 +1412,23 @@ struct STEREOLABS_API FSlMeshData
 	}
 
 	/** Vertices of the mesh */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	TArray<FVector> Vertices;
 
 	/** Indices of the mesh */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	TArray<int32> Indices;
 
 	/** UV0 of the mesh */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	TArray<FVector2D> UV0;
 
 	/** Texture of the mesh */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	UTexture2D* Texture;
 
 	/** Normals of the mesh */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	TArray<FVector> Normals;
 };
 
@@ -1403,7 +1454,7 @@ struct STEREOLABS_API FSlMeshFilterParameters
 	}
 
 	/** Intensity of the mesh filtering */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlFilterIntensity FilterIntensity;
 };
 
@@ -1454,23 +1505,23 @@ struct STEREOLABS_API FSlSpatialMappingParameters
 	}
 
 	/** Depth integration max range. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "2.0", ClampMax = "20.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "2.0", ClampMax = "20.0"), Category = "Stereolabs|Struct")
 	float MaxRange;
 
 	/** Spatial mapping resolution. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0.01", ClampMax = "0.2"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0.01", ClampMax = "0.2"), Category = "Stereolabs|Struct")
 	float Resolution;
 
 	/** The maximum CPU memory (in mega bytes) allocated for the meshing process (will fit your configuration in any case). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int32 MaxMemoryUsage;
 
 	/** Resolution preset */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlSpatialMappingResolution PresetResolution;
 
 	/** Range preset */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlSpatialMappingRange PresetRange;
 
 	/**
@@ -1478,35 +1529,35 @@ struct STEREOLABS_API FSlSpatialMappingParameters
 	   This parameter controls how many times a stable 3D points should be seen before it is integrated into the spatial mapping.
 	   Default value is 0, this will define the stability counter based on the mesh resolution, the higher the resolution, the higher the stability counter.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int StabilityCounter;
 
 	/*
 	 * Set to true if you want be able to apply texture to your mesh after its creation.
 	 * This option will take more memory.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bSaveTexture;
 
 	/**
 	 * Disparity noise standard deviation in pixels.
 	 * Use a small value (<0.1) if the depth map is accurate, a large value (>0.5) if noisy.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DisparityStd;
 
 	/**
 	 * Weighting factor of the current depth during integration.
 	 * 1.0 = full fusion with previously integrated depth; 0.0 = discard previous data.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float Decay;
 
 	/**
 	 * If true, the previous map is forgotten progressively to limit memory and drift,
 	 * keeping only a mapped scene around the current camera position.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableForgetPast;
 
 	/** remove this function when chunks supported */
@@ -1520,7 +1571,7 @@ private:
 	 *	Updating the Mesh is time consuming, consider using only Chunks data for better performance.
 	 *  Chunks are not supported, forced to false.
 	 */
-	 //UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	 //UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stereolabs|Struct")
 	bool bUseChunkOnly = false;
 };
 
@@ -1546,15 +1597,61 @@ struct STEREOLABS_API FSlPlaneDetectionParameters
 	 \brief controls the spread of plane by checking the position difference.
 	 \n default: 0.15 meters
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float MaxDistanceThreshold;
 
 	/**
 	 \brief controls the spread of plane by checking the angle difference.
 	 \n default: 15 degree
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float NormalSimilarityThreshold;
+};
+
+/*
+ * Self-diagnostic results of the camera (image, depth and sensor health).
+ * Requires FSlInitParameters::bEnableImageValidityCheck (on by default).
+ * see sl::HealthStatus
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Types")
+struct STEREOLABS_API FSlHealthStatus
+{
+	GENERATED_BODY()
+
+	FSlHealthStatus()
+		:
+		bEnabled(false),
+		bLowImageQuality(false),
+		bLowLighting(false),
+		bLowDepthReliability(false),
+		bLowMotionSensorsReliability(false),
+		bDuplicatedImage(false)
+	{
+	}
+
+	/** Whether the health check is enabled. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bEnabled;
+
+	/** Poor image quality detected (hardware issue, occlusion, blur, incorrect settings). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bLowImageQuality;
+
+	/** Low-light conditions detected. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bLowLighting;
+
+	/** Low depth map reliability (obstructed optics, heavy fog). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bLowDepthReliability;
+
+	/** Motion sensor reliability issue (corrupted stream, saturated sensors, shocks). */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bLowMotionSensorsReliability;
+
+	/** Current image is a duplicate: not a new frame even if the timestamp says so. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
+	bool bDuplicatedImage;
 };
 
 /*
@@ -1577,23 +1674,23 @@ struct STEREOLABS_API FSlRecordingState
 	}
 
 	/** Compression time for the current frame in ms. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float CurrentCompressionTime;
 
 	/** Compression ratio (% of raw size) for the current frame. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float CurrentCompressionRatio;
 
 	/** Average compression time in ms since beginning of recording. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float AverageCompressionTime;
 
 	/** Compression ratio (% of raw size) since beginning of recording. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	float AverageCompressionRatio;
 
 	/** Status of current frame. May be true for success or false if frame could not be written in the SVO file. */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Stereolabs|Struct")
 	uint8 Status : 1;
 };
 
@@ -1801,51 +1898,51 @@ struct STEREOLABS_API FSlVideoSettings
 	}
 
 	/** Brightness, default = 4 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"), Category = "Stereolabs|Struct")
 	int32 Brightness;
 
 	/** Contrast, default = 4 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"), Category = "Stereolabs|Struct")
 	int32 Contrast;
 
 	/** Hue, default = 0 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "11"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "11"), Category = "Stereolabs|Struct")
 	int32 Hue;
 
 	/** Saturation, default = 4 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"), Category = "Stereolabs|Struct")
 	int32 Saturation;
 
 	/** Saturation, default = 3 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "8"), Category = "Stereolabs|Struct")
 	int32 Sharpness;
 
 	/** Gamma, default = 3 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "9"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1", ClampMax = "9"), Category = "Stereolabs|Struct")
 	int32 Gamma;
 
 	/** WhiteBalance */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "2800", ClampMax = "6500"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "2800", ClampMax = "6500"), Category = "Stereolabs|Struct")
 	int32 WhiteBalance;
 
 	/** Gain */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "100"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "100"), Category = "Stereolabs|Struct")
 	int32 Gain;
 
 	/** Exposure */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "100"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", ClampMax = "100"), Category = "Stereolabs|Struct")
 	int32 Exposure;
 
 	/** Automatic white balance, default = true */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bAutoWhiteBalance;
 
 	/** Automatic gain and exposure, default = true */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bAutoGainAndExposure;
 
 	/** True to reset to default */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bDefault;
 };
 
@@ -1964,27 +2061,27 @@ struct STEREOLABS_API FSlRuntimeParameters
 	}
 
 	/** Enable depth (need to be true if tracking enabled) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableDepth;
 
 	/** Defines if the depth map should be completed or not, similar to the removed SENSING_MODE::FILL*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableFillMode;
 
 	/** Threshold to reject depth values based on their confidence. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int ConfidenceThreshold;
 
 	/**Threshold to reject depth values based on their texture confidence.. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int TextureConfidenceThreshold;
 
 	/** Reference frame */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlReferenceFrame ReferenceFrame;
 
 	/** Remove saturated areas */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bRemoveSaturatedAreas;
 };
 
@@ -2035,7 +2132,6 @@ struct STEREOLABS_API FSlRecordingParameters
 	GENERATED_BODY()
 
 	FSlRecordingParameters() :
-		VideoFilename(""),
 		CompressionMode(ESlSVOCompressionMode::SCM_H264),
 		TargetFramerate(0),
 		Bitrate(0),
@@ -2058,7 +2154,7 @@ struct STEREOLABS_API FSlRecordingParameters
 		GConfig->GetString(
 			Section,
 			TEXT("VideoFilename"),
-			VideoFilename,
+			VideoFilename.FilePath,
 			*Path
 		);
 
@@ -2096,7 +2192,7 @@ struct STEREOLABS_API FSlRecordingParameters
 		GConfig->SetString(
 			Section,
 			TEXT("VideoFilename"),
-			*VideoFilename,
+			*VideoFilename.FilePath,
 			*Path
 		);
 
@@ -2125,22 +2221,22 @@ struct STEREOLABS_API FSlRecordingParameters
 
 	const TCHAR* Section = TEXT("Recording");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString VideoFilename;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "SVO file|*.svo2;*.svo"))
+	FFilePath VideoFilename;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlSVOCompressionMode CompressionMode;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int32 TargetFramerate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int32 Bitrate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bTranscodeStreamingInput;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlSVOEncodingPreset EncodingPreset;
 
 	/**
@@ -2148,11 +2244,11 @@ struct STEREOLABS_API FSlRecordingParameters
 	 * Leave empty to record without encryption. The same key must be provided in
 	 * FSlInitParameters::SvoDecryptionKey for playback.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString EncryptionKey;
 
 	/** True to loop when SVO playback enabled */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	uint8 bLoop : 1;
 };
 
@@ -2169,20 +2265,21 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 
 	FSlPositionalTrackingParameters()
 		:
+		bOverrideTrackingOrigin(false),
 		Location(FVector::ZeroVector),
 		Rotation(FRotator::ZeroRotator),
 		bEnableTracking(true),
 		bEnableAreaMemory(false),
 		bEnablePoseSmoothing(true),
 		bSetFloorAsOrigin(true),
-		AreaFilePath(""),
 		bEnableImuFusion(true),
 		bSetAsStatic(false),
 		DepthMinRange(-1),
 		bSetGravityAsOrigin(true),
 		Mode(ESlPositionalTrackingMode::PTM_Gen_3),
 		bEnableLocalizationOnly(false),
-		bEnable2DGroundMode(false)
+		bEnable2DGroundMode(false),
+		ComputePreference(ESlComputePreference::CP_Auto)
 	{
 	}
 
@@ -2191,7 +2288,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		GConfig->GetString(
 			Section,
 			TEXT("AreaFilePath"),
-			AreaFilePath,
+			AreaFilePath.FilePath,
 			*Path
 		);
 
@@ -2223,6 +2320,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			*Path
 		);
 
+		GConfig->GetBool(
+			Section,
+			TEXT("bOverrideTrackingOrigin"),
+			bOverrideTrackingOrigin,
+			*Path
+		);
+
 		GConfig->GetVector(
 			Section,
 			TEXT("Location"),
@@ -2243,7 +2347,7 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 		GConfig->SetString(
 			Section,
 			TEXT("AreaFilePath"),
-			*AreaFilePath,
+			*AreaFilePath.FilePath,
 			*Path
 		);
 
@@ -2275,6 +2379,13 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 			*Path
 		);
 
+		GConfig->SetBool(
+			Section,
+			TEXT("bOverrideTrackingOrigin"),
+			bOverrideTrackingOrigin,
+			*Path
+		);
+
 		GConfig->SetVector(
 			Section,
 			TEXT("Location"),
@@ -2291,73 +2402,85 @@ struct STEREOLABS_API FSlPositionalTrackingParameters
 	}
 
 	/*
-	 * Initial position.
-	 * If using HMD tracking origin, this is the HMD location.
-	 * If not using HMD tracking origin, this is an offset from origin added to the tracking.
+	 * Use Location and Rotation as the tracking origin instead of the transform of the camera actor
+	 * placed in the level. With Set Gravity As Origin enabled, only the yaw of Rotation is kept.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	bool bOverrideTrackingOrigin;
+
+	/*
+	 * Position of the tracking origin in the world.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (EditCondition = "bOverrideTrackingOrigin"))
 	FVector Location;
 
 	/*
-	 * Initial rotation.
-	 * If using HMD tracking origin, this is the HMD rotation.
-	 * If not using HMD tracking origin, this is an offset from origin added to the tracking.
+	 * Rotation of the tracking origin in the world.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (EditCondition = "bOverrideTrackingOrigin"))
 	FRotator Rotation;
 
 	/** Enable positional tracking */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Tracking"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Tracking"), Category = "Stereolabs|Struct")
 	bool bEnableTracking;
 
 	/** Enable area localization */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Area Memory"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Area Memory"), Category = "Stereolabs|Struct")
 	bool bEnableAreaMemory;
 
 	/** Enable smooth pose */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Pose smoothing"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Pose smoothing"), Category = "Stereolabs|Struct")
 	bool bEnablePoseSmoothing;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bSetFloorAsOrigin;
 
 	/** Path to the area file */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString AreaFilePath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "ZED area file|*.area"))
+	FFilePath AreaFilePath;
 
 	/* This setting allows you to enable or disable IMU fusion. When set to false, only the optical odometry will be used. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableImuFusion;
 
 	/* This setting allows you define the camera as static.If true, it will not move in the environment. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bSetAsStatic;
 
 	/* This setting allows you to change the minimum depth used by the SDK for Positional Tracking. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DepthMinRange;
 
 	/** Set Gravity As Origin
 	*This setting allows you to override 2 of the 3 rotations from initial_world_transform using the IMU gravity
 	* default : true
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bSetGravityAsOrigin;
 
 	/**
 	* @brief Positional tracking mode used. Can be used to improve accuracy in some type of scene at the cost of longer runtime
 	* default : POSITIONAL_TRACKING_MODE::STANDARD
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlPositionalTrackingMode Mode;
 
 	/** Whether to enable the area mode in localize only mode. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableLocalizationOnly;
 
 	/** Whether to enable 2D ground mode for tracking. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnable2DGroundMode;
+
+	/**
+	 * How much GPU positional tracking is allowed to use.
+	 * GEN 3 runs on the CPU by default, so it does not compete with your own GPU workloads.
+	 * Set Prefer GPU to make tracking faster and lower the per-frame Grab() cost, at the cost of
+	 * using the GPU. GEN 1 computes depth and therefore uses the GPU whatever this is set to.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	ESlComputePreference ComputePreference;
 };
 
 /*
@@ -2412,7 +2535,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: 2.5 meters
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float depthFarThresholdMeters = 2.5;
 
 	/**
@@ -2420,7 +2543,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: 0.5, correspond to the lower half of the image
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float imageHeightRatioCutoff = 0.5;
 
 	/**
@@ -2428,7 +2551,7 @@ struct STEREOLABS_API FSlRegionOfInterestParameters
 
 	 Default: Enabled
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TSet<ESlModule> autoApplyModule;
 };
 
@@ -2482,7 +2605,6 @@ struct STEREOLABS_API FSlInitParameters
 		:
 		InputType(ESlInputType::IT_USB),
 		SerialNumber(0),
-		SvoPath(""),
 		GmslPort(-1),
 		bLoop(false),
 		StreamIP(""),
@@ -2490,6 +2612,7 @@ struct STEREOLABS_API FSlInitParameters
 		Resolution(ESlResolution::R_AUTO),
 		FPS(-1),
 		DepthMode(ESlDepthMode::DM_Neural),
+		DepthPrecision(ESlDepthPrecision::DP_FP16),
 		DepthMinimumDistance(10.0f),
 		DepthMaximumDistance(4000.0f),
 		GPUID(-1.0f),
@@ -2502,14 +2625,11 @@ struct STEREOLABS_API FSlInitParameters
 		bEnableRightSideMeasure(false),
 		DepthStabilization(1),
 		bAsyncGrabCameraRecovery(false),
-		OptionalSettingPath(""),
-		OptionalOpencvCalibrationFile(""),
 		bSensorsRequired(false),
 		bEnableImageEnhancement(true),
 		OpenTimeoutSec(5.0f),
-		VerboseFilePath(""),
 		GrabComputeCappingFPS(0.0f),
-		bEnableImageValidityCheck(false),
+		bEnableImageValidityCheck(true),
 		MaximumWorkingResolution(FIntPoint(0, 0)),
 		SvoDecryptionKey("")
 	{
@@ -2623,7 +2743,7 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->GetString(
 			Section,
 			TEXT("SvoPath"),
-			SvoPath,
+			SvoPath.FilePath,
 			*Path
 		);
 
@@ -2658,7 +2778,7 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->GetString(
 			Section,
 			TEXT("VerboseFilePath"),
-			VerboseFilePath,
+			VerboseFilePath.FilePath,
 			*Path
 		);
 
@@ -2831,14 +2951,14 @@ struct STEREOLABS_API FSlInitParameters
 		GConfig->SetString(
 			Section,
 			TEXT("SvoPath"),
-			*SvoPath,
+			*SvoPath.FilePath,
 			*Path
 		);
 
 		GConfig->SetString(
 			Section,
 			TEXT("VerboseFilePath"),
-			*VerboseFilePath,
+			*VerboseFilePath.FilePath,
 			*Path
 		);
 
@@ -2886,90 +3006,100 @@ struct STEREOLABS_API FSlInitParameters
 	}
 
 	/** Input type used in the ZED SDK */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlInputType InputType;
 
 	/* Serial number of the camera (default is 0)*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int32 SerialNumber;
 
 	/** Path to a SVO file if inputType is set to SVO */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString SvoPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "SVO file|*.svo2;*.svo"))
+	FFilePath SvoPath;
 
 	/* Gmsl port of the camera (default : -1)*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int32 GmslPort;
 
 	/** True to loop when SVO playback enabled */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	uint8 bLoop : 1;
 
 	/** IP of the sender camera if inputType is set to Stream */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString StreamIP;
 
 	/** Port of the sender camera if inputType is set to Stream */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int StreamPort;
 
-	/** Resolution of the camera (720p if used with HMD) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	/** Resolution of the camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlResolution Resolution;
 
 	/** Capture fps of the camera */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int FPS;
 
 	/** Disparity */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlDepthMode DepthMode;
 
+	/**
+	 * Precision used for neural depth inference.
+	 * INT8 trades a small amount of accuracy for a faster depth runtime and a lower memory
+	 * footprint, and is currently supported by the Neural depth mode only. Always safe to set:
+	 * the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does
+	 * not support INT8.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	ESlDepthPrecision DepthPrecision;
+
 	/** Minimum distance for depth */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DepthMinimumDistance;
 
 	/** Maximum distance for depth */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DepthMaximumDistance;
 
 	/** Device selected */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float GPUID;
 
 	/** Unit */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlUnit Unit;
 
 	/** Coordinate system */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlCoordinateSystem CoordinateSystem;
 
 	/** If true, skip some SVO frame if computation time is too long */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bRealTime;
 
 	/** Verbose ZED */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int Verbose;
 
 	/** Disable self calibration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bDisableSelfCalibration;
 
 	/** Vertical flip */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlFlipMode VerticalFlipImage;
 
 	/** Enable right side measure */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableRightSideMeasure;
 
 	/**Regions of the generated depth map can oscillate from one frame to another.These oscillations result from a lack of texture(too homogeneous) on an objectand by image noise.
 		\n This parameter control a stabilization filter that reduces these oscillations.In the range[0 - 100], 0 is disable(raw depth), smoothness is linear from 1 to 100.
 		\n default: 1
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int DepthStabilization;
 
 	/**
@@ -2978,32 +3108,32 @@ struct STEREOLABS_API FSlInitParameters
 	 When async_grab_camera_recovery is false, the grab() function is blocking and will return only once the camera communication is restored or the timeout is reached.
 	 The default behavior is synchronous, like previous ZED SDK versions
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bAsyncGrabCameraRecovery;
 
 	/* Set the optional path where the SDK has to search for the settings file (SN<XXXX>.conf file). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString OptionalSettingPath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	FDirectoryPath OptionalSettingPath;
 
 	/* Set an optional file path where the SDK can find a file containing the calibration information of the camera computed by OpenCV. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString OptionalOpencvCalibrationFile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "OpenCV calibration file|*.yml;*.yaml;*.xml"))
+	FFilePath OptionalOpencvCalibrationFile;
 
 	/* Force the motion sensors opening of the ZED 2 / ZED-M to open the camera. default : false.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bSensorsRequired;
 
 	/* Enable or Disable the Enhanced Contrast Technology, to improve image quality. default : true. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableImageEnhancement;
 
 	/* Define a timeout in seconds after which an error is reported if the open() command fails. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float OpenTimeoutSec;
 
 	/** Verbose file path */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString VerboseFilePath;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "Log file|*.txt;*.log"))
+	FFilePath VerboseFilePath;
 
 	/**
 	 Define a computation upper limit to the grab frequency.
@@ -3013,16 +3143,16 @@ struct STEREOLABS_API FSlInitParameters
 	 \note Internally the grab function always tries to get the latest available image while respecting the desired fps as much as possible.
 	 default is 0.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float GrabComputeCappingFPS;
 	/**
 	 Enable or disable the image validity verification.
 	 This will perform additional verification on the image to identify corrupted data. This verification is done in the grab function and requires some computations.
 	 If an issue is found, the grab function will output a warning as sl::ERROR_CODE::CORRUPTED_FRAME.
 	 This version doesn't detect frame tearing currently.
-	 \n default: disabled
+	 \n default: enabled
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableImageValidityCheck;
 	/**
 	\brief Set a maximum size for all SDK output, like retrieveImage and retrieveMeasure functions.
@@ -3036,14 +3166,14 @@ struct STEREOLABS_API FSlInitParameters
 	 * - maximum_working_resolution = sl::Resolution(1280, 2) -> 1280 x (image_height/2) = 1280 x (half height)
 	 * - maximum_working_resolution = sl::Resolution(4, 4) -> (image_width/4) x (image_height/4) = quarter size
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FIntPoint MaximumWorkingResolution;
 
 	/**
 	 * Decryption key required to open an SVO file that was recorded with encryption.
 	 * Leave empty if the SVO file is not encrypted. Must match the key used during recording.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString SvoDecryptionKey;
 };
 
@@ -3058,15 +3188,15 @@ struct STEREOLABS_API FSlBatchParameters
 	const TCHAR* Section = TEXT("Batch");
 
 	/* Defines if the Batch option in the object detection module is enabled.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnable;
 
 	/* Max retention time in seconds of a detected object. After this time, the same object will mostly have a different ID.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float IdRetentionTime;
 
 	/* Trajectories will be output in batch with the desired latency in seconds. During this waiting time, re-identification of objects is done in the background. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float Latency;
 
 	FSlBatchParameters() :
@@ -3087,44 +3217,44 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 
 	const TCHAR* Section = TEXT("ObjectDetection");
 	/* Defines if the object detection will track objects across images flow.	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableTracking;
 
 	/* Defines if the mask object will be computed. 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableSegmentation;
 
 	/* Enable human pose estimation with skeleton keypoints output. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectDetectionModel DetectionModel;
 
 	/* In a multi camera setup, specify which group this model belongs to. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString FusionObjectsGroupName;
 
 	/*  Path to the YOLO-like onnx file for custom object detection ran in the ZED SDK. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString CustomOnnxFile;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (FilePathFilter = "onnx"))
+	FFilePath CustomOnnxFile;
 
 	/*  Resolution to the YOLO-like onnx file for custom object detection ran in the ZED SDK. This resolution defines the input tensor size for dynamic shape ONNX model only.
 	The batch and channel dimensions are automatically handled, it assumes it's color images like default YOLO models. */
 	FIntPoint CustomOnnxDynamicInputShape;
 
 	/* Defines a upper depth range for detections. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float MaxRange;
 
 	/* Batching system parameters. Batching system (introduced in 3.5) performs short-term re-identification with deep learning and trajectories filtering. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlBatchParameters BatchParameters;
 	/* Defines the filtering mode that should be applied to raw detections. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectFilteringMode FilteringMode;
 
 	/*When an object is not detected anymore, the SDK will predict its positions during a short period of time before switching its state to SEARCHING.
 	/* Defines the duration of this prediction.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float PredictionTimeout_s;
 
 	/**
@@ -3135,7 +3265,7 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 	 * The accuracy loss should not exceed 1-2% on the compatible models.
 	 * The current compatible models are all HUMAN_BODY_XXXX
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 
 	bool bAllowReducedPrecisionInference;
 
@@ -3144,7 +3274,6 @@ struct STEREOLABS_API FSlObjectDetectionParameters
 		bEnableSegmentation(false),
 		DetectionModel(ESlObjectDetectionModel::ODM_MultiClassBoxAccurate),
 		FusionObjectsGroupName(""),
-		CustomOnnxFile(""),
 		CustomOnnxDynamicInputShape(FIntPoint(512, 512)),
 		MaxRange(-1.0f),
 		BatchParameters(FSlBatchParameters()),
@@ -3160,19 +3289,19 @@ struct STEREOLABS_API FSlObjectTrackingParameters
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectAccelerationPreset ObjectAccelerationPreset = ESlObjectAccelerationPreset::OAP_DEFAULT;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float VelocitySmoothingFactor = -1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float MinVelocityThreshold = -1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float PredictionTimeout_s = -1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float MinConfirmationTime_s = -1.0f;
 };
 
@@ -3187,21 +3316,21 @@ struct STEREOLABS_API FSlObjectDetectionRuntimeParameters
 	const TCHAR* Section = TEXT("ObjectDetectionRuntime");
 
 	/* Defines the confidence threshold: interval between 1 and 99. A confidence of 1 meaning a low threshold, more uncertain objects and 99 very few but very precise objects.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DetectionConfidenceThreshold;
 
 	/* Select which object types to detect and track. By default all classes are tracked. Fewer object types can slightly speed up the process, since every objects are tracked. Only the selected classes in the vector will be output.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TMap<ESlObjectClass, bool>	ObjectClassFilter;
 
 	/* Defines a detection threshold for each classes. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TMap<ESlObjectClass, float> ObjectClassDetectionConfidenceThreshold;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlObjectTrackingParameters ObjectTrackingParameters;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TMap<ESlObjectClass, FSlObjectTrackingParameters> ObjectClassTrackingParameters;
 
 	FSlObjectDetectionRuntimeParameters() :
@@ -3246,39 +3375,39 @@ struct STEREOLABS_API FSlObjectData
 	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int Id;
 
 	/* Unique ID to help identify and track AI detections. Can be either generated externally, or using generate_unique_id() or left empty.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString UniqueObjectId;
 
 	/* Object label, forwarded from CustomBoxObjectData when using DETECTION_MODEL::CUSTOM_BOX_OBJECTS.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int RawLabel;
 
 	/* Object category. Identify the object type.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectClass Label;
 
 	/* Object subclass.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectSubClass Sublabel;
 
 	/* Defines the object tracking state.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectTrackingState TrackingState;
 
 	/* Defines the object action state.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectActionState ActionState;
 
 	/* Defines the object 3D centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Position;
 
 	/* Defines the object 3D velocity Defined in sl:InitParameters::UNIT / seconds, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Velocity;
 
 	/* the covariance matrix of the 3d position, represented by its upper triangular matrix value
@@ -3286,7 +3415,7 @@ struct STEREOLABS_API FSlObjectData
 	*	[p1, p3, p4]
 	*	[p2, p4, p5]
 	*	where pi is position_covariance[i]*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<float> PositionCovariance;
 
 	/*2D bounding box of the person represented as four 2D points starting at the top left corner and rotation clockwise. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
@@ -3294,15 +3423,15 @@ struct STEREOLABS_API FSlObjectData
 	*	| Object |
 	*	D ------ C
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector2D> BoundingBox2D;
 
 	/* Defines for the bounding_box_2d the pixels which really belong to the object (set to 255) and those of the background (set to 0).*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlMat Mask;
 
 	/* Defines the detection confidence value of the object. From 0 to 100, a low value means the object might not be localized perfectly or the label (OBJECT_CLASS) is uncertain.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float Confidence;
 
 	/* 3D bounding box of the person represented as eight 3D points Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
@@ -3313,23 +3442,23 @@ struct STEREOLABS_API FSlObjectData
 	*	|        |/
 	*	4 ------ 7
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> BoundingBox;
 
 	/* 3D object dimensions: width, height, length Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Dimensions;
 
 	/* Bounds the head with four 2D points. Expressed in pixels on the original image resolution.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector2D> HeadBoundingBox2D;
 
 	/* Bounds the head with eight 3D points. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> HeadBoundingBox;
 
 	/* 3D head centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector HeadPosition;
 };
 
@@ -3340,16 +3469,16 @@ struct STEREOLABS_API FSlObjects
 
 	const TCHAR* Section = TEXT("Objects");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlTimestamp Timestamp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FSlObjectData> ObjectList;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bIsNew;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bIsTracked;
 
 	FSlObjects() :
@@ -3371,37 +3500,37 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 
 	const TCHAR* Section = TEXT("BodyTracking");
 	/* Defines if the object detection will track objects across images flow.	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableTracking;
 
 	/* Defines if the mask object will be computed. 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableSegmentation;
 
 	/* Enable human pose estimation with skeleton keypoints output. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlBodyTrackingModel DetectionModel;
 
 	/* Enable body fitting */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bEnableBodyFitting;
 
 	/* Defines the body format output by the sdk when \ref retrieveBodies is called. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlBodyFormat BodyFormat;
 
 	/* Defines the body format output by the sdk when \ref retrieveBodies is called. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlBodyKeypointsSelection BodySelection;
 
 	/* Defines a upper depth range for detections. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float MaxRange;
 
 	/*When an object is not detected anymore, the SDK will predict its positions during a short period of time before switching its state to SEARCHING.
 	/* Defines the duration of this prediction.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float PredictionTimeout_s;
 	/**
 	\brief Allow inference to run at a lower precision to improve runtime and memory usage,
@@ -3411,7 +3540,7 @@ struct STEREOLABS_API FSlBodyTrackingParameters
 	 * The accuracy loss should not exceed 1-2% on the compatible models.
 	 * The current compatible models are all HUMAN_BODY_XXXX
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bAllowReducedPrecisionInference;
 
 	FSlBodyTrackingParameters() :
@@ -3439,18 +3568,18 @@ struct STEREOLABS_API FSlBodyTrackingRuntimeParameters
 	const TCHAR* Section = TEXT("BodyTrackingRuntime");
 
 	/* Defines the confidence threshold: interval between 1 and 99. A confidence of 1 meaning a low threshold, more uncertain objects and 99 very few but very precise objects.  */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float DetectionConfidenceThreshold;
 
 	/* the SDK will outputs skeleton with more detected keypoints than this threshold*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int MinimumKeypointsThreshold;
 
 	/**
 	 * @brief this value controls the smoothing of the fitted fused skeleton.
 	 * it is ranged from 0 (low smoothing) and 1 (high smoothing)
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float SkeletonSmoothing;
 
 	FSlBodyTrackingRuntimeParameters() :
@@ -3487,27 +3616,27 @@ struct STEREOLABS_API FSlBodyData
 	const TCHAR* Section;
 
 	/* Object identification number, used as a reference when tracking the object through the frames.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	int Id;
 
 	/* Unique ID to help identify and track AI detections. Can be either generated externally, or using generate_unique_id() or left empty.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString UniqueObjectId;
 
 	/* Defines the object tracking state.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectTrackingState TrackingState;
 
 	/* Defines the object action state.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlObjectActionState ActionState;
 
 	/* Defines the object 3D centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Position;
 
 	/* Defines the object 3D velocity Defined in sl:InitParameters::UNIT / seconds, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Velocity;
 
 	/* the covariance matrix of the 3d position, represented by its upper triangular matrix value
@@ -3515,7 +3644,7 @@ struct STEREOLABS_API FSlBodyData
 	*	[p1, p3, p4]
 	*	[p2, p4, p5]
 	*	where pi is position_covariance[i]*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<float> PositionCovariance;
 
 	/*2D bounding box of the person represented as four 2D points starting at the top left corner and rotation clockwise. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
@@ -3523,15 +3652,15 @@ struct STEREOLABS_API FSlBodyData
 	*	| Object |
 	*	D ------ C
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector2D> BoundingBox2D;
 
 	/* Defines for the bounding_box_2d the pixels which really belong to the object (set to 255) and those of the background (set to 0).*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlMat Mask;
 
 	/* Defines the detection confidence value of the object. From 0 to 100, a low value means the object might not be localized perfectly or the label (OBJECT_CLASS) is uncertain.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	float Confidence;
 
 	/* 3D bounding box of the person represented as eight 3D points Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
@@ -3542,51 +3671,51 @@ struct STEREOLABS_API FSlBodyData
 	*	|        |/
 	*	4 ------ 7
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> BoundingBox;
 
 	/* 3D object dimensions: width, height, length Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector Dimensions;
 
 	/* A set of useful points representing the human body, expressed in 2D, respect to the original image resolution.
 	* We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS. Expressed in pixels on the original image resolution, [0,0] is the top left corner.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector2D> Keypoint2D;
 
 	/* A set of useful points representing the human body, expressed in 3D. We use a classic 18 points representation, the points semantic and order is given by BODY_PARTS.
 	* Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> Keypoint;
 
 	/* Bounds the head with four 2D points. Expressed in pixels on the original image resolution.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector2D> HeadBoundingBox2D;
 
 	/* Bounds the head with eight 3D points. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> HeadBoundingBox;
 
 	/* 3D head centroid. Defined in sl:InitParameters::UNIT, expressed in RuntimeParameters::measure3D_reference_frame.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FVector HeadPosition;
 
 	/* Per keypoint detection confidence, can not be lower than the ObjectDetectionRuntimeParameters::detection_confidence_threshold.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<float> KeypointConfidence;
 
 	/* Per keypoint local position (the position of the child keypoint with respect to its parent expressed in its parent coordinate frame)*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FVector> LocalPositionPerJoint;
 
 	/* Per keypoint local orientation.*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FQuat> LocalOrientationPerJoint;
 
 	/* global root orientation of the skeleton. The orientation is also represented by a quaternion with the same format as local_orientation_per_joint*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FQuat GlobalRootOrientation;
 
 };
@@ -3598,16 +3727,16 @@ struct STEREOLABS_API FSlBodies
 
 	const TCHAR* Section = TEXT("Bodies");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FSlTimestamp Timestamp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	TArray<FSlBodyData> BodyList;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bIsNew;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	bool bIsTracked;
 
 	FSlBodies() :
@@ -3628,20 +3757,20 @@ struct STEREOLABS_API FSlSVOData
 	/// Key used to retrieve the data stored into SVOData's content.
 	/// WARNING: Length must not exceed 128.
 	/// </summary>
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString Key = "";
 
 	/// <summary>
 	/// Timestamp of the data, in nanoseconds, as a string.
 	/// </summary>
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString TimestampNano = "0";
 
 	/// <summary>
 	/// Content stored as SVOData.
 	/// Allow any type of content, including raw data like compressed images or JSON.
 	/// </summary>
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	FString Content = "";
 
 	FSlSVOData()
@@ -3654,79 +3783,3 @@ struct STEREOLABS_API FSlSVOData
 };
 
 
-/*
- * Rendering parameters
- */
-USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
-struct STEREOLABS_API FSlRenderingParameters
-{
-	GENERATED_BODY()
-
-	const TCHAR* Section = TEXT("Rendering");
-
-	FSlRenderingParameters()
-		:
-		PerceptionDistance(100.0f),
-		SRemapEnable(false)
-	{
-	}
-
-	FORCEINLINE void Load(const FString& Path)
-	{
-		GConfig->GetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-		);
-
-		GConfig->GetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	FORCEINLINE void Save(const FString& Path) const
-	{
-		GConfig->SetFloat(
-			Section,
-			TEXT("PerceptionDistance"),
-			PerceptionDistance,
-			*Path
-		);
-
-		GConfig->SetBool(
-			Section,
-			TEXT("SRemapEnable"),
-			SRemapEnable,
-			*Path
-		);
-	}
-
-	/** Distance in cm at which real object perfectly match their real size, between 75 and 300. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "75", ClampMax = "3000"))
-	float PerceptionDistance;
-
-	/** ! Experimental ! : enable SRemap. */
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool SRemapEnable;
-};
-
-/** Environmental lighting settings */
-USTRUCT(BlueprintType)
-struct FEnvironmentalLightingSettings
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** Image exposure */
-	UPROPERTY(BlueprintReadOnly, Category = Exposure)
-	float Exposure;
-
-	FEnvironmentalLightingSettings()
-		:
-		Exposure(1)
-	{
-	}
-};

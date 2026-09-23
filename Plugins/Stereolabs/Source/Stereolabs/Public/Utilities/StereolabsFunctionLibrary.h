@@ -68,18 +68,6 @@ public:
 	static FVector2D GetRenderPlaneSize(const FIntPoint& ImageResolution, float VerticalFOV, float PlaneDistance);
 
 	/*
-	 * Compute rendering plane size using gamma
-	 * @param PerceptionDistance The distance at which objects will have their correct size
-	 * @param ImageResolution    Zed image resolution
-	 * @param PerceptionDistance Distance at which object match their real size
-	 * @param ZedFocal	         Zed focal
-	 * @param PlaneDistance	     Plane rendering distance from camera
-	 * @return size width/height of the plane
-	 */
-	UFUNCTION(BlueprintPure, meta = (WorldContext = "WorldContextObject", DisplayName = "GetRenderPlaneSizeWithGamma", Keywords = "get zed render plane size with gamma"), Category = "Stereolabs")
-	static FVector2D GetRenderPlaneSizeWithGamma(UObject* WorldContextObject, const FIntPoint& ImageResolution, float PerceptionDistance, float ZedFocal, float PlaneDistance);
-
-	/*
 	 * Compute optical center offsets for left/right images
 	 * @paramI mageResolution  Zed image resolution
 	 * @param Distance         Distance from camera

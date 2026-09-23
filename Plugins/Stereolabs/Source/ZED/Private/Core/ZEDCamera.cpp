@@ -9,45 +9,72 @@
 #include "Stereolabs/Public/Utilities/StereolabsFunctionLibrary.h"
 #include "Stereolabs/Public/Core/StereolabsCameraProxy.h"
 #include "Kismet/KismetRenderingLibrary.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 DEFINE_LOG_CATEGORY(ZEDCamera);
+
+#if WITH_EDITOR
+#define ZED_CONFIG_FILE_PATH			FPaths::Combine(*FPaths::ProjectDir(), *FString("Saved/Config/ZED/ZED.ini"))
+#define ZED_CAMERA_CONFIG_FILE_PATH     FPaths::Combine(*FPaths::ProjectDir(), *FString("Saved/Config/ZED/Camera.ini"))
+#define DEFAULT_VERBOSE_FILE_PATH       FPaths::Combine(*FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()), *FString("Binaries/Win64/ZedLog.txt"))
+#else
+#define ZED_CONFIG_FILE_PATH			FPaths::Combine(*FPaths::ConvertRelativePathToFull("../../"), *FString("Saved/Config/ZED/ZED.ini"))
+#define ZED_CAMERA_CONFIG_FILE_PATH     FPaths::Combine(*FPaths::ConvertRelativePathToFull("../../"), *FString("Saved/Config/ZED/Camera.ini"))
+#define DEFAULT_VERBOSE_FILE_PATH       FPaths::Combine(*FPaths::ConvertRelativePathToFull("."),      *FString("ZedLog.txt"))
+#endif
+
+static bool IsGConfigAvailable()
+{
+	if (!GConfig)
+	{
+		SL_LOG_E(ZEDCamera, "GConfig not available");
+		return false;
+	}
+
+	return true;
+}
+
+static FString GetParameterGroupConfigPath(EZEDParameterGroup Group)
+{
+	return Group == EZEDParameterGroup::PG_CameraSettings ? ZED_CAMERA_CONFIG_FILE_PATH : ZED_CONFIG_FILE_PATH;
+}
 
 #define ZED_CAMERA_LOG(Format, ...) SL_LOG(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_W(Format, ...) SL_LOG_W(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_E(Format, ...) SL_LOG_E(ZEDCamera, Format, ##__VA_ARGS__)
 #define ZED_CAMERA_LOG_F(Format, ...) SL_LOG_F(ZEDCamera, Format, ##__VA_ARGS__)
 
-/** Preset for depth texture quality */
-static TAutoConsoleVariable<int32> CVarZEDDepthTextureQualityPreset(
-	TEXT("r.ZED.DepthTextureQualityPreset"),
-	1,
-	TEXT("Set the quality of the ZED depth texture.")
-	TEXT("	0: low (default)")
-	TEXT("	1: medium")
-	TEXT("	2: high"),
-	ECVF_RenderThreadSafe
-	);
-
 AZEDCamera::AZEDCamera()
 	:
 	LeftEyeColor(nullptr),
 	LeftEyeDepth(nullptr),
 	LeftEyeRenderTarget(nullptr),
+	DepthResolution( ESlDepthResolution::DR_Half ),
+	DepthResolutionInPixels( ForceInit ),
 	ImageView( ESlView::V_Left ),
 	CameraRenderPlaneDistance( 0.f ),
 	ZedLeftEyeMaterialInstanceDynamic( nullptr ),
+	bShowZedImage( true ),
+	bLoadParametersFromConfigFile( false ),
+	bLoadCameraSettingsFromConfigFile( false ),
 	bDepthOcclusion( true ),
 	DepthClampThreshold( 0.f ),
 	Batch( nullptr ),
 	ZedSourceMaterial( nullptr ),
-	CurrentDepthTextureQualityPreset( 2 ),
 	bCurrentDepthEnabled( false ),
 	bInit( false ),
-	bShowZedImage( true ),
 	LeftRoot( nullptr ),
 	LeftCamera( nullptr ),
-	LeftPlane( nullptr )
+	LeftPlane( nullptr ),
+	ViewCamera( nullptr )
 {
+	if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
+	{
+		InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
+	}
+
+	DepthClampThreshold = InitParameters.DepthMaximumDistance;
+
 	// Controller tick the camera to make it the first actor to tick
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -59,9 +86,15 @@ AZEDCamera::AZEDCamera()
 	LeftRoot = CreateDefaultSubobject<USceneComponent>(TEXT("LeftRoot"));
 	LeftCamera = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("LeftCamera"));
 	LeftPlane = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftPlane"));
+	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 
+	// The capture sits at the actor origin, the plane root is pushed in front of it
 	LeftRoot->SetupAttachment(RootComponent);
+	LeftCamera->SetupAttachment(RootComponent);
 	LeftPlane->SetupAttachment(LeftRoot);
+
+	// The optical origin is the actor origin, not the offset render plane root
+	ViewCamera->SetupAttachment(RootComponent);
 
 	// Initial camera setup
 	LeftCamera->bCaptureEveryFrame = true;
@@ -97,13 +130,26 @@ AZEDCamera::AZEDCamera()
 	LeftCamera->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
 	// Set light channels
 	LeftPlane->LightingChannels.bChannel0 = false;
+
+	// Hidden while the camera is not opened, so a level-placed camera does not show a bare plane.
+	// Rendering re-enables it through InitializeRenderingCpp.
+	LeftPlane->SetVisibility(false);
 }
 
 void AZEDCamera::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+	// A level-placed camera can exist in a world without a ZED game instance (no camera proxy)
+	if (GSlCameraProxy)
+	{
+		GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+	}
+	else
+	{
+		ZED_CAMERA_LOG_E("No camera proxy available: the game instance must inherit from UZEDGameInstance");
+	}
+
 	CameraRenderPlaneDistance = GNearClippingPlane +0.001;
 }
 
@@ -128,11 +174,12 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 		return;
 	}
 
-	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	const FProperty* Property = PropertyChangedEvent.Property;
+	FName PropertyName = Property ? Property->GetFName() : NAME_None;
 
-	if (PropertyChangedEvent.Property->GetOwnerStruct())
+	if (Property && Property->GetOwnerStruct())
 	{
-		FString StructName = PropertyChangedEvent.Property->GetOwnerStruct()->GetName();
+		FString StructName = Property->GetOwnerStruct()->GetName();
 		if (StructName == FString("SlVideoSettings"))
 		{
 			SetCameraSettings(CameraSettings);
@@ -143,6 +190,23 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 			SetRuntimeParameters(RuntimeParameters);
 		}
 	}
+	// A whole struct is replaced at once by the load, reset and undo of a parameter group
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, CameraSettings))
+	{
+		SetCameraSettings(CameraSettings);
+	}
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, RuntimeParameters))
+	{
+		SetRuntimeParameters(RuntimeParameters);
+	}
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, InitParameters))
+	{
+		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
+		SetDepthClampThreshold(DepthClampThreshold);
+	}
+
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
 	{
 		GSlCameraProxy->SetSVOPlaybackLooping(InitParameters.bLoop);
@@ -156,18 +220,81 @@ void AZEDCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 		SetDepthOcclusion(bDepthOcclusion);
 	}
 
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AZEDCamera, EditorPreviewPlaneDistance) && bInit)
+	{
+		SetEditorPreviewPlaneDistance();
+	}
+
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 {
-	FName PropertyName = InProperty->GetFName();
-
-	if (!GSlCameraProxy)
+	if (!InProperty)
 	{
-		return false;
+		return Super::CanEditChange(InProperty);
 	}
 
+	FName PropertyName = InProperty->GetFName();
+
+	// Design time (level editor, no camera session): authoring rules
+	if (!GSlCameraProxy)
+	{
+		if (InProperty->GetOwnerStruct())
+		{
+			FString StructName = InProperty->GetOwnerStruct()->GetName();
+
+			if (StructName == FString("SlCameraSettings"))
+			{
+				return !(InitParameters.InputType == ESlInputType::IT_SVO);
+			}
+
+			if (StructName == FString("SlRuntimeParameters"))
+			{
+				if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlRuntimeParameters, ReferenceFrame))
+				{
+					return false;
+				}
+
+				return true;
+			}
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, Resolution) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlRecordingParameters, VideoFilename) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlRecordingParameters, CompressionMode)
+			)
+		{
+			return !(InitParameters.InputType == ESlInputType::IT_SVO);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, SvoPath) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bRealTime) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, bLoop))
+		{
+			return (InitParameters.InputType == ESlInputType::IT_SVO);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, StreamIP) ||
+			PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, StreamPort))
+		{
+			return (InitParameters.InputType == ESlInputType::IT_STREAM);
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlInitParameters, DepthMode))
+		{
+			return RuntimeParameters.bEnableDepth;
+		}
+
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(FSlPositionalTrackingParameters, bEnablePoseSmoothing))
+		{
+			return TrackingParameters.bEnableAreaMemory;
+		}
+
+		return Super::CanEditChange(InProperty);
+	}
+
+	// Runtime (camera session live)
 	if (InProperty->GetOwnerStruct())
 	{
 		if (InProperty->GetOwnerStruct()->GetName() == FString("SlCameraSettings"))
@@ -214,11 +341,85 @@ bool AZEDCamera::CanEditChange(const FProperty* InProperty) const
 
 	return Super::CanEditChange(InProperty);
 }
+
+bool AZEDCamera::ValidateForEditorSession(FString& OutError) const
+{
+	if (RuntimeParameters.ReferenceFrame != ESlReferenceFrame::RF_World)
+	{
+		OutError = TEXT("Reference frame must be World");
+		return false;
+	}
+
+	// Init() binds the depth texture to the material, and CreateLeftTextures only creates it when depth is on
+	if (!RuntimeParameters.bEnableDepth)
+	{
+		OutError = TEXT("Depth must be enabled in the runtime parameters");
+		return false;
+	}
+
+	return true;
+}
+
+void AZEDCamera::BeginEditorSession()
+{
+	check(GSlCameraProxy);
+
+	GSlCameraProxy->OnCameraClosed.AddDynamic(this, &AZEDCamera::CameraClosed);
+
+	SetEditorPreviewPlaneDistance();
+
+	LoadParametersAndSettings();
+	PrepareForOpening();
+}
+
+void AZEDCamera::SetEditorPreviewPlaneDistance()
+{
+	// In game the plane sits on the near clipping plane so it covers the whole view. Viewed from
+	// outside in the level editor that is a centimeter wide speck, so the preview is pushed further out
+	CameraRenderPlaneDistance = FMath::Max<float>(GNearClippingPlane + 0.001f, EditorPreviewPlaneDistance);
+
+	if (bInit)
+	{
+		LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
+		SetPlaneSize(LeftPlane, CameraRenderPlaneDistance);
+	}
+}
+
+void AZEDCamera::EndEditorSession()
+{
+	if (GSlCameraProxy)
+	{
+		DisableObjectDetection();
+		GSlCameraProxy->OnCameraClosed.RemoveDynamic(this, &AZEDCamera::CameraClosed);
+		GSlCameraProxy->RemoveFromGrabDelegate(GrabDelegateHandle);
+	}
+
+	DisableRenderingCpp();
+	ClearOutputs();
+
+	// Leave the placed actor as the constructor built it, nothing of the session may end up saved in the level
+	LeftCamera->TextureTarget = nullptr;
+	LeftEyeRenderTarget = nullptr;
+	LeftPlane->SetMaterial(0, nullptr);
+	ZedLeftEyeMaterialInstanceDynamic = nullptr;
+
+	// Undo the render plane layout SetupComponents computed from the camera calibration
+	LeftRoot->SetRelativeLocation(FVector::ZeroVector);
+	LeftPlane->SetWorldScale3D(FVector::OneVector);
+	CameraRenderPlaneDistance = 0.f;
+
+	bInit = false;
+}
 #endif
 
 void AZEDCamera::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (!GSlCameraProxy || !bInit || !Batch)
+	{
+		return;
+	}
 
 	bool bUpdateTracking = false;
 	SL_SCOPE_LOCK(Lock, TrackingUpdateSection)
@@ -239,6 +440,10 @@ void AZEDCamera::Tick(float DeltaSeconds)
 	// Always tick to retrieve last images
 	bool bNewImage = Batch->Tick();
 
+	// Enqueued after the batch, so they run on the render thread once the textures hold this frame
+	UpdateColorOutput();
+	UpdateDepthOutput();
+
 	TrackingData.ZedWorldTransform		 = TrackingData.ZedPathTransform;
 	TrackingData.OffsetZedWorldTransform = TrackingData.ZedWorldTransform;
 
@@ -256,49 +461,43 @@ void AZEDCamera::Tick(float DeltaSeconds)
 		OnTrackingDataUpdated.Broadcast(TrackingData, DeltaSeconds);
 	}
 
-	// Depth texture quality, normals will have the same size for performance purpose
-	int32 GDepthTextureSizePreset = CVarZEDDepthTextureQualityPreset.GetValueOnGameThread();
-	if (CurrentDepthTextureQualityPreset != GDepthTextureSizePreset)
+	// Depth retrieve toggle
+	if (bCurrentDepthEnabled != RuntimeParameters.bEnableDepth)
 	{
-		CurrentDepthTextureQualityPreset = GDepthTextureSizePreset;
+		bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
 
-		if (bCurrentDepthEnabled)
+		if (!bCurrentDepthEnabled)
 		{
-			FVector2D DepthSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
+			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
 
-			// Left depth
+			Batch->RemoveTexture(LeftEyeDepth);
+			LeftEyeDepth->ConditionalBeginDestroy();
+			LeftEyeDepth = nullptr;
+
+			DepthResolutionInPixels = FIntPoint::ZeroValue;
+		}
+		else
+		{
+			CreateLeftTextures(false);
+
+			Batch->AddTexture(LeftEyeDepth);
+
+			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+		}
+	}
+	// Depth texture resolution, normals will have the same size for performance purpose
+	else if (bCurrentDepthEnabled)
+	{
+		const FIntPoint DepthSize = GetDepthTextureSize();
+		if (DepthSize.X != LeftEyeDepth->Width || DepthSize.Y != LeftEyeDepth->Height)
+		{
 			Batch->RemoveTexture(LeftEyeDepth);
 			LeftEyeDepth->Resize(DepthSize.X, DepthSize.Y);
 			Batch->AddTexture(LeftEyeDepth);
 
 			ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-		}
-		else
-		{
-			ZED_CAMERA_LOG_E("Resizing depth and normal without depth enabled in runtime parameters");
-		}
 
-		// Depth retrieve toggle
-		if (bCurrentDepthEnabled != RuntimeParameters.bEnableDepth)
-		{
-			bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
-
-			if (!bCurrentDepthEnabled)
-			{
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", nullptr);
-
-				Batch->RemoveTexture(LeftEyeDepth);
-				delete LeftEyeDepth;
-				LeftEyeDepth = nullptr;
-			}
-			else
-			{
-				CreateLeftTextures(false);
-
-				Batch->AddTexture(LeftEyeDepth);
-
-				ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
-			}
+			DepthResolutionInPixels = DepthSize;
 		}
 	}
 }
@@ -318,13 +517,33 @@ void AZEDCamera::GrabCallback(ESlErrorCode ErrorCode, const FSlTimestamp& Timest
 		CurrentFrameTrackingData.TrackingState = (ESlTrackingState)TrackingState;
 		CurrentFrameTrackingData.Timestamp = Timestamp;
 
-		if (TrackingState == SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW)
+		// Logged on change, this runs at grab rate. The states that do not reach the pose update
+		// below leave the actor standing still, so they cannot stay silent
+		if ((int32)TrackingState != LastLoggedTrackingState)
 		{
-			ZED_CAMERA_LOG_W("FPS too low for good tracking.");
-		}
-		else if (TrackingState == SL_POSITIONAL_TRACKING_STATE_SEARCHING)
-		{
-			ZED_CAMERA_LOG_W("Tracking trying to relocate.");
+			LastLoggedTrackingState = (int32)TrackingState;
+
+			switch (TrackingState)
+			{
+				case SL_POSITIONAL_TRACKING_STATE_OK:
+					ZED_CAMERA_LOG("Positional tracking OK");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW:
+					ZED_CAMERA_LOG_W("FPS too low for good tracking");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_SEARCHING_FLOOR_PLANE:
+					ZED_CAMERA_LOG_W("Searching the floor plane, the pose holds until it is found");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_UNAVAILABLE:
+					ZED_CAMERA_LOG_W("Tracking could not follow the previous frame, the pose holds");
+					break;
+				case SL_POSITIONAL_TRACKING_STATE_OFF:
+					ZED_CAMERA_LOG_W("Positional tracking is off");
+					break;
+				default:
+					ZED_CAMERA_LOG_W("Positional tracking state %d", (int32)TrackingState);
+					break;
+			}
 		}
 
 		// Get the IMU rotation
@@ -358,15 +577,138 @@ void AZEDCamera::CreateLeftTextures(bool bCreateColorTexture/* = true*/)
 	{
 		FIntPoint Resolution = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution;
 
-		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ImageView, true, ESlTextureFormat::TF_R8G8B8A8_SNORM);
+		LeftEyeColor = USlViewTexture::CreateGPUViewTexture("LeftEyeColor", Resolution.X, Resolution.Y, ImageView, true, ESlTextureFormat::TF_R8G8B8A8_UNORM);
 	}
 
 	if (RuntimeParameters.bEnableDepth)
 	{
-		FIntPoint TextureSize = GetSlTextureSizeFromPreset(CurrentDepthTextureQualityPreset);
+		const FIntPoint TextureSize = GetDepthTextureSize();
 
 		LeftEyeDepth = USlMeasureTexture::CreateGPUMeasureTexture("LeftEyeDepth", TextureSize.X, TextureSize.Y, ESlMeasure::M_Depth, true, ESlTextureFormat::TF_R32_FLOAT);
+
+		DepthResolutionInPixels = TextureSize;
 	}
+}
+
+FIntPoint AZEDCamera::GetDepthTextureSize() const
+{
+	static_assert((int32)ESlDepthResolution::DR_Full == 0 && (int32)ESlDepthResolution::DR_Eighth == 3,
+		"ESlDepthResolution is used as a power of two divisor, so its order carries the meaning");
+
+	const FIntPoint ImageSize = GSlCameraProxy->CameraInformation.CalibrationParameters.LeftCameraParameters.Resolution;
+	const int32 Shift = (int32)DepthResolution;
+
+	// A power of two divisor keeps the image aspect ratio and never rounds to zero on a valid image
+	return FIntPoint(FMath::Max(ImageSize.X >> Shift, 1), FMath::Max(ImageSize.Y >> Shift, 1));
+}
+
+namespace
+{
+	/** Resize and reformat an output target so a straight copy from a ZED texture is possible */
+	bool ConformRenderTarget(UTextureRenderTarget2D* Target, int32 Width, int32 Height, EPixelFormat Format, bool bLinearGamma)
+	{
+		if (Target->SizeX == Width && Target->SizeY == Height && Target->GetFormat() == Format && Target->bForceLinearGamma == bLinearGamma)
+		{
+			return false;
+		}
+
+		// OverrideFormat takes precedence over RenderTargetFormat and InitAutoFormat leaves it alone.
+		// With it set, IsSRGB is just !bForceLinearGamma
+		Target->OverrideFormat = Format;
+		Target->bForceLinearGamma = bLinearGamma;
+		Target->ClearColor = FLinearColor::Black;
+
+		// Recreates the resource itself
+		Target->InitAutoFormat(Width, Height);
+
+		return true;
+	}
+
+	void CopyTextureToRenderTarget(UTexture2D* Source, UTextureRenderTarget2D* Target)
+	{
+		FTextureResource* SourceResource = Source->GetResource();
+
+		// GetRenderTargetResource asserts on the rendering thread
+		FTextureRenderTargetResource* TargetResource = Target->GameThread_GetRenderTargetResource();
+
+		if (!SourceResource || !TargetResource)
+		{
+			return;
+		}
+
+		ENQUEUE_RENDER_COMMAND(ZEDCopyToRenderTarget)(
+			[SourceResource, TargetResource](FRHICommandListImmediate& RHICmdList)
+			{
+				FRHITexture* SourceRHI = SourceResource->TextureRHI;
+				FRHITexture* TargetRHI = TargetResource->GetRenderTargetTexture();
+
+				if (!SourceRHI || !TargetRHI ||
+					SourceRHI->GetDesc().Extent != TargetRHI->GetDesc().Extent ||
+					SourceRHI->GetDesc().Format != TargetRHI->GetDesc().Format)
+				{
+					return;
+				}
+
+				RHICmdList.Transition(FRHITransitionInfo(SourceRHI, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+				RHICmdList.Transition(FRHITransitionInfo(TargetRHI, ERHIAccess::Unknown, ERHIAccess::CopyDest));
+
+				RHICmdList.CopyTexture(SourceRHI, TargetRHI, FRHICopyTextureInfo());
+
+				RHICmdList.Transition(FRHITransitionInfo(TargetRHI, ERHIAccess::CopyDest, ERHIAccess::SRVMask));
+			});
+	}
+}
+
+void AZEDCamera::ClearOutputs()
+{
+	// Depth 0 is what the composite depth mesh treats as no sample, so its mask drops those vertices
+	if (ColorOutput)
+	{
+		UKismetRenderingLibrary::ClearRenderTarget2D(this, ColorOutput, FLinearColor::Black);
+	}
+
+	if (DepthOutput)
+	{
+		UKismetRenderingLibrary::ClearRenderTarget2D(this, DepthOutput, FLinearColor::Black);
+	}
+}
+
+void AZEDCamera::UpdateColorOutput()
+{
+	if (!ColorOutput)
+	{
+		return;
+	}
+
+	if (!LeftEyeColor || !LeftEyeColor->Texture)
+	{
+		return;
+	}
+
+	// Matches the source texture so the copy is a straight blit, sRGB so it samples like any color texture
+	if (ConformRenderTarget(ColorOutput, LeftEyeColor->Width, LeftEyeColor->Height, PF_R8G8B8A8, false))
+	{
+		ZED_CAMERA_LOG_W("Color output %s set to %dx%d RGBA8 sRGB",
+			*ColorOutput->GetName(), LeftEyeColor->Width, LeftEyeColor->Height);
+	}
+
+	CopyTextureToRenderTarget(LeftEyeColor->Texture, ColorOutput);
+}
+
+void AZEDCamera::UpdateDepthOutput()
+{
+	if (!DepthOutput || !LeftEyeDepth || !LeftEyeDepth->Texture)
+	{
+		return;
+	}
+
+	if (ConformRenderTarget(DepthOutput, LeftEyeDepth->Width, LeftEyeDepth->Height, PF_R32_FLOAT, true))
+	{
+		ZED_CAMERA_LOG_W("Depth output %s set to %dx%d R32F to match the depth texture",
+			*DepthOutput->GetName(), LeftEyeDepth->Width, LeftEyeDepth->Height);
+	}
+
+	CopyTextureToRenderTarget(LeftEyeDepth->Texture, DepthOutput);
 }
 
 void AZEDCamera::EnableMultiThreadedRenderingMode(const bool EnableMTR)
@@ -479,32 +821,192 @@ void AZEDCamera::ResetTrackingOrigin()
 
 void AZEDCamera::SaveSpatialMemoryArea()
 {
-	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath);
+	GSlCameraProxy->SaveSpatialMemoryArea(TrackingParameters.AreaFilePath.FilePath);
 }
 
-void AZEDCamera::InitializeParameters(AZEDInitializer* ZedInitializer)
+void AZEDCamera::PrepareForOpening()
 {
-	TrackingParameters = ZedInitializer->TrackingParameters;
-	InitParameters = ZedInitializer->InitParameters;
-	RuntimeParameters = ZedInitializer->RuntimeParameters;
-	RenderingParameters = ZedInitializer->RenderingParameters;
-	CameraSettings = ZedInitializer->CameraSettings;
-	RecordingParameters = ZedInitializer->RecordingParameters;
-	bDepthOcclusion = ZedInitializer->bDepthOcclusion;
-	bShowZedImage = ZedInitializer->bShowZedImage;
-	ImageView = ZedInitializer->ImageView;
-
-	ObjectDetectionParameters = ZedInitializer->ObjectDetectionParameters;
-	ObjectDetectionRuntimeParameters = ZedInitializer->ObjectDetectionRuntimeParameters;
-
-	BodyTrackingParameters = ZedInitializer->BodyTrackingParameters;
-	BodyTrackingRuntimeParameters = ZedInitializer->BodyTrackingRuntimeParameters;
-
-	DepthClampThreshold = ZedInitializer->DepthClampThreshold;
-
 	bCurrentDepthEnabled = RuntimeParameters.bEnableDepth;
 
 	checkf(RuntimeParameters.ReferenceFrame == ESlReferenceFrame::RF_World, TEXT("Reference frame must be World when using the ZEDCamera"));
+}
+
+void AZEDCamera::LoadParametersAndSettings()
+{
+	if (bLoadParametersFromConfigFile)
+	{
+		LoadParameters();
+	}
+	if (bLoadCameraSettingsFromConfigFile)
+	{
+		LoadCameraSettings();
+	}
+}
+
+void AZEDCamera::LoadParameters()
+{
+	LoadParameterGroup(EZEDParameterGroup::PG_Init);
+	LoadParameterGroup(EZEDParameterGroup::PG_Tracking);
+	LoadParameterGroup(EZEDParameterGroup::PG_Runtime);
+	LoadParameterGroup(EZEDParameterGroup::PG_Recording);
+}
+
+void AZEDCamera::LoadCameraSettings()
+{
+	LoadParameterGroup(EZEDParameterGroup::PG_CameraSettings);
+}
+
+void AZEDCamera::SaveParameters()
+{
+	SaveParameterGroup(EZEDParameterGroup::PG_Init);
+	SaveParameterGroup(EZEDParameterGroup::PG_Tracking);
+	SaveParameterGroup(EZEDParameterGroup::PG_Runtime);
+	SaveParameterGroup(EZEDParameterGroup::PG_Recording);
+}
+
+void AZEDCamera::SaveCameraSettings()
+{
+	SaveParameterGroup(EZEDParameterGroup::PG_CameraSettings);
+}
+
+void AZEDCamera::LoadParameterGroup(EZEDParameterGroup Group)
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	const FString Path = GetParameterGroupConfigPath(Group);
+
+	// Write out every group sharing that file, so the next load finds all of them
+	if (!GConfig->Find(Path))
+	{
+		if (Group == EZEDParameterGroup::PG_CameraSettings)
+		{
+			SaveParameterGroup(EZEDParameterGroup::PG_CameraSettings);
+		}
+		else
+		{
+			SaveParameterGroup(EZEDParameterGroup::PG_Init);
+			SaveParameterGroup(EZEDParameterGroup::PG_Tracking);
+			SaveParameterGroup(EZEDParameterGroup::PG_Runtime);
+			SaveParameterGroup(EZEDParameterGroup::PG_Recording);
+		}
+
+		return;
+	}
+
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+			InitParameters.Load(Path);
+			if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
+			{
+				InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
+			}
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters.Load(Path);
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings.Load(Path);
+			break;
+	}
+}
+
+void AZEDCamera::SaveParameterGroup(EZEDParameterGroup Group)
+{
+	if (!IsGConfigAvailable())
+	{
+		return;
+	}
+
+	const FString Path = GetParameterGroupConfigPath(Group);
+
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+#if WITH_EDITOR
+			// An empty path means "use the default", don't bake the machine specific one into the config
+			if (InitParameters.VerboseFilePath.FilePath == DEFAULT_VERBOSE_FILE_PATH)
+			{
+				InitParameters.VerboseFilePath.FilePath.Empty();
+			}
+#endif
+			InitParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters.Save(Path);
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings.Save(Path);
+			break;
+	}
+
+	GConfig->Flush(false, *Path);
+}
+
+void AZEDCamera::ResetParameterGroup(EZEDParameterGroup Group)
+{
+	switch (Group)
+	{
+		case EZEDParameterGroup::PG_Init:
+			InitParameters = FSlInitParameters();
+			if (InitParameters.VerboseFilePath.FilePath.IsEmpty())
+			{
+				InitParameters.VerboseFilePath.FilePath = DEFAULT_VERBOSE_FILE_PATH;
+			}
+			DepthClampThreshold = InitParameters.DepthMaximumDistance;
+			break;
+		case EZEDParameterGroup::PG_Tracking:
+			TrackingParameters = FSlPositionalTrackingParameters();
+			break;
+		case EZEDParameterGroup::PG_Runtime:
+			RuntimeParameters = FSlRuntimeParameters();
+			break;
+		case EZEDParameterGroup::PG_Recording:
+			RecordingParameters = FSlRecordingParameters();
+			break;
+		case EZEDParameterGroup::PG_CameraSettings:
+			CameraSettings = FSlVideoSettings();
+			break;
+	}
+}
+
+void AZEDCamera::ResetParameters()
+{
+	ResetParameterGroup(EZEDParameterGroup::PG_Init);
+	ResetParameterGroup(EZEDParameterGroup::PG_Tracking);
+	ResetParameterGroup(EZEDParameterGroup::PG_Runtime);
+
+	ObjectDetectionParameters = FSlObjectDetectionParameters();
+	ObjectDetectionRuntimeParameters = FSlObjectDetectionRuntimeParameters();
+
+	BodyTrackingParameters = FSlBodyTrackingParameters();
+	BodyTrackingRuntimeParameters = FSlBodyTrackingRuntimeParameters();
+
+	bDepthOcclusion = true;
+
+	ImageView = ESlView::V_Left;
+
+	bShowZedImage = true;
+}
+
+void AZEDCamera::ResetSettings()
+{
+	ResetParameterGroup(EZEDParameterGroup::PG_CameraSettings);
 }
 
 void AZEDCamera::Init()
@@ -513,6 +1015,9 @@ void AZEDCamera::Init()
 	{
 		return;
 	}
+
+	// So a new session logs its first tracking state even when it matches the previous one
+	LastLoggedTrackingState = -1;
 
 	Batch = USlGPUTextureBatch::CreateGPUTextureBatch(FName("ZedCameraBatch"));
 
@@ -534,7 +1039,10 @@ void AZEDCamera::Init()
 
 	CreateLeftTextures();
 	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Color", LeftEyeColor->Texture);
-	ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+	if (LeftEyeDepth)
+	{
+		ZedLeftEyeMaterialInstanceDynamic->SetTextureParameterValue("Depth", LeftEyeDepth->Texture);
+	}
 
 	Batch->AddTexture(LeftEyeColor);
 
@@ -565,10 +1073,17 @@ void AZEDCamera::CameraClosed()
 	if (Batch) Batch->Clear();
 	if (LeftEyeColor) {
 		LeftEyeColor->ConditionalBeginDestroy();
+		LeftEyeColor = nullptr;
 	}
 	if (LeftEyeDepth) {
 		LeftEyeDepth->ConditionalBeginDestroy();
+		LeftEyeDepth = nullptr;
 	}
+
+	DepthResolutionInPixels = FIntPoint::ZeroValue;
+
+	ClearOutputs();
+
 	bInit = false;
 }
 
@@ -590,7 +1105,11 @@ void AZEDCamera::SetSVOPlaybackLooping(bool bLooping)
 void AZEDCamera::ToggleComponents(bool enable)
 {
 	LeftPlane->SetVisibility(enable);
-	LeftCamera->SetActive(enable);
+
+	// The scene capture renders the whole scene every frame into LeftEyeRenderTarget, which only
+	// gameplay ever reads. An editor session shows the plane without paying for it
+	const UWorld* World = GetWorld();
+	LeftCamera->SetActive(enable && World && World->IsGameWorld());
 }
 
 void AZEDCamera::SetupComponents()
@@ -605,6 +1124,10 @@ void AZEDCamera::SetupComponents()
 
 	// Set camera FOV
 	LeftCamera->FOVAngle = cameraParam.HFOV;
+
+	ViewCamera->SetFieldOfView(cameraParam.HFOV);
+	ViewCamera->SetAspectRatio((float)cameraParam.Resolution.X / (float)cameraParam.Resolution.Y);
+	ViewCamera->bConstrainAspectRatio = true;
 	
 	LeftRoot->SetRelativeLocation(FVector(CameraRenderPlaneDistance, 0, 0));
 	// Set plane size
@@ -616,14 +1139,6 @@ void AZEDCamera::SetupComponents()
 	// Set camera projection matrix
 	LeftCamera->bUseCustomProjectionMatrix = true;
 	USlFunctionLibrary::GetSceneCaptureProjectionMatrix(LeftCamera->CustomProjectionMatrix, ESlEye::E_Left);
-}
-
-void AZEDCamera::SetPlaneSizeWithGamma(UStaticMeshComponent* plane, float planeDistance)
-{
-	FSlCameraParameters cameraParam = USlFunctionLibrary::GetCameraProxy()->CameraInformation.CalibrationParameters.LeftCameraParameters;
-
-	FVector2D planeSize = USlFunctionLibrary::GetRenderPlaneSizeWithGamma(this, cameraParam.Resolution, RenderingParameters.PerceptionDistance, cameraParam.HFocal, planeDistance/100.0f); // because plane is already of side 100
-	plane->SetWorldScale3D(FVector(planeSize.X, planeSize.Y, 1.0f));
 }
 
 void AZEDCamera::SetPlaneSize(UStaticMeshComponent* plane, float planeDistance)

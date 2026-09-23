@@ -17,8 +17,10 @@ public class SpatialMapping : ModuleRules
 
 #if UE_5_6_OR_LATER
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Error;
-#else
+#elif UE_5_5_OR_LATER
         UndefinedIdentifierWarningLevel = WarningLevel.Error;
+#else
+        bEnableUndefinedIdentifierWarnings = true;
 #endif
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
