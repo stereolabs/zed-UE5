@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "SpatialMappingBaseTypes.generated.h"
+
 /*
  * Current step of SpatialMapping
  */
