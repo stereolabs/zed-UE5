@@ -3,6 +3,7 @@
 #include "Stereolabs.h"
 #include "StereolabsPrivatePCH.h"
 #include "Core.h"
+#include "Stereolabs/Public/Core/StereolabsCApiImports.h"
 //#include "Interfaces/IPluginManager.h"
 
 #define LOCTEXT_NAMESPACE "FStereolabs"
@@ -33,6 +34,8 @@ void FStereolabs::StartupModule()
 #else
 	SL_IMPORT_STRING(ZedCApi, TEXT("../../Plugins/Stereolabs/Binaries/Win64/sl_zed_c.dll"));
 #endif
+
+	SlBindCApiImports(TEXT("Stereolabs"));
 }
 
 void FStereolabs::ShutdownModule()

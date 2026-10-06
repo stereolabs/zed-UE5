@@ -853,6 +853,12 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 		UE_LOG(LogTemp, Warning, TEXT("Hit is not in viewport"));
 		return false;
 	}
+	if (!GSlCameraProxy->IsCameraOpened())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Plane detection is unavailable, the camera is not open"));
+		return false;
+	}
+
 	int CameraID = GSlCameraProxy->GetCameraID();
 
 	SL_PlaneDetectionParameters sdk_params = sl::unreal::ToSlType(planeDetectionParameters);
@@ -906,6 +912,12 @@ bool UZEDFunctionLibrary::CreateMeshFromFloorHit(AZEDPlayerController* PlayerCon
 }
 
 bool UZEDFunctionLibrary::CreateMeshFromFloorPlane(FSlMeshData& MeshData) {
+	if (!GSlCameraProxy->IsCameraOpened())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Floor plane detection is unavailable, the camera is not open"));
+		return false;
+	}
+
 	int CameraID = GSlCameraProxy->GetCameraID();
 
 	SL_Vector3 reset_translation, prior_translation;;

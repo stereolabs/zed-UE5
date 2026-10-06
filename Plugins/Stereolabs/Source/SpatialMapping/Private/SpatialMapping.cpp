@@ -2,12 +2,14 @@
 
 #include "SpatialMapping.h"
 #include "SpatialMappingPrivatePCH.h"
+#include "Stereolabs/Public/Core/StereolabsCApiImports.h"
 
 #define LOCTEXT_NAMESPACE "FStereolabsSpatialMapping"
 
 void FStereolabsSpatialMapping::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	SlBindCApiImports(TEXT("SpatialMapping"));
 }
 
 void FStereolabsSpatialMapping::ShutdownModule()

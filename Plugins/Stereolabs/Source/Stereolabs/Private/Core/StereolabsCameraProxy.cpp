@@ -255,6 +255,11 @@ void USlCameraProxy::BeginDestroy()
 
 FString USlCameraProxy::GetSDKVersion()
 {
+	if (!GSlCApiAvailable)
+	{
+		return FString();
+	}
+
 	char* Version = sl_get_sdk_version();
 	FString Out = FString(Version);
 	sl_free(Version);
@@ -263,6 +268,13 @@ FString USlCameraProxy::GetSDKVersion()
 
 void USlCameraProxy::OpenCamera(const FSlInitParameters& InitParameters)
 {
+	if (!GSlCApiAvailable)
+	{
+		SL_CAMERA_PROXY_LOG_E("sl_zed_c.dll is missing or older than the plugin, see the error logged at startup");
+		SetOpenCameraErrorCode(ESlErrorCode::EC_IncompatibleSDKVersion);
+		return;
+	}
+
 	if (OpenCameraAsyncTask)
 	{
 		return;
@@ -487,8 +499,10 @@ void USlCameraProxy::CloseCamera()
 		OnCameraClosed.Broadcast();
 	}
 
-	sl_close_camera(CameraID);
-
+	if (GSlCApiAvailable)
+	{
+		sl_close_camera(CameraID);
+	}
 
 }
 
@@ -1342,6 +1356,12 @@ void USlCameraProxy::EnableBodyTrackingThread(bool bEnable)
 
 bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel)
 {
+	// Report nothing to optimize, so callers go on to OpenCamera() which reports the error
+	if (!GSlCApiAvailable)
+	{
+		return true;
+	}
+
 	const SL_AI_Model_status ai_model_status = SlCopyAndFree(sl_check_AI_model_status((SL_AI_MODELS)AiModel, 0));
 
 	if (!ai_model_status.optimized)
@@ -1353,6 +1373,12 @@ bool USlCameraProxy::CheckAIModelOptimization(const ESlAIModels AiModel)
 }
 
 void USlCameraProxy::OptimizeAIModel(const ESlAIModels& AIModel, const ESlAIType& AIType) {
+
+	if (!GSlCApiAvailable)
+	{
+		SL_CAMERA_PROXY_LOG_E("sl_zed_c.dll is missing or older than the plugin, see the error logged at startup");
+		return;
+	}
 
 	AIOptimizationAsyncTask = new FAsyncTask<FAIOptimizationAsyncTask>(AIModel, AIType);
 	AIOptimizationAsyncTask->StartBackgroundTask();

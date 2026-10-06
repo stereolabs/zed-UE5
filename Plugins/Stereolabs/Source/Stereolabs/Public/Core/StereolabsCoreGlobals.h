@@ -20,6 +20,12 @@ extern STEREOLABS_API bool GSlIsGrabThreadIdInitialized;
 /** Camera proxy instance */
 extern STEREOLABS_API class USlCameraProxy* GSlCameraProxy;
 
+/** False when sl_zed_c.dll could not be loaded or lacks a function the plugin calls, see SlBindCApiImports() */
+extern STEREOLABS_API bool GSlCApiAvailable;
+
+/** Clears GSlCApiAvailable and logs why. MissingFunction is null when the DLL itself could not be loaded */
+STEREOLABS_API void SlSetCApiUnavailable(const TCHAR* ModuleName, const ANSICHAR* MissingFunction);
+
 /*
  * @return True if called from the grab thread
  */

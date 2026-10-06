@@ -1,5 +1,6 @@
 #include "ZED.h"
 #include "ZEDPrivatePCH.h"
+#include "Stereolabs/Public/Core/StereolabsCApiImports.h"
 
 
 #define LOCTEXT_NAMESPACE "FStereolabsZED"
@@ -7,6 +8,7 @@
 void FStereolabsZED::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+	SlBindCApiImports(TEXT("ZED"));
 }
 
 void FStereolabsZED::ShutdownModule()

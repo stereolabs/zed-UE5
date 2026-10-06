@@ -100,6 +100,12 @@ bool UZEDEditorCameraSession::Start(AZEDCamera* InCamera, FString& OutError)
 		return false;
 	}
 
+	if (!GSlCApiAvailable)
+	{
+		OutError = TEXT("sl_zed_c.dll is missing or older than the plugin, see the error logged at startup");
+		return false;
+	}
+
 	// One SDK session per device: a play session or another actor already owns the camera
 	if (GSlCameraProxy)
 	{
