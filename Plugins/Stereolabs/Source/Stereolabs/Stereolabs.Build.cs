@@ -180,35 +180,11 @@ public class Stereolabs : ModuleRules
             PublicAdditionalLibraries.Add(Path.Combine(DirPath, "lib", LibName));
             PublicDelayLoadDLLs.Add(DLLName);
 
-            string DLLPath = Path.Combine(ModulePath, "../ThirdParty/sl_zed_c/bin/", DLLName);
-
             PublicIncludePaths.Add(Path.Combine(DirPath, "include"));
 
-            if (!Directory.Exists(ProjectBinariesPathDirectory))
-            {
-                Directory.CreateDirectory(ProjectBinariesPathDirectory);
-            }
-
-            // Copy to the project binary folder. Skip when already up to date, and do not fail
-            // the build if an up-to-date copy is locked by a running process (editor, UAT, cook).
-            string DLLDestPath = Path.Combine(ProjectBinariesPathDirectory, DLLName);
-            FileInfo Source = new FileInfo(DLLPath);
-            FileInfo Dest = new FileInfo(DLLDestPath);
-            bool bUpToDate = Dest.Exists && Dest.Length == Source.Length && Dest.LastWriteTimeUtc == Source.LastWriteTimeUtc;
-            if (!bUpToDate)
-            {
-                try
-                {
-                    File.Copy(DLLPath, DLLDestPath, true);
-                }
-                catch (IOException) when (Dest.Exists)
-                {
-                    System.Console.WriteLine("Warning: could not refresh locked " + DLLDestPath + ", keeping existing copy");
-                }
-            }
-
-            // Add library to the packaged binary folder
-            RuntimeDependencies.Add(ProjectBinariesPathDirectory + DLLName, StagedFileType.NonUFS);
+            // UBT copies it into the plugin binary folder whenever the source is newer, and stages it from there.
+            // A copy done here would be skipped on builds where UBT reuses its cached makefile
+            RuntimeDependencies.Add(Path.Combine(ProjectBinariesPathDirectory, DLLName), Path.Combine(DirPath, "bin", DLLName), StagedFileType.NonUFS);
         }
     }
 }
