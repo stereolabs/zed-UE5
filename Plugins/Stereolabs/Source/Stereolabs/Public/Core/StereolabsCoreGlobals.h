@@ -311,6 +311,10 @@ namespace sl
 				return ESlErrorCode::EC_DriverFailure;
 			case SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH:
 				return ESlErrorCode::EC_CameraExceedsBandwidth;
+			case SL_ERROR_CODE_INVALID_TIMESTAMP:
+				return ESlErrorCode::EC_InvalidTimestamp;
+			case SL_ERROR_CODE_AI_MODEL_NOT_AVAILABLE:
+				return ESlErrorCode::EC_AIModelNotAvailable;
 			default:
 			{
 				ensureMsgf(false, TEXT("Unhandled sl::ERROR_CODE entry %u"), (uint32)SlType);
@@ -926,6 +930,12 @@ namespace sl
 				return sl::ERROR_CODE::MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION;
 			case ESlErrorCode::EC_DriverFailure: /**< A driver failure occurred, try rebooting your computer or updating your drivers.*/
 				return sl::ERROR_CODE::DRIVER_FAILURE;
+			case ESlErrorCode::EC_CameraExceedsBandwidth:
+				return sl::ERROR_CODE::CAMERA_EXCEEDS_BANDWIDTH;
+			case ESlErrorCode::EC_InvalidTimestamp:
+				return sl::ERROR_CODE::INVALID_TIMESTAMP;
+			case ESlErrorCode::EC_AIModelNotAvailable:
+				return sl::ERROR_CODE::AI_MODEL_NOT_AVAILABLE;
 			case ESlErrorCode::EC_None:
 				return  sl::ERROR_CODE::LAST;
 			default:
@@ -1900,6 +1910,26 @@ namespace sl
 		}
 
 		/*
+		 * Convert from FSlRelativePoseData to SL_RelativePoseData
+		 * The camera is opened in the UE coordinate system and unit, so the transforms are copied as is
+		 */
+		FORCEINLINE SL_RelativePoseData ToSlType(const FSlRelativePoseData& UnrealData)
+		{
+			SL_RelativePoseData SlData = {};
+			SlData.start_timestamp = (uint64_t)UnrealData.StartTimestamp;
+			SlData.end_timestamp = (uint64_t)UnrealData.EndTimestamp;
+			SlData.motion.translation = ToSlType(UnrealData.Motion.GetLocation());
+			SlData.motion.rotation = ToSlType(UnrealData.Motion.GetRotation());
+			SlData.measured_axes = (unsigned int)UnrealData.MeasuredAxes;
+			FMemory::Memcpy(SlData.covariance, UnrealData.Covariance.GetData(), FMath::Min<SIZE_T>(UnrealData.Covariance.Num(), 36) * sizeof(float));
+			SlData.is_stationary = UnrealData.bIsStationary;
+			SlData.sensor_transform.translation = ToSlType(UnrealData.SensorTransform.GetLocation());
+			SlData.sensor_transform.rotation = ToSlType(UnrealData.SensorTransform.GetRotation());
+			SlData.rejection_threshold = UnrealData.RejectionThreshold;
+			return SlData;
+		}
+
+		/*
 		 * Convert from FSlTrackingParameters to sl::TrackingParameters
 		 */
 		FORCEINLINE sl::PositionalTrackingParameters ToSlType(const FSlPositionalTrackingParameters& UnrealData)
@@ -2139,6 +2169,35 @@ namespace sl
 			CameraParameters.image_size = sl::unreal::ToSlType2(UnrealData.Resolution);
 
 			return CameraParameters;
+		}
+
+		/*
+		 * AI model whose engine the camera opening builds for this depth configuration.
+		 * The 8-bit engines are separate from the FP16 ones: optimizing one does not optimize the other.
+		 * @return False when the depth mode does not use an AI model
+		 */
+		FORCEINLINE bool GetDepthAIModel(ESlDepthMode DepthMode, ESlDepthPrecision DepthPrecision, ESlAIModels& OutModel)
+		{
+			const bool bInt8 = DepthPrecision == ESlDepthPrecision::DP_INT8;
+
+			switch (DepthMode)
+			{
+			case ESlDepthMode::DM_NeuralLight:
+				OutModel = bInt8 ? ESlAIModels::AIM_NeuralLightDepthInt8 : ESlAIModels::AIM_NeuralLightDepth;
+				return true;
+			case ESlDepthMode::DM_Neural:
+				OutModel = bInt8 ? ESlAIModels::AIM_NeuralDepthInt8 : ESlAIModels::AIM_NeuralDepth;
+				return true;
+			case ESlDepthMode::DM_NeuralPlus:
+				OutModel = bInt8 ? ESlAIModels::AIM_NeuralPlusDepthInt8 : ESlAIModels::AIM_NeuralPlusDepth;
+				return true;
+			// The SDK has no separate 8-bit entry for Neural Max
+			case ESlDepthMode::DM_NeuralMax:
+				OutModel = ESlAIModels::AIM_NeuralMaxDepth;
+				return true;
+			default:
+				return false;
+			}
 		}
 
 		FORCEINLINE SL_AI_MODELS cvtDetection(const SL_OBJECT_DETECTION_MODEL& m_in) {

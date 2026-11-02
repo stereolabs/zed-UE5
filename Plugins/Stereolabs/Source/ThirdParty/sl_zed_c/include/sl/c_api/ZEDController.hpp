@@ -108,6 +108,7 @@ public:
 
 
     sl::ERROR_CODE setIMUPriorOrientation(SL_Quaternion rotation);
+    sl::ERROR_CODE ingestMotionPrior(struct SL_RelativePoseData* motion_prior);
     sl::ERROR_CODE getIMUOrientation(SL_Quaternion *quaternion, int time_reference);
     sl::ERROR_CODE getSensorsData(SL_SensorsData *sensorData, int time_reference);
 
