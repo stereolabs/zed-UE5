@@ -761,6 +761,46 @@ void USlCameraProxy::SetIMUPrior(const FTransform& Transform)
 	sl_set_imu_prior_orientation(CameraID, sl::unreal::ToSlType(Transform.Rotator().Quaternion()));
 }
 
+ESlErrorCode USlCameraProxy::IngestMotionPrior(const FSlRelativePoseData& MotionPrior)
+{
+	if (!GSlCApiAvailable)
+	{
+		return ESlErrorCode::EC_IncompatibleSDKVersion;
+	}
+
+	if (MotionPrior.Covariance.Num() != 36)
+	{
+		SL_CAMERA_PROXY_LOG_E("Motion prior covariance must hold 36 values, got %d", MotionPrior.Covariance.Num());
+		return ESlErrorCode::EC_InvalidFunctionParameters;
+	}
+
+	// No GrabSection lock: the SDK takes samples from the source's thread while grab runs
+	SL_RelativePoseData SlMotionPrior = sl::unreal::ToSlType(MotionPrior);
+	return sl::unreal::ToUnrealType((SL_ERROR_CODE)sl_ingest_motion_prior(CameraID, &SlMotionPrior));
+}
+
+ESlRelativePoseFusionStatus USlCameraProxy::GetRelativePoseFusionStatus()
+{
+	if (!GSlCApiAvailable)
+	{
+		return ESlRelativePoseFusionStatus::RPFS_Off;
+	}
+
+	SL_SCOPE_LOCK(Lock, GrabSection)
+		return (ESlRelativePoseFusionStatus)SlCopyAndFree(sl_get_positional_tracking_status(CameraID)).relative_pose_fusion_status;
+	SL_SCOPE_UNLOCK
+}
+
+int64 USlCameraProxy::GetCurrentTimestamp()
+{
+	if (!GSlCApiAvailable)
+	{
+		return 0;
+	}
+
+	return (int64)sl_get_current_timestamp(CameraID);
+}
+
 bool USlCameraProxy::IsTrackingEnabled()
 {
 	return bTrackingEnabled;
@@ -1417,7 +1457,14 @@ void USlCameraProxy::Internal_OptimizeAIModel(const ESlAIModels& AIModel, const 
 			}
 			else
 			{
-				SL_CAMERA_PROXY_LOG_E("Error during model optimization");
+				SL_CAMERA_PROXY_LOG_E("Error during model optimization: \"%s\"", *EnumToString(sl::unreal::ToUnrealType((SL_ERROR_CODE)err)));
+
+				// Open anyway: the SDK either falls back (FP16 when the GPU has no 8-bit support)
+				// or returns the actual error, which the open path reports
+				if (AIType == ESlAIType::AIT_Depth)
+				{
+					GSlCameraProxy->OnAIModelOptimized.Broadcast();
+				}
 			}
 		});
 }

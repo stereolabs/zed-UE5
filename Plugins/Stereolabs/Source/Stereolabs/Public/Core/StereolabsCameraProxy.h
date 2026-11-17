@@ -314,6 +314,29 @@ public:
 	void SetIMUPrior(const FTransform& Transform);
 
 	/*
+	 * Give the positional tracking the motion measured by an external source over one time interval.
+	 * Samples must follow each other (StartTimestamp of one = EndTimestamp of the previous) and can be
+	 * sent from the thread that reads the source, before the grab of the image they cover.
+	 * Requires the GEN 3 tracking mode.
+	 * @param MotionPrior The motion and its uncertainty
+	 * @return			  The error code, InvalidTimestamp when the sample ends more than 2 s before the last grabbed image
+	 */
+	UFUNCTION(BlueprintCallable, meta = (Keywords = "ingest zed motion prior odometry"), Category = "Zed|Tracking")
+	ESlErrorCode IngestMotionPrior(const FSlRelativePoseData& MotionPrior);
+
+	/*
+	 * @return How the motion prior was used for the last grabbed image
+	 */
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed motion prior status"), Category = "Zed|Tracking")
+	ESlRelativePoseFusionStatus GetRelativePoseFusionStatus();
+
+	/*
+	 * @return The current time in the camera clock, in nanoseconds, to timestamp motion prior samples
+	 */
+	UFUNCTION(BlueprintPure, meta = (Keywords = "get zed current timestamp"), Category = "Zed|Camera")
+	int64 GetCurrentTimestamp();
+
+	/*
 	 * @return True if tracking enabled
 	 */
 	UFUNCTION(BlueprintPure, Category = "Zed|Tracking")
@@ -939,7 +962,7 @@ public:
 	FSlBodies bodies;
 
 public:
-	/** Broadcast after the AI model is optimized*/
+	/** Broadcast when a depth AI model optimization ends, also when it failed: opening the camera then reports the error */
 	UPROPERTY(BlueprintAssignable, Category = "Zed")
 	FSlCameraProxyDelegate OnAIModelOptimized;
 

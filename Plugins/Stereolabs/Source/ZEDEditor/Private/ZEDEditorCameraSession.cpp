@@ -17,18 +17,6 @@ DEFINE_LOG_CATEGORY_STATIC(ZEDEditorCameraSession, Log, All);
 namespace
 {
 	UZEDEditorCameraSession* GZEDEditorCameraSession = nullptr;
-
-	/** The neural depth modes need their model optimized before the camera can be opened with them */
-	bool GetDepthAIModel(ESlDepthMode DepthMode, ESlAIModels& OutModel)
-	{
-		switch (DepthMode)
-		{
-			case ESlDepthMode::DM_Neural:      OutModel = ESlAIModels::AIM_NeuralDepth;      return true;
-			case ESlDepthMode::DM_NeuralPlus:  OutModel = ESlAIModels::AIM_NeuralPlusDepth;  return true;
-			case ESlDepthMode::DM_NeuralLight: OutModel = ESlAIModels::AIM_NeuralLightDepth; return true;
-			default: return false;
-		}
-	}
 }
 
 UZEDEditorCameraSession* UZEDEditorCameraSession::Get()
@@ -134,7 +122,8 @@ bool UZEDEditorCameraSession::Start(AZEDCamera* InCamera, FString& OutError)
 	SeedTrackingOrigin();
 
 	ESlAIModels DepthAIModel;
-	if (GetDepthAIModel(InCamera->InitParameters.DepthMode, DepthAIModel) && !GSlCameraProxy->CheckAIModelOptimization(DepthAIModel))
+	if (sl::unreal::GetDepthAIModel(InCamera->InitParameters.DepthMode, InCamera->InitParameters.DepthPrecision, DepthAIModel) &&
+		!GSlCameraProxy->CheckAIModelOptimization(DepthAIModel))
 	{
 		SL_LOG_W(ZEDEditorCameraSession, "Optimizing the depth AI model, the process can take a few minutes");
 

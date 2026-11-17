@@ -479,7 +479,9 @@ enum SL_ERROR_CODE {
 	SL_ERROR_CODE_MOTION_SENSORS_REQUIRED, /**< The module needs the sensors to be enabled (see SL_InitParameters.sensors_required). */
 	SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CUDA_VERSION, /**< The module needs a newer version of CUDA. */
 	SL_ERROR_CODE_DRIVER_FAILURE, /**< The drivers initialization has failed. When using gmsl cameras, try restarting with sudo systemctl restart zed_x_daemon.service */
-	SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH = 35 /**< The camera configuration exceeds available PHY CSI bandwidth (GMSL). Reduce resolution/FPS or adjust hardware configuration. */
+	SL_ERROR_CODE_CAMERA_EXCEEDS_BANDWIDTH = 35, /**< The camera configuration exceeds available PHY CSI bandwidth (GMSL). Reduce resolution/FPS or adjust hardware configuration. */
+	SL_ERROR_CODE_INVALID_TIMESTAMP = 36, /**< The data was discarded because of its timestamp: too old to be used. Check that it uses the same time reference as the camera, in nanoseconds, and send it as soon as it is measured. */
+	SL_ERROR_CODE_AI_MODEL_NOT_AVAILABLE = 37 /**< The AI model needed by the requested depth mode or module is not on this host and could not be downloaded. Each AI model is downloaded at its first use: connect the host to the internet, or download the models beforehand with ZED Diagnostic. */
 };
 
 /**
@@ -970,7 +972,46 @@ enum SL_POSITIONAL_TRACKING_FUSION_STATUS {
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_INERTIAL_GNSS = 4,
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_VISUAL_GNSS = 5,
 	SL_POSITIONAL_TRACKING_FUSION_STATUS_INERTIAL_GNSS = 6,
-	SL_POSITIONAL_TRACKING_FUSION_STATUS_UNAVAILABLE = 7
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_UNAVAILABLE = 7,
+	SL_POSITIONAL_TRACKING_FUSION_STATUS_MOTION_PRIOR = 8 /**< The images cannot be used (darkness, low texture, covered lens), so the pose follows the motion given to \ref sl_ingest_motion_prior(), completed by the IMU when available. The pose uncertainty grows until the images can be used again, and tracking then goes back to its usual status without a reset.
+	                                                       \note Only reported for a camera, once a sample has been accepted through \ref sl_ingest_motion_prior(). */
+};
+
+/**
+\brief Report how the motion given to \ref sl_ingest_motion_prior() was used for the current image.
+ */
+enum SL_RELATIVE_POSE_FUSION_STATUS {
+	SL_RELATIVE_POSE_FUSION_STATUS_OFF = 0,         /**< The motion prior is not used: no sample has been accepted through \ref sl_ingest_motion_prior() yet in this session, or the session does not run SL_POSITIONAL_TRACKING_MODE_GEN_3. */
+	SL_RELATIVE_POSE_FUSION_STATUS_OK = 1,          /**< The motion prior was used for this image. */
+	SL_RELATIVE_POSE_FUSION_STATUS_MISSING = 2,     /**< No motion prior was received for this image, only the images were used. Occasional values are expected and harmless. */
+	SL_RELATIVE_POSE_FUSION_STATUS_OUT_OF_SYNC = 3, /**< A motion prior was available but did not cover this image's time interval, so the pose was estimated from the images alone. Occasional occurrences are harmless.
+	                                                 \note Also reported when a gap leaves too much of the interval uncovered (one missed sample is tolerated, a hole several samples long is not), or when the samples are not chained: a sample whose start_timestamp is not the end_timestamp of the previous one.
+	                                                 \note Reported on every frame means either the samples are not chained, or the two clocks do not agree. For the latter, check that your timestamps come from the same time reference as \ref sl_get_image_timestamp(), in nanoseconds. */
+	SL_RELATIVE_POSE_FUSION_STATUS_REJECTED = 4,    /**< The motion prior disagreed with what the images show and was discarded for this image. Persistent values usually mean a wrong mounting transform, a wrong sign convention, or an uncertainty that is set too low. */
+	SL_RELATIVE_POSE_FUSION_STATUS_DEFERRED = 5     /**< The motion prior for this image had not arrived yet, because the source is slower than the camera or its samples arrive after the image: it was not applied to this image, but it is used to correct the trajectory over a longer stretch once it arrives. Expected on most images with such a source. */
+};
+
+/**
+\brief Flags selecting which degrees of freedom of a \ref SL_RelativePoseData are measured.
+
+Combine them with the bitwise OR operator. An axis that is not listed is treated as completely unknown: the ZED SDK
+ignores the corresponding row and column of \ref SL_RelativePoseData.covariance and lets the images alone determine that axis.
+\note The order of the flags is also the order of the rows and columns of \ref SL_RelativePoseData.covariance.
+\note X, Y and Z are the axes of your motion source itself, the ones the motion of \ref SL_RelativePoseData is expressed along,
+and the rotation of \ref SL_RelativePoseData.sensor_transform says where they point. A wheel odometry measuring forward,
+sideways and heading motion therefore declares SL_POSE_AXIS_TX | SL_POSE_AXIS_TY | SL_POSE_AXIS_RZ.
+ */
+enum SL_POSE_AXIS {
+	SL_POSE_AXIS_NONE = 0,                                                  /**< No axis. */
+	SL_POSE_AXIS_TX = 1 << 0,                                               /**< Translation along the X axis. */
+	SL_POSE_AXIS_TY = 1 << 1,                                               /**< Translation along the Y axis. */
+	SL_POSE_AXIS_TZ = 1 << 2,                                               /**< Translation along the Z axis. */
+	SL_POSE_AXIS_RX = 1 << 3,                                               /**< Rotation about the X axis. */
+	SL_POSE_AXIS_RY = 1 << 4,                                               /**< Rotation about the Y axis. */
+	SL_POSE_AXIS_RZ = 1 << 5,                                               /**< Rotation about the Z axis. */
+	SL_POSE_AXIS_TRANSLATION = SL_POSE_AXIS_TX | SL_POSE_AXIS_TY | SL_POSE_AXIS_TZ, /**< The three translation axes. */
+	SL_POSE_AXIS_ROTATION = SL_POSE_AXIS_RX | SL_POSE_AXIS_RY | SL_POSE_AXIS_RZ,    /**< The three rotation axes. */
+	SL_POSE_AXIS_ALL = SL_POSE_AXIS_TRANSLATION | SL_POSE_AXIS_ROTATION     /**< All six degrees of freedom. */
 };
 
 /**
@@ -990,6 +1031,10 @@ struct SL_PositionalTrackingStatus
 	@brief  Represents the current state of positional tracking fusion.
 	*/
 	enum SL_POSITIONAL_TRACKING_FUSION_STATUS tracking_fusion_status;
+	/**
+	@brief  Represents how the motion given to \ref sl_ingest_motion_prior() was used for the current image.
+	*/
+	enum SL_RELATIVE_POSE_FUSION_STATUS relative_pose_fusion_status;
 };
 
 /**
@@ -1064,7 +1109,8 @@ enum SL_DEPTH_MODE {
 	SL_DEPTH_MODE_NEURAL_LIGHT,  /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL, /**< End to End Neural disparity estimation.\n Requires AI module. */
 	SL_DEPTH_MODE_NEURAL_PLUS, /**< More accurate Neural disparity estimation.\n Requires AI module. */
-	SL_DEPTH_MODE_CUSTOM /**< No internal depth computation. The depth (or disparity) is provided for each frame with sl_ingest_custom_depth(), between sl_read() and sl_grab(). */
+	SL_DEPTH_MODE_CUSTOM, /**< No internal depth computation. The depth (or disparity) is provided for each frame with sl_ingest_custom_depth(), between sl_read() and sl_grab(). */
+	SL_DEPTH_MODE_NEURAL_MAX /**< Most accurate Neural disparity estimation.\n Requires AI module.\n Much heavier than \ref SL_DEPTH_MODE_NEURAL_PLUS, with about 1 GB of GPU memory: meant for high-end GPUs (e.g. Jetson AGX Thor) or offline processing. */
 };
 
 /**
@@ -1072,8 +1118,19 @@ enum SL_DEPTH_MODE {
  */
 enum SL_DEPTH_PRECISION {
 	SL_DEPTH_PRECISION_FP16, /**< Half-precision neural depth inference (default). */
-	SL_DEPTH_PRECISION_INT8, /**< INT8 neural depth inference: faster and with a lower memory footprint, for a small accuracy cost.\n Only \ref SL_DEPTH_MODE_NEURAL provides an INT8 model, the other depth modes always run in FP16.\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. */
-	SL_DEPTH_PRECISION_LAST /**< Neither of the above.\n Only ever returned by sl_get_init_parameters(), never set by the user: the depth engine runs at a precision that has no \ref SL_DEPTH_PRECISION value. */
+	SL_DEPTH_PRECISION_INT8, /**< 8-bit neural depth inference: faster and with a lower memory footprint, at an accuracy cost.\n \ref SL_DEPTH_MODE_NEURAL, \ref SL_DEPTH_MODE_NEURAL_PLUS, \ref SL_DEPTH_MODE_NEURAL_LIGHT and \ref SL_DEPTH_MODE_NEURAL_MAX provide 8-bit models; \ref SL_DEPTH_MODE_NEURAL_MAX runs them in FP8 on GPUs with FP8 support, which is more accurate, and in INT8 on the others. The other depth modes run in FP16.\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. */
+	SL_DEPTH_PRECISION_LAST /**< Neither of the above.\n Only ever returned by sl_get_init_parameters(), never set by the user: the depth engine runs at a precision that has no \ref SL_DEPTH_PRECISION value, such as on the DLA (\ref SL_DEPTH_COMPUTE_DEVICE_DLA) or the PVA. */
+};
+
+/**
+\brief Lists the processors that can run the neural depth network.
+ */
+enum SL_DEPTH_COMPUTE_DEVICE {
+	SL_DEPTH_COMPUTE_DEVICE_AUTO, /**< The processor that gives the best depth performance, currently the GPU (default). */
+	SL_DEPTH_COMPUTE_DEVICE_GPU, /**< The GPU. */
+	SL_DEPTH_COMPUTE_DEVICE_DLA, /**< Experimental. A Deep Learning Accelerator core of a Jetson AGX Orin or Orin NX with JetPack 6 (the Jetson Orin Nano has no DLA): the network runs on the DLA instead of the GPU.\n Only for \ref SL_DEPTH_MODE_NEURAL_LIGHT; the network runs at its own precision, SL_InitParameters::depth_precision is ignored and sl_get_init_parameters() reports it as \ref SL_DEPTH_PRECISION_LAST. Where it cannot be used, the depth runs on the GPU (\ref SL_ERROR_CODE_CONFIGURATION_FALLBACK from sl_open_camera()). */
+	SL_DEPTH_COMPUTE_DEVICE_PVA, /**< Experimental. The Programmable Vision Accelerator of a Jetson, currently with JetPack 7.2 only: the network runs on the PVA instead of the GPU.\n Only for \ref SL_DEPTH_MODE_NEURAL_LIGHT; the network runs at its own precision, which sl_get_init_parameters() reports (\ref SL_DEPTH_PRECISION_LAST when it has no \ref SL_DEPTH_PRECISION value). With another depth mode, or where it cannot be used, the depth runs on the GPU (\ref SL_ERROR_CODE_CONFIGURATION_FALLBACK from sl_open_camera()). */
+	SL_DEPTH_COMPUTE_DEVICE_LAST
 };
 
 /**
@@ -1110,6 +1167,38 @@ enum SL_COPY_TYPE
 	SL_COPY_TYPE_CPU_GPU, /**< Copy data from CPU to GPU.*/
 	SL_COPY_TYPE_GPU_GPU, /**< copy data from GPU to GPU.*/
 	SL_COPY_TYPE_GPU_CPU  /**< Copy data from GPU to CPU.*/
+};
+
+/**
+\brief Lists the IMU sampling rates that can be requested in \ref SL_InitParameters.imu_sampling_rate.
+ */
+enum SL_IMU_SAMPLING_RATE {
+	SL_IMU_SAMPLING_RATE_DEFAULT, /**< Camera default (200 Hz on ZED X cameras).*/
+	SL_IMU_SAMPLING_RATE_HZ_200, /**< 200 Hz.*/
+	SL_IMU_SAMPLING_RATE_HZ_400, /**< 400 Hz.*/
+	SL_IMU_SAMPLING_RATE_OFF, /**< IMU not opened: the camera runs without motion sensors.*/
+};
+
+/**
+\brief Lists the accelerometer full-scale ranges that can be requested in \ref SL_InitParameters.imu_accelerometer_range.
+ */
+enum SL_ACCELEROMETER_RANGE {
+	SL_ACCELEROMETER_RANGE_DEFAULT, /**< Camera default (±12 g on ZED X cameras).*/
+	SL_ACCELEROMETER_RANGE_G_3, /**< ±3 g.*/
+	SL_ACCELEROMETER_RANGE_G_6, /**< ±6 g.*/
+	SL_ACCELEROMETER_RANGE_G_12, /**< ±12 g.*/
+	SL_ACCELEROMETER_RANGE_G_24, /**< ±24 g.*/
+};
+
+/**
+\brief Lists the gyroscope full-scale ranges that can be requested in \ref SL_InitParameters.imu_gyroscope_range.
+ */
+enum SL_GYROSCOPE_RANGE {
+	SL_GYROSCOPE_RANGE_DEFAULT, /**< Camera default (±1000 deg/s on ZED X cameras).*/
+	SL_GYROSCOPE_RANGE_DPS_250, /**< ±250 deg/s.*/
+	SL_GYROSCOPE_RANGE_DPS_500, /**< ±500 deg/s.*/
+	SL_GYROSCOPE_RANGE_DPS_1000, /**< ±1000 deg/s.*/
+	SL_GYROSCOPE_RANGE_DPS_2000, /**< ±2000 deg/s.*/
 };
 
 /**
@@ -1252,7 +1341,10 @@ enum SL_AI_MODELS {
 	SL_AI_MODELS_NEURAL_LIGHT_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_LIGHT*/
 	SL_AI_MODELS_NEURAL_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL*/
 	SL_AI_MODELS_NEURAL_PLUS_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_PLUS*/
-	SL_AI_MODELS_NEURAL_DEPTH_INT8, /**< Related to \ref SL_DEPTH_MODE_NEURAL with \ref SL_DEPTH_PRECISION_INT8. Separate artifact and engine from \ref SL_AI_MODELS_NEURAL_DEPTH.*/
+	SL_AI_MODELS_NEURAL_DEPTH_INT8, /**< Related to \ref SL_DEPTH_MODE_NEURAL with \ref SL_DEPTH_PRECISION_INT8. Uses the model file of \ref SL_AI_MODELS_NEURAL_DEPTH, with an engine of its own: optimizing one does not optimize the other.*/
+	SL_AI_MODELS_NEURAL_LIGHT_DEPTH_INT8, /**< Related to \ref SL_DEPTH_MODE_NEURAL_LIGHT with \ref SL_DEPTH_PRECISION_INT8. A model of its own, in the model file of \ref SL_AI_MODELS_NEURAL_LIGHT_DEPTH, with an engine of its own: optimizing one does not optimize the other.*/
+	SL_AI_MODELS_NEURAL_MAX_DEPTH, /**< Related to \ref SL_DEPTH_MODE_NEURAL_MAX*/
+	SL_AI_MODELS_NEURAL_PLUS_DEPTH_INT8, /**< Related to \ref SL_DEPTH_MODE_NEURAL_PLUS with \ref SL_DEPTH_PRECISION_INT8. Uses the model file of \ref SL_AI_MODELS_NEURAL_PLUS_DEPTH, with an engine of its own: optimizing one does not optimize the other.*/
 	SL_AI_MODELS_LAST
 };
 
@@ -1628,6 +1720,7 @@ struct SL_Resolution {
 
 This class allows you to select multiple parameters for the camera to open such as the selected camera, resolution, depth mode, coordinate system, and units of measurement.
 \n Once filled with the desired options, it should be passed to the sl_open_camera() function.
+\n Zero-initialize it before setting its fields (<code>struct SL_InitParameters init_param = {0};</code>): a field left uninitialized is read as a request, for example an IMU sampling rate or range.
 
 \note For more info, read about the ZED SDK C++ class it mirrors:
 <a href="https://www.stereolabs.com/docs/api/structsl_1_1InitParameters.html">InitParameters</a>
@@ -1910,8 +2003,8 @@ struct SL_InitParameters
 	\brief \ref SL_DEPTH_PRECISION used for neural depth inference.
 
 	Default: \ref SL_DEPTH_PRECISION_FP16
-	\n Set it to \ref SL_DEPTH_PRECISION_INT8 to request INT8 inference, which is faster and uses less memory for a small accuracy cost. Only \ref SL_DEPTH_MODE_NEURAL provides an INT8 model, the other depth modes always run in FP16.
-	\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. sl_get_init_parameters() reports the precision actually in use, which may differ from the one requested here.
+	\n Set it to \ref SL_DEPTH_PRECISION_INT8 to request 8-bit inference, which is faster and uses less memory, at an accuracy cost. \ref SL_DEPTH_MODE_NEURAL, \ref SL_DEPTH_MODE_NEURAL_PLUS, \ref SL_DEPTH_MODE_NEURAL_LIGHT and \ref SL_DEPTH_MODE_NEURAL_MAX provide 8-bit models (\ref SL_DEPTH_MODE_NEURAL_MAX in FP8 on GPUs with FP8 support, in INT8 on the others); the other depth modes run in FP16.
+	\n Always safe to set: the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does not support INT8. sl_get_init_parameters() reports the precision actually in use, which may differ from the one requested here: \ref SL_DEPTH_PRECISION_LAST when the depth runs at a precision that has no value here, such as on the DLA or the PVA (depth_compute_device).
 	 */
 	enum SL_DEPTH_PRECISION depth_precision;
 
@@ -1925,6 +2018,47 @@ struct SL_InitParameters
 	Default: false (disabled)
 	 */
 	bool allow_depth_cuda_graph;
+
+	/**
+	\brief Processor that runs the neural depth network.
+
+	Default: \ref SL_DEPTH_COMPUTE_DEVICE_AUTO, the processor that gives the best depth performance (currently the GPU).
+	\n Experimental: \ref SL_DEPTH_COMPUTE_DEVICE_DLA and \ref SL_DEPTH_COMPUTE_DEVICE_PVA run \ref SL_DEPTH_MODE_NEURAL_LIGHT on an accelerator of a Jetson, which leaves the GPU to your application: the network runs on the accelerator, small steps around it still run on the GPU. The DLA is available on a Jetson AGX Orin or Orin NX with JetPack 6 (the Jetson Orin Nano has no DLA), the PVA currently with JetPack 7.2 only. Where the accelerator cannot be used (none on this device, none available, its model unavailable), the depth runs on the GPU instead: sl_open_camera() returns \ref SL_ERROR_CODE_CONFIGURATION_FALLBACK, the log says why, and sl_get_init_parameters() reports \ref SL_DEPTH_COMPUTE_DEVICE_GPU.
+	\note With \ref SL_DEPTH_COMPUTE_DEVICE_DLA, sl_open_camera() fails with \ref SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS for any depth mode other than \ref SL_DEPTH_MODE_NEURAL_LIGHT (or \ref SL_DEPTH_MODE_NONE). With \ref SL_DEPTH_COMPUTE_DEVICE_PVA, another depth mode runs on the GPU, as above.
+	\note The DLA model is downloaded on first use, like the other AI models, then prepared for the device: the first sl_open_camera() takes a few minutes, the next ones do not.
+	\note A DLA has room for a limited number of depth models for the whole system, other applications included. Cameras of one application can share a model; otherwise each needs room of its own, so a Jetson Orin with two DLAs may run as few as two such cameras. When no DLA has room, the depth of that camera runs on the GPU, as above.
+	\note Several cameras can compute their depth on the PVA at once, and other applications can use it too. They share it, so the depth takes longer and its time can vary from frame to frame: a warning says so when the PVA is already in use as the camera starts on it. If the PVA fails during the session, the depth runs on the GPU from that frame on: sl_grab() returns \ref SL_ERROR_CODE_CONFIGURATION_FALLBACK once and sl_get_init_parameters() reports \ref SL_DEPTH_COMPUTE_DEVICE_GPU.
+	 */
+	enum SL_DEPTH_COMPUTE_DEVICE depth_compute_device;
+
+	/**
+	\brief Requested full-scale range of the accelerometer.
+
+	The range in use is reported by the accelerometer \ref SL_SensorParameters "range" of the camera information.
+	\n Only the ZED X family supports it, with ZED X driver 1.5.0 or later. Other cameras, and older drivers, keep their default range.
+
+	Default: \ref SL_ACCELEROMETER_RANGE_DEFAULT (camera default, ±12 g on ZED X cameras)
+	 */
+	enum SL_ACCELEROMETER_RANGE imu_accelerometer_range;
+
+	/**
+	\brief Requested full-scale range of the gyroscope.
+
+	Same availability as \ref imu_accelerometer_range.
+
+	Default: \ref SL_GYROSCOPE_RANGE_DEFAULT (camera default, ±1000 deg/s on ZED X cameras)
+	 */
+	enum SL_GYROSCOPE_RANGE imu_gyroscope_range;
+
+	/**
+	\brief Requested IMU sampling rate.
+
+	Sets the rate of the gyroscope, and so of the IMU data. 400 Hz needs ZED X driver 1.5.0 or later; otherwise the IMU runs at 200 Hz.
+	\ref SL_IMU_SAMPLING_RATE_OFF opens the camera without its IMU (no IMU data, motion sensors reported unavailable).
+
+	Default: \ref SL_IMU_SAMPLING_RATE_DEFAULT (camera default, 200 Hz on ZED X cameras)
+	 */
+	enum SL_IMU_SAMPLING_RATE imu_sampling_rate;
 };
 
 /**
@@ -2395,6 +2529,107 @@ struct SL_PositionalTrackingParameters
 	 * \n default : SL_COMPUTE_PREFERENCE_AUTO
 	 */
 	enum SL_COMPUTE_PREFERENCE compute_preference;
+};
+
+/**
+\brief Structure containing the motion measured by your motion source over one time interval, to be used by the
+positional tracking as a prior through \ref sl_ingest_motion_prior().
+
+Use it to give wheel odometry, an external visual-inertial system or the difference between two consecutive GNSS fixes
+to the ZED SDK. The motion prior constrains how far the camera is allowed to have moved between two images; the images
+still determine the final pose.
+
+\note The following conventions are fixed and cannot be configured:
+\note - The motion is the pose of your motion source at \ref end_timestamp expressed in the frame that same source was
+in at \ref start_timestamp, the same direction as the pose returned by \ref sl_get_position().
+\note - The motion is expressed along the axes of your motion source, exactly as that source measures it, in the unit
+selected in \ref SL_InitParameters. Where those axes point is described only by the rotation of
+\ref sensor_transform.
+\note - \ref covariance is ordered [tx, ty, tz, rx, ry, rz], the same order and quantities as \ref SL_PoseData.pose_covariance,
+so translation first, then the rotation as a rotation vector in radians, \b not Euler angles.
+\note - \ref covariance describes the error of the motion in the frame the source started the interval in, and \b not
+along the axes the source ends up on.
+\note - Translation variances are in coordinate units squared, rotation variances in radians squared, and the
+translation/rotation blocks in coordinate units times radians.
+ */
+struct SL_RelativePoseData
+{
+	/**
+	\brief Beginning of the time interval this motion was measured over, in nanoseconds.
+
+	Set it to the \ref end_timestamp of the sample you ingested previously, so that consecutive samples follow each
+	other without a gap. For your very first sample, set it to the instant your source started measuring that increment.
+	\note Same time reference as \ref end_timestamp, and earlier than it. It cannot be left at 0.
+	*/
+	uint64_t start_timestamp;
+	/**
+	\brief End of the time interval this motion was measured over, in nanoseconds.
+
+	It must use the same time reference as \ref sl_get_image_timestamp().
+	*/
+	uint64_t end_timestamp;
+	/**
+	\brief Motion of your motion source between \ref start_timestamp and \ref end_timestamp.
+
+	Give it exactly as your source measures it, along its own axes: the ZED SDK moves it into the camera frame using
+	\ref sensor_transform. Only the parts selected by \ref measured_axes are read.
+	\note Its rotation must be a valid rotation even if no rotation axis is measured: use the identity quaternion
+	(0, 0, 0, 1) in that case.
+	*/
+	struct SL_Transform motion;
+	/**
+	\brief Degrees of freedom that your motion source actually measures, as a combination of \ref SL_POSE_AXIS flags.
+
+	A sample that declares no axis (SL_POSE_AXIS_NONE) is rejected by \ref sl_ingest_motion_prior().
+	\note Wheel encoders measure forward, sideways and heading motion only, and should not claim the other three.
+	Declaring an axis that the source does not measure is the most common reason for a motion prior to degrade the
+	tracking instead of improving it.
+	*/
+	unsigned int measured_axes;
+	/**
+	\brief Uncertainty of the motion, row-major 6x6 matrix ordered [tx, ty, tz, rx, ry, rz].
+
+	Only the rows and columns selected by \ref measured_axes are read, which keeps the correlations between the
+	measured axes. The remaining entries can be left at 0.
+	\n The part that is read must be symmetric and describe a real uncertainty. Values too small to be physically
+	achievable are raised to a minimum by the ZED SDK.
+	*/
+	float covariance[36];
+	/**
+	\brief Whether this sample reports that the camera did not move at all.
+
+	Set it together with a small but non-zero \ref covariance. It is what allows the ZED SDK to hold the position
+	perfectly still while your vehicle is stopped.
+	*/
+	bool is_stationary;
+	/**
+	\brief Where your motion source is mounted, relative to the camera.
+
+	Set the pose of the source (the wheel odometry frame, the external tracker, ...) in the camera frame: its
+	translation is where the source sits, its rotation is how the axes it measures along are oriented. The ZED SDK
+	then brings \ref motion and \ref covariance into the camera frame for you, so you fill them exactly as your
+	source produces them.
+	\n Use the identity (null translation, quaternion (0, 0, 0, 1)) when the source already reports the motion of the
+	camera itself, along the camera axes. It must always be set: a zeroed quaternion is not a valid rotation, and the
+	sample is then refused.
+	\note Expressed in the coordinate system selected in \ref SL_InitParameters, its translation in the unit selected there.
+	\note A rotation never mirrors an axis, so your source must have the same <b>handedness</b> as the coordinate
+	system you selected. Otherwise convert the motion and its uncertainty before ingesting it, as a mirroring
+	transform makes \ref sl_ingest_motion_prior() refuse the sample.
+	\note Getting the rotation wrong is the most likely reason for the motion prior to be rejected, which \ref SL_PositionalTrackingStatus.relative_pose_fusion_status reports.
+	*/
+	struct SL_Transform sensor_transform;
+	/**
+	\brief How far this motion is allowed to disagree with the images before it is discarded, as a multiple of the
+	uncertainty given in \ref covariance.
+
+	Lower values trust the images more, higher values trust the motion prior more. 3.0 is a good starting point.
+	\note Must be strictly positive, otherwise \ref sl_ingest_motion_prior() refuses the sample: it cannot be left at
+	0. To never discard the motion, set a large value.
+	\note When several samples cover the same image or keyframe interval, the lowest value applies.
+	\note Discarded motion is reported through \ref SL_PositionalTrackingStatus.relative_pose_fusion_status.
+	*/
+	float rejection_threshold;
 };
 
 /**

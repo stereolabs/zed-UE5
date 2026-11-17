@@ -195,7 +195,8 @@ enum class ESlDepthMode : uint8
 	DM_NeuralLight			 UMETA(DisplayName = "Neural Light"),
 	DM_Neural				 UMETA(DisplayName = "Neural"),
 	DM_NeuralPlus			 UMETA(DisplayName = "Neural+"),
-	DM_Custom				 UMETA(DisplayName = "Custom")
+	DM_Custom				 UMETA(DisplayName = "Custom"),
+	DM_NeuralMax			 UMETA(DisplayName = "Neural Max")
 };
 
 /*
@@ -206,7 +207,7 @@ UENUM(BlueprintType, Category = "Stereolabs|Enum")
 enum class ESlDepthPrecision : uint8
 {
 	DP_FP16					 UMETA(DisplayName = "FP16 (default)"),
-	DP_INT8					 UMETA(DisplayName = "INT8 (faster, slightly less accurate)")
+	DP_INT8					 UMETA(DisplayName = "8-bit (faster, less accurate)")
 };
 
 /*
@@ -404,8 +405,10 @@ enum class ESlErrorCode : uint8
 	EC_ModuleNotCompatibleWithCuda   UMETA(DisplayName = "Module not compatible with cuda version"),
 	EC_DriverFailure  				 UMETA(DisplayName = "Driver failure"),
 	EC_CameraExceedsBandwidth = 35	 UMETA(DisplayName = "Camera exceeds bandwidth"),
+	EC_InvalidTimestamp = 36		 UMETA(DisplayName = "Invalid timestamp"),
+	EC_AIModelNotAvailable = 37		 UMETA(DisplayName = "AI model not available"),
 	// ERROR_CODE_LAST
-	EC_None					  	   UMETA(DisplayName = "No error")
+	EC_None = 38				  	 UMETA(DisplayName = "No error")
 };
 
 /**
@@ -632,6 +635,39 @@ enum class ESlComputePreference : uint8
 };
 
 /*
+* Degrees of freedom a motion prior source measures, combined as a bitmask.
+* The order is also the row and column order of FSlRelativePoseData::Covariance.
+* see sl::POSE_AXIS
+*/
+UENUM(BlueprintType, Meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"), Category = "Stereolabs|Enum")
+enum class ESlPoseAxis : uint8
+{
+	PA_None = 0			UMETA(Hidden),
+	PA_TX = 1 << 0		UMETA(DisplayName = "Translation X"),
+	PA_TY = 1 << 1		UMETA(DisplayName = "Translation Y"),
+	PA_TZ = 1 << 2		UMETA(DisplayName = "Translation Z"),
+	PA_RX = 1 << 3		UMETA(DisplayName = "Rotation X"),
+	PA_RY = 1 << 4		UMETA(DisplayName = "Rotation Y"),
+	PA_RZ = 1 << 5		UMETA(DisplayName = "Rotation Z")
+};
+ENUM_CLASS_FLAGS(ESlPoseAxis)
+
+/*
+* How the motion prior was used for the last grabbed image.
+* see sl::RELATIVE_POSE_FUSION_STATUS
+*/
+UENUM(BlueprintType, Category = "Stereolabs|Enum")
+enum class ESlRelativePoseFusionStatus : uint8
+{
+	RPFS_Off		UMETA(DisplayName = "Off"),
+	RPFS_Ok			UMETA(DisplayName = "Ok"),
+	RPFS_Missing	UMETA(DisplayName = "Missing"),
+	RPFS_OutOfSync	UMETA(DisplayName = "Out of sync"),
+	RPFS_Rejected	UMETA(DisplayName = "Rejected"),
+	RPFS_Deferred	UMETA(DisplayName = "Deferred")
+};
+
+/*
 * Lists available modules.
 */
 UENUM(BlueprintType, Category = "Stereolabs|Enum")
@@ -733,7 +769,10 @@ enum class ESlAIModels : uint8
 	AIM_NeuralLightDepth				UMETA(DisplayName = "Neural Light Depth"),
 	AIM_NeuralDepth						UMETA(DisplayName = "Neural Depth"),
 	AIM_NeuralPlusDepth					UMETA(DisplayName = "Neural Plus Depth"),
-	AIM_NeuralDepthInt8					UMETA(DisplayName = "Neural Depth INT8")
+	AIM_NeuralDepthInt8					UMETA(DisplayName = "Neural Depth INT8"),
+	AIM_NeuralLightDepthInt8			UMETA(DisplayName = "Neural Light Depth INT8"),
+	AIM_NeuralMaxDepth					UMETA(DisplayName = "Neural Max Depth"),
+	AIM_NeuralPlusDepthInt8				UMETA(DisplayName = "Neural Plus Depth INT8")
 };
 
 /*
@@ -2591,6 +2630,62 @@ struct STEREOLABS_API FSlIMUData : public FSlPose
 };
 
 /*
+ * Motion measured by an external source (wheel odometry, external tracker) over one time interval,
+ * given to the positional tracking as a prior. Requires the GEN 3 tracking mode.
+ * see sl::RelativePoseData
+ */
+USTRUCT(BlueprintType, Category = "Stereolabs|Struct")
+struct STEREOLABS_API FSlRelativePoseData
+{
+	GENERATED_BODY()
+
+	FSlRelativePoseData()
+		:
+		StartTimestamp(0),
+		EndTimestamp(0),
+		Motion(FTransform::Identity),
+		MeasuredAxes(0),
+		bIsStationary(false),
+		SensorTransform(FTransform::Identity),
+		RejectionThreshold(3.0f)
+	{
+		Covariance.SetNumZeroed(36);
+	}
+
+	/** Start of the interval in nanoseconds, camera clock. Set it to the EndTimestamp of the previous sample. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	int64 StartTimestamp;
+
+	/** End of the interval in nanoseconds, camera clock (see GetCurrentTimestamp) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	int64 EndTimestamp;
+
+	/** Pose of the source at EndTimestamp in its frame at StartTimestamp, along the source's own axes, in cm */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	FTransform Motion;
+
+	/** Axes the source actually measures. Wheel odometry is typically TX | TY | RZ */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct", meta = (Bitmask, BitmaskEnum = "/Script/Stereolabs.ESlPoseAxis"))
+	int32 MeasuredAxes;
+
+	/** Row-major 6x6 uncertainty ordered tx, ty, tz, rx, ry, rz, in cm^2 and rad^2. Only the measured axes are read */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	TArray<float> Covariance;
+
+	/** The camera did not move at all. Set it with a small but non-zero covariance */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	bool bIsStationary;
+
+	/** Pose of the source in the camera frame, identity when it reports the camera motion itself */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	FTransform SensorTransform;
+
+	/** How far the motion may disagree with the images before it is discarded, as a multiple of the covariance. Must be > 0 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
+	float RejectionThreshold;
+};
+
+/*
  * SDK init parameters
  * see sl::InitParameters
  */
@@ -3047,10 +3142,10 @@ struct STEREOLABS_API FSlInitParameters
 
 	/**
 	 * Precision used for neural depth inference.
-	 * INT8 trades a small amount of accuracy for a faster depth runtime and a lower memory
-	 * footprint, and is currently supported by the Neural depth mode only. Always safe to set:
-	 * the SDK falls back to FP16, and says so in the log, when the depth mode or the GPU does
-	 * not support INT8.
+	 * 8-bit trades accuracy for a faster depth runtime and a lower memory footprint. Neural Light,
+	 * Neural, Neural+ and Neural Max provide 8-bit models (Neural Max in FP8 on GPUs that support
+	 * it, INT8 otherwise); the other depth modes run in FP16. Always safe to set: the SDK falls
+	 * back to FP16, and says so in the log, when the depth mode or the GPU does not support it.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stereolabs|Struct")
 	ESlDepthPrecision DepthPrecision;

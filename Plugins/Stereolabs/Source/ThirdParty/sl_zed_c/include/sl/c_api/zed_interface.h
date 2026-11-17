@@ -82,7 +82,7 @@ extern "C" {
     \param bus_port : Physical port the camera is plugged into, on whichever bus \ref input_type selects: the GMSL port or the port of the MIPI capture card. Default: -1 (do nothing).
 	\param bus_type : Whether the camera is a USB or a GMSL camera (when opening with camera ID).
     \param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
-    \param opt_settings_path[optional] : Settings path.
+    \param opt_settings_path[optional] : Directory where the SDK looks for the SN<XXXX>.conf calibration file. The trailing separator is optional. If the file is not found there, the default settings directory is used instead and a warning is reported in the SDK log.
     \param opencv_calib_path[optional] : openCV calibration file.
     
     \return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
@@ -95,7 +95,7 @@ extern "C" {
 	\param camera_id : Id of the camera to open.
 	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
 	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
-	\param opt_settings_path[optional] : Settings path.
+	\param opt_settings_path[optional] : Directory where the SDK looks for the SN<XXXX>.conf calibration file. The trailing separator is optional. If the file is not found there, the default settings directory is used instead and a warning is reported in the SDK log.
 	\param opencv_calib_path[optional] : openCV calibration file.
 	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
@@ -107,7 +107,7 @@ extern "C" {
 	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
 	\param serial_number : Serial number of the camera to open.
 	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
-	\param opt_settings_path[optional] : Settings path.
+	\param opt_settings_path[optional] : Directory where the SDK looks for the SN<XXXX>.conf calibration file. The trailing separator is optional. If the file is not found there, the default settings directory is used instead and a warning is reported in the SDK log.
 	\param opencv_calib_path[optional] : openCV calibration file.
 	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
@@ -120,7 +120,7 @@ extern "C" {
 	\param init_parameters : A structure containing all the initial parameters. Default: a preset of SL_InitParameters.
 	\param path_svo : Filename of the svo to read (for SVO input).
 	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
-	\param opt_settings_path[optional] : Settings path.
+	\param opt_settings_path[optional] : Directory where the SDK looks for the SN<XXXX>.conf calibration file. The trailing separator is optional. If the file is not found there, the default settings directory is used instead and a warning is reported in the SDK log.
 	\param opencv_calib_path[optional] : openCV calibration file.
 	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
@@ -133,7 +133,7 @@ extern "C" {
 	\param ip : IP of the camera to open (for Stream input).
 	\param stream_port : Port of the camera to open (for Stream input).
 	\param output_file : ZED SDK verbose log file. Redirect the SDK verbose message to the file.
-	\param opt_settings_path[optional] : Settings path.
+	\param opt_settings_path[optional] : Directory where the SDK looks for the SN<XXXX>.conf calibration file. The trailing separator is optional. If the file is not found there, the default settings directory is used instead and a warning is reported in the SDK log.
 	\param opencv_calib_path[optional] : openCV calibration file.
 	\return An error code giving information about the internal process. If \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" (0) is returned, the camera is ready to use. Every other code indicates an error and the program should be stopped.
     */
@@ -679,7 +679,13 @@ extern "C" {
     \param camera_id : Id of the camera instance.
     \param mode : The setting to be set.
     \param value : The value to set.
-    \return \ref SL_ERROR_CODE to indicate if the function was successful.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the camera applied the setting.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the setting does not exist on this camera model or if
+    the value is out of range. Use \ref sl_is_camera_setting_supported() to know what is accepted.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if the input is an SVO file (only \ref SL_VIDEO_SETTINGS
+    "SL_VIDEO_SETTINGS_SHARPNESS" can be changed during playback, the other settings are part of the recorded images).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CAMERA_NOT_INITIALIZED" if the camera is no longer available (disconnected, stream closed).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if the camera refused the setting.
     \note The function works only if the camera is open in LIVE or STREAM mode.
      */
     INTERFACE_API enum SL_ERROR_CODE sl_set_camera_settings(int camera_id, enum SL_VIDEO_SETTINGS mode, int value);
@@ -695,7 +701,12 @@ extern "C" {
     \param mode : The setting to be set.
     \param min : The min value to set.
     \param max : The max value to set.
-    \return \ref SL_ERROR_CODE to indicate if the function was successful.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the camera applied the range.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the setting is not one of the three above, if it is not
+    available on this camera model, or if \p min is greater than \p max.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if the input is an SVO file.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CAMERA_NOT_INITIALIZED" if the camera is no longer available (disconnected, stream closed).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if the camera refused the range.
     \note The function works only if the camera is open in LIVE or STREAM mode.
      */
     INTERFACE_API enum SL_ERROR_CODE sl_set_camera_settings_min_max(int camera_id, enum SL_VIDEO_SETTINGS mode, int min, int max);
@@ -706,7 +717,11 @@ extern "C" {
     \param side : \ref SL_SIDE on which to be applied for AEC/AGC computation.
     \param roi : \ref SL_Rect that defines the target to be applied for AEC/AGC computation. Must be given according to camera resolution.
     \param reset : Cancel the manual ROI and reset it to the full image.
-    \return \ref SL_ERROR_CODE to indicate if the function was successful.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the camera applied the region.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if \p roi does not fit in the current image resolution.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if the input is an SVO file.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CAMERA_NOT_INITIALIZED" if the camera is no longer available (disconnected, stream closed).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_FAILURE" if the camera refused the region.
     \note The function works only if the camera is open in LIVE or STREAM mode.
     \note A ROI larger than the image, or smaller than the minimum size the camera accepts, is rejected and the previously set ROI stays in use.
     Check this function's return code to know whether the ROI was applied: sl_get_roi_for_aec_agc() reports the still-active ROI with
@@ -961,6 +976,42 @@ extern "C" {
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if the <b>reference_time</b> is not valid.
      */
     INTERFACE_API int sl_set_imu_prior_orientation(int camera_id, struct SL_Quaternion rotation);
+
+    /**
+    \brief Gives the positional tracking a motion prior: the motion measured by your motion source.
+
+    Use it to help the tracking with wheel odometry, an external visual-inertial system or the difference between two
+    consecutive GNSS fixes. Each sample describes how the camera moved over one time interval, together with how uncertain
+    that motion is and which axes the source actually measures.
+
+    Call it before \ref sl_grab(). Samples are matched to an image by timestamp, so it can be called from the thread that
+    reads your motion source, and several times between two \ref sl_grab() calls. A missing sample is never an error: the
+    tracking uses the images alone for that image.
+
+    Feed the samples back to back: the interval each one covers must start where the previous one ended, as they are joined
+    together to describe the motion between two images. A short gap is filled in for you, a longer one makes the motion
+    unusable for that image and is reported as \ref SL_RELATIVE_POSE_FUSION_STATUS "SL_RELATIVE_POSE_FUSION_STATUS_OUT_OF_SYNC".
+    \note A source faster than the camera is used on every image. A slower one is used to correct the trajectory over
+    longer stretches, not each image. In both cases the timestamps must use the same clock as the images.
+    \note A sample that arrives after the image it covers was grabbed is not lost: it is used the same way as a slower
+    source, provided it arrives within 2 seconds. Samples given out of order are accepted too.
+    \note There is nothing to enable: the motion prior is used from the first sample on. Requires \ref SL_POSITIONAL_TRACKING_MODE "SL_POSITIONAL_TRACKING_MODE_GEN_3".
+    How the motion was used for the last grabbed image is reported through \ref SL_PositionalTrackingStatus.relative_pose_fusion_status.
+
+    \param camera_id : Id of the camera instance.
+    \param motion_prior : Motion measured over one time interval, with its uncertainty.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if the motion was accepted.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if the positional tracking is not enabled, or is enabled
+    with a mode other than \ref SL_POSITIONAL_TRACKING_MODE "SL_POSITIONAL_TRACKING_MODE_GEN_3".
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS" if <b>motion_prior</b> is NULL, if either timestamp
+    is left at 0 or they are not ordered, if no axis is declared measured, if the motion or the uncertainty of the declared
+    axes cannot be used, if \ref SL_RelativePoseData.sensor_transform is not a valid position and orientation (its rotation
+    must describe axes of the same handedness as the coordinate system selected in \ref SL_InitParameters), or if
+    \ref SL_RelativePoseData.rejection_threshold is not greater than 0.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_TIMESTAMP" if the sample ends more than 2 seconds before the last
+    grabbed image: it was discarded.
+     */
+    INTERFACE_API int sl_ingest_motion_prior(int camera_id, struct SL_RelativePoseData* motion_prior);
     /**
     \brief Gets the rotation given by the IMU.
     \note This function is only effective if the camera has a model other than a \ref SL_MODEL "SL_MODEL_ZED", which does not contains internal sensors.
@@ -1565,7 +1616,8 @@ extern "C" {
     \param camera_id : Id of the camera instance.
     \param object_detection_parameters : A structure containing all the specific parameters for the object detection. Default: a preset of \ref SL_ObjectDetectionParameters.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine.
-    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION" if the AI model is missing or corrupted. In this case, the SDK needs to be reinstalled.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_AI_MODEL_NOT_AVAILABLE" if the AI model is not on this host and could not be downloaded (no internet access).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION" if the AI dependencies (TensorRT) cannot be loaded or the AI model is corrupted.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA" if the camera used does not have a IMU (\ref SL_MODEL "SL_MODEL_ZED").
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MOTION_SENSORS_REQUIRED" if the camera model is correct (not \ref SL_MODEL "SL_MODEL_ZED") but the IMU is missing. It probably happens because \ref SL_InitParameters.sensors_required was set to false and that IMU has not been found.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if one of the <b>object_detection_parameters</b> parameter is not compatible with other modules parameters (for example, <b>depth_mode</b> has been set to \ref SL_DEPTH_MODE "SL_DEPTH_MODE_NONE").
@@ -1623,7 +1675,8 @@ extern "C" {
     \param camera_id : Id of the camera instance.
     \param body_tracking_parameters : A structure containing all the specific parameters for the body tracking. Default: a preset of \ref SL_BodyTrackingParameters.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_SUCCESS" if everything went fine.
-    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION" if the AI model is missing or corrupted. In this case, the SDK needs to be reinstalled.
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_AI_MODEL_NOT_AVAILABLE" if the AI model is not on this host and could not be downloaded (no internet access).
+    \return \ref SL_ERROR_CODE "SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION" if the AI dependencies (TensorRT) cannot be loaded or the AI model is corrupted.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MODULE_NOT_COMPATIBLE_WITH_CAMERA" if the camera used does not have a IMU (\ref SL_MODEL "SL_MODEL_ZED").
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_MOTION_SENSORS_REQUIRED" if the camera model is correct (not \ref SL_MODEL "SL_MODEL_ZED") but the IMU is missing. It probably happens because \ref SL_InitParameters.sensors_required was set to false and that IMU has not been found.
     \return \ref SL_ERROR_CODE "SL_ERROR_CODE_INVALID_FUNCTION_CALL" if one of the <b>object_detection_parameters</b> parameter is not compatible with other modules parameters (for example, <b>depth_mode</b> has been set to \ref SL_DEPTH_MODE "SL_DEPTH_MODE_NONE").

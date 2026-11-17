@@ -450,19 +450,11 @@ void AZEDPlayerController::Internal_OpenZedCamera()
 	// Validate parameters
 	ZedCamera->PrepareForOpening();
 
-	if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_Neural && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralDepth)) {
-
-		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralDepth, ESlAIType::AIT_Depth);
-		UpdateHUDOptimizingAIModel();
-	}
-	else if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_NeuralPlus && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralPlusDepth))
+	ESlAIModels DepthAIModel;
+	if (sl::unreal::GetDepthAIModel(ZedCamera->InitParameters.DepthMode, ZedCamera->InitParameters.DepthPrecision, DepthAIModel) &&
+		!GSlCameraProxy->CheckAIModelOptimization(DepthAIModel))
 	{
-		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralPlusDepth, ESlAIType::AIT_Depth);
-		UpdateHUDOptimizingAIModel();
-	}
-	else if (ZedCamera->InitParameters.DepthMode == ESlDepthMode::DM_NeuralLight && !GSlCameraProxy->CheckAIModelOptimization(ESlAIModels::AIM_NeuralLightDepth))
-	{
-		GSlCameraProxy->OptimizeAIModel(ESlAIModels::AIM_NeuralLightDepth, ESlAIType::AIT_Depth);
+		GSlCameraProxy->OptimizeAIModel(DepthAIModel, ESlAIType::AIT_Depth);
 		UpdateHUDOptimizingAIModel();
 	}
 	else
